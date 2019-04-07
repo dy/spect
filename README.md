@@ -14,15 +14,16 @@
 * Replacement to HOCs
 * Natural hydration (mods initialized via HTML)
 * Folds complex JSX wrappers into semantic HTML tags
+* Make html clean again
 
 ```jsx
 import {Sidebar, Page, Navigation, Logo,'mod/sidebar'
 
 <body>
-	<aside mod-intent={Sidebar}/>
-	<main mod-intent={Page}>
-		<div mod-logo mod-route/>
-		<nav mod-menu mod-sticky/>
+	<aside mod={Sidebar()}/>
+	<main mod={Page()}>
+		<div className="logo" mod-route/>
+		<nav mod-intent="menu" mod-sticky/>
 
     	<article>
 	        <header mod={SEO('header')}>
@@ -37,6 +38,37 @@ import {Sidebar, Page, Navigation, Logo,'mod/sidebar'
 	    </article>
     </main>
 </body>
+```
+
+## High-level replacement for react
+
+* Mods act like classical vanillajs initializers/components.
+* They know nothing about vdom/dom, they're infrastructure-agnostic.
+* Rendering a template for mods is just a side-effect, unlike react.
+* They can act as component glue.
+* Elements are useEffects bodies by default with dependency on props.
+
+```jsx
+import
+
+function App(component, props) {
+  // location side-effect
+  let [path, setPath] = useLocation()
+
+  // window.title side-effect
+  let [title, setTitle] = useTitle()
+
+
+  // DOM side-effect
+  let [el, render] = useRender()
+  render(html`
+    <main react=${App}>
+    </main>
+    <aside mount=${}
+  `, document.body)
+
+  return
+}
 ```
 
 ## API
@@ -175,8 +207,9 @@ render(
 )
 
 // context with mods
-<App mod-mount="#root" mod={[ Provider({store}), PersistGate({loaging, persistor}), ConnectedRouter({history})]}/>
+<App mod-mount="#root" mod-context={[ Provider({store}), PersistGate({loaging, persistor}), ConnectedRouter({history})]}/>
 ```
+
 
 
 ## Motivation
