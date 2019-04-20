@@ -2,38 +2,38 @@ import { render } from 'react-dom'
 
 
 function app((props) => {
+	// essentially we bind data source/state
 	let [items, fetch] = async(fetchData, [])
-
+	
+	// with a set of visual effects
 	fx((title) => {
 		document.title=title
-	}, [props.title])
+	})
 
-	let {app} = css(`
+	css`
 		.app {
 
 		}
-	`, [])
+	`
 
-	let [header] = fx(header)
-
-	let [element] = render(
-	<main class={app} mod={provider}>
-		<header x={1}/>
+	html(
+	<main class={app} mod-store-provider mod-lang-provider>
+		<header x={1} mod-header/>
 		<ul>
 			{items.map(item => <li {...item}/>)}
 		</ul>
 	</main>,
-	document.body, [items])
+	document.body)
 
 	raf(() => {
 
-	}, [])
+	})
 
 	destroy(() => {
 
 	})
 
-	gsm(, [])
+	gsm()
 }, [props])
 
 
