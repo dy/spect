@@ -37,6 +37,7 @@ function app(props) {
 		<header id="header" mod={Header}/>
 
 		<ul mod={[preloadable, sortable, draggable]}>
+
 			{items.map(item => <li {...item}/>)}
 		</ul>
 	</main>,
@@ -58,7 +59,6 @@ function app(props) {
 		document.body.removeChild(app)
 	})
 }
-
 
 function Header ({element, children, ...props}) {
 	return <nav>...</nav>
