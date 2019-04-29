@@ -15,6 +15,8 @@
 * Natural hydration (mods initialized via HTML)
 * Folds complex JSX wrappers into semantic HTML tags
 * Make html clean again
+* Framework-agnostic hooks
+* Component hierarchy
 
 ```jsx
 import {Sidebar, Page, Navigation, Logo,'mod/sidebar'
@@ -149,23 +151,15 @@ Set a state for an element
 
 Schedule regular events
 
-### mod-loading
-
-Loading fallback
-
 ### mod-route
 
 Coditionally trigger element by matching route
-
-### mod-link
 
 ### mod-lazy
 
 Hide when not on the screen
 
 ### mod-transition
-
-### mod-suspense
 
 ### mod-connect
 
