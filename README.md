@@ -15,28 +15,29 @@
 * Natural hydration (mods initialized via HTML)
 * Folds complex JSX wrappers into semantic HTML tags
 * Make html clean again
-* Framework-agnostic hooks
+* Framework-agnostic reactless hooks
+* Reactless native reactions
 * Component hierarchy
 
 ```jsx
 import {Sidebar, Page, Navigation, Logo,'mod/sidebar'
 
 <body>
-	<aside mod={Sidebar()}/>
-	<main mod={Page()}>
-		<div className="logo" mod-route/>
-		<nav mod-intent="menu" mod-sticky/>
+	<aside class="mod-sidebar"/>
+	<main class="mod-page">
+		<div class="logo mod-route"/>
+		<nav class="mod-sticky"/>
 
     	<article>
-	        <header mod={SEO('header')}>
-	        	<h1 mod={Typography({type})}>{page.title}</h1>
-	        	<div mod={Share}/>
+	        <header class="mod-seo" data-seo="json">
+	        	<h1 mod-typography="typo-settings">{page.title}</h1>
+	        	<div mod-share/>
 	        </header>
 
-	        <section mod={Intro}/>
-	        <section mod={Feature}/><section mod={Feature}/><section mod={Feature}/>
+	        <section is="mod-intro"/>
+	        <section is="mod-feature"><section is="mod-feature"/><section is="mod-feature"/>
 
-	        <footer mod={Footer}/>
+	        <footer class="mod-footer"/>
 	    </article>
     </main>
 </body>
@@ -53,163 +54,199 @@ import {Sidebar, Page, Navigation, Logo,'mod/sidebar'
 ```jsx
 import
 
-function App(component, props) {
+function App(el) {
   // location side-effect
-  let [path, setPath] = useLocation()
+  let [path, setPath] = location()
 
   // window.title side-effect
-  let [title, setTitle] = useTitle()
-
-
-  // DOM side-effect
-  let [el, render] = useRender()
-  render(html`
+  let [title, setTitle] = title()
+  
+  // DOM render
+  render`
     <main react=${App}>
     </main>
     <aside mount=${}
-  `, document.body)
-
-  return
+  `, el)
 }
 ```
 
-## API
+## Getting started
 
-### mod={},[],string,function
-
-Initializes mod, list or dict of mods on an element.
-
-
-## Standard mods
-
-### mod-on={ event: handler }
-
-Mod binding events to the element, considering naming, polyfilling etc.
-
-
-### mod-react
-
-Enables inner content to be react node, eg.
+There are two ways to use mods in html.
 
 ```js
-// this renders inner JSX into component
-<div id="root" mod-react>
-	<App/>
-</div>
+<script>
+import dom from '@mod/dom'
+import el from '@mod/custom-element'
+
+// attach mod to dom (not custom element)
+dom('.fps-indicator', import('fps-indicator'))
+
+fx(() => {
+// register DOM-selector to observe
+$('.fps-indicator')
+
+// call
+fx(() => {
+})
+
+})
+
+// create app
+customElements.define('app-el', mod(el => {
+}), {extends: 'main'})
+</script>
+
+<main is="app-el"/>
 ```
 
-### mod-redux
+## `@mod/dom`
+
+Mod is an alternative way to write custom elements code. Essentially mod is just a function, that has a set of side-effects via `@mod/fx` helpers. Side-effects are the concept very similar to react hooks. 
+
+### `@mod/state`
+
+Same as react useState. Provides per-mod state:
+
+```js
+function mod (el) {
+let [value, set] = st8(initialValue)
+}
+```
+
+### `@mod/fx`
+
+Side-effect for mod. Same as react `useEffect`:
+
+```js
+function mod (el) {
+fx()
+}
+```
+
+### mount
+
+### unmount
+
+### on
+
+Attach event handlers to the element.
+
+```js
+el => {
+on('evt', handler)
+return () => {
+off('evt')
+}
+}
+```
+
+### redux
+
+Connect mod to redux store
+
+```js
+let store = configureStore()
+
+el => {
+let {props} = redux(selector)
+}
+```
+
+### css
+
+CSS effect for an element. Uses virtual-css to apply fast CSS diffs.
+
+```js
+el => {
+css`
+:host {
+}
+:host .sub-element {
+}
+`
+}
+```
 
 
-### mod-css={CSS}
-
-Adds tachyons classnames corresponding to passed CSS object or string.
-
-See ui-box.
-
-
-### mod-a11y
+### a11y
 
 Provides accessibility properties.
 
-
-### mod-dataschema
+### seo
 
 Provides schema description object for the mod.
 
+### htm
 
-### mod-mount
+Make sure element contains defined innerHTML via DOM diffing algo. It uses `htm` internally, connected to fast dom-diffing engine.
 
-Selector in the real dom to mount the mod on. Can be used to create portals ~~to another dimension~~.
+### gl
 
-
-### mod-gl
-
-Can be used on canvas only. Enables children for canvas, rendering them as virtual layers.
+Multilayer gl canvas custom element.
 
 ```js
-<canvas mod-gl>
-	<gl-legend/>
-	<gl-scatter/>
-	<gl-axes/>
-</canvas>
+<GlCanvas>
+	<Legend/>
+	<Scatter/>
+	<Axes/>
+</GlCanvas>
+```
+### interval
+
+```js
+function mod () {
+    interval(() => {}, 50)
+}
 ```
 
-### mod-render
-
-Takes a function to render the content. See https://github.com/streamich/react-universal-interface
-
-### mod-fx
-
-Invoke a function on attributes/lifecycle events.
-
-### mod-state
-
-Set a state for an element
-
-### mod-interval, mod-timeout
+### timeout
 
 Schedule regular events
 
-### mod-route
+### route
 
 Coditionally trigger element by matching route
 
-### mod-lazy
+### visible
 
 Hide when not on the screen
 
-### mod-transition
+### transition
 
-### mod-connect
+### connect
 
 
 
-### Infusing into react
+## Integration with react
 
-Use `import React from '@mod/react'` instead of `import React from 'react'`.
+Mods are interoperable with react.
 
-That enables passing mods as props to any components.
+To connect react component to mod, use `react` hook:
 
-```jsx
-// composing with recompose
-export default compose(
-  connect(
-    mapStateToProps,
-    mapDispatchToProps
-  ),
-  reduxForm({form: 'MyForm'}),
-  withPagination,
-  withNavigation,
-)(Page)
+```js
+import dom from '@mod/dom'
+import react from '@mod/react'
+import App from './App.jsx'
 
-// composing with mods
-<Page mod={[withPagination, withSubscription, reduxForm({ form:'MyForm' }), connect(state)]} />
+dom('.app', el => react(<App {...el.getAttributes()}/>)
 ```
 
+To connect Mod to react, you don't need to do anything, mod uses native DOM, whether custom-elements or selector observers:
+
 ```jsx
-// context with react
-render(
-  <Provider store={store}>
-  	<PersistGate loading="loading..." persistor={persistor}>
-	    <ConnectedRouter history={history}>
-	      <App />
-	    </ConnectedRouter>
-    </PersistGate>
-  </Provider>,
-  document.getElementById("root") as HTMLElement
-)
-
-// context with mods
-<App mod-mount="#root" mod-context={[ Provider({store}), PersistGate({loaging, persistor}), ConnectedRouter({history})]}/>
+<App>
+<div className=".fps-indicator"/>
+<custom-el></custom-el>
+</App>
 ```
-
 
 
 ## Motivation
 
-Hyperscript was a nice beginning. But introduction of Components was a mistake. It made JSX trees complex and shallow, detached them from HTML, made developers less skilled in HTML/CSS. That brought to the situation of mess both in generated and in source code.
-Mods are here to reestablish justice and clarity.
+Hyperscript was a nice beginning. But introduction of Components was a mistake. It made JSX trees complex and shallow, detached them from HTML, made developers less skilled in HTML/CSS. That increased risk of situation mess both in generated and in source code (see tweet).
+
+Mods are here to reestablish justice. They require no bundler since they rely on browser mechanisms to load scripts. They require no compilers for JSX since HTML is already here. 
 
 ### Principles
 
