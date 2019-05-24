@@ -15,12 +15,38 @@
 * Natural hydration (mods initialized via HTML)
 * Folds complex JSX wrappers into semantic HTML tags
 * Make html clean again
-* Framework-agnostic reactless hooks
-* Reactless native reactions
+* Framework-agnostic hooks
+* Reactless reactions
 * Component hierarchy
+* Declarative JS for your web-app
 
 ```jsx
-import {Sidebar, Page, Navigation, Logo,'mod/sidebar'
+<style>
+@import "//unpkg.com/@material/textfield/mdc-text-field"
+</style>
+
+<script>
+import mod, { htm, css, fx } from '//unpkg.com/@mod/core'
+
+import { MDCRipple } from '//unpkg.com/@material/ripple'
+import { MDCTextField } from `//unpkg.com/@material/textfield`
+
+// register ripple effect for all elements with .mdc-ripple class on the page
+// ( it raises a question of internal redundancy instantly that needs covering )
+mod('.mdc-ripple', MDCRipple)
+
+// create textField custom element based on material ui (following the docs)
+let TextField = mod(el => {
+  htm`<div class="mdc-text-field">
+        <input type="text" id="my-text-field" class="mdc-text-field__input">
+        <label class="mdc-floating-label" for="my-text-field">Label</label>
+        <div class="mdc-line-ripple"></div>
+      </div>`
+  
+  el.textField = new MDCTextField(el)
+})
+customElements.define('mdc-text-field', TextField, {extends: 'div'})
+</script>
 
 <body>
 	<aside class="mod-sidebar"/>
