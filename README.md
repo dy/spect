@@ -42,7 +42,7 @@ let TextField = mod(el => {
         <label class="mdc-floating-label" for="my-text-field">Label</label>
         <div class="mdc-line-ripple"></div>
       </div>`
-  
+
   el.textField = new MDCTextField(el)
 })
 customElements.define('mdc-text-field', TextField, {extends: 'div'})
@@ -86,7 +86,7 @@ function App(el) {
 
   // window.title side-effect
   let [title, setTitle] = title()
-  
+
   // DOM render
   render`
     <main react=${App}>
@@ -128,7 +128,7 @@ customElements.define('app-el', mod(el => {
 
 ## `@mod/dom`
 
-Mod is an alternative way to write custom elements code. Essentially mod is just a function, that has a set of side-effects via `@mod/fx` helpers. Side-effects are the concept very similar to react hooks. 
+Mod is an alternative way to write custom elements code. Essentially mod is just a function, that has a set of side-effects via `@mod/fx` helpers. Side-effects are the concept very similar to react hooks.
 
 ### `@mod/state`
 
@@ -272,7 +272,7 @@ To connect Mod to react, you don't need to do anything, mod uses native DOM, whe
 
 Hyperscript was a nice beginning. But introduction of Components was a mistake. It made JSX trees complex and shallow, detached them from HTML, made developers less skilled in HTML/CSS. That increased risk of situation mess both in generated and in source code (see tweet).
 
-Mods are here to reestablish justice. They require no bundler since they rely on browser mechanisms to load scripts. They require no compilers for JSX since HTML is already here. 
+Mods are here to reestablish justice. They require no bundler since they rely on browser mechanisms to load scripts. They require no compilers for JSX since HTML is already here.
 
 ### Principles
 
