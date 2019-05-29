@@ -1,0 +1,34 @@
+{
+  "name": "spect",
+  "version": "1.0.0",
+  "description": "Aspects with effects",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/dy/spect.git"
+  },
+  "keywords": [
+    "aspect",
+    "spect",
+    "aop",
+    "hooks",
+    "fx",
+    "effects",
+    "use-effect",
+    "lifecycle",
+    "react-hooks",
+    "react",
+    "dom",
+    "custom-elements",
+    "web-components"
+  ],
+  "author": "dy <df.creative@gmail.com>",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/dy/spect/issues"
+  },
+  "homepage": "https://github.com/dy/spect#readme"
+}
