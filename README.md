@@ -1,4 +1,17 @@
-# Mods
+# Spect
+
+Effectful aspects for DOM.
+
+Spect is a concept inspired by aspect/subject programming, react hooks and custom elemeents. For any object it creates effects-enabled accompanying function (so-called advice). Effects can be thought of as react hooks with better API design.
+DOM-aspects can augment elements with additional behavior, from effects (like ripple, fade-in, parallax or animation) to business-logic (authentication, authorization, accounting, logging, etc).
+
+
+## Gems
+
+* effectful functions, not bound to DOM
+* cached state machine
+* soft dom diff
+
 
 * Respects semantic HTML: familiar, enforces good practice, provokes semantic thinking
 * Provides multiframework glue: mods take internal rendering result of the other framework
@@ -12,15 +25,148 @@
 * Mod is h-compatible function, each mod receives an element and props `(el, props) => {}`
 * Can be gradually infused into react/JSX, reducing tree complexity
 * Replacement to HOCs
-* Natural hydration (mods initialized via HTML)
+* Natural hydration
 * Folds complex JSX wrappers into semantic HTML tags
 * Make html clean again
 * Framework-agnostic hooks
 * Reactless reactions
-* Component hierarchy
-* Declarative JS for your web-app
+* Declarative JS
+* Mods act like classical vanillajs initializers/components.
+* They know nothing about vdom/dom, they're infrastructure-agnostic.
+* Rendering a template for mods is just a side-effect.
+* They can act as component glue.
+* Elements are useEffects bodies by default with dependency on props.
 
-```jsx
+[TODO: highly demonstrative generic example ]
+
+```html
+<script type="module">
+  import spect from "https://unpkg.com/spect/dom"
+  import { fx, attr } from "https://unpkg.com/spect/fx"
+
+  // declare dom-aspect
+  spect('.app', el => {
+    // register attributes listeners
+    let [x, setX] = attr('x')
+
+    let result = fx(() => {
+      // called when deps change
+    }, deps)
+
+    // fx can be a generator
+    let result = gen(async function * () {
+      yield Symbol('pending')
+      yield Symbol('loading')
+      let data = await load()
+
+    })
+
+    // register an event - automatically removed when element is unmounted
+    on('click', e => {
+
+    })
+
+    // make sure htm softly exists in the element (doesn't remove the rest)
+    htm`
+      <div is=${RegisteredElement} use=${[Provider, Auth, Persistor]}></div>
+    `
+
+    // called on unmount
+    return () => {
+
+    }
+  })
+</script>
+```
+
+[Material-components](https://github.com/material-components/material-components-web) example:
+
+```html
+<link href="https://unpkg.com/@material/ripple/dist/mdc-ripple.css" rel="stylesheet">
+<script type="module">
+  import spect from "https://unpkg.com/spect"
+  import {MDCRipple} from 'https://unpkg.com/@material/ripple';
+
+  // register ripple effect for all buttons on the page
+  spect('button', el => {
+    let ripple = new MDCRipple(el)
+    el.classNames.add('mdc-ripple')
+
+    return ripple.destroy
+  }, [])
+</script>
+
+<button>Ripple</button>
+```
+
+Simulated canvas layers via DOM:
+
+```html
+spect('canvas.plot', canvas => raf(
+  function render () {
+    let ctx = canvas.getContext('2d')
+
+    // clear canvas
+    ctx.clearRect(0,0, canvas.width, canvas.height)
+
+    // rerender all layers
+    [...el.children].forEach(layer => {
+      if (!(layer instanceOf CanvasLayer)) CustomElements.upgrade(layer, 'canvas-layer')
+
+      layer.draw()
+    })
+
+    raf(render)
+  }
+  )
+)
+```
+
+Non-DOM aspects:
+
+
+```js
+
+function aspect (obj) {
+  // ...non-dom fx work
+  dprop('a.b.c')
+  on('evt', callback)
+}
+
+// we have to add that trait to some object
+spect(obj, aspect)
+
+// this way we can attach "sagas" to some store
+spect(store, state => {
+  on('specialEvent', () => {
+    someAction
+  })
+
+  emit('event', () => {})
+})
+
+```
+
+```js
+function App(el) {
+  // location side-effect
+  let [path, setPath] = location()
+
+  // window.title side-effect
+  let [title, setTitle] = title()
+
+  // DOM render
+  htm`
+    <main react=${App}>
+    </main>
+    <aside mount=${}
+  `, el)
+}
+```
+
+
+
+```html
 <style>
 @import "//unpkg.com/@material/textfield/mdc-text-field"
 </style>
@@ -49,82 +195,33 @@ customElements.define('mdc-text-field', TextField, {extends: 'div'})
 </script>
 
 <body>
-	<aside class="mod-sidebar"/>
-	<main class="mod-page">
-		<div class="logo mod-route"/>
-		<nav class="mod-sticky"/>
+  <aside class="mod-sidebar"/>
+  <main class="mod-page">
+    <div class="logo mod-route"/>
+    <nav class="mod-sticky"/>
 
-    	<article>
-	        <header class="mod-seo" data-seo="json">
-	        	<h1 mod-typography="typo-settings">{page.title}</h1>
-	        	<div mod-share/>
-	        </header>
+      <article>
+          <header class="mod-seo" data-seo="json">
+            <h1 mod-typography="typo-settings">{page.title}</h1>
+            <div mod-share/>
+          </header>
 
-	        <section is="mod-intro"/>
-	        <section is="mod-feature"><section is="mod-feature"/><section is="mod-feature"/>
+          <section is="mod-intro"/>
+          <feature><feature/><feature/>
 
-	        <footer class="mod-footer"/>
-	    </article>
+          <footer class="mod-footer"/>
+      </article>
     </main>
 </body>
 ```
 
-## High-level replacement for react
-
-* Mods act like classical vanillajs initializers/components.
-* They know nothing about vdom/dom, they're infrastructure-agnostic.
-* Rendering a template for mods is just a side-effect, unlike react.
-* They can act as component glue.
-* Elements are useEffects bodies by default with dependency on props.
-
-```jsx
-import
-
-function App(el) {
-  // location side-effect
-  let [path, setPath] = location()
-
-  // window.title side-effect
-  let [title, setTitle] = title()
-
-  // DOM render
-  render`
-    <main react=${App}>
-    </main>
-    <aside mount=${}
-  `, el)
-}
-```
 
 ## Getting started
 
-There are two ways to use mods in html.
 
-```js
-<script>
-import dom from '@mod/dom'
-import el from '@mod/custom-element'
 
-// attach mod to dom (not custom element)
-dom('.fps-indicator', import('fps-indicator'))
+## Effects
 
-fx(() => {
-// register DOM-selector to observe
-$('.fps-indicator')
-
-// call
-fx(() => {
-})
-
-})
-
-// create app
-customElements.define('app-el', mod(el => {
-}), {extends: 'main'})
-</script>
-
-<main is="app-el"/>
-```
 
 ## `@mod/dom`
 
@@ -213,9 +310,9 @@ Multilayer gl canvas custom element.
 
 ```js
 <GlCanvas>
-	<Legend/>
-	<Scatter/>
-	<Axes/>
+  <Legend/>
+  <Scatter/>
+  <Axes/>
 </GlCanvas>
 ```
 ### interval
@@ -246,26 +343,36 @@ Hide when not on the screen
 
 ## Integration with react
 
-Mods are interoperable with react.
+Aspects are interoperable with react.
 
-To connect react component to mod, use `react` hook:
-
-```js
-import dom from '@mod/dom'
-import react from '@mod/react'
-import App from './App.jsx'
-
-dom('.app', el => react(<App {...el.getAttributes()}/>)
-```
-
-To connect Mod to react, you don't need to do anything, mod uses native DOM, whether custom-elements or selector observers:
+To connect aspect to react, just put aspect into `ref` prop:
 
 ```jsx
 <App>
-<div className=".fps-indicator"/>
+<div className="fps-indicator" ref={aspect}/>
 <custom-el></custom-el>
 </App>
 ```
+
+The aspect will manage it's state and effects well, as well as mount/unmount itself properly.
+
+To connect react component to spect, just use normal react render:
+
+```js
+import $ from 'spect'
+import React from 'react'
+import render from 'react-dom'
+import App from './App.jsx'
+
+$('.app', el => render(<App {...el.getAttributes()}/>, el)
+```
+
+This can also serve as remount:
+
+```js
+```
+
+
 
 
 ## Motivation
@@ -280,155 +387,3 @@ Mods are here to reestablish justice. They require no bundler since they rely on
 * Nama, Rupa, Guna, Lila
 
 
-
-
-
-
-
-
-
-
-# spect
-
-Aspects for DOM.
-
-[Coming soon.]
-
-
-<!--
-Spect is similar to aspect/subject programming. For any object it creates a lifetime-companion function (so-called advice), that at defined moments performs additional actions. Classical examples: authentication, authorization, accounting, logging, etc.
-That can be thought of as effects, put into a different adjacent functions.
-
-```html
-<script type="module">
-  import spect, {diff, state} from "https://unpkg.com/spect/dom"
-
-  spect('.app', el => {
-    // init, update
-
-    return () => {
-      // destroy
-    }
-  })
-</script>
-```
-
-[Material-components](https://github.com/material-components/material-components-web) example:
-
-```html
-<link href="https://unpkg.com/@material/ripple/dist/mdc-ripple.css" rel="stylesheet">
-<script type="module">
-  import fx from "https://unpkg.com/spect"
-  import {MDCRipple} from 'https://unpkg.com/@material/ripple';
-
-  // register ripple effect for all buttons on the page
-  fx('button', el => {
-    let ripple = new MDCRipple(el)
-    el.classNames.add('mdc-ripple')
-
-    () => {
-      ripple.destroy()
-    }
-  }, [])
-</script>
-
-<button>Ripple</button>
-```
-
-Simulated canvas layers via DOM:
-
-```html
-fx('.plot', canvas => raf(
-  () => {
-    let ctx = canvas.getContext('2d')
-
-    // clear canvas
-    ctx.clearRect(0,0, canvas.width, canvas.height)
-
-    // rerender all layers
-    [...el.children].forEach(layer => {
-      if (!(layer instanceOf CanvasLayer)) CustomElements.upgrade(layer, 'canvas-layer')
-
-      layer.draw()
-    })
-  }
-))
-```
-
-* `fx(selector, handler, attrs?)`
-  - attributes are separate from selector
-  - selector is passed as first arg to handler, not attrs
-  - attributes aren't passed to handler (API inconsistency)
-    ? `fx('tagName[attr1, attr2]', (el, attr1, attr2) => {})`
-      + selector params are passed as args
-        - messy selector parsing
-      - too verbose selector
-      + apparent indication of attribute difference
-      - doesn't correspond to css selector (falsy values)
->   ? attributes effect `fx('tagName', el => { let {a, b, c} = attrs() })`
-      + registers changes
-      + consistent with props
-  * selector/attrs reflect mutationobserver config, could make sense joining it
-
-
-## Gems
-
-* effectful functions, not bound to DOM
-* cached state machine
-* soft dom diff
-
-## Hooks redesigned
-
-* let [x, set] = state
-  - local "store" is unseparable from update
-    - that is addressed via useRef, that is super-confusing
-  - oftentimes we see "fake" useState, `let [,update] = useState()` just to force rerender
-  + we need just "local state" and/or "update"
-  + if we use multiple set states in order, they trigger one after the other
-* useEffect(() => { init; update; return destroy; }, deps)
-  - scary name indeed
-  - so much confusion using it: no clear understanding when it's been triggered or why `useEffect(fn, [])` !== `useEffect(fn)`
-  - no definite indicator of triggering, sometimes it depends on forced "fake" id from `useState`, just to re-trigger it
-  - no returning result
-  - any attributes change cause retriggering destroy
-  + mount/unmount are more apparent, although don't have shared state
-  + change by condition is more apparent
-  + conceptually there is
-    * let shoot = load(() => {}), which can be async too
-    * updateDiff(fn, deps), similar to update-diff
-* useContext, useRef, useReducer are just ... react legacy stuff
-* useMemo
-  - because of signature conflict with useState, it requires redundant functional wrapper, could be `let result = memo(() => {})`
-  - intuitively very similar to useEffect, but takes no deps list
-*
-
-*** spect is bad name: what if we want effectful handlers without DOM? how?
-```js
-
-function advice (obj) {
-  // ...non-dom fx work
-  dprop('a.b.c')
-  on('evt', callback)
-}
-
-// we have to add that trait to some object
-fxify(obj, advice)
-
-// this way we can attach "sagas" to some store
-fx(store, state => {
-  on('specialEvent', () => {
-    someAction
-  })
-
-  emit('event', () => {})
-})
-
-```
-
-## Naming
-
-* these are lifecycle companions, mods, effects, side-effects, behaviors, traits, satellites,
-lifecycle functions applied to some object lifetime, called at some important points: init, end, stages, changes.
-They compose a frain of an object's lifecycle. Ideally it runs on any object change.
-
--->
