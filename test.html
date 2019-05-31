@@ -1,0 +1,32 @@
+<script type="module">
+import htm from 'https://unpkg.com/htm?module'
+
+let html = htm.bind((a, b, c) => console.log(a, b, c))
+
+// ok
+// html`<${document.body} ...${[1,2,3]}><//>``
+
+// ok
+// html`<.tagname ...${[1,2,3]}><//>`
+
+// ok
+// html`<$.tag>123<//>`
+
+// ok
+// html`<div#id.class><//>`
+
+// fail
+// html`<p>P. Sherman<br>
+// 42 Wallaby Way<br>
+// Sydney</p>`
+
+// ok
+// html`<${function tag() {}}/>`
+
+// fail
+// html`<$ ...${function attrs(){}}/>`
+
+// ok
+html`<$>${(a, b, c) => { console.log(a, b, c)}}<//>`
+
+</script>

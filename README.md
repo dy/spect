@@ -1,6 +1,6 @@
 # Spect
 
-Effectful aspects for DOM.
+Functional aspects.
 
 Spect is a concept inspired by aspect/subject programming, react hooks and custom elemeents. For any object it creates effects-enabled accompanying function (so-called advice). Effects can be thought of as react hooks with better API design.
 DOM-aspects can augment elements with additional behavior, from effects (like ripple, fade-in, parallax or animation) to business-logic (authentication, authorization, accounting, logging, etc).
@@ -39,44 +39,42 @@ DOM-aspects can augment elements with additional behavior, from effects (like ri
 
 [TODO: highly demonstrative generic example ]
 
-```html
-<script type="module">
-  import spect from "https://unpkg.com/spect/dom"
-  import { fx, attr } from "https://unpkg.com/spect/fx"
+```js
+import spect from "https://unpkg.com/spect/dom"
+import { fx, attr } from "https://unpkg.com/spect/fx"
 
-  // declare dom-aspect
-  spect('.app', el => {
-    // register attributes listeners
-    let [x, setX] = attr('x')
+// declare dom-aspect
+spect('.app', el => {
+  // register attributes listeners
+  let [x, setX] = attr('x')
 
-    let result = fx(() => {
-      // called when deps change
-    }, deps)
+  let result = fx(() => {
+    // called when deps change
+  }, deps)
 
-    // fx can be a generator
-    let result = gen(async function * () {
-      yield Symbol('pending')
-      yield Symbol('loading')
-      let data = await load()
+  // fx can be a generator
+  let result = gen(async function * () {
+    yield Symbol('pending')
+    yield Symbol('loading')
+    let data = await load()
 
-    })
-
-    // register an event - automatically removed when element is unmounted
-    on('click', e => {
-
-    })
-
-    // make sure htm softly exists in the element (doesn't remove the rest)
-    htm`
-      <div is=${RegisteredElement} use=${[Provider, Auth, Persistor]}></div>
-    `
-
-    // called on unmount
-    return () => {
-
-    }
   })
-</script>
+
+  // register an event - automatically removed when element is unmounted
+  on('click', e => {
+
+  })
+
+  // make sure htm softly exists in the element (doesn't remove the rest)
+  htm`
+    <div is=${RegisteredElement} use=${[Provider, Auth, Persistor]}></div>
+  `
+
+  // called on unmount
+  return () => {
+
+  }
+})
 ```
 
 [Material-components](https://github.com/material-components/material-components-web) example:
@@ -101,7 +99,7 @@ DOM-aspects can augment elements with additional behavior, from effects (like ri
 
 Simulated canvas layers via DOM:
 
-```html
+```js
 spect('canvas.plot', canvas => raf(
   function render () {
     let ctx = canvas.getContext('2d')
@@ -215,19 +213,32 @@ customElements.define('mdc-text-field', TextField, {extends: 'div'})
 </body>
 ```
 
+Effects without specting:
+
+```js
+import fx from 'spect/fx'
+
+document.querySelector(el => {
+  // effects - applied once (waiting for function.caller proposal)...
+})
+```
+
 
 ## Getting started
 
+[TODO: 2-seconds connect via unpackage module]
+[TODO: connect as direct dependency]
+[TODO: another good example, not too specific]
 
 
 ## Effects
 
 
-## `@mod/dom`
+## `dom`
 
 Mod is an alternative way to write custom elements code. Essentially mod is just a function, that has a set of side-effects via `@mod/fx` helpers. Side-effects are the concept very similar to react hooks.
 
-### `@mod/state`
+### `state`
 
 Same as react useState. Provides per-mod state:
 
@@ -237,7 +248,7 @@ let [value, set] = st8(initialValue)
 }
 ```
 
-### `@mod/fx`
+### `fx`
 
 Side-effect for mod. Same as react `useEffect`:
 
@@ -247,9 +258,11 @@ fx()
 }
 ```
 
-### mount
+### fn
 
-### unmount
+### gen
+
+### call
 
 ### on
 
@@ -266,7 +279,7 @@ off('evt')
 
 ### redux
 
-Connect mod to redux store
+Connect aspect to redux store
 
 ```js
 let store = configureStore()
@@ -290,7 +303,6 @@ css`
 `
 }
 ```
-
 
 ### a11y
 
@@ -372,14 +384,56 @@ This can also serve as remount:
 ```js
 ```
 
+<!--
+
+## Registering aspects, pointcuts
+
+Basic pattern for registering aspects:
+
+```java
+aspect Name {
+  pointcut name(): proxy fields to observe
+  before|after|join point: pointcut {
+    advice code
+  }
+}
+
+So basically when to trigger, what to trigger
+
+```
+spect.register(TargetClass, whenToTriggerFx)
+```
+
+But that can't easily extend native builtins, that provides own implementation.
 
 
+Streams:
+
+```js
+stream = spect(Stream, function handler (chunk) {
+start(() => {
+})
+data(() => {
+})
+end(() => {
+})
+})
+```
+
+Objects:
+
+```js
+obj = $o(obj, function handler (obj) {
+})
+```
+-->
 
 ## Motivation
 
-Hyperscript was a nice beginning. But introduction of Components was a mistake. It made JSX trees complex and shallow, detached them from HTML, made developers less skilled in HTML/CSS. That increased risk of situation mess both in generated and in source code (see tweet).
+Hyperscript was a nice beginning. But introduction of Components in React was a mistake. It made JSX trees complex and shallow, detached them from HTML, made developers less skilled in HTML/CSS. That increased risk of situation mess both in generated and in source code (see tweet).
 
-Mods are here to reestablish justice. They require no bundler since they rely on browser mechanisms to load scripts. They require no compilers for JSX since HTML is already here.
+Spect is here to reestablish justice. They require no bundler since they rely on browser mechanisms to load scripts. They require no compilers for JSX since HTML is already here.
+
 
 ### Principles
 
