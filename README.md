@@ -8,34 +8,7 @@ DOM-aspects can augment elements with additional behavior, from effects (like ri
 
 ## Gems
 
-* effectful functions, not bound to DOM
-* cached state machine
-* soft dom diff
-
-
-* Respects semantic HTML: familiar, enforces good practice, provokes semantic thinking
-* Provides multiframework glue: mods take internal rendering result of the other framework
-* Modifiers from the BEM: modifier is still element, but allows blending with other modifiers
-* Self-deployable JSX
-* Embrace react hooks simplicity
-* Particles of behavior
-* Natural blend of html/js: behavioral wrapper components merge into one semantic tag
-* Blends in JSX, HTM etc or templates.
-* Like attributes with additional behavior
-* Mod is h-compatible function, each mod receives an element and props `(el, props) => {}`
-* Can be gradually infused into react/JSX, reducing tree complexity
-* Replacement to HOCs
-* Natural hydration
-* Folds complex JSX wrappers into semantic HTML tags
-* Make html clean again
-* Framework-agnostic hooks
-* Reactless reactions
-* Declarative JS
-* Mods act like classical vanillajs initializers/components.
-* They know nothing about vdom/dom, they're infrastructure-agnostic.
-* Rendering a template for mods is just a side-effect.
-* They can act as component glue.
-* Elements are useEffects bodies by default with dependency on props.
+* :gem:
 
 [TODO: highly demonstrative generic example ]
 
