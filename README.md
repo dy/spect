@@ -1,9 +1,20 @@
 # Spect
 
-`Spect` is a new type of frontend framework, incorporating [Aspect-Oriented Programming]() principles with modern frontend practices like virtual-DOM, hooks and , at the same time bringing the flavor of classical vanilla-js simplicity.
+`Spect` is a new type of frontend framework, incorporating principles of [Aspect-Oriented Programming](https://en.wikipedia.org/wiki/Aspect-oriented_programming) with modern frontend practices, like virtual-DOM, hooks and web-components, at the same time bringing the simplicity of vanilla js with jQuery flavor.
 
-Spect is a concept inspired by aspect/subject programming, react hooks and custom elemeents. For any object it creates effects-enabled accompanying function, an _aspect_. Effects can be thought of as react hooks with better API design.
-DOM-aspects can augment elements with additional behavior, from effects (like ripple, fade-in, parallax or animation) to business-logic (authentication, authorization, accounting, logging, etc).
+Spect introduces the concept of _aspect_ - a function with hooks/effects, accompanying any DOM _Node_. Such DOM-aspects can augment plain elements with additional behavior, such as:
+
+* visual effects (ripple, appearance, parallax, animations etc.)
+* style properties (ui-box, layout etc.)
+* a11y, l10n
+* document side-effects (meta, header, dataschema)
+* business-logic (authentication, authorization, accounting)
+* connecting to store / providing data
+* logging, context, etc.
+* sound
+* text formatting, typography
+* additional rendering (portals)
+* etc.
 
 
 ## Gems
@@ -13,7 +24,7 @@ DOM-aspects can augment elements with additional behavior, from effects (like ri
 [TODO: highly demonstrative generic example ]
 
 ```js
-import spect from "https://unpkg.com/spect/dom"
+import spect from "https://unpkg.com/spect"
 import { fx, attr } from "https://unpkg.com/spect/fx"
 
 // declare dom-aspect
