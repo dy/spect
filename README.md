@@ -1,11 +1,11 @@
 # Spect
 
-`Spect` is a new type of frontend framework, incorporating principles of [Aspect-Oriented Programming](https://en.wikipedia.org/wiki/Aspect-oriented_programming) with modern frontend practices, like virtual-DOM, hooks and web-components, at the same time bringing the simplicity of vanilla js with jQuery flavor.
+`Spect` brings principles of [Aspect-Oriented Programming](https://en.wikipedia.org/wiki/Aspect-oriented_programming) with modern frontend practices, like virtual-DOM, hooks and web-components, at the same time bringing the simplicity of vanilla js with jQuery flavor.
 
 Spect introduces the concept of _aspect_ - a function with hooks/effects, accompanying any DOM _Node_. Such DOM-aspects can augment plain elements with additional behavior, such as:
 
 * visual effects (ripple, appearance, parallax, animations etc.)
-* style properties (ui-box, layout etc.)
+* style properties (ui-box, tacjypns, layout polyfills etc.)
 * a11y, l10n
 * document side-effects (meta, header, dataschema)
 * business-logic (authentication, authorization, accounting)
