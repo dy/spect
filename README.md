@@ -16,12 +16,22 @@ Spect introduces the concept of _aspect_ - a function with hooks/effects, accomp
 * additional rendering (portals)
 * etc.
 
-
-## Gems
-
 * :gem:
 
+## Getting started
+
 [TODO: highly demonstrative generic example ]
+
+### Examples
+
+[TODO: 2-seconds connect via unpackage module]
+[TODO: connect as direct dependency]
+[TODO: another good example, not too specific]
+
+[TODO: TODO-app]()
+[TODO: Forms]()
+[TODO: Sound synthesiser as an aspect]()
+
 
 ```js
 import spect from "https://unpkg.com/spect"
@@ -202,21 +212,23 @@ document.querySelector(el => {
 })
 ```
 
-## Examples
 
-[TODO: TODO-app]()
-[TODO: Forms]()
-[TODO: Sound synthesiser as an aspect]()
-
-
-## Getting started
-
-[TODO: 2-seconds connect via unpackage module]
-[TODO: connect as direct dependency]
-[TODO: another good example, not too specific]
 
 
 ## Effects
+
+* state
+  * attr
+  * prop
+  * query
+  * local
+  * remote
+* fx
+  * mount
+  * on
+* html
+* css
+
 
 ### `state`
 
