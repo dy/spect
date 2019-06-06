@@ -34,6 +34,7 @@ function spect (target, ...children) {
   if (isObject(children[0])) props = children.shift()
 
   // selector or new element
+  // TODO: cache target/type detection in weakmap
   if (typeof target === 'string') {
     const selector = target.trim()
 
@@ -60,43 +61,63 @@ function spect (target, ...children) {
     // classTargets.push(selector.slice(1))
     // queryTargets.push(selector.slice(1))
     // spect('div', ...)
+
+    // TODO: run already existing elements matching selector
   }
 
-  // existing element - read state or init state
+  // existing element
   else {
-    if (!tracking.has(target)) {
-      init(target)
-    }
+    // register private state, associated with element
+    let state = tracking.get(target)
+    if (!state) tracking.set(target, state = {node: target, order: 0})
 
     // TODO: `container` prop, narrowing observer down to target tag
+    // identify aspect, assigned to the current invocation position, if that was init already
+    let aspect = getAspect(target, state, props, children)
 
-    // TODO: cache target/type detection in weakmap
-    // spect(element, ...)
-    if (target.classList) {
-      target.classList.add(SPECT_CLASS)
-    }
+    // run init aspect
+    aspect.call(target, target)
+
+    // TODO: for selector target, run an aspect for matched elements
+    // TODO: figure out which props to pass to aspect
+
+    // FIXME:
+    // if (target.classList) {
+    //   target.classList.add(SPECT_CLASS)
+    // }
   }
+
+
+}
+
+function getAspect (target, state, props, children) {
+  let aspect
+
+  // FIXME: expect for now children to be a single aspect function
+  if (children.length === 1 && typeof children[0] === 'function') aspect = children[0]
+
+  return aspect
+}
+
+
+// register element for tracking
+function track (el) {
+  let state = {}
 
   // TODO: build an aspect handler?
   let aspect = buildAspect(target, props, children)
 
-  // TODO: for selector target, run an aspect for matched elements
-
-  // TODO: for element, run an aspect
-  // TODO: figure out which props to pass to aspect
-  aspect.call(target, )
-}
-
-function init (el, ) {
   // TODO: observer allows multiple targets
   // TODO: unregister observer when element is unmounted
   observer.observe(el, {
     childList: true,
-    subtree: true
+    attributes: false,
+    subtree: false
   })
 
-  // TODO: run already existing elements matching selector
-  aspect(el)
+  tracking.set(el, state)
+
+  return state
 }
 
 function callAll (nodes, toState, target) {
