@@ -1,7 +1,7 @@
 {
   "name": "spect",
   "version": "1.0.0",
-  "description": "Aspects with effects",
+  "description": "Aspect-oriented DOM",
   "main": "index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
@@ -23,7 +23,10 @@
     "react",
     "dom",
     "custom-elements",
-    "web-components"
+    "web-components",
+    "pointcut",
+    "join point",
+    "advice"
   ],
   "author": "dy <df.creative@gmail.com>",
   "license": "MIT",
