@@ -1,8 +1,8 @@
 # Spect
 
-`Spect` brings principles of [Aspect-Oriented Programming](https://en.wikipedia.org/wiki/Aspect-oriented_programming) with modern frontend practices, like virtual-DOM, hooks and web-components, at the same time bringing the simplicity of vanilla js with jQuery flavor.
+`Spect` brings principles of [Aspect-Oriented Programming](https://en.wikipedia.org/wiki/Aspect-oriented_programming) with modern frontend practices, like virtual-DOM, hooks and web-components, keeping the simplicity of vanilla js and jQuery flavor.
 
-Spect introduces the concept of _aspect_ - a function with hooks/effects, accompanying any DOM _Node_. Such DOM-aspects can augment plain elements with additional behavior, such as:
+Spect introduces the concept of _aspect_ [- a function with hooks/effects, accompanying any DOM _Node_]. Such DOM-aspects can augment plain elements with additional behavior, such as:
 
 * visual effects (ripple, appearance, parallax, animations etc.)
 * style properties (ui-box, tacjypns, layout polyfills etc.)
@@ -23,6 +23,10 @@ Spect introduces the concept of _aspect_ - a function with hooks/effects, accomp
 [TODO: highly demonstrative generic example ]
 
 ### Examples
+
+[TODO: remount]
+[TODO: react-use]
+[TODO: context]
 
 [TODO: 2-seconds connect via unpackage module]
 [TODO: connect as direct dependency]
@@ -293,7 +297,7 @@ Same as local, but persists value via remote storage.
 
 ### `fx` [unstable...]
 
-Run side-effect function. Similar to react's `useEffect`, with some differences: `fx` can return value; `fx` has no destructor; handler can be async function; handler can be generator. 
+Run side-effect function. Similar to react's `useEffect`, with some differences: `fx` can return value; `fx` has no destructor; handler can be async function; handler can be generator.
 
 ```js
 function mod (el) {
@@ -310,7 +314,7 @@ el => {
   mount(() => {
     // called when element is mounted
   })
-  
+
   unmount(() => {
     // called when element is unmounted
   })
@@ -324,7 +328,7 @@ Attach event handler to the target element. No need to care about removing liste
 ```js
 el => {
   on('evt', handler)
-  
+
   on('evt1 evt2 evt3', handler)
 }
 ```
@@ -348,7 +352,7 @@ css`
 ## Plugins
 
 * [spect-react]() - render react components in spect.
-* [spect-redux]() - use state hooks, connected to redux store. 
+* [spect-redux]() - use state hooks, connected to redux store.
 * [spect-gl]() - enable layers for gl-canvas element.
 * [spect-a11y]() - enable a11y props for the element.
 * [spect-dataschema]() - provide dataschema props for the element.
@@ -467,9 +471,11 @@ obj = $o(obj, function handler (obj) {
 
 ## Motivation
 
-Hyperscript was a nice beginning. But introduction of Components in React was a mistake. It made JSX trees complex and shallow, detached them from HTML, made developers less skilled in HTML/CSS. That increased risk of situation mess both in generated and in source code (see tweet).
+Aspects aren't something new for DOM, the perfect example of aspect is CSS - instead of stuffing styles inline into elements, styles are separated into a stylesheet "aspect", with selectors defining "pointcuts" and style rules defining "advice". Spect bring this concept back and pushes it one step forward, enabling generic aspects.
 
-Spect is here to reestablish justice. They require no bundler since they rely on browser mechanisms to load scripts. They require no compilers for JSX since HTML is already here.
+In result, this gives graceful solution to existing frontend problems, such as many shallow JSX wrappers (react providers, styling systems, HOCs), portals, component side-effects, tree complexity (see [tweet](https://twitter.com/sindresorhus/status/1089075390327316480)), abandoning CSS/HTML, bundling.
+
+Made for people who love clean elegant code from people who love clean elegant code.
 
 
 ### Principles

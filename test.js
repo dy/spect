@@ -129,6 +129,7 @@ t('null target')
 t('fake target')
 
 
+
 // handlers
 t('function', t => {
   // this
@@ -184,6 +185,9 @@ t('`is` property', t => {
   $('div', {is: () => {
 
   }}, ...children)
+})
+t('promise (suspense)', t => {
+  $('div', import('url'))
 })
 
 // props
