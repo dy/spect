@@ -35,6 +35,7 @@
   },
   "homepage": "https://github.com/dy/spect#readme",
   "dependencies": {
+    "fast-on-load": "^1.0.0",
     "primitive-pool": "^1.1.0"
   },
   "devDependencies": {

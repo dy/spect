@@ -34,14 +34,32 @@ function getAspectFunction (props, children) {
 
 // call aspect with corresponding targetStates
 export const callStack = []
+
 export function callAspect(target, aspectState) {
   callStack.push([target, aspectState])
 
   let result = aspectState.aspect(target)
 
+  // TODO: figure out if that should be called after each individual aspect and not in a separate tick or somewhere
+  runAfterEffects()
+
   callStack.pop()
 
   return result
+}
+
+// plan side-effect to call after the current aspect
+export function afterEffect(fn, args=[]) {
+  afterStack.push([fn, args])
+}
+
+// accumulated side-effects for an aspect
+export const afterStack = []
+export function runAfterEffects() {
+  while (afterStack.length) {
+    let [fx, args] = afterStack.shift()
+    fx(...args)
+  }
 }
 
 export default spect

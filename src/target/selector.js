@@ -64,6 +64,9 @@ export const selectors = {}
 export function spect (selector, aspect) {
   let selectorAspects = selectors[selector] || (selectors[selector] = [])
   selectorAspects.push({type: getSelectorType(selector), aspect})
+
+  // to instantly handle accumulated mutations (skips extra tick)
+  handleMutations(observer.takeRecords())
 }
 
 
@@ -78,16 +81,19 @@ export function spect (selector, aspect) {
 export const observer = new MutationObserver(handleMutations)
 observer.observe(document.documentElement, {
   childList: true,
-  subtree: true
+  subtree: true,
+  attributes: true,
+  attributeFilter: ['id', 'class']
 })
 
 function handleMutations (mutations) {
   for (let m = 0; m < mutations.length; m++) {
     const { addedNodes, removedNodes, target, type, attributeName, oldValue } = mutations[m]
 
+    let nodes = [...addedNodes, ...removedNodes, target]
     // TODO: inverse querying as `ids[node.id]`, `classes[node.class[i]]`
-    for (let i = 0; i < addedNodes.length; i++) {
-      let node = addedNodes[i]
+    for (let i = 0; i < nodes.length; i++) {
+      let node = nodes[i]
 
       for (let selector in selectors) {
         let selectorAspects = selectors[selector]
@@ -124,7 +130,7 @@ function handleMutations (mutations) {
             let { aspects, ...state } = targetStates.get(target)
 
             // init run, if aspect is not registered
-            if (!~aspects.indexOf(aspect)) {
+            if (!~aspects.findIndex((aspectState) => aspectState.aspect === aspect)) {
               let aspectState = { aspect }
               aspects.push(aspectState)
 
