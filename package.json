@@ -33,5 +33,12 @@
   "bugs": {
     "url": "https://github.com/dy/spect/issues"
   },
-  "homepage": "https://github.com/dy/spect#readme"
+  "homepage": "https://github.com/dy/spect#readme",
+  "dependencies": {
+    "primitive-pool": "^1.1.0"
+  },
+  "devDependencies": {
+    "@pika/web": "^0.4.3",
+    "tape-modern": "^1.1.2"
+  }
 }

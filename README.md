@@ -27,6 +27,7 @@ Spect introduces the concept of _aspect_ [- a function with hooks/effects, accom
 [TODO: remount]
 [TODO: react-use]
 [TODO: context]
+[TODO: ui-box]
 
 [TODO: 2-seconds connect via unpackage module]
 [TODO: connect as direct dependency]
@@ -38,7 +39,7 @@ Spect introduces the concept of _aspect_ [- a function with hooks/effects, accom
 
 
 ```js
-import spect from "https://unpkg.com/spect"
+import spect from "https://unpkg.com/spect/dom"
 import { fx, attr } from "https://unpkg.com/spect/fx"
 
 // declare dom-aspect
@@ -113,10 +114,12 @@ spect('canvas.plot', canvas => raf(
 )
 ```
 
-Non-DOM aspects:
+### Non-DOM aspects
 
+Spect allows experimental non-dom aspects support. For that purpose `spect` entry should be used.
 
 ```js
+import spect from 'spect'
 
 function aspect (obj) {
   // ...non-dom fx work

@@ -1,12 +1,45 @@
-import t, {assert} from 'https://unpkg.com/@dy/tape-modern@latest?module'
-import $, {fx} from './index.js'
+import {test as t, assert} from './node_modules/tape-modern/dist/tape-modern.esm.js'
+import $, { mount } from './dom.js'
+import {h} from './src/util.js'
 
 
 assert.deepEqual = (a, b, msg) => {
   for (let i = 0; i < Math.max(a.length, b.length); i++) {
-    assert.equal(a[i], b[i], msg)
+    if (a[i] !== b[i]) {
+      console.error('Not deepEqual', a, b)
+      throw Error(msg)
+    }
   }
 }
+
+// tick is required to let mutation pass
+function delay (delay=0) { return new Promise((ok) => setTimeout(ok, delay))}
+
+
+t.only('selectors observing', async t => {
+  let log = []
+  $('#app', el => {
+    log.push('render')
+
+    mount(() => {
+      log.push('on')
+      return () => log.push('off')
+    })
+  })
+
+  let app = h`div#app`
+  t.deepEqual(log, [])
+
+  // should detect mount
+  document.body.appendChild(app)
+  await delay()
+  t.deepEqual(log, ['render', 'on'], 'mount')
+
+  document.body.removeChild(app)
+  await delay()
+  t.deepEqual(log, ['render', 'on', 'off'], 'unmount')
+})
+
 
 
 // selectors
@@ -42,7 +75,7 @@ t('new custom element', t => {
 
 
 // targets
-t.only('existing element', async t => {
+t('existing element', async t => {
   // init on detached new
   let div = document.createElement('div')
 
