@@ -224,17 +224,34 @@ document.querySelector(el => {
 
 ## Effects
 
+* mount
+* visible
 * state
-  * attr
-  * prop
-  * query
-  * local
-  * remote
+* attr
+* prop
+* query
+* local
 * fx
-  * mount
-  * on
+* on
+* remote
 * html
 * css
+
+### mount
+
+Called when the element is mounted on the DOM. The returned function is called when the element is unmounted.
+
+```js
+el => {
+  mount(() => {
+    // called when element is mounted
+
+    return () => {
+      // called when element is unmounted
+    }
+  })
+}
+```
 
 
 ### `state`
@@ -305,22 +322,6 @@ Run side-effect function. Similar to react's `useEffect`, with some differences:
 ```js
 function mod (el) {
   let [result, pending, error] = fx(handler, deps?)
-}
-```
-
-### mount
-
-Called when the element is mounted on the DOM.
-
-```js
-el => {
-  mount(() => {
-    // called when element is mounted
-  })
-
-  unmount(() => {
-    // called when element is unmounted
-  })
 }
 ```
 
