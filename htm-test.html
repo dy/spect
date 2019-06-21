@@ -27,6 +27,23 @@ let html = htm.bind((a, b, c) => console.log(a, b, c))
 // html`<$ ...${function attrs(){}}/>`
 
 // ok
-html`<$>${(a, b, c) => { console.log(a, b, c)}}<//>`
+// html`<$>${(a, b, c) => { console.log(a, b, c)}}<//>`
 
+// fail
+// html`<a ${123}/>`
+
+// ok
+// html`<a ...${[1,2,3]}/>`
+
+// ok
+// html`< x=1><//>`
+
+// ok (same as above, no-tag direct attribute)
+// html`<x=1><a><b/></><c/></>`
+
+// ok
+// html`<><a/></>`
+
+// ok
+// html`<x=.123></x>`
 </script>

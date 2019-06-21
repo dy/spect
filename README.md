@@ -1,8 +1,21 @@
 # Spect
 
-`Spect` brings principles of [Aspect-Oriented Programming](https://en.wikipedia.org/wiki/Aspect-oriented_programming) with modern frontend practices, like virtual-DOM, hooks and web-components, keeping the simplicity of vanilla js and jQuery flavor.
+`Spect` is [Aspect-Oriented](https://en.wikipedia.org/wiki/Aspect-oriented_programming) js library for building expressive UI code. It's designed with modern frontend practices in mind, looking at best/worst parts of existing frameworks and targeted for least boilerplate code possible.
 
-Spect introduces the concept of _aspect_ [- a function with hooks/effects, accompanying any DOM _Node_]. Such DOM-aspects can augment plain elements with additional behavior, such as:
+Takes a bit more classical-flavored js with hooks power.
+
+Principles:
+
+- no bundling
+- grounded html (progressive enhancement)
+- natural hydration
+- least non-standard solution
+- max elegancy / expressiveness / as little boilerplate as possible
+- max API consistency
+
+_Aspect_ - a functional part, not necessarily linked to the main function [wikipedia](https://en.wikipedia.org/wiki/Aspect_(computer_programming)). Practically, aspects seems to have existed in DOM for a time already - as CSS, with stylesheet as "aspect", selectors as "pointcuts" and rules as "advice"; or as `hidden`, `contenteditable`, `title`, `autocapitalize` and other attributes. Step takes this concept one step forward, enabling generic aspects tooling?.
+
+That turns out to provide elegant solution to many common frontend problems.
 
 * visual effects (ripple, appearance, parallax, animations etc.)
 * style properties (ui-box, tacjypns, layout polyfills etc.)
@@ -20,9 +33,177 @@ Spect introduces the concept of _aspect_ [- a function with hooks/effects, accom
 
 ## Getting started
 
-[TODO: highly demonstrative generic example ]
+Spect can be connected directly to html bypassing bundling as:
 
-### Examples
+```html
+<script type="module">
+import html from 'https://unpkg.com/spect@latest?module'
+
+// your UI code
+</script>
+```
+
+Or that can be connected the classical way as
+
+<samp>npm i spect</samp>
+
+```js
+import { h } from 'spect'
+```
+
+Let's see how [basic react examples](https://reactjs.org/) would look like built with spect:
+
+### A simple aspect
+
+Basic tool of spect is `html` function. It acts in a way, similar to hyperscript, but instantly renders html to "current level" container:
+
+```js
+import {html} from 'spect'
+
+// renders directly to root element
+html`<div id="hello-example" ${hello} name="Taylor"></div>`
+
+// `hello` anonymous aspect
+function hello({name}) {
+  // renders to #hello-example
+  html`${name}`
+}
+```
+
+### A stateful aspect
+
+Spect introduces state and effects, very similar to react hooks, but redesigned:
+
+```js
+import {html, state, mount} from 'spect'
+
+// mount app to document with single aspect
+html`<div#timer-example ${timer} />`
+
+function timer(el) {
+  // init state
+  let { seconds = 0 } = state()
+
+  // called on mount
+  mount(() => {
+    let i = setInterval(() => {
+      // set state
+      state({ seconds: seconds + 1 })
+    }, 1000)
+
+    // called on unmount
+    return () => {
+      clearInterval(i)
+    }
+  })
+
+  html`Seconds: ${seconds}`
+}
+```
+
+### An application
+
+```js
+import { html, state, on } from 'spect'
+
+function Todo (el) {
+  let {items=[], text=''} = state()
+
+  // listens for `submit` event on current target
+  on('submit', e => {
+    e.preventDefault();
+    if (!this.state.text.length) {
+      return;
+    }
+    const newItem = {
+      text: this.state.text,
+      id: Date.now()
+    };
+    this.setState(state => ({
+      items: state.items.concat(newItem),
+      text: ''
+    }))
+  })
+
+  // delegates event to #new-todo element
+  on('#new-todo', 'change', e => state({ text: e.target.value });
+
+  html`
+    <h3>TODO</h3>
+    <main items=${items}>${TodoList}</main>
+    <form>
+      <label for=new-todo>
+        What needs to be done?
+      </label>
+      <input id=#new-todo value=${text}/>
+      <button>
+        Add #${items.length + 1}
+      </button>
+    </form>
+  `
+}
+
+function TodoList ({items}) {
+  html`
+  <ul>
+    ${items.map(item => `<li>${item.text}</li>`)}
+  </ul>
+  `
+}
+
+html`<div#todos-example ${todo}/>`
+```
+
+### A component using external plugins
+
+```js
+import Remarkable from 'remarkable'
+import { html, state } from 'spect'
+
+function MarkdownEditor () {
+  let {value='Hello, **world**!'} = state()
+
+  let getRawMarkup = () => {
+    const md = new Remarkable();
+    return md.render(value);
+  }
+
+  html`
+    <div class="MarkdownEditor">
+      <h3>Input</h3>
+      <label for="markdown-content">
+        Enter some markdown
+      </label>
+      <textarea
+        id="markdown-content"
+        onchange=${e => state({value: e.target.value})}
+        defaultValue=${value}
+      />
+      <h3>Output</h3>
+      <div class="content">${el => el.innerHTML = getRawMarkup()}</div>
+    </div>
+  `
+}
+
+// mount MarkdownEditor aspect on `#markdown-example` element
+html(`#markdown-example`, MarkdownEditor)
+```
+
+
+## Examples
+
+[x][TODO: counter]
+[ ][TODO: TODO-app]()
+
+Generic use-cases
+
+[TODO: search resultt]
+[TODO: form with validation]
+[TODO: routing]
+[TODO: authorization]
+[TODO: i18n]
+[TODO: suspense]
+[TODO: slideshow]
 
 [TODO: remount]
 [TODO: react-use]
@@ -33,43 +214,8 @@ Spect introduces the concept of _aspect_ [- a function with hooks/effects, accom
 [TODO: connect as direct dependency]
 [TODO: another good example, not too specific]
 
-[TODO: TODO-app]()
-[TODO: Forms]()
 [TODO: Sound synthesiser as an aspect]()
 
-
-```js
-import spect from "https://unpkg.com/spect/dom"
-import { fx, attr } from "https://unpkg.com/spect/fx"
-
-// declare dom-aspect
-spect('.app', el => {
-  // register attributes listeners - trigger renderer any time an attribute changes
-  let [x, setX] = attr('x')
-
-  let result = fx(() => {
-    // called when deps change
-  }, deps)
-
-  // fx can be a generator
-  let result = gen(async function * () {
-    yield Symbol('pending')
-    yield Symbol('loading')
-    let data = await load()
-
-  })
-
-  // register an event - automatically removed when element is unmounted
-  on('click', e => {
-
-  })
-
-  // make sure htm softly exists in the element (doesn't remove the rest)
-  htm`
-    <div is=${RegisteredElement} use=${[Provider, Auth, Persistor]}></div>
-  `
-})
-```
 
 [Material-components](https://github.com/material-components/material-components-web) example:
 
@@ -112,50 +258,6 @@ spect('canvas.plot', canvas => raf(
   }
   )
 )
-```
-
-### Non-DOM aspects
-
-Spect allows experimental non-dom aspects support. For that purpose `spect` entry should be used.
-
-```js
-import spect from 'spect'
-
-function aspect (obj) {
-  // ...non-dom fx work
-  dprop('a.b.c')
-  on('evt', callback)
-}
-
-// we have to add that trait to some object
-spect(obj, aspect)
-
-// this way we can attach "sagas" to some store
-spect(store, state => {
-  on('specialEvent', () => {
-    someAction
-  })
-
-  emit('event', () => {})
-})
-
-```
-
-```js
-function App(el) {
-  // location side-effect
-  let [path, setPath] = location()
-
-  // window.title side-effect
-  let [title, setTitle] = title()
-
-  // DOM render
-  htm`
-    <main react=${App}>
-    </main>
-    <aside mount=${}
-  `, el)
-}
 ```
 
 
@@ -209,35 +311,44 @@ customElements.define('mdc-text-field', TextField, {extends: 'div'})
 </body>
 ```
 
-Effects without specting:
 
-```js
-import fx from 'spect/fx'
+## API
 
-document.querySelector(el => {
-  // effects - applied once (waiting for function.caller proposal)...
-})
-```
+Aspect side-effects are highly inspired by react hooks with changed API design for shorter notation.
+
+* [ ] html
+* [ ] css
+* [ ] create
+* [x] mount
+* [ ] on
+* [ ] fx
+* [ ] intersect
+* [ ] state
+* [ ] attr
+* [ ] prop
+* [ ] query
+* [ ] local
+* [ ] remote
+
+
+### `html(selector|element=currentElement, string|html|function)`
+
+Assign an aspect function to all elements matching selector or direct elements.
+
+Selector<sup>1</sup> can be:
+
+* `element-name`: Select by element name.
+* `.class`: Select by class name.
+* `[attribute]`: Select by attribute name.
+* `[attribute=value]`: Select by attribute name and value.
+* `:not(sub_selector)`: Select only if the element does not match the sub_selector.
+* `selector1, selector2`: Select if either selector1 or selector2 matches.
+
+Aspect function takes element as the first argument and provides context for effects. It is similar to hooks-powered react render function, but treats html render as side-effect, not the result of the function.
 
 
 
-
-## Effects
-
-* mount
-* visible
-* state
-* attr
-* prop
-* query
-* local
-* fx
-* on
-* remote
-* html
-* css
-
-### mount
+### `mount(target=currentElement, callback)`
 
 Called when the element is mounted on the DOM. The returned function is called when the element is unmounted.
 
@@ -251,96 +362,138 @@ el => {
     }
   })
 }
-```
 
+el => {
+  // called when the target is mounted
+  mount('#target', () => {
+    return () => {
 
-### `state`
-
-Same as react `useState`. Provides per-element private state:
-
-```js
-function mod (el) {
-let [value, set] = state(initialValue)
+    }
+  })
 }
 ```
 
-### `attr`
+
+### `state(target=currentTarget, value?)`
+
+Component state hook. Provides per-element associated values:
+
+```js
+function mod (el) {
+  // init/get state
+  let { foo=default, bar } = state()
+
+  // set state
+  state({ foo: a, bar: b })
+}
+```
+
+### `attr(target=currentTarget, value?)`
 
 Same as `state`, but reads an attribute from the element, as well as registers listeners for the defined attribute. Any time attribute value changes, it triggers rerender.
 
 ```js
 (el) => {
-  let [value, set] = attr('my-attribute-name')
+  // read attributes, register attr change listeners
+  let { attrA=default, attrB } = attr()
+
+  // write new attribute value
+  attr({ attrA: a, attrB: b })
 }
 ```
 
-### `prop`
+Note that attribute value must be a string, for non-string values use `prop` effect.
 
-Similar to `attr` but registers prop listener for the element. Can be used for communication between aspects.
+
+### `prop(target=currentTarget, value?)`
+
+Similar to `attr` but reads element property. Can be used for communication between aspects.
 
 ```js
 // first aspect
-el => {
-  let [value, set] = prop('my-prop-name')
+function aspectA (el) {
+  let {foo=default, bar} = prop()
 }
 
 // second aspect
-el => {
-  let [value, set] = prop('my-prop-name')
-  // value is written by first aspect
+function aspectB (el) {
+  let {foo} = prop()
+  // foo === default
 }
+
+html`<div ${aspectA} ${aspectB} />`
 ```
 
-### `query`
+### `query(value?)`
 
-Same as `state`, but reflects state value in browser `location.search` as `https://url.com/?param=value`.
+Same as `state`, but the value is reflected in `location.search` as `https://url.com/?param=value`.
 
 ```js
 (el) => {
-  let [value, set] = q('my-query-param-name')
+  let {param=default} = query()
+
+  query({param: 'xyz'})
+  // ?param=xyz
 }
 ```
 
-### `local`
+### `local(target=currentTarget, value?)`
 
 Same as `state`, but persists value in localStorage.
 
 ```js
 el => {
-  let [value, set] = local('my-key')
+  // read value from local storage
+  let {foo=default, bar} = local()
+
+  // write to local storage
+  local({foo: value})
 }
 ```
 
 ### `remote` [pending...]
 
-Same as local, but persists value via remote storage.
+Same as local, but persists value in remote storage.
 
-### `fx` [unstable...]
+### `fx(handler, deps)` [unstable...]
 
 Run side-effect function. Similar to react's `useEffect`, with some differences: `fx` can return value; `fx` has no destructor; handler can be async function; handler can be generator.
 
 ```js
 function mod (el) {
-  let [result, pending, error] = fx(handler, deps?)
+  let result = fx(handler, deps?)
+
+  // use fx to organize async request
+  let result = fx(await () => {
+    html'Pending...'
+    let result = await doRequest()
+    html`Result ${result}`
+  })
 }
+
 ```
 
-### on
+### `on(target=currentTarget, event, handler)`
 
-Attach event handler to the target element. No need to care about removing listeners - they're removed automatically when component is unmounted.
+Attach or delegate event handler to the target element. No need to care about removing listeners - they're removed automatically when component is unmounted.
 
 ```js
 el => {
+  // add single event listener
   on('evt', handler)
 
+  // attach multiple events
   on('evt1 evt2 evt3', handler)
+
+  // delegate event to external element
+  on('#el', 'click', handler)
 }
 ```
 
 
-### css
+### `css(target=currentElement, string)`
 
-CSS effect for an element. Uses virtual-css to apply fast CSS diffs.
+Apply css styles, scoped to target element.
 
 ```js
 el => {
@@ -350,8 +503,18 @@ css`
 :host .sub-element {
 }
 `
+
 }
 ```
+
+### intersects(target=currentElement, callback)
+
+Invoked when element is visible in the screen.
+
+### transition
+
+Invoked per-transition.
+
 
 ## Plugins
 
@@ -362,39 +525,6 @@ css`
 * [spect-dataschema]() - provide dataschema props for the element.
 * [spect-meta]() - set document meta props.
 * [spect-uibox]()
-* [spect-use]() - enable multiple aspects, similar to react-use.
-
-
-### interval
-
-Schedule regular callback.
-
-```js
-function mod () {
-    interval(() => {}, 50)
-}
-```
-
-### raf
-
-Schedule rendering in next frame.
-
-### route
-
-Coditionally trigger element by matching route.
-
-### visible
-
-Invoked when element is visible in the screen.
-
-### onhidden
-
-Invoked when element is hidden from the viewport.
-
-### transition
-
-Invoked per-transition.
-
 
 
 ## Integration with react
@@ -404,14 +534,21 @@ Aspects are interoperable with react.
 To connect aspect to react, just put aspect into `ref` prop:
 
 ```jsx
-import Box from 'spect-ui-box'
-
 <App>
-<div className="fps-indicator" ref={Box} color="red"/>
+<div className="fps-indicator" ref={aspect}/>
 </App>
 ```
 
-The `Box` aspect will enable style attributes for fps-indicator element.
+But that's not even necessary - aspects can be added by selectors fully independent of react:
+
+```
+// spect
+html('[app]', (el) => {})
+
+// react
+<div app>
+</div>
+```
 
 To connect react component to spect, just use normal react render:
 
@@ -421,70 +558,27 @@ import React from 'react'
 import render from 'react-dom'
 import App from './App.jsx'
 
-$('.app', el => render(<App {...el.getAttributes()}/>, el)
+html('.app', el => render(<App/>, el)
 ```
 
-This can also serve as remount:
 
-```js
-```
-
-<!--
-
-## Registering aspects, pointcuts
-
-Basic pattern for registering aspects:
-
-```java
-aspect Name {
-  pointcut name(): proxy fields to observe
-  before|after|join point: pointcut {
-    advice code
-  }
-}
-
-So basically when to trigger, what to trigger
-
-```
-spect.register(TargetClass, whenToTriggerFx)
-```
-
-But that can't easily extend native builtins, that provides own implementation.
+## Custom elements
 
 
-Streams:
+## Microfrontends
 
-```js
-stream = spect(Stream, function handler (chunk) {
-start(() => {
-})
-data(() => {
-})
-end(() => {
-})
-})
-```
 
-Objects:
 
-```js
-obj = $o(obj, function handler (obj) {
-})
-```
--->
 
-## Motivation
+## FAQ
 
-Aspects aren't something new for DOM, the perfect example of aspect is CSS - instead of stuffing styles inline into elements, styles are separated into a stylesheet "aspect", with selectors defining "pointcuts" and style rules defining "advice". Spect bring this concept back and pushes it one step forward, enabling generic aspects.
-
-In result, this gives graceful solution to existing frontend problems, such as many shallow JSX wrappers (react providers, styling systems, HOCs), portals, component side-effects, tree complexity (see [tweet](https://twitter.com/sindresorhus/status/1089075390327316480)), abandoning CSS/HTML, bundling.
-
-Made for people who love clean elegant code from people who love clean elegant code.
+### Why aspect, not component?
 
 
 ### Principles
 
 * Sat, Chit, Ananda, Vigraha
 * Nama, Rupa, Guna, Lila
+
 
 
