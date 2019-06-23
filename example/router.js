@@ -1,19 +1,13 @@
-import $, { h, route } from 'spect'
+import $, { html, route } from 'spect'
 
-// it's sad though that the only thing that separates $ from h is this inconsistency of first selector.
-$('#app', el => h`
-  <${el}>
-    <header ${topbar} title="App title"><//>
-    <aside ${sidebar}><//>
-    <main path=${el => history.location}>
-      ${({path}) => page({path})}
-    </main>
-  </>
+$('#app', el => html`
+  <header ${topbar} title="App title"><//>
+  <aside ${sidebar}><//>
+  <main>${page}</main>
 `)
 
-function page({path}) {
-  // html as side-effect allows single-flow rendering
-  h`Loading...`
+function page(main) {
+  html`Loading...`
 
   // unredirect
   path = ({
@@ -22,15 +16,15 @@ function page({path}) {
     '/user/:userId': '/user'
   })[path]
 
-  import(path.slice(1)).then(h, err)
+  import(path).then(html, html)
 }
-
 
 function sidebar (el) {
-  h`<aside></aside>`
+  html`menu...`
 }
 
-function header ({title}) {
-  h`<header id="app-header">${title}</header>`
+function header (el) {
+  attr({id: 'app-header'})
+  html`${title}`
 }
 

@@ -48,7 +48,7 @@ Or that can be connected the classical way as
 <samp>npm i spect</samp>
 
 ```js
-import { h } from 'spect'
+import $, * as fx from 'spect'
 ```
 
 Let's see how [basic react examples](https://reactjs.org/) would look like built with spect:
@@ -58,30 +58,31 @@ Let's see how [basic react examples](https://reactjs.org/) would look like built
 Basic tool of spect is `html` function. It acts in a way, similar to hyperscript, but instantly renders html to "current level" container:
 
 ```js
-import {html} from 'spect'
+import $, { html } from 'spect'
 
-// renders directly to root element
-html`<div id="hello-example" ${hello} name="Taylor"></div>`
+$(document.body, body =>
+  html`<div id="hello-example" ${hello} name="Taylor"></div>`
+)
 
 // `hello` anonymous aspect
 function hello({name}) {
-  // renders to #hello-example
+  // html effect for #hello-example
   html`${name}`
 }
 ```
 
 ### A stateful aspect
 
-Spect introduces state and effects, very similar to react hooks, but redesigned:
+Spect introduces state and effects:
 
 ```js
-import {html, state, mount} from 'spect'
+import $, {html, state, mount} from 'spect'
 
-// mount app to document with single aspect
-html`<div#timer-example ${timer} />`
+// apply timer aspect to #timer-example
+$('#timer-example', timer)
 
 function timer(el) {
-  // init state
+  // init defaults
   let { seconds = 0 } = state()
 
   // called on mount
@@ -104,7 +105,7 @@ function timer(el) {
 ### An application
 
 ```js
-import { html, state, on } from 'spect'
+import $, { html, state, on } from 'spect'
 
 function Todo (el) {
   let {items=[], text=''} = state()
@@ -126,7 +127,7 @@ function Todo (el) {
   })
 
   // delegates event to #new-todo element
-  on('#new-todo', 'change', e => state({ text: e.target.value });
+  on('change', '#new-todo' e => state({ text: e.target.value });
 
   html`
     <h3>TODO</h3>
@@ -151,14 +152,14 @@ function TodoList ({items}) {
   `
 }
 
-html`<div#todos-example ${todo}/>`
+$(`#todos-example`, Todo)
 ```
 
 ### A component using external plugins
 
 ```js
 import Remarkable from 'remarkable'
-import { html, state } from 'spect'
+import $, { html, state } from 'spect'
 
 function MarkdownEditor () {
   let {value='Hello, **world**!'} = state()
@@ -176,7 +177,7 @@ function MarkdownEditor () {
       </label>
       <textarea
         id="markdown-content"
-        onchange=${e => state({value: e.target.value})}
+        on-change=${e => state({value: e.target.value})}
         defaultValue=${value}
       />
       <h3>Output</h3>
@@ -186,17 +187,15 @@ function MarkdownEditor () {
 }
 
 // mount MarkdownEditor aspect on `#markdown-example` element
-html(`#markdown-example`, MarkdownEditor)
+$(`#markdown-example`, MarkdownEditor)
 ```
 
 
 ## Examples
 
-[x][TODO: counter]
+[x][counter]
+[ ][email validator]
 [ ][TODO: TODO-app]()
-
-Generic use-cases
-
 [TODO: search resultt]
 [TODO: form with validation]
 [TODO: routing]
