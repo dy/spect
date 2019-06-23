@@ -194,26 +194,22 @@ $(`#markdown-example`, MarkdownEditor)
 ## Examples
 
 [x][counter]
-[ ][email validator]
+[x][email validator]
 [ ][TODO: TODO-app]()
-[TODO: search resultt]
-[TODO: form with validation]
-[TODO: routing]
-[TODO: authorization]
-[TODO: i18n]
-[TODO: suspense]
-[TODO: slideshow]
+[ ][TODO: search resultt]
+[ ][TODO: form with validation]
+[ ][TODO: routing]
+[ ][TODO: authorization]
+[ ][TODO: i18n]
+[ ][TODO: suspense]
+[ ][TODO: slideshow]
 
-[TODO: remount]
-[TODO: react-use]
-[TODO: context]
-[TODO: ui-box]
+[ ][TODO: remount]
+[ ][TODO: react-use]
+[ ][TODO: context]
+[ ][TODO: ui-box]
 
-[TODO: 2-seconds connect via unpackage module]
-[TODO: connect as direct dependency]
-[TODO: another good example, not too specific]
-
-[TODO: Sound synthesiser as an aspect]()
+[ ][TODO: Sound synthesiser as an aspect]()
 
 
 [Material-components](https://github.com/material-components/material-components-web) example:
@@ -221,15 +217,17 @@ $(`#markdown-example`, MarkdownEditor)
 ```html
 <link href="https://unpkg.com/@material/ripple/dist/mdc-ripple.css" rel="stylesheet">
 <script type="module">
-  import spect from "https://unpkg.com/spect"
+  import $, {mount} from "https://unpkg.com/spect"
   import {MDCRipple} from 'https://unpkg.com/@material/ripple';
 
   // register ripple effect for all buttons on the page
-  spect('button', el => {
-    let ripple = new MDCRipple(el)
-    el.classNames.add('mdc-ripple')
+  $('button', el => {
+    mount(() => {
+      let ripple = new MDCRipple(el)
+      el.classList.add('mdc-ripple')
 
-    return ripple.destroy
+      return ripple.destroy
+    })
   }, [])
 </script>
 
@@ -239,24 +237,27 @@ $(`#markdown-example`, MarkdownEditor)
 Simulated canvas layers via DOM:
 
 ```js
-spect('canvas.plot', canvas => raf(
-  function render () {
-    let ctx = canvas.getContext('2d')
-
-    // clear canvas
-    ctx.clearRect(0,0, canvas.width, canvas.height)
-
-    // rerender all layers
-    [...el.children].forEach(layer => {
-      if (!(layer instanceOf CanvasLayer)) CustomElements.upgrade(layer, 'canvas-layer')
-
-      layer.draw()
-    })
-
+$('canvas.plot', canvas =>
+  prop({render})
+  mount(() => {
     raf(render)
-  }
-  )
+    return () => {
+
+    }
+  })
 )
+
+function render() {
+  let ctx = canvas.getContext('2d')
+
+  // clear canvas
+  ctx.clearRect(0,0, canvas.width, canvas.height)
+
+  // rerender all layers
+  [...el.children].forEach(layer => layer.draw())
+
+  raf(render)
+}
 ```
 
 
@@ -267,28 +268,28 @@ spect('canvas.plot', canvas => raf(
 </style>
 
 <script>
-import mod, { htm, css, fx } from '//unpkg.com/@mod/core'
+import $, { htm, css, fx } from '//unpkg.com/spect'
 
-import { MDCRipple } from '//unpkg.com/@material/ripple'
 import { MDCTextField } from `//unpkg.com/@material/textfield`
 
-// register ripple effect for all elements with .mdc-ripple class on the page
-// ( it raises a question of internal redundancy instantly that needs covering )
-mod('.mdc-ripple', MDCRipple)
-
 // create textField custom element based on material ui (following the docs)
-let TextField = mod(el => {
-  htm`<div class="mdc-text-field">
-        <input type="text" id="my-text-field" class="mdc-text-field__input">
-        <label class="mdc-floating-label" for="my-text-field">Label</label>
-        <div class="mdc-line-ripple"></div>
-      </div>`
-
-  el.textField = new MDCTextField(el)
-})
-customElements.define('mdc-text-field', TextField, {extends: 'div'})
+function TextField(el) {
+  mount(() => (
+    html`<${el} class="mdc-text-field">
+      <input type="text" id="my-text-field" class="mdc-text-field__input">
+      <label class="mdc-floating-label" for="my-text-field">Label</label>
+      <div class="mdc-line-ripple"></div>
+    </>`,
+    el.textField = new MDCTextField(el),
+    () => {}
+  ))
+}
+$('.mdc-text-field', TextField)
 </script>
+```
 
+
+```html
 <body>
   <aside class="mod-sidebar"/>
   <main class="mod-page">
@@ -313,28 +314,27 @@ customElements.define('mdc-text-field', TextField, {extends: 'div'})
 
 ## API
 
-Aspect side-effects are highly inspired by react hooks with changed API design for shorter notation.
-
-* [ ] html
-* [ ] css
-* [ ] create
-* [x] mount
-* [ ] on
-* [ ] fx
-* [ ] intersect
-* [ ] state
-* [ ] attr
-* [ ] prop
-* [ ] query
-* [ ] local
+* [ ] $(target, fn)
+* [ ] html`content`
+* [ ] css`style`
+* [ ] create(() => destroy)
+* [x] mount(() => unmount)
+* [ ] on(evt, delegate?, handler)
+* [ ] fx(fn, deps)
+* [ ] intersect(fn, target?)
+* [ ] state(value?)
+* [ ] attr(value?)
+* [ ] prop(value?)
+* [ ] query(value?)
+* [ ] local(value?)
 * [ ] remote
 
 
-### `html(selector|element=currentElement, string|html|function)`
+### `$(selector|element, fn)`
 
-Assign an aspect function to all elements matching selector or direct elements.
+Register a function listener (aspect) for elements, matching the selector, or direct element.
 
-Selector<sup>1</sup> can be:
+Selector<sup><a href="#ng-sel">1</a></sup> can have form:
 
 * `element-name`: Select by element name.
 * `.class`: Select by class name.
@@ -343,13 +343,78 @@ Selector<sup>1</sup> can be:
 * `:not(sub_selector)`: Select only if the element does not match the sub_selector.
 * `selector1, selector2`: Select if either selector1 or selector2 matches.
 
-Aspect function takes element as the first argument and provides context for effects. It is similar to hooks-powered react render function, but treats html render as side-effect, not the result of the function.
+<sup id="ng-sel">1</sup> - selector syntax similar to angular selectors.
+
+The aspect takes element as the only argument and provides context for effects.
+
+```js
+import $, { on } from 'spect'
+
+// like jquery with react hooks
+$('#button-container button', button => {
+  on('click', evt =>
+    $('#banner-message', msg => msg.classList.toggle('visible'))
+  )
+})
+```
+
+`$` returns the result of the aspect function.
+
+<!-- Without an aspect `$` is just a shortcut for `document.querySelector`. -->
 
 
+### ``html`markup` ``
 
-### `mount(target=currentElement, callback)`
+HTML effect of aspect. Makes sure current element has provided markup.
 
-Called when the element is mounted on the DOM. The returned function is called when the element is unmounted.
+```js
+import $, { html, state } from 'spect'
+
+// just like htm with aspects
+function Logs(el) {
+  let {show} = state()
+
+  function toggle () {
+    state({show: !show})
+  }
+
+  return html`
+    <div class=logs ...${props}/>
+      <button onclick=${toggle}>▼</button>
+    ${
+      show && html`
+        <section class=logs-details>
+          ${ logs.map(log => html`<${Log} ...${log}/>`) }
+        </section>
+      `
+    }
+    </div>
+  `
+}
+
+function Log({ details, date }) {
+  html`<p>${details}</p>`
+}
+```
+
+If an element has own content, the `html` effect can be used as "reducer". For that purpose it provides `<...>` and `<#id>` tags.
+
+```js
+import $, { attr } from 'spect'
+
+// enable `icon` attribute for all buttons
+$('button[icon]', ({icon}) => html`<i class="material-icons">${icon}</i> <...>`
+
+// show validator after the email input
+$('.input-group', input => {
+  let { value } = prop()
+  html`<#email-input><div class=validate>${validate(value)}</div>`
+})
+```
+
+### `mount(() => () => {})`
+
+Called when the element is mounted on the DOM. The returned function is called when unmounted.
 
 ```js
 el => {
@@ -361,19 +426,10 @@ el => {
     }
   })
 }
-
-el => {
-  // called when the target is mounted
-  mount('#target', () => {
-    return () => {
-
-    }
-  })
-}
 ```
 
 
-### `state(target=currentTarget, value?)`
+### `state(value?)`
 
 Component state hook. Provides per-element associated values:
 
@@ -387,7 +443,7 @@ function mod (el) {
 }
 ```
 
-### `attr(target=currentTarget, value?)`
+### `attr(value?)`
 
 Same as `state`, but reads an attribute from the element, as well as registers listeners for the defined attribute. Any time attribute value changes, it triggers rerender.
 
@@ -404,7 +460,7 @@ Same as `state`, but reads an attribute from the element, as well as registers l
 Note that attribute value must be a string, for non-string values use `prop` effect.
 
 
-### `prop(target=currentTarget, value?)`
+### `prop(value?)`
 
 Similar to `attr` but reads element property. Can be used for communication between aspects.
 
@@ -436,7 +492,7 @@ Same as `state`, but the value is reflected in `location.search` as `https://url
 }
 ```
 
-### `local(target=currentTarget, value?)`
+### `local(value?)`
 
 Same as `state`, but persists value in localStorage.
 
@@ -454,43 +510,44 @@ el => {
 
 Same as local, but persists value in remote storage.
 
-### `fx(handler, deps)` [unstable...]
+### `fx(fn, deps)`
 
-Run side-effect function. Similar to react's `useEffect`, with some differences: `fx` can return value; `fx` has no destructor; handler can be async function; handler can be generator.
+Run side-effect function. Different from `useEffect` in:
+- `fx` can return value
+- `fx` has no destructor
+- fn can be async function or generator
+- fn may include inner effects
+- fn can be run in unmounted state
 
 ```js
-function mod (el) {
-  let result = fx(handler, deps?)
-
-  // use fx to organize async request
+function aspect (el) {
   let result = fx(await () => {
     html'Pending...'
-    let result = await doRequest()
+    let result = await doRequest(param)
     html`Result ${result}`
-  })
+  }, [param])
 }
 
 ```
 
-### `on(target=currentTarget, event, handler)`
+### `on(event, delegate?, handler)`
 
-Attach or delegate event handler to the target element. No need to care about removing listeners - they're removed automatically when component is unmounted.
+Attach event handler. No care about removing listeners - they're removed automatically when component is unmounted.
 
 ```js
 el => {
-  // add single event listener
-  on('evt', handler)
+  on('submit', handler)
 
-  // attach multiple events
-  on('evt1 evt2 evt3', handler)
+  // multiple events
+  on('touchstart mousedown keydown', handler)
 
-  // delegate event to external element
-  on('#el', 'click', handler)
+  // delegate to external element
+  on('click', '#el', handler)
 }
 ```
 
 
-### `css(target=currentElement, string)`
+### ``css`styles` ``
 
 Apply css styles, scoped to target element.
 
@@ -498,21 +555,19 @@ Apply css styles, scoped to target element.
 el => {
 css`
 :host {
+  background: red;
 }
-:host .sub-element {
+.sub-element {
+  background: white;
 }
 `
 
 }
 ```
 
-### intersects(target=currentElement, callback)
+### intersects(() => () => off)
 
 Invoked when element is visible in the screen.
-
-### transition
-
-Invoked per-transition.
 
 
 ## Plugins
@@ -568,10 +623,25 @@ html('.app', el => render(<App/>, el)
 
 
 
-
 ## FAQ
 
 ### Why aspect, not component?
+
+
+## Inspiration
+
+`spect` would not be possible without brilliant ideas from many libraries authors, hence the acknowledge:
+
+* react - for pains, hooks and jsx, grandiose job
+* jquery - for old school
+* htm - for belief in possibilities and parser code
+* funkia/turbine - for examples and generators
+* redux - for reducers
+* tachyons, tailwindcss, ui-box - for CSS driving use-case
+* evergreen-ui, material-ui - for many practical examples
+* fast-on-load, selector-ovserver - for grounding selector observer solution
+* reuse - for aspects hint
+* material-design-lite - for upgrade code ground
 
 
 ### Principles
