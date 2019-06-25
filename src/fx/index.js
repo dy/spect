@@ -1,6 +1,6 @@
 export const effects = []
 
-export function registerEffect (effect) {
+export default function registerEffect (effect) {
   if (~effects.indexOf(effect)) throw Error('Effect already exists')
 
   effects.push(effect)

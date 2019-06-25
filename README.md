@@ -616,10 +616,6 @@ html('.app', el => render(<App/>, el)
 ```
 
 
-## Custom elements
-
-
-## Microfrontends
 
 
 
@@ -628,20 +624,37 @@ html('.app', el => render(<App/>, el)
 ### Why aspect, not component?
 
 
+
+### Why aspect, not custom elements?
+
+[Hm](https://twitter.com/Rich_Harris/status/1141689227299737601).
+
+
+### Microfrontends?
+
+
+### Complexity?
+
+Complexity of selectors is O(1) for id selectors and O(n) for class / general case selectors.
+
+
 ## Inspiration
 
 `spect` would not be possible without brilliant ideas from many libraries authors, hence the acknowledge:
 
-* react - for pains, hooks and jsx, grandiose job
-* jquery - for old school
-* htm - for belief in possibilities and parser code
-* funkia/turbine - for examples and generators
+* react - for jsx, hocs, hooks and pains grandiose job
+* atomico - for novative approach to custom-elements
+* jquery - for old school ground
+* htm - for belief that everything is possible and parser code
+* funkia/turbine - for generators rendering and examples
 * redux - for reducers
 * tachyons, tailwindcss, ui-box - for CSS driving use-case
 * evergreen-ui, material-ui - for many practical examples
-* fast-on-load, selector-ovserver - for grounding selector observer solution
+* fast-on-load - for proving fast mutation observer solution
+* selector-ovserver - for proving selector observer solution
 * reuse - for aspects hint
 * material-design-lite - for upgrade code ground
+* God - for making this possible
 
 
 ### Principles
