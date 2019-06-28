@@ -11,12 +11,13 @@ assert.deepEqual = (a, b, msg) => {
 
 // tick is required to let mutation pass
 export function delay (delay=0) { return new Promise((ok) => setTimeout(ok, delay))}
-export const t = test
+export { test }
 
 export const tick = delay()
 
 
-import ('./mount.js')
+import ('./htm.js')
+// import ('./mount.js')
 // import('./core.js')
 // import('./selector.js')
 
