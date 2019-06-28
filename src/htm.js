@@ -1,18 +1,20 @@
-// MAXI fork of htm
+/**
+ * MAXI fork of htm with ordered props (ohtm)
+ * takes in html`` template literal
+ * returns hierarchical arrays structure as
+ * [mainAspect, ...secondaryAspects, children, ...namedAspects]
+ * eg. ['div', function(){}, value, true, [ 'small', 'red', ...{color: 'red'}], ...{children: []}]
+ * that's a bit redundant by providing named props, similar to regexp.match, but corresponds to aspects indexes
+ */
 
 // commands for eval
-// const TAG_SET = 1;
-// const PROPS_SET = 2;
-// const PROPS_ASSIGN = 3;
-// const CHILD_RECURSE = 4;
-// const CHILD_APPEND = 0;
-const TAG_SET = 'tag-set';
-const PROPS_SET = 'props-set';
-const PROPS_ASSIGN = 'props-assign';
-const CHILD_RECURSE = 'child-recurse';
-const CHILD_APPEND = 'child-append';
+const TAG_SET = 1;
+const PROPS_SET = 2;
+const PROPS_ASSIGN = 3;
+const CHILD_RECURSE = 4;
+const CHILD_APPEND = 0;
 
-// modes for parsing: mode indicates current [transition] logic
+// parsing mode indicates current [transition] logic/state
 const MODE_SLASH = 0;
 const MODE_TEXT = 1;
 const MODE_WHITESPACE = 2;
@@ -20,13 +22,14 @@ const MODE_TAGNAME = 3;
 const MODE_ATTRIBUTE = 4;
 
 
+// turn statics into sequence of commands tuples of a kind
+// [..., value, operation, propName?, ...]
 function parse (statics) {
-  const h = this;
-
   let mode = MODE_TEXT;
   let buffer = '';
   let quote = '';
-  // 0 indicates reference to 0 field, which is static parts
+
+  // 0 indicates reference to 0 field, which is statics
   let current = [0];
   let char, propName;
 
@@ -58,8 +61,6 @@ function parse (statics) {
 
   // walk by static parts
   for (let i=0; i<statics.length; i++) {
-    // skip 0 field - we start with MODE_TEXT instantly turned into anything
-    // so first token cannot be an operation, therefore no need to commit ref to 0 field
     if (i) {
       if (mode === MODE_TEXT) {
         commit();
@@ -142,11 +143,11 @@ function parse (statics) {
 };
 
 
-// `current`` is a sequence of tuples of a kind
-// [..., value, operation, propName?, ...]
 // `fields` is index of values passed from html`field1: ${field1} field2: ${field2}` → `[statics, field1, field2]`
-function evaluate (current, fields, level={}) {
-  Object.assign(level, {main: '', props: [], children: []})
+// `current` is tree level with command tuples sequence
+function evaluate (current, fields) {
+  let tag, props = []
+  let children = []
 
   // start from 1 because 0 is parent
   for (let i = 1; i < current.length; i++) {
@@ -155,28 +156,32 @@ function evaluate (current, fields, level={}) {
     // if field is a number - that's a reference to value in tpl fields
     const value = typeof field === 'number' ? fields[field] : field;
 
+
     if (current[i] === TAG_SET) {
-      level.main = value;
+      tag = value
     }
     else if (current[i] === PROPS_SET) {
-      level.props.push([current[++i], value])
+      props.push(value)
+      let name = current[++i]
+      if (name) props[name] = value
     }
     else if (current[i] === PROPS_ASSIGN) {
       for (let name in value) {
-        level.props.push([name, value[name]])
+        props.push(value)
+        props[name] = value[name]
       }
     }
     else if (current[i] === CHILD_RECURSE) {
       // code === CHILD_RECURSE
-      level.children.push(evaluate(value, fields));
+      children.push(evaluate(value, fields));
     }
     else {
       // code === CHILD_APPEND
-      level.children.push(value);
+      children.push(value);
     }
   }
 
-  return level;
+  return { tag, props, children }
 };
 
 
@@ -185,7 +190,7 @@ const CACHE = {};
 // `statics` is tpl literal parts split by placeholders, eg. `a ${b} c` → [`a `, ` c`]
 function html (statics) {
   const key = statics.join('')
-  const tpl = CACHE[key] || (CACHE[key] = build(statics))
+  const tpl = CACHE[key] || (CACHE[key] = parse(statics))
   return evaluate(tpl, arguments);
 }
 

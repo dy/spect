@@ -11,14 +11,6 @@ test('empty', () => {
 // console.log(h`<a x="ab\"c"def />`)
 // 3. make anonymous props possible (available by index key)
 
-
-// We have to do 2 modifications
-// - parse unnamed attributes
-// - return lists, not h calls
-// ? can we parse aspects straight ahead?
-// can we just modify props to return array instead of object?
-// or - just identify anonymous props by their index
-
 test.only('anonymous attributes', () => {
   console.log(htm`<a x ${() => {}} y=1 z=${2}><b/></a>c`)
 })
