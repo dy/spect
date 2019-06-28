@@ -1,17 +1,39 @@
 # Spect
 
-`Spect` is [Aspect-Oriented](https://en.wikipedia.org/wiki/Aspect-oriented_programming) js library for building expressive UI code. It's designed with modern frontend practices in mind, looking at best/worst parts of existing frameworks and targeted for least boilerplate code possible.
+`Spect` is a frontent library for building expressive UI in [aspect-oriented](https://en.wikipedia.org/wiki/Aspect-oriented_programming) fashion. It is [~33% more expressive]() than react.
 
-Takes a bit more classical-flavored js with hooks power.
+At the core, it introduces _nothing_ new, just rearranges known things a bit so, that it looks familiar and at the same time new:
 
-Principles:
+```js
+import $, {html, state} from 'spect'
 
-- no bundling
+// jquery?
+$(document.documentElement, body => {
+  let {data, loading=false} = state()
+
+  // react hooks?
+  fx(() => {
+    state({loading: true})
+    let result = await fetch(data)
+    state({data: result, loading: false})
+  }, [])
+
+  // htm?
+  html`${loading ? 'Loading...' : data}`
+})
+```
+
+Spect takes a twist towards classical-flavored js.
+
+## Principles
+
+- no bundling needed
+- JS-less hydration
 - grounded html (progressive enhancement)
-- natural hydration
 - least non-standard solution
 - max elegancy / expressiveness / as little boilerplate as possible
 - max API consistency
+
 
 _Aspect_ - a functional part, not necessarily linked to the main function [wikipedia](https://en.wikipedia.org/wiki/Aspect_(computer_programming)). Practically, aspects seems to have existed in DOM for a time already - as CSS, with stylesheet as "aspect", selectors as "pointcuts" and rules as "advice"; or as `hidden`, `contenteditable`, `title`, `autocapitalize` and other attributes. Step takes this concept one step forward, enabling generic aspects tooling?.
 
@@ -318,9 +340,11 @@ $('.mdc-text-field', TextField)
 * [ ] html`content`
 * [ ] css`style`
 * [ ] create(() => destroy)
-* [x] mount(() => unmount)
-* [ ] on(evt, delegate?, handler)
-* [ ] fx(fn, deps)
+* [ ] mount(() => unmount)
+* [ ] init(() => dispose)
+* [ ] on(evt, delegate?, fn)
+* [ ] fx(fn, deps?)
+* [ ] update()
 * [ ] intersect(fn, target?)
 * [ ] state(value?)
 * [ ] attr(value?)
@@ -360,12 +384,54 @@ $('#button-container button', button => {
 
 `$` returns the result of the aspect function.
 
-<!-- Without an aspect `$` is just a shortcut for `document.querySelector`. -->
+<!-- API improvements -->
+
+<!-- Without an aspect `$` is just a shortcut for `document.querySelector/all`. -->
+
+<!-- Effect === aspect, <div mount=${() => () => {}}></div> -->
+
+<!-- Effects exposed in jquery way: $(els).html(), but realtime via mutation observer -->
+
+<!-- Empty selector cases for fragment construction: $(frag => {}), $().effect() -->
+
+
+### `mount(() => () => {})`
+
+Called when the element is mounted on the DOM. The returned function is called when unmounted.
+
+```js
+el => {
+  mount(() => {
+    // called when element is mounted
+
+    return () => {
+      // called when element is unmounted
+    }
+  })
+}
+```
+
+### `create(() => () => {})`
+
+Called whenever aspect is assigned / unassigned to an element:
+
+```js
+$(el, el => {
+  create(() => {
+    // aspect assigned
+    return () => {
+      // aspect unassigned
+    }
+  })
+}
+```
+
+Note that an aspect can be assigned to existing elements, in that case `mount` will be triggered automatically.
 
 
 ### ``html`markup` ``
 
-HTML effect of aspect. Makes sure current element has provided markup.
+HTML effect of an aspect. Makes sure current element has provided markup. Acts like html reducer, mapping initial markup to provided one.
 
 ```js
 import $, { html, state } from 'spect'
@@ -397,36 +463,46 @@ function Log({ details, date }) {
 }
 ```
 
-If an element has own content, the `html` effect can be used as "reducer". For that purpose it provides `<...>` and `<#id>` tags.
+To keep the initial markup the `<...>` tag can be used.
 
 ```js
 import $, { attr } from 'spect'
 
 // enable `icon` attribute for all buttons
 $('button[icon]', ({icon}) => html`<i class="material-icons">${icon}</i> <...>`
+```
 
+To modify or keep specific elements, the `<#id>` tag can be used:
+
+```js
 // show validator after the email input
 $('.input-group', input => {
   let { value } = prop()
-  html`<#email-input><div class=validate>${validate(value)}</div>`
+  html`<...><#email-input/><div class=validate>${validate(value)}</div>`
 })
+`
 ```
 
-### `mount(() => () => {})`
-
-Called when the element is mounted on the DOM. The returned function is called when unmounted.
+HTML effect internally uses [html](https://ghub.io/htm) fork with a couple of improvements.
 
 ```js
-el => {
-  mount(() => {
-    // called when element is mounted
 
-    return () => {
-      // called when element is unmounted
-    }
-  })
-}
+// directly mount to DOM
+html`<${document.body} ...${attrs}>
+  <...>
+  ${content}
+</>`
+
+// use existing selector-elements
+html`<#target ...${attrs}><...>${content}</>`
+
+// apply anonymous aspects
+html`<div ${aspect}></div>`
 ```
+
+HTML takes soft-vdom approach, similar to [react reconciliation](), with some differences. Instead of `key` prop it uses native `id` attribute - that removes burden of remembering that detail.
+
+<!-- TODO: move to a separate article -->
 
 
 ### `state(value?)`
@@ -510,7 +586,7 @@ el => {
 
 Same as local, but persists value in remote storage.
 
-### `fx(fn, deps)`
+### `fx(fn, deps?)`
 
 Run side-effect function. Different from `useEffect` in:
 - `fx` can return value
@@ -520,54 +596,103 @@ Run side-effect function. Different from `useEffect` in:
 - fn can be run in unmounted state
 
 ```js
-function aspect (el) {
+// as an aspect
+(el) => {
   let result = fx(await () => {
     html'Pending...'
-    let result = await doRequest(param)
-    html`Result ${result}`
+    let data = await doRequest(param)
+    html`Result ${data}`
+
+    return data
   }, [param])
 }
 
+// as a mod
+$(el).fx(() => {
+  log('Any update')
+})
 ```
 
-### `on(event, delegate?, handler)`
+### `on(event, delegate?, fn?)`
 
-Attach event handler. No care about removing listeners - they're removed automatically when component is unmounted.
+Attach event handler. Listeners are removed automatically when component is unmounted.
 
 ```js
+// as effect
 el => {
-  on('submit', handler)
+  on('submit', fn)
 
   // multiple events
-  on('touchstart mousedown keydown', handler)
+  on('touchstart mousedown keydown', fn)
 
   // delegate to external element
-  on('click', '#el', handler)
+  on('click', '#el', fn)
 }
+
+// as modifier
+$(el).on('click', '#el', fn)
 ```
 
+<!-- TODO: research aspect on-syntax -->
+<!--
 
-### ``css`styles` ``
+<div on=${ 'evt1 evt2': handler }/>
+
+<div on-evt1-evt2=${handler} />
+
+<div on="evt1 evt2 ${handler}" />
+
+<div on=${[evt1, evt2, handler]} />
+-->
+
+### `css('styles')`
 
 Apply css styles, scoped to target element.
 
 ```js
-el => {
-css`
-:host {
-  background: red;
-}
-.sub-element {
-  background: white;
-}
+// as effect
+$(el, () => css`
+  :host {}
+  .sub-element {}
 `
 
-}
+// as modifier
+$(el).css`
+  :host {
+    background: red;
+  }
+  .sub-element {
+    background: white;
+  }
+`
+
+// as aspect
+html`
+  <${target} css=${`
+    :host {}
+    .sub-element {}
+  `}></>
+`
+
 ```
 
-### intersects(() => () => off)
+### `intersects(() => () => off)`
 
 Invoked when element is visible in the screen.
+
+### `update()`
+
+Simple effect triggering re-rendering.
+
+```js
+$('#clock', () => {
+  let date = new Date()
+  html`<time date=${date}>${date.toLocalTimeString()}</time>`
+  setTimeout(update, 1000)
+})
+```
+
+<small>Fixes react shallow `let [, update] = useState` anti-pattern.</small>
 
 
 ## Plugins

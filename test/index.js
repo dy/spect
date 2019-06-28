@@ -13,9 +13,12 @@ assert.deepEqual = (a, b, msg) => {
 export function delay (delay=0) { return new Promise((ok) => setTimeout(ok, delay))}
 export const t = test
 
+export const tick = delay()
 
+
+import ('./mount.js')
 // import('./core.js')
-import('./selector.js')
+// import('./selector.js')
 
 
 
