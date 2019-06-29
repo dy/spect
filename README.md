@@ -1,21 +1,23 @@
 # Spect
 
-`Spect` is a frontent library for building expressive UI in [aspect-oriented](https://en.wikipedia.org/wiki/Aspect-oriented_programming) fashion. It is [~33% more expressive]() than react.
+`Spect` is a tool for building expressive UIs in [aspect-oriented](https://en.wikipedia.org/wiki/Aspect-oriented_programming) fashion.
 
-At the core, it introduces _nothing_ new, just rearranges known things a bit so, that it looks familiar and at the same time new:
+> It is [~33% more expressive]() than ~~the ubiquitous framework~~.
+
+At the core, it introduces _nothing_ new, but rearranges known patterns.
 
 ```js
-import $, {html, state} from 'spect'
+import $, { html, state, fx } from 'spect'
 
 // jquery?
-$(document.documentElement, body => {
-  let {data, loading=false} = state()
+$(document.body, body => {
+  let {data, loading = false} = state()
 
   // react hooks?
-  fx(() => {
-    state({loading: true})
-    let result = await fetch(data)
-    state({data: result, loading: false})
+  fx(async () => {
+    state({ loading: true })
+    state({ data: await fetch(data) })
+    state({ loading: false })
   }, [])
 
   // htm?
@@ -23,17 +25,11 @@ $(document.documentElement, body => {
 })
 ```
 
-Spect takes a twist towards classical-flavored js.
-
 ## Principles
 
-- no bundling needed
+- no bundling
 - JS-less hydration
-- grounded html (progressive enhancement)
-- least non-standard solution
-- max elegancy / expressiveness / as little boilerplate as possible
-- max API consistency
-
+- standard html first
 
 _Aspect_ - a functional part, not necessarily linked to the main function [wikipedia](https://en.wikipedia.org/wiki/Aspect_(computer_programming)). Practically, aspects seems to have existed in DOM for a time already - as CSS, with stylesheet as "aspect", selectors as "pointcuts" and rules as "advice"; or as `hidden`, `contenteditable`, `title`, `autocapitalize` and other attributes. Step takes this concept one step forward, enabling generic aspects tooling?.
 
@@ -51,7 +47,6 @@ That turns out to provide elegant solution to many common frontend problems.
 * additional rendering (portals)
 * etc.
 
-* :gem:
 
 ## Getting started
 
@@ -59,25 +54,27 @@ Spect can be connected directly to html bypassing bundling as:
 
 ```html
 <script type="module">
-import html from 'https://unpkg.com/spect@latest?module'
+import $, * as fx from 'https://unpkg.com/spect@latest?module'
 
-// your UI code
+// your expressive UI code
 </script>
 ```
 
-Or that can be connected the classical way as
+Or that can be connected the classical way as:
 
 <samp>npm i spect</samp>
 
 ```js
 import $, * as fx from 'spect'
+
+// your elegant UI code
 ```
 
-Let's see how [basic react examples](https://reactjs.org/) would look like built with spect:
+Let's see how [basic react examples](https://reactjs.org/) look like with spect:
 
 ### A simple aspect
 
-Basic tool of spect is `html` function. It acts in a way, similar to hyperscript, but instantly renders html to "current level" container:
+Basic tool of spect is `html` effect. It acts similar to hyperscript, but deploys html instantly to the aspect container:
 
 ```js
 import $, { html } from 'spect'
@@ -95,10 +92,10 @@ function hello({name}) {
 
 ### A stateful aspect
 
-Spect introduces state and effects:
+Spect introduces state and effects, reminding ~~known framework~~ hooks:
 
 ```js
-import $, {html, state, mount} from 'spect'
+import $, { html, state, mount } from 'spect'
 
 // apply timer aspect to #timer-example
 $('#timer-example', timer)
@@ -341,34 +338,20 @@ $('.mdc-text-field', TextField)
 * [ ] css`style`
 * [ ] create(() => destroy)
 * [ ] mount(() => unmount)
-* [ ] init(() => dispose)
-* [ ] on(evt, delegate?, fn)
 * [ ] fx(fn, deps?)
 * [ ] update()
+* [ ] on(evt, delegate?, fn)
 * [ ] intersect(fn, target?)
 * [ ] state(value?)
 * [ ] attr(value?)
 * [ ] prop(value?)
 * [ ] query(value?)
 * [ ] local(value?)
-* [ ] remote
 
 
 ### `$(selector|element, fn)`
 
-Register a function listener (aspect) for elements, matching the selector, or direct element.
-
-Selector<sup><a href="#ng-sel">1</a></sup> can have form:
-
-* `element-name`: Select by element name.
-* `.class`: Select by class name.
-* `[attribute]`: Select by attribute name.
-* `[attribute=value]`: Select by attribute name and value.
-* `:not(sub_selector)`: Select only if the element does not match the sub_selector.
-* `selector1, selector2`: Select if either selector1 or selector2 matches.
-
-<sup id="ng-sel">1</sup> - selector syntax similar to angular selectors.
-
+Register an aspect for elements matching selector or direct element.
 The aspect takes element as the only argument and provides context for effects.
 
 ```js
@@ -394,6 +377,20 @@ $('#button-container button', button => {
 
 <!-- Empty selector cases for fragment construction: $(frag => {}), $().effect() -->
 
+<!--
+    Spect-based test-runner. t(name, fn => {}) is exactly the spect syntax. In fact, test is an aspect of some component.
+    The cool thing: it can run asserts as effects.
+
+    import t, {eq, deq} from 'spect/t'
+
+    t('some-target-to-observe', target => {
+      bench()
+      eq(a, b)
+      tick()
+
+      fx()
+    })
+-->
 
 ### `mount(() => () => {})`
 
