@@ -1,4 +1,4 @@
-import {test, assert} from 'tape-modern'
+import {test, assert} from 'tape'
 
 // assert.deepEqual = (a, b, msg) => {
 //   for (let i = 0; i < Math.max(a.length, b.length); i++) {
