@@ -75,4 +75,4 @@ typings/
 # FuseBox cache
 .fusebox/
 
-test/bundle*
+bundle*
