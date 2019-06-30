@@ -1,10 +1,6 @@
 # Spect
 
-`Spect` is a tool for building expressive UIs in [aspect-oriented](https://en.wikipedia.org/wiki/Aspect-oriented_programming) fashion.
-
-> It is [~33% more expressive]() than ~~the ubiquitous framework~~.
-
-At the core, it introduces _nothing_ new, but rearranges known patterns.
+`Spect` is a framework for building expressive UIs in [aspect-oriented](https://en.wikipedia.org/wiki/Aspect-oriented_programming) fashion.
 
 ```js
 import $, { html, state, fx } from 'spect'
@@ -30,6 +26,7 @@ $(document.body, body => {
 - no bundling
 - JS-less hydration
 - standard html first
+- expressiveness
 
 _Aspect_ - a functional part, not necessarily linked to the main function [wikipedia](https://en.wikipedia.org/wiki/Aspect_(computer_programming)). Practically, aspects seems to have existed in DOM for a time already - as CSS, with stylesheet as "aspect", selectors as "pointcuts" and rules as "advice"; or as `hidden`, `contenteditable`, `title`, `autocapitalize` and other attributes. Step takes this concept one step forward, enabling generic aspects tooling?.
 

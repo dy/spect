@@ -1,4 +1,4 @@
-import { test } from './index.js'
+import tape from 'tape'
 import htm from '../src/htm.js'
 
 test('empty', () => {

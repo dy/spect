@@ -1,10 +1,11 @@
 {
   "name": "spect",
   "version": "1.0.0",
-  "description": "Aspect-oriented DOM",
+  "description": "Aspect-oriented DOM framework",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "build": "microbundle",
+    "dev": "px -w -E --external-core ./test/index.js ./test/bundle.js"
   },
   "repository": {
     "type": "git",
@@ -34,12 +35,8 @@
     "url": "https://github.com/dy/spect/issues"
   },
   "homepage": "https://github.com/dy/spect#readme",
+  "type": "module",
   "dependencies": {
-    "fast-on-load": "^1.0.0",
-    "primitive-pool": "^1.1.0"
-  },
-  "devDependencies": {
-    "@pika/web": "^0.4.3",
-    "tape-modern": "^1.1.2"
+    "tape": "^4.11.0"
   }
 }
