@@ -5,7 +5,7 @@
   "main": "index.js",
   "scripts": {
     "build": "microbundle",
-    "dev": "px -w -E --external-core ./test/index.js ./test/bundle.js"
+    "dev": "px -w -E ./test/index.js ./test/bundle.js"
   },
   "repository": {
     "type": "git",
@@ -38,5 +38,9 @@
   "type": "module",
   "dependencies": {
     "tape": "^4.11.0"
+  },
+  "devDependencies": {
+    "esm": "^3.2.25",
+    "tst": "^2.0.2"
   }
 }

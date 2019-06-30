@@ -1,4 +1,4 @@
-import tape from 'tape'
+import test from 'tst'
 import htm from '../src/htm.js'
 
 test('empty', () => {
@@ -11,7 +11,7 @@ test('empty', () => {
 // console.log(h`<a x="ab\"c"def />`)
 // 3. make anonymous props possible (available by index key)
 
-test.only('anonymous attributes', () => {
+test.only('anonymous attributes', (t) => {
   console.log(htm`<a x ${() => {}} y=1 z=${2}><b/></a>c`)
 })
 
