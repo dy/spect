@@ -1,5 +1,5 @@
-import { t, tick } from './index.js'
-import $, { mount } from '../index.js'
+import t from 'tst'
+import $, { mount } from '../src/index.js'
 
 t('multiple mount callbacks', async t => {
   let log = []

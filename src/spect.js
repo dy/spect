@@ -150,7 +150,7 @@ export const effectStacks = new WeakMap()
 export function registerEffect (name, fx) {
   if (effects[name]) throw Error('Effect already exists')
 
-  effects[name] = function effect (...args) => {
+  effects[name] = function effect (...args) {
     let callSite = callStack[callStack.length - 1]
     let [target, aspect, index, after] = callSite
 

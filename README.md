@@ -77,12 +77,10 @@ Basic tool of spect is `html` effect. It acts similar to hyperscript, but deploy
 import $, { html } from 'spect'
 
 $(document.body, body =>
-  html`<div id="hello-example" ${hello} name="Taylor"></div>`
+  html`<${hello} id="hello-example" name="Taylor"></>`
 )
 
-// `hello` anonymous aspect
 function hello({name}) {
-  // html effect for #hello-example
   html`${name}`
 }
 ```
@@ -152,7 +150,7 @@ function Todo (el) {
       <label for=new-todo>
         What needs to be done?
       </label>
-      <input id=#new-todo value=${text}/>
+      <input id=new-todo value=${text}/>
       <button>
         Add #${items.length + 1}
       </button>
@@ -193,7 +191,7 @@ function MarkdownEditor () {
       </label>
       <textarea
         id="markdown-content"
-        on-change=${e => state({value: e.target.value})}
+        onchange=${e => state({value: e.target.value})}
         defaultValue=${value}
       />
       <h3>Output</h3>

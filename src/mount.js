@@ -1,7 +1,6 @@
 // Observing code is borrowed from https://github.com/hyperdivision/fast-on-load
 
 import { effect, aspectFx } from './spect.js'
-import { onload, isConnected } from './util.js'
 
 export default function mount ({target, aspect, index, after, initArgs}, args) {
   if (tracking.has(target)) return

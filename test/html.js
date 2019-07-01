@@ -1,9 +1,4 @@
-import $, { html, update, prop } from '../index.js'
-
-
-t('', t => {
-
-})
+import $, { html, update, prop } from '../src/index.js'
 
 
 t('two wrapping aspects', t => {
@@ -15,7 +10,7 @@ t('two wrapping aspects', t => {
     html`<div id="b"><...></div>`
   }
 
-  let el = $(() => html`content`)
+  let el = html`content`
   $(el, el => {
     prop({ update })
     a()
