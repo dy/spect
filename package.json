@@ -4,8 +4,8 @@
   "description": "Aspect-oriented DOM framework",
   "main": "index.js",
   "scripts": {
-    "build": "microbundle",
-    "dev": "px -w -E ./test/index.js ./test/bundle.js"
+    "build": "parcel build",
+    "dev": "parcel serve test/index.html"
   },
   "repository": {
     "type": "git",
@@ -36,11 +36,9 @@
   },
   "homepage": "https://github.com/dy/spect#readme",
   "type": "module",
-  "dependencies": {
-    "tape": "^4.11.0"
-  },
+  "dependencies": {},
   "devDependencies": {
-    "esm": "^3.2.25",
-    "tst": "^2.0.2"
+    "parcel-bundler": "^1.12.3",
+    "tape": "^4.11.0"
   }
 }

@@ -1,4 +1,4 @@
-import test from 'tst'
+import test from 'tape'
 import htm from '../src/htm.js'
 
 test('empty', () => {
@@ -13,6 +13,7 @@ test('empty', () => {
 
 test.only('anonymous attributes', (t) => {
   console.log(htm`<a x ${() => {}} y=1 z=${2}><b/></a>c`)
+  t.end()
 })
 
 test('single named elements', () => {
