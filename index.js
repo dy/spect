@@ -1,8 +1,8 @@
-import spect from './spect.js'
+import spect from './src/spect.js'
 
 // import html from './html'
 // import create from './src/fx/create'
-import mount from './mount.js'
+import mount from './src/mount.js'
 
 export { mount }
 

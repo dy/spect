@@ -2,7 +2,8 @@
   "name": "spect",
   "version": "0.0.0",
   "description": "Aspect-oriented DOM framework",
-  "main": "index.js",
+  "main": "./index.js",
+  "module": "./index.js",
   "scripts": {
     "build": "parcel build",
     "start": "parcel serve test/index.html"

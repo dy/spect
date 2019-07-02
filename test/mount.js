@@ -1,5 +1,5 @@
 import t from 'tst'
-import $, { mount } from '../src/index.js'
+import $, { mount } from '../index.js'
 
 
 // TODO: parcel: export default from; regenerator runtime here
