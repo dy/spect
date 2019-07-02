@@ -764,6 +764,7 @@ Complexity of selectors is O(1) for id selectors and O(n) for class / general ca
 * tachyons, tailwindcss, ui-box - for CSS driving use-case
 * evergreen-ui, material-ui - for many practical examples
 * fast-on-load - for proving fast mutation observer solution
+* [hui](https://github.com/hyperdivision/hui)
 * selector-ovserver - for proving selector observer solution
 * reuse - for aspects hint
 * material-design-lite - for upgrade code ground
