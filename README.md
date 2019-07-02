@@ -333,8 +333,8 @@ $('.mdc-text-field', TextField)
 
 ## API
 
-* [x] $(sel|el, fn)
-* [x] mount(() => unmount)
+* [x] `$(sel|el, fn)`
+* [x] `mount(() => unmount)`
 
 <!--
 * [ ] html`content`
