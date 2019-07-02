@@ -1,7 +1,9 @@
 # Spect
 
-`Spect` is a framework for building expressive UIs in [aspect-oriented](https://en.wikipedia.org/wiki/Aspect-oriented_programming) fashion.
+`Spect` is effects kit for building expressive UIs in [aspect-oriented](https://en.wikipedia.org/wiki/Aspect-oriented_programming) fashion.
 
+
+<!--
 ```js
 import $, { html, state, fx } from 'spect'
 
@@ -20,6 +22,7 @@ $(document.body, body => {
   html`${loading ? 'Loading...' : data}`
 })
 ```
+
 
 ## Principles
 
@@ -325,14 +328,18 @@ $('.mdc-text-field', TextField)
 </body>
 ```
 
+-->
+
 
 ## API
 
-* [ ] $(target, fn)
+* [x] $(sel|el, fn)
+* [x] mount(() => unmount)
+
+<!--
 * [ ] html`content`
 * [ ] css`style`
 * [ ] create(() => destroy)
-* [ ] mount(() => unmount)
 * [ ] fx(fn, deps?)
 * [ ] update()
 * [ ] on(evt, delegate?, fn)
@@ -344,23 +351,39 @@ $('.mdc-text-field', TextField)
 * [ ] local(value?)
 
 
+
 ### `$(selector|element, fn)`
 
-Register an aspect for elements matching selector or direct element.
-The aspect takes element as the only argument and provides context for effects.
+Register selector observer aspect or direct element aspect.
 
 ```js
 import $, { on } from 'spect'
 
-// like jquery with react hooks
 $('#button-container button', button => {
-  on('click', evt =>
-    $('#banner-message', msg => msg.classList.toggle('visible'))
-  )
+  on('click', evt => )
+
+  $('#banner-message', el => el.classList.toggle('visible'))
 })
 ```
 
 `$` returns the result of the aspect function.
+
+-->
+
+### `mount(() => () => {})`
+
+Mount effect calls passed function when the element is mounted on the DOM. The returned function is called on unmount.
+
+```js
+$('#target', el => {
+  mount(() => {
+    console.log('element mounted')
+
+    return () => console.log('element unmounted')
+  })
+})
+```
+
 
 <!-- API improvements -->
 
@@ -387,22 +410,7 @@ $('#button-container button', button => {
     })
 -->
 
-### `mount(() => () => {})`
-
-Called when the element is mounted on the DOM. The returned function is called when unmounted.
-
-```js
-el => {
-  mount(() => {
-    // called when element is mounted
-
-    return () => {
-      // called when element is unmounted
-    }
-  })
-}
-```
-
+<!--
 ### `create(() => () => {})`
 
 Called whenever aspect is assigned / unassigned to an element:
@@ -494,7 +502,6 @@ html`<div ${aspect}></div>`
 
 HTML takes soft-vdom approach, similar to [react reconciliation](), with some differences. Instead of `key` prop it uses native `id` attribute - that removes burden of remembering that detail.
 
-<!-- TODO: move to a separate article -->
 
 
 ### `state(value?)`
@@ -625,17 +632,6 @@ el => {
 $(el).on('click', '#el', fn)
 ```
 
-<!-- TODO: research aspect on-syntax -->
-<!--
-
-<div on=${ 'evt1 evt2': handler }/>
-
-<div on-evt1-evt2=${handler} />
-
-<div on="evt1 evt2 ${handler}" />
-
-<div on=${[evt1, evt2, handler]} />
--->
 
 ### `css('styles')`
 
@@ -781,3 +777,4 @@ Complexity of selectors is O(1) for id selectors and O(n) for class / general ca
 
 
 
+-->
