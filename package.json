@@ -5,12 +5,15 @@
   "main": "index.js",
   "scripts": {
     "build": "parcel build",
-    "dev": "parcel serve test/index.html"
+    "start": "parcel serve test/index.html"
   },
   "repository": {
     "type": "git",
     "url": "git+https://github.com/dy/spect.git"
   },
+  "browserslist": [
+    "last 1 Chrome versions"
+  ],
   "keywords": [
     "aspect",
     "spect",
@@ -37,6 +40,7 @@
   "homepage": "https://github.com/dy/spect#readme",
   "type": "module",
   "dependencies": {
+    "fast-on-load": "^1.0.0",
     "htm": "^2.1.1"
   },
   "devDependencies": {

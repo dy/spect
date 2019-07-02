@@ -3,10 +3,18 @@ import { isAsync } from './util.js'
 // const SPECT_CLASS = '👁' //+ Math.random().toString(36).slice(2)
 // const CONNECTED = 0, DISCONNECTED = 1
 
+// selector aspects
 export const selectors = {}
 
-// tracked real elements
+// tracked real elements with their aspects
 export const tracking = new WeakMap()
+
+// calling aspects/fx stack
+export let currentTarget = document.documentElement
+
+// current is always bound to target, current fx acts on single aspect but can be nested
+export let currentAspect = null
+export let currentFx = null
 
 
 const SELECTOR_ID = 1, SELECTOR_CLASS = 2, SELECTOR_QUERY = 3, SELECTOR_ELEMENT = 4
@@ -25,8 +33,9 @@ function getSelectorType (selector) {
 
 export default function spect (selector, aspect) {
   // FIXME: make selectors an array
-  let selectorState = selectors[selector] || (selectors[selector] = {type: getSelectorType(selector), aspects: []})
-  selectorState.aspects.push(aspect)
+  let aspects = selectors[selector] || (selectors[selector] = [])
+  aspects.push(aspect)
+  aspects.type = getSelectorType(selector)
 
   // TODO: create spect.min without mutation observers
   // no-mutations initializer
@@ -67,11 +76,12 @@ function handleElements (nodes) {
     let node = nodes[i]
 
     for (let selector in selectors) {
-      let {type, aspects: selectorAspects} = selectors[selector]
+      let selAspects = selectors[selector]
+      let selType = selAspects.type
 
       let targets = []
 
-      if (type === SELECTOR_ID) {
+      if (selType === SELECTOR_ID) {
         let id = selector.slice(1)
         if (node.id === id) targets.push(node)
         else {
@@ -80,11 +90,11 @@ function handleElements (nodes) {
           if (node.contains(el)) targets.push(el)
         }
       }
-      else if (type === SELECTOR_QUERY) {
+      else if (selType === SELECTOR_QUERY) {
         if (node.matches(selector)) targets.push(node)
         targets.push(...node.querySelectorAll(selector))
       }
-      else if (type === SELECTOR_CLASS) {
+      else if (selType === SELECTOR_CLASS) {
         let elClass = selector.slice(1)
         if (node.classList.contains(elClass)) targets.push(node)
         targets.push(...node.getElementsByClassName(elClass))
@@ -93,78 +103,61 @@ function handleElements (nodes) {
       targets.filter(Boolean).forEach(target => {
         // init state for unknown targets
         if (!tracking.has(target)) {
-          tracking.set(target, { aspects: [] })
+          tracking.set(target, new WeakSet)
         }
 
-        // if target has no registered aspect - init-run it
         let targetAspects = tracking.get(target)
 
-        selectorAspects.forEach(aspect => {
-          // init run, if aspect is not registered
-          if (!~targetAspects.findIndex(a => a === aspect)) {
-            targetAspects.push(aspect)
+        selAspects.forEach(aspect => {
+          // init run aspect
+          if (!targetAspects.has(aspect)) {
+            targetAspects.add(aspect)
 
-            // create effects order for aspect
-            aspectFxCache.set(aspect, [])
+            let prevTarget = currentTarget
+            currentTarget = target
+
 
             // FIXME: figure out what to do with result
-            let result = callAspect(target, aspect, targetAspects)
+            callAspect(aspect)
+
+            currentTarget = prevTarget
           }
         })
-
       })
     }
   }
 }
 
 
-// call aspect with corresponding state, track fx count
-export const callStack = []
 
-export function callAspect(target, aspect) {
-  // FIXME: async aspects - should registered effects trigger before the aspect is resolved or better wait it's finished?
 
-  // called next tick, effects are enqueued here
-  let whenEnd = Promise.resolve()
-  function after(fn) { whenEnd.then(fn) }
+// before render hook
+const beforeAspectListeners = []
+export function onBeforeAspect(fn) {
+  if (beforeAspectListeners.indexOf(fn) < 0) beforeAspectListeners.push(fn)
+}
 
-  callStack.push([target, aspect, 0, after])
+export function callAspect(fn, args=[]) {
+  let prevAspect = currentAspect
+  currentAspect = fn
 
-  // FIXME: what should we do with result?
-  let result = aspect(target)
+  beforeAspectListeners.forEach(fn => fn())
 
-  // FIXME: should we pop stack before the effects run?
-  // FIXME: should we pop stack before the async effect end?
-  callStack.pop()
+  let result = fn(...args)
+
+  currentAspect = prevAspect
 
   return result
 }
 
 
-// cache of registered global effects
-export const effects = {}
+export function callFx(fn, args=[]) {
+  let prevFx = currentFx
+  currentFx = fn
 
-// registered effects per aspect, in order, as <aspect: { index: effect }>
-export const effectStacks = new WeakMap()
+  let result = fn(...args)
 
-export function registerEffect (name, fx) {
-  if (effects[name]) throw Error('Effect already exists')
+  currentFx = prevFx
 
-  effects[name] = function effect (...args) {
-    let callSite = callStack[callStack.length - 1]
-    let [target, aspect, index, after] = callSite
-
-    let effectStack = effectStacks.get(aspect)
-    if (!effectStack[index]) {
-      effectStack[index] = [fx, args]
-    }
-    else {
-      effectSite = effectStack[index]
-    }
-
-    // the effect provider
-    fx({target, aspect, index, after, initArgs: args}, args)
-
-    callSite.index += 1
-  }
+  return result
 }

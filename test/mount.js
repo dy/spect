@@ -1,6 +1,8 @@
 import t from 'tst'
 import $, { mount } from '../src/index.js'
 
+
+// TODO: parcel: export default from; regenerator runtime here
 t('multiple mount callbacks', async t => {
   let log = []
 
@@ -20,13 +22,16 @@ t('multiple mount callbacks', async t => {
 
   let x = document.createElement('div')
   x.id = 'x'
-  document.body.appendChild(x)
 
-  await tick
+  document.documentElement.appendChild(x)
+
+  await (() => {})
 
   t.deepEqual(log, ['mount A', 'mount B'])
 
-  document.body.removeChild(x)
+  document.documentElement.removeChild(x)
+
+  await (() => {})
 
   t.deepEqual(log, ['mount A', 'mount B', 'unmount A', 'unmount B'])
 })
