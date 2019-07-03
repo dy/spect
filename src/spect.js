@@ -32,6 +32,10 @@ function getSelectorType (selector) {
 // FIXME: make a weakmap
 
 export default function spect (selector, aspect) {
+  if (selector instanceof Node) {
+    return handleAspect(selector, aspect)
+  }
+
   // FIXME: make selectors an array
   let aspects = selectors[selector] || (selectors[selector] = [])
   aspects.push(aspect)
@@ -100,30 +104,34 @@ function handleElements (nodes) {
         targets.push(...node.getElementsByClassName(elClass))
       }
 
-      targets.filter(Boolean).forEach(target => {
-        // init state for unknown targets
-        if (!tracking.has(target)) {
-          tracking.set(target, new WeakSet)
-        }
+      targets = targets.filter(Boolean)
 
-        let targetAspects = tracking.get(target)
-
-        selAspects.forEach(aspect => {
-          // init run aspect
-          if (!targetAspects.has(aspect)) {
-            targetAspects.add(aspect)
-
-            let prevTarget = currentTarget
-            currentTarget = target
-
-            // FIXME: figure out what to do with result
-            callAspect(aspect)
-
-            currentTarget = prevTarget
-          }
-        })
+      selAspects.forEach(aspect => {
+        targets.forEach(target => handleAspect(target, aspect))
       })
     }
+  }
+}
+
+function handleAspect(target, aspect) {
+  // init state for unknown targets
+  if (!tracking.has(target)) {
+    tracking.set(target, new WeakSet)
+  }
+
+  let targetAspects = tracking.get(target)
+
+  // init run aspect
+  if (!targetAspects.has(aspect)) {
+    targetAspects.add(aspect)
+
+    let prevTarget = currentTarget
+    currentTarget = target
+
+    // FIXME: figure out what to do with result
+    callAspect(aspect)
+
+    currentTarget = prevTarget
   }
 }
 
@@ -136,13 +144,13 @@ export function onBeforeAspect(fn) {
   if (beforeAspectListeners.indexOf(fn) < 0) beforeAspectListeners.push(fn)
 }
 
-export function callAspect(fn, args=[]) {
+export function callAspect(fn) {
   let prevAspect = currentAspect
   currentAspect = fn
 
   beforeAspectListeners.forEach(fn => fn())
 
-  let result = fn(...args)
+  let result = fn(currentTarget)
 
   currentAspect = prevAspect
 

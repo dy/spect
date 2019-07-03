@@ -1,14 +1,18 @@
 import t from 'tst'
 import $, { html } from '../index.js'
 
+t('basic', t => {
+  let el = document.createElement('div')
+  $(el, el => {
+    html`<a>b</a>`
+    t.equal(el.innerHTML, '<a>b</a>')
+  })
+})
 
-t.only('basic', t => {
+t.only('fragment', t => {
   $(document.createElement('div'), el => {
-    html`<a>b</>`
-
-    setTimeout(() => {
-      t.equal(el.innerHTML, '<a>b</a>')
-    })
+    html`<><a>a</a><b><>b</></b></>`
+    console.log(el.innerHTML)
   })
 })
 
