@@ -1,5 +1,16 @@
-import $, { html, update, prop } from '../src/index.js'
+import t from 'tst'
+import $, { html } from '../index.js'
 
+
+t.only('basic', t => {
+  $(document.createElement('div'), el => {
+    html`<a>b</>`
+
+    setTimeout(() => {
+      t.equal(el.innerHTML, '<a>b</a>')
+    })
+  })
+})
 
 t('two wrapping aspects', t => {
   function a () {
@@ -10,12 +21,9 @@ t('two wrapping aspects', t => {
     html`<div id="b"><...></div>`
   }
 
-  let el = html`content`
-  $(el, el => {
-    prop({ update })
-    a()
-    b()
-  })
+  let el = document.createElement('div')
+  $(el, a)
+  $(el, b)
 
   t.deepEqual(el.innerHTML, `<div id="b"><div id="a">content</div><div>`)
 

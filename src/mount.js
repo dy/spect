@@ -16,6 +16,8 @@ export default function mount (fn) {
     })
 
     let target = currentTarget
+
+    // FIXME: use native onload multiple binding capability
     onload(currentTarget, () => {
       let state = tracking.get(target)
       state.unmount = state.mount.map(fn => callFx(fn || noop) || noop)

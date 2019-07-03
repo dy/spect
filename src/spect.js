@@ -116,7 +116,6 @@ function handleElements (nodes) {
             let prevTarget = currentTarget
             currentTarget = target
 
-
             // FIXME: figure out what to do with result
             callAspect(aspect)
 

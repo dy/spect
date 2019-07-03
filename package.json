@@ -1,7 +1,7 @@
 {
   "name": "spect",
   "version": "0.0.1",
-  "description": "Aspect-oriented DOM framework",
+  "description": "Aspect-oriented virtual-DOM framework",
   "main": "./index.js",
   "module": "./index.js",
   "scripts": {
@@ -41,8 +41,9 @@
   "homepage": "https://github.com/dy/spect#readme",
   "type": "module",
   "dependencies": {
-    "fast-on-load": "^1.0.0",
-    "htm": "^2.1.1"
+    "fast-on-load": "^1.0.1",
+    "htm": "^2.1.1",
+    "snabbdom": "^0.7.3"
   },
   "devDependencies": {
     "parcel-bundler": "^1.12.3",
