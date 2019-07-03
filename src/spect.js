@@ -1,5 +1,9 @@
 import { isAsync } from './util.js'
 
+
+// TODO: invalidate html vdom for elements that're being changed by something outside of spect scope
+
+
 // const SPECT_CLASS = '👁' //+ Math.random().toString(36).slice(2)
 // const CONNECTED = 0, DISCONNECTED = 1
 
@@ -78,6 +82,7 @@ function handleElements (nodes) {
   // TODO: inverse querying as `ids[node.id]`, `classes[node.class[i]]`
   for (let i = 0; i < nodes.length; i++) {
     let node = nodes[i]
+
 
     for (let selector in selectors) {
       let selAspects = selectors[selector]
