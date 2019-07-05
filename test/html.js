@@ -9,10 +9,28 @@ t('basic', t => {
   })
 })
 
-t.only('fragment', t => {
+t('multiple root nodes', t => {
+  let el = document.createElement('div')
+  $(el, el => {
+    html`<a>a</><a>b</><foo><bar></bar></foo>`
+    t.equal(el.innerHTML, '<a>a</a><a>b</a><foo><bar></bar></foo>')
+  })
+})
+
+t('fragment', t => {
   $(document.createElement('div'), el => {
-    html`<><a>a</a><b><>b</></b></>`
-    console.log(el.innerHTML)
+    html`<><a>a</a><b><>b<c/></></b></>`
+    t.equal(el.innerHTML, '<a>a</a><b>b<c></c></b>')
+  })
+})
+
+t.only('spread', t => {
+  let el = document.createElement('div')
+  el.innerHTML = '<a>b</a>'
+
+  $(el, el => {
+    html`<b><...></b>`
+    t.equal(el.innerHTML, '<b><a>b</a></b>')
   })
 })
 

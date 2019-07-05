@@ -22,6 +22,19 @@ const patch = snabInit([
 // wrap snabH to connect to htm
 function h(target, props, ...children) {
   if (!props) props = {}
+
+  // spread operator returns original content
+  if (target === '...') {
+    let origContent = tracking.get(currentTarget).origContent
+    return origContent
+  }
+
+  // fragment targets return array
+  if (target === '') return children
+
+  // nested fragments create nested arrays
+  children = children.flat()
+
   return snabH(target, props, children)
 }
 const vhtml = htm.bind(h)
@@ -34,10 +47,15 @@ export default function html() {
   // takes current target
   let target = currentTarget
 
-  let oldVNode = tracking.has(target) ? tracking.get(target) : toVNode(target)
+  if (!tracking.has(target)) {
+    let vnode = toVNode(target)
+    tracking.set(target, {vnode, origContent: vnode.children})
+  }
+  let state = tracking.get(target)
+  // console.log(vhtml(...arguments))
 
   // builds target virtual DOM
-  let newVNode = snabH(oldVNode.sel, oldVNode.data, vhtml(...arguments))
-
-  tracking.set(target, patch(oldVNode, newVNode));
+  let newVnode = snabH(state.vnode.sel, state.vnode.data, vhtml(...arguments))
+  console.log(state.vnode, newVnode)
+  state.vnode = patch(state.vnode, newVnode)
 }
