@@ -24,7 +24,7 @@ t('fragment', t => {
   })
 })
 
-t.only('spread', t => {
+t('spread', t => {
   let el = document.createElement('div')
   el.innerHTML = '<a>b</a>'
 
@@ -34,20 +34,22 @@ t.only('spread', t => {
   })
 })
 
-t('two wrapping aspects', t => {
-  function a () {
-    html`<div id="a"><...><div>`
-  }
-
+t.only('two wrapping aspects', async t => {
   function b () {
-    html`<div id="b"><...></div>`
+    html`<div#b><...></div>`
   }
 
   let el = document.createElement('div')
+  el.innerHTML = 'content'
   $(el, a)
   $(el, b)
 
-  t.deepEqual(el.innerHTML, `<div id="b"><div id="a">content</div><div>`)
+  function a () {
+    html`<div#a><...></div>`
+    setTimeout(() => {
+      t.equal(el.innerHTML, `<div id="b"><div id="a">content</div><div>`)
+    }, 100)
+  }
 
   // updating is persistent
 })

@@ -23,10 +23,9 @@ const patch = snabInit([
 function h(target, props, ...children) {
   if (!props) props = {}
 
-  // spread operator returns original content
   if (target === '...') {
-    let origContent = tracking.get(currentTarget).origContent
-    return origContent
+    // return snabH('x', {}, [])
+    return tracking.get(currentTarget).origVnode.children
   }
 
   // fragment targets return array
@@ -37,25 +36,28 @@ function h(target, props, ...children) {
 
   return snabH(target, props, children)
 }
-const vhtml = htm.bind(h)
 
 
 // vnodes per targets
 const tracking = new WeakMap()
 
-export default function html() {
+export default function html(statics) {
+  // FIXME: dirty little hack to make <...> possible, consider that fast
+  // forking htm for that is too much
+  arguments[0] = statics.map(str => str.replace('<...>', '<.../>').replace('<br>', '<br/>').replace('<hr>', '<hr/>'))
+
   // takes current target
   let target = currentTarget
+  let aspect = currentAspect
 
   if (!tracking.has(target)) {
-    let vnode = toVNode(target)
-    tracking.set(target, {vnode, origContent: vnode.children})
+    tracking.set(target, {vnode: toVNode(target), origVnode: toVNode(target)})
   }
   let state = tracking.get(target)
-  // console.log(vhtml(...arguments))
 
   // builds target virtual DOM
-  let newVnode = snabH(state.vnode.sel, state.vnode.data, vhtml(...arguments))
+  let newVnode = snabH(state.vnode.sel, state.vnode.data, htm.apply(h, arguments))
+
   console.log(state.vnode, newVnode)
   state.vnode = patch(state.vnode, newVnode)
 }
