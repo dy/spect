@@ -43,6 +43,7 @@
   "dependencies": {
     "fast-on-load": "^1.0.1",
     "htm": "^2.1.1",
+    "primitive-pool": "^1.1.0",
     "snabbdom": "^0.7.3"
   },
   "devDependencies": {

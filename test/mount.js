@@ -2,8 +2,8 @@ import t from 'tst'
 import $, { mount } from '../index.js'
 
 
-// TODO: parcel: export default from; regenerator runtime here
-t('multiple mount callbacks', async t => {
+// TODO: parcel: export default from;
+t('mount: multiple mount callbacks', async t => {
   let log = []
 
   $('#x', el => {
@@ -37,6 +37,6 @@ t('multiple mount callbacks', async t => {
 })
 
 
-t.skip('instant remove/insert shouldn\'t trigger callback', async t => {
+t.skip('mount: instant remove/insert shouldn\'t trigger callback', async t => {
   // TODO
 })

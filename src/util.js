@@ -34,3 +34,42 @@ export function h (str, props) {
 export function isAsync (fn) {
   return fn.constructor.name === 'AsyncFunction'
 }
+
+
+// multikey weakmap
+export function MultikeyMap() {
+  let cache = new WeakMap
+
+  return {
+    has (...args) {
+      let store = cache, lastKey = args.pop()
+      for (let key of args) {
+        if (!store.has(key)) return
+        store = store.get(key)
+      }
+      return store.has(lastKey)
+    },
+
+    get (...args) {
+      let store = cache
+      for (let key of args) {
+        if (!store.has(key)) return
+        store = store.get(key)
+      }
+      return store
+    },
+
+    set (...args) {
+      let value = args.pop()
+      let valueKey = args.pop()
+      let store = cache
+      // obtain storage
+      for (let key of args) {
+        if (!store.has(key)) store.set(key, new WeakMap)
+        store = store.get(key)
+      }
+      store.set(valueKey, value)
+      return value
+    }
+  }
+}

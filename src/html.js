@@ -10,8 +10,8 @@ import snabEvent from 'snabbdom/modules/eventlisteners'
 import snabDataset from 'snabbdom/modules/dataset'
 import toVNode from 'snabbdom/tovnode'
 
-import { currentTarget, callFx } from './spect.js'
-import { isObject } from './util.js'
+import { currentTarget, currentAspect, callFx } from './spect.js'
+import { isObject, MultikeyMap } from './util.js'
 
 // patcher includes all possible decorators for now
 // TODO: mb remove data-, attr-, class- and props- stuff
@@ -25,7 +25,7 @@ function h(target, props, ...children) {
 
   if (target === '...') {
     // return snabH('x', {}, [])
-    return tracking.get(currentTarget).origVnode.children
+    return tracking.get(currentTarget, currentAspect).origVnode.children
   }
 
   // fragment targets return array
@@ -39,25 +39,22 @@ function h(target, props, ...children) {
 
 
 // vnodes per targets
-const tracking = new WeakMap()
+const tracking = new MultikeyMap()
 
 export default function html(statics) {
   // FIXME: dirty little hack to make <...> possible, consider that fast
+  // FIXME: that should be ignored if in quotes
   // forking htm for that is too much
-  arguments[0] = statics.map(str => str.replace('<...>', '<.../>').replace('<br>', '<br/>').replace('<hr>', '<hr/>'))
+  arguments[0] = statics.map(str => str.replace('<...>', '<.../>'))
 
   // takes current target
-  let target = currentTarget
-  let aspect = currentAspect
-
-  if (!tracking.has(target)) {
-    tracking.set(target, {vnode: toVNode(target), origVnode: toVNode(target)})
+  if (!tracking.has(currentTarget, currentAspect)) {
+    tracking.set(currentTarget, currentAspect, {vnode: toVNode(currentTarget), origVnode: toVNode(currentTarget)})
   }
-  let state = tracking.get(target)
+  let state = tracking.get(currentTarget, currentAspect)
 
   // builds target virtual DOM
   let newVnode = snabH(state.vnode.sel, state.vnode.data, htm.apply(h, arguments))
 
-  console.log(state.vnode, newVnode)
   state.vnode = patch(state.vnode, newVnode)
 }

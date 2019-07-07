@@ -1,7 +1,7 @@
 import t from 'tst'
 import $, { html } from '../index.js'
 
-t('basic', t => {
+t('html: basic', t => {
   let el = document.createElement('div')
   $(el, el => {
     html`<a>b</a>`
@@ -9,7 +9,7 @@ t('basic', t => {
   })
 })
 
-t('multiple root nodes', t => {
+t('html: multiple root nodes', t => {
   let el = document.createElement('div')
   $(el, el => {
     html`<a>a</><a>b</><foo><bar></bar></foo>`
@@ -17,14 +17,14 @@ t('multiple root nodes', t => {
   })
 })
 
-t('fragment', t => {
+t('html: fragment', t => {
   $(document.createElement('div'), el => {
     html`<><a>a</a><b><>b<c/></></b></>`
     t.equal(el.innerHTML, '<a>a</a><b>b<c></c></b>')
   })
 })
 
-t('spread', t => {
+t('html: spread', t => {
   let el = document.createElement('div')
   el.innerHTML = '<a>b</a>'
 
@@ -34,7 +34,7 @@ t('spread', t => {
   })
 })
 
-t.only('two wrapping aspects', async t => {
+t('html: two wrapping aspects', async t => {
   function b () {
     html`<div#b><...></div>`
   }
@@ -46,15 +46,13 @@ t.only('two wrapping aspects', async t => {
 
   function a () {
     html`<div#a><...></div>`
-    setTimeout(() => {
-      t.equal(el.innerHTML, `<div id="b"><div id="a">content</div><div>`)
-    }, 100)
   }
 
-  // updating is persistent
+  await (() => {})
+  t.equal(el.innerHTML, `<div id="b"><div id="a">content</div></div>`)
 })
 
-t('duplicate id warning', t => {
+t.skip('duplicate id warning', t => {
   let el = document.createElement('div')
   el.innerHTML = '<div id="a"></div>'
 
