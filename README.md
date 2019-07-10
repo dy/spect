@@ -336,9 +336,9 @@ $('.mdc-text-field', TextField)
 
 * [x] `$(sel|el, fn)`
 * [x] `mount(() => unmount)`
+* [ ] html`content`
 
 <!--
-* [ ] html`content`
 * [ ] css`style`
 * [ ] create(() => destroy)
 * [ ] fx(fn, deps?)
@@ -373,7 +373,7 @@ $('#button-container button', button => {
 
 ### `mount(() => () => {})`
 
-Mount effect calls passed function when the element is mounted on the DOM. The returned function is called on unmount.
+Mount effect invokes passed function when target is mounted to the DOM and invokes returned function when unmounted.
 
 ```js
 $('#target', el => {
@@ -428,16 +428,15 @@ $(el, el => {
 ```
 
 Note that an aspect can be assigned to existing elements, in that case `mount` will be triggered automatically.
+-->
 
+### ``html`content` ``
 
-### ``html`markup` ``
-
-HTML effect of an aspect. Makes sure current element has provided markup. Acts like html reducer, mapping initial markup to provided one.
+HTML effect makes sure that current element has provided markup.
 
 ```js
 import $, { html, state } from 'spect'
 
-// just like htm with aspects
 function Logs(el) {
   let {show} = state()
 
@@ -446,64 +445,49 @@ function Logs(el) {
   }
 
   return html`
-    <div class=logs ...${props}/>
+    <div.logs ...${props}/>
       <button onclick=${toggle}>▼</button>
-    ${
-      show && html`
-        <section class=logs-details>
-          ${ logs.map(log => html`<${Log} ...${log}/>`) }
-        </section>
-      `
-    }
+    ${show && html`
+      <section.logs-details>
+        ${ logs.map(Log) }
+      </section>
+    `}
     </div>
   `
 }
 
 function Log({ details, date }) {
-  html`<p>${details}</p>`
+  html`<p>${details}</p><time>${date.toLocalTimeString()}</time>`
 }
 ```
 
-To keep the initial markup the `<...>` tag can be used.
+`html` effect internally uses [htm](https://ghub.io/htm) and [snabbdom](https://ghub.io/snabbdom) with `classes`, `ids`, `attributes`, `eventlisteners`, `style` and `props` modules.
+
+Existing HTML elements can be used as tags or content.
 
 ```js
 import $, { attr } from 'spect'
 
 // enable `icon` attribute for all buttons
-$('button[icon]', ({icon}) => html`<i class="material-icons">${icon}</i> <...>`
-```
-
-To modify or keep specific elements, the `<#id>` tag can be used:
-
-```js
-// show validator after the email input
-$('.input-group', input => {
-  let { value } = prop()
-  html`<...><#email-input/><div class=validate>${validate(value)}</div>`
-})
-`
-```
-
-HTML effect internally uses [html](https://ghub.io/htm) fork with a couple of improvements.
-
-```js
+$('button[icon]', ({icon}) => html`<i class="material-icons">${icon}</i> ${el.childNodes}`
 
 // directly mount to DOM
 html`<${document.body} ...${attrs}>
-  <...>
   ${content}
 </>`
-
-// use existing selector-elements
-html`<#target ...${attrs}><...>${content}</>`
-
-// apply anonymous aspects
-html`<div ${aspect}></div>`
 ```
 
-HTML takes soft-vdom approach, similar to [react reconciliation](), with some differences. Instead of `key` prop it uses native `id` attribute - that removes burden of remembering that detail.
+Note that aspect element itself is also can be used, allowing wrapping own content. The `html` effect makes sure it does not create recursions on rerendering.
+
+```js
+function Wrapper (el) {
+  html`<div#id>${el}</div>`
+}
+```
 
 
+
+<!--
 
 ### `state(value?)`
 

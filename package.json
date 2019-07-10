@@ -2,10 +2,12 @@
   "name": "spect",
   "version": "0.0.1",
   "description": "Aspect-oriented virtual-DOM framework",
-  "main": "./index.js",
-  "module": "./index.js",
+  "source": "./src/index.js",
+  "main": "dist/spect.js",
+  "module": "dist/spect.mjs",
+  "unpkg": "dist/spect.umd.js",
   "scripts": {
-    "build": "parcel build",
+    "build": "microbundle",
     "start": "parcel serve test/index.html"
   },
   "repository": {
@@ -47,6 +49,7 @@
     "snabbdom": "^0.7.3"
   },
   "devDependencies": {
+    "microbundle": "^0.11.0",
     "parcel-bundler": "^1.12.3",
     "tape": "^4.11.0",
     "tst": "^2.0.2"
