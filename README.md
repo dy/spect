@@ -1,6 +1,6 @@
 # Spect
 
-`Spect` is effects kit for building expressive UIs in [aspect-oriented](https://en.wikipedia.org/wiki/Aspect-oriented_programming) fashion.
+`Spect` [aspect-oriented](https://en.wikipedia.org/wiki/Aspect-oriented_programming) web-framework for building expressive UIs.
 
 
 
@@ -81,7 +81,7 @@ Basic tool of spect is `html` effect. It acts similar to hyperscript, but deploy
 import $, { html } from 'spect'
 
 $(document.body, body =>
-  html`<${hello} id="hello-example" name="Taylor"></>`
+  html`<host><${hello} id="hello-example" name="Taylor"></>`)
 )
 
 function hello({name}) {
@@ -116,7 +116,7 @@ function timer(el) {
     }
   })
 
-  html`Seconds: ${seconds}`
+  html`<host>Seconds: ${seconds}</>`
 }
 ```
 
@@ -147,7 +147,7 @@ function Todo (el) {
   // delegates event to #new-todo element
   on('change', '#new-todo' e => state({ text: e.target.value });
 
-  html`
+  html`<host>
     <h3>TODO</h3>
     <main items=${items}>${TodoList}</main>
     <form>
@@ -159,7 +159,7 @@ function Todo (el) {
         Add #${items.length + 1}
       </button>
     </form>
-  `
+  </host>`
 }
 
 function TodoList ({items}) {
@@ -430,9 +430,9 @@ $(el, el => {
 Note that an aspect can be assigned to existing elements, in that case `mount` will be triggered automatically.
 -->
 
-### ``html`content` ``
+### ``html`...markup` ``
 
-HTML effect makes sure that current element has provided markup.
+HTML effect builds provided DOM markup and makes sure that's mounted, performing necessary updates.
 
 ```js
 import $, { html, state } from 'spect'
@@ -444,47 +444,20 @@ function Logs(el) {
     state({show: !show})
   }
 
-  return html`
-    <div.logs ...${props}/>
-      <button onclick=${toggle}>▼</button>
+  html`<${el} class=logs ...${props}>
+    <button onclick=${toggle}>▼</button>
     ${show && html`
       <section.logs-details>
         ${ logs.map(Log) }
-      </section>
-    `}
-    </div>
-  `
+      </section>`
+    }
+  </>`
 }
 
-function Log({ details, date }) {
-  html`<p>${details}</p><time>${date.toLocalTimeString()}</time>`
-}
+const Log = ({ details, date }) => `<p>${details}</p><time>${ date.toLocalTimeString() }</time>`
 ```
 
-`html` effect internally uses [htm](https://ghub.io/htm) and [snabbdom](https://ghub.io/snabbdom) with `classes`, `ids`, `attributes`, `eventlisteners`, `style` and `props` modules.
-
-Existing HTML elements can be used as tags or content.
-
-```js
-import $, { attr } from 'spect'
-
-// enable `icon` attribute for all buttons
-$('button[icon]', ({icon}) => html`<i class="material-icons">${icon}</i> ${el.childNodes}`
-
-// directly mount to DOM
-html`<${document.body} ...${attrs}>
-  ${content}
-</>`
-```
-
-Note that aspect element itself is also can be used, allowing wrapping own content. The `html` effect makes sure it does not create recursions on rerendering.
-
-```js
-function Wrapper (el) {
-  html`<div#id>${el}</div>`
-}
-```
-
+Internally `html` uses [htm](https://ghub.io/htm) and [snabbdom](https://ghub.io/snabbdom) with `class`, `props`, `style`, `attributes`, `eventlisteners` and `dataset` modules.
 
 
 <!--

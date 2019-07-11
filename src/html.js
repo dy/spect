@@ -10,8 +10,8 @@ import snabEvent from 'snabbdom/modules/eventlisteners'
 import snabDataset from 'snabbdom/modules/dataset'
 import toVNode from 'snabbdom/tovnode'
 
-import { currentTarget, currentAspect, callFx } from './spect.js'
-import { isObject, MultikeyMap } from './util.js'
+import { currentTarget, currentAspect, callFx, callAspect } from './spect.js'
+import { MultikeyMap } from './util.js'
 
 // patcher includes all possible decorators for now
 // TODO: mb remove data-, attr-, class- and props- stuff
@@ -19,13 +19,31 @@ const patch = snabInit([
   snabClass, snabProps, snabAttrs, snabStyle, snabEvent, snabDataset
 ]);
 
+// vnodes per targets
+const tracking = new MultikeyMap()
+
 // wrap snabH to connect to htm
 function h(target, props, ...children) {
   if (!props) props = {}
 
-  if (target === '...') {
-    // return snabH('x', {}, [])
-    return tracking.get(currentTarget, currentAspect).origVnode.children
+  // DOM targets get their props / content updated
+  if (target instanceof Node) {
+    if (!tracking.has(target)) tracking.set(target, toVNode(target))
+    let oldVnode = tracking.get(target)
+    let newVNode = snabH(oldVnode.sel, {props}, children)
+    tracking.set(target, patch(oldVnode, newVNode))
+    return target
+  }
+
+  // Components create modifyable document fragment
+  if (typeof target === 'function') {
+    if (!tracking.has(target)) tracking.set(target, document.createDocumentFragment())
+    let frag = tracking.get(target)
+    Object.assign(frag, props)
+    callAspect(frag, target)
+
+    // unwrap fragment to plain list of children
+    return frag.childNodes.length <= 1 ? frag.firstChild : [...frag.childNodes]
   }
 
   // fragment targets return array
@@ -38,23 +56,20 @@ function h(target, props, ...children) {
 }
 
 
-// vnodes per targets
-const tracking = new MultikeyMap()
-
 export default function html(statics) {
-  // FIXME: dirty little hack to make <...> possible, consider that fast
-  // FIXME: that should be ignored if in quotes
-  // forking htm for that is too much
-  arguments[0] = statics.map(str => str.replace('<...>', '<.../>'))
+  let vtree = htm.apply(h, arguments)
 
-  // takes current target
-  if (!tracking.has(currentTarget, currentAspect)) {
-    tracking.set(currentTarget, currentAspect, {vnode: toVNode(currentTarget), origVnode: toVNode(currentTarget)})
-  }
-  let state = tracking.get(currentTarget, currentAspect)
+  if (Array.isArray(vtree)) return vtree.map(domify)
 
-  // builds target virtual DOM
-  let newVnode = snabH(state.vnode.sel, state.vnode.data, htm.apply(h, arguments))
+  return domify(vtree)
+}
 
-  state.vnode = patch(state.vnode, newVnode)
+export function domify(vnode) {
+  if (vnode instanceof Node) return vnode
+
+  // FIXME: make sure we can't reuse element creation here
+  let result = document.createElement(vnode.sel)
+  patch(toVNode(result), vnode)
+
+  return result
 }

@@ -3,7 +3,7 @@ import $, {html, on, state, fx} from 'spect'
 
 $('#mount', main)
 
-function main () {
+function main (target) {
   // model
   let {celsius, fahren} = state()
 
@@ -16,7 +16,7 @@ function main () {
   fx(() => state({ fahren:  (celsius * 9) / 5 + 32) }), [celsius])
 
   // html effect
-  html`<div>
+  html`<${target}>
     <div>
       <label>Fahrenheit</>
       <input value=${fahren}).output({ fahrenInput: "input" })

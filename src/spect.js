@@ -130,13 +130,8 @@ function handleAspect(target, aspect) {
   if (!targetAspects.has(aspect)) {
     targetAspects.add(aspect)
 
-    let prevTarget = currentTarget
-    currentTarget = target
-
     // FIXME: figure out what to do with result
-    callAspect(aspect)
-
-    currentTarget = prevTarget
+    callAspect(target, aspect)
   }
 }
 
@@ -149,7 +144,10 @@ export function onBeforeAspect(fn) {
   if (beforeAspectListeners.indexOf(fn) < 0) beforeAspectListeners.push(fn)
 }
 
-export function callAspect(fn) {
+export function callAspect(target, fn) {
+  let prevTarget = currentTarget
+  currentTarget = target
+
   let prevAspect = currentAspect
   currentAspect = fn
 
@@ -158,6 +156,7 @@ export function callAspect(fn) {
   let result = fn(currentTarget)
 
   currentAspect = prevAspect
+  currentTarget = prevTarget
 
   return result
 }

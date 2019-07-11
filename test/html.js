@@ -1,11 +1,39 @@
 import t from 'tst'
-import $, { html } from '../index.js'
+import $, { html } from '../src/index.js'
 
 t('html: basic', t => {
+  let node = html`<a></a>`
+  t.equal(node.outerHTML, '<a></a>')
+
+  let [a, b] = html`<a/><b/>`
+  t.equal(a.outerHTML, `<a></a>`)
+  t.equal(b.outerHTML, `<b></b>`)
+
   let el = document.createElement('div')
+  let el1 = html`<${el}><foo/></>`
+  t.equal(el, el1)
+  t.equal(el.outerHTML, '<div><foo></foo></div>')
+
+  t.equal(el, el1)
+})
+
+t.only('html: component / props', t=> {
+  let c = html`<${C} x y=1 z=${2} />`
+
+  function C (el) {
+    t.deepEqual({x: el.x, y: el.y, z: el.z}, {x: true, y: '1', z: 2})
+
+    html`<${el}><div></div></>`
+  }
+
+  t.equal(c.outerHTML, '<div></div>')
+})
+
+t('html: DOM attrs/props', t => {
+  let el = document.createElement('x')
   $(el, el => {
-    html`<a>b</a>`
-    t.equal(el.innerHTML, '<a>b</a>')
+    html`<${el} x y=1><a z=${() => {}}>b</a></>`
+    t.equal(el.outerHTML, '<x><a>b</a></x>')
   })
 })
 
@@ -24,19 +52,27 @@ t('html: fragment', t => {
   })
 })
 
-t('html: spread', t => {
+t('html: wrapping', t => {
   let el = document.createElement('div')
   el.innerHTML = '<a>b</a>'
 
   $(el, el => {
-    html`<b><...></b>`
+    html`<b>${el.childNodes}</b>`
     t.equal(el.innerHTML, '<b><a>b</a></b>')
   })
 })
 
+t('html: adjacent node', t => {
+
+})
+
+t('html: external node', t => {
+  html`<${el}>content</>`
+})
+
 t('html: two wrapping aspects', async t => {
-  function b () {
-    html`<div#b><...></div>`
+  function b (el) {
+    html`<div#b>${el}</div>`
   }
 
   let el = document.createElement('div')
@@ -44,8 +80,8 @@ t('html: two wrapping aspects', async t => {
   $(el, a)
   $(el, b)
 
-  function a () {
-    html`<div#a><...></div>`
+  function a (el) {
+    html`<div#a>${el}</div>`
   }
 
   await (() => {})
@@ -59,4 +95,13 @@ t.skip('duplicate id warning', t => {
   t.throws(() => {
     $(el, el => html`<div id="a"></div><...>`)
   })
+})
+
+t('html: destructuring result nodes')
+t('html: destructuring result ids')
+
+
+t('html: nested fragments', t => {
+  `<><></></>`
+
 })

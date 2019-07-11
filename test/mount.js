@@ -1,5 +1,5 @@
 import t from 'tst'
-import $, { mount } from '../index.js'
+import $, { mount } from '../src/index.js'
 
 
 // TODO: parcel: export default from;
