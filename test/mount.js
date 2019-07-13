@@ -27,13 +27,13 @@ t('mount: multiple mount callbacks', async t => {
 
   await (() => {})
 
-  t.deepEqual(log, ['mount A', 'mount B'])
+  t.deepEqual(log, ['mount A', 'mount B'], 'multiple mounts')
 
   document.documentElement.removeChild(x)
 
   await (() => {})
 
-  t.deepEqual(log, ['mount A', 'mount B', 'unmount A', 'unmount B'])
+  t.deepEqual(log, ['mount A', 'mount B', 'unmount A', 'unmount B'], 'multiple unmounts')
 })
 
 

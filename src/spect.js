@@ -7,18 +7,13 @@ import { isAsync } from './util.js'
 // const SPECT_CLASS = '👁' //+ Math.random().toString(36).slice(2)
 // const CONNECTED = 0, DISCONNECTED = 1
 
-// selector aspects
+// NOTE: aspect === init effect, that treats returned function as destroy effect
+
+// selector effects
 export const selectors = {}
 
-// tracked real elements with their aspects
+// tracked real elements with their effects
 export const tracking = new WeakMap()
-
-// calling aspects/fx stack
-export let currentTarget = document.documentElement
-
-// current is always bound to target, current fx acts on single aspect but can be nested
-export let currentAspect = null
-export let currentFx = null
 
 
 const SELECTOR_ID = 1, SELECTOR_CLASS = 2, SELECTOR_QUERY = 3, SELECTOR_ELEMENT = 4
@@ -131,44 +126,46 @@ function handleAspect(target, aspect) {
     targetAspects.add(aspect)
 
     // FIXME: figure out what to do with result
-    callAspect(target, aspect)
+    callFx('init', aspect, target)
   }
 }
 
 
+// calling fx stack
+export let currentTarget = document.documentElement
+export let currentFx = null
+export let currentFxName = null
+export let currentBeforeFxStack = [], currentAfterFxStack = []
 
 
 // before render hook
-const beforeAspectListeners = []
-export function onBeforeAspect(fn) {
-  if (beforeAspectListeners.indexOf(fn) < 0) beforeAspectListeners.push(fn)
+export function beforeFx(fn) {
+  if (currentBeforeFxStack.indexOf(fn) < 0) currentBeforeFxStack.push(fn)
 }
 
-export function callAspect(target, fn) {
+export function callFx(name, fn, target=currentTarget) {
   let prevTarget = currentTarget
   currentTarget = target
 
-  let prevAspect = currentAspect
-  currentAspect = fn
+  let prevFx = currentFx
+  currentFx = fn
 
-  beforeAspectListeners.forEach(fn => fn())
+  let prevFxName = currentFxName
+  currentFxName = name
+
+  currentBeforeFxStack.forEach(fn => fn())
 
   let result = fn(currentTarget)
 
-  currentAspect = prevAspect
+  currentAfterFxStack.forEach(fn => fn())
+
+  currentFx = prevFx
   currentTarget = prevTarget
+  currentFxName = prevFxName
 
   return result
 }
 
+export function createWebComponentAspect (fn) {
 
-export function callFx(fn, args=[]) {
-  let prevFx = currentFx
-  currentFx = fn
-
-  let result = fn(...args)
-
-  currentFx = prevFx
-
-  return result
 }
