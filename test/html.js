@@ -17,7 +17,7 @@ t('html: basic', t => {
   t.equal(el, el1)
 })
 
-t.only('html: component / props', t=> {
+t('html: function components', t=> {
   let c = html`<${C} x y=1 z=${2} />`
 
   function C (el) {
@@ -28,6 +28,18 @@ t.only('html: component / props', t=> {
 
   t.equal(c.outerHTML, '<div></div>')
 })
+
+t.skip('html: function as a child (invalid in react)', t => {
+  html`<a>${C}</a>`
+
+  function C () {
+
+  }
+})
+
+t('html: class components')
+
+t('html: extended web-components')
 
 t('html: DOM attrs/props', t => {
   let el = document.createElement('x')

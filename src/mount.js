@@ -1,9 +1,8 @@
 import onload from 'fast-on-load'
 import { currentTarget, callFx, beforeFx } from './spect.js'
+import { noop } from './util.js'
 
 let tracking = new WeakMap
-
-const noop = () => {}
 
 
 export default function mount (fn) {
@@ -32,6 +31,8 @@ export default function mount (fn) {
   mount.push(fn)
 }
 
+// FIXME: beforeFx is too generic. It should be
+// 'if target re-runs any of it's effects of the current stack level, reset mount listeners _of the current stack level_'
 beforeFx((target) => {
   if (!tracking.has(currentTarget)) return
 

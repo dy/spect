@@ -1,4 +1,5 @@
-import { isAsync } from './util.js'
+import { isAsync, noop } from './util.js'
+import render from './render.js';
 
 
 // TODO: invalidate html vdom for elements that're being changed by something outside of spect scope
@@ -27,18 +28,19 @@ function getSelectorType (selector) {
 
 // TODO: run already existing elements matching selector
 
-// { selector: aspect[] } map
+// { selector: listener[] } map
 // FIXME: make a weakmap
 
-export default function spect (selector, aspect) {
+export default function spect (selector, listener) {
   if (selector instanceof Node) {
-    return handleAspect(selector, aspect)
+    let target = selector
+    return handleListener(target, null, listener)
   }
 
   // FIXME: make selectors an array
-  let aspects = selectors[selector] || (selectors[selector] = [])
-  aspects.push(aspect)
-  aspects.type = getSelectorType(selector)
+  let listeners = selectors[selector] || (selectors[selector] = [])
+  listeners.push(listener)
+  listeners.type = getSelectorType(selector)
 
   // TODO: create spect.min without mutation observers
   // no-mutations initializer
@@ -49,11 +51,11 @@ export default function spect (selector, aspect) {
 }
 
 
-// TODO: build an aspect handler?
+// TODO: build an listener listener?
 // TODO: observer allows multiple targets
 // TODO: unregister observer when element is unmounted
 // FIXME: make this observer lazy
-// Single purpose observer - init aspect for elements matching selector
+// Single purpose observer - init listener for elements matching selector
 export const observer = new MutationObserver(handleMutations)
 
 // FIXME: make observer combinatory, so that complex selectors don't register observe-all stuff. `css-what` is nice solution.
@@ -61,6 +63,7 @@ observer.observe(document.documentElement, {
   childList: true,
   subtree: true,
   attributes: true,
+  // FIXME: selectors should register corresponding attributeFilter
   attributeFilter: ['id', 'class']
 })
 
@@ -75,13 +78,18 @@ function handleMutations (mutations) {
 
 function handleElements (nodes) {
   // TODO: inverse querying as `ids[node.id]`, `classes[node.class[i]]`
+  // TODO: cache selectors assigned to targets and check if they're valid still
   for (let i = 0; i < nodes.length; i++) {
     let node = nodes[i]
 
+    // ignore non-element nodes
+    // FIXME: there should be a faster way to filter text nodes
+    if (node.nodeType !== 1) continue
 
+    // check if target matches any of registered selector listeners
     for (let selector in selectors) {
-      let selAspects = selectors[selector]
-      let selType = selAspects.type
+      let selListeners = selectors[selector]
+      let selType = selListeners.type
 
       let targets = []
 
@@ -106,27 +114,28 @@ function handleElements (nodes) {
 
       targets = targets.filter(Boolean)
 
-      selAspects.forEach(aspect => {
-        targets.forEach(target => handleAspect(target, aspect))
+      selListeners.forEach(listener => {
+        targets.forEach(target => handleListener(target, selector, listener))
       })
     }
   }
 }
 
-function handleAspect(target, aspect) {
+function handleListener(target, selector, listener) {
   // init state for unknown targets
   if (!tracking.has(target)) {
-    tracking.set(target, new WeakSet)
+    tracking.set(target, new WeakMap)
   }
 
-  let targetAspects = tracking.get(target)
+  let targetListeners = tracking.get(target)
 
-  // init run aspect
-  if (!targetAspects.has(aspect)) {
-    targetAspects.add(aspect)
+  // init run listener
+  if (!targetListeners.has(listener)) {
+    let listenerState = {}
+    targetListeners.set(listener, listenerState)
 
-    // FIXME: figure out what to do with result
-    callFx('init', aspect, target)
+    // result is destructor function
+    render(target, selector, listener)
   }
 }
 
@@ -143,29 +152,31 @@ export function beforeFx(fn) {
   if (currentBeforeFxStack.indexOf(fn) < 0) currentBeforeFxStack.push(fn)
 }
 
-export function callFx(name, fn, target=currentTarget) {
-  let prevTarget = currentTarget
-  currentTarget = target
+export function callFx(name, fn, target) {
+  let prevTarget
+  if (target) {
+    prevTarget = currentTarget
+    currentTarget = target
+  }
 
   let prevFx = currentFx
   currentFx = fn
 
+  // TODO: use for effectFn.name
   let prevFxName = currentFxName
   currentFxName = name
 
   currentBeforeFxStack.forEach(fn => fn())
 
+  // current target passed for inline effects `$(target).fx(target => {})`
   let result = fn(currentTarget)
 
   currentAfterFxStack.forEach(fn => fn())
 
   currentFx = prevFx
-  currentTarget = prevTarget
   currentFxName = prevFxName
+  if (target) currentTarget = prevTarget
 
   return result
 }
 
-export function createWebComponentAspect (fn) {
-
-}

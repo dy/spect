@@ -10,7 +10,7 @@ import snabEvent from 'snabbdom/modules/eventlisteners'
 import snabDataset from 'snabbdom/modules/dataset'
 import toVNode from 'snabbdom/tovnode'
 
-import { currentTarget, currentAspect, callFx, callAspect } from './spect.js'
+import { currentTarget, createComponent } from './spect.js'
 import { MultikeyMap } from './util.js'
 
 // patcher includes all possible decorators for now
@@ -20,7 +20,8 @@ const patch = snabInit([
 ]);
 
 // vnodes per targets
-const tracking = new MultikeyMap()
+const tracking = new WeakMap()
+
 
 // wrap snabH to connect to htm
 function h(target, props, ...children) {
@@ -35,15 +36,15 @@ function h(target, props, ...children) {
     return target
   }
 
-  // Components create modifyable document fragment
+  //  register web-component
   if (typeof target === 'function') {
-    if (!tracking.has(target)) tracking.set(target, document.createDocumentFragment())
-    let frag = tracking.get(target)
-    Object.assign(frag, props)
-    callAspect(frag, target)
+    if (!tracking.has(target)) {
+      // TODO: differentiate class / function
+      tracking.set(target, createComponent(target, props, children))
+    }
+    let { tagName } = tracking.get(target)
 
-    // unwrap fragment to plain list of children
-    return frag.childNodes.length <= 1 ? frag.firstChild : [...frag.childNodes]
+    return snabH(tagName, props, children)
   }
 
   // fragment targets return array
