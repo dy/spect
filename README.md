@@ -1,8 +1,8 @@
 # Spect
 
-`Spect` [aspect-oriented](https://en.wikipedia.org/wiki/Aspect-oriented_programming) web-framework for building expressive UIs.
+`Spect` is [aspect-oriented](https://en.wikipedia.org/wiki/Aspect-oriented_programming) web-framework for building expressive UIs.
 
-
+<!-- It can be thought of as mixture of jQuery, vdom, hooks and web-components. -->
 
 <!--
 ```js
@@ -334,9 +334,9 @@ $('.mdc-text-field', TextField)
 
 ## API
 
-* [x] `$(sel|el, fn)`
-* [x] `mount(() => unmount)`
-* [ ] html`content`
+* [x] `$(selector|element, init => destroy)`
+* [x] `mount(mount => unmount)`
+* [ ] html`...content`
 
 <!--
 * [ ] css`style`
@@ -351,25 +351,40 @@ $('.mdc-text-field', TextField)
 * [ ] query(value?)
 * [ ] local(value?)
 
+* [ ] plugins
 
+-->
 
-### `$(selector|element, fn)`
+### `$(selector|element, init)`
 
-Register selector observer aspect or direct element aspect.
+Register selector observer or direct element aspect. Returned from aspect function is called when aspect is removed.
 
 ```js
-import $, { on } from 'spect'
+import $, from 'spect'
 
-$('#button-container button', button => {
-  on('click', evt => )
-
-  $('#banner-message', el => el.classList.toggle('visible'))
+// API
+$('#my-selector', element => {
+  // ...init
+  return () => {
+    // ...destroy
+  }
 })
 ```
 
-`$` returns the result of the aspect function.
+Example:
 
--->
+```js
+import $, { on, state } from 'spect'
+
+let hiddenBox = $('#banner-message');
+$('#button-container button').on( 'click', e => {
+  hiddenBox.classList.add( 'visible' )
+});
+```
+
+You may wonder what's the difference with [jQuery](https://jquery.com/)?
+In `spect` selector results are dynamic, so that it doesn't matter when the code is executed or if there are matching elements the DOM. _For any elements ever attached to the DOM, matching the selectors, `spect` runs the described handler, called **aspect**._
+
 
 ### `mount(() => () => {})`
 
