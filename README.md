@@ -391,7 +391,7 @@ $('#button-container button').on( 'click', e => {
 
 You may wonder what's the difference with [jQuery](https://jquery.com/)?
 
-`spect` treats selector dynamically, so that it doesn't matter when the code is executed or if there are matching elements the DOM.
+− _Spect_ treats selector dynamically, so that it doesn't matter when the spect code is launched or if there are matching elements the DOM.
 
 _For any elements matching the selector, ever attached to the DOM, `spect` runs the described handler function, called **aspect**._
 
