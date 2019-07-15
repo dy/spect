@@ -1,9 +1,9 @@
 import onload from 'fast-on-load'
-import { currentTarget, callFx, beforeFx } from './spect.js'
+import { currentTarget, callFx } from './spect.js'
 import { noop } from './util.js'
+import { beforeRender } from './render.js'
 
-let tracking = new WeakMap
-
+let tracking = new WeakMap()
 
 export default function mount (fn) {
   if (!tracking.has(currentTarget)) {
@@ -24,6 +24,14 @@ export default function mount (fn) {
       let state = tracking.get(target)
       state.unmount.forEach(fn => callFx('unmount', fn || noop))
     })
+
+    // if target rerenders, reset mounted listeners (re-registered anyways)
+    beforeRender(target, fn => {
+      if (!tracking.has(target)) return
+
+      let { mount, unmount } = tracking.get(target)
+      mount.length = 0
+    })
   }
 
   // mount array is clean for the first mount call
@@ -31,14 +39,5 @@ export default function mount (fn) {
   mount.push(fn)
 }
 
-// FIXME: beforeFx is too generic. It should be
-// 'if target re-runs any of it's effects of the current stack level, reset mount listeners _of the current stack level_'
-beforeFx((target) => {
-  if (!tracking.has(currentTarget)) return
-
-  // whenever we have a new aspect init call - reset mounts, they're re-registered each mount call
-  let { mount, unmount } = tracking.get(currentTarget)
-  mount.length = 0
-})
 
 

@@ -11,7 +11,7 @@ import snabDataset from 'snabbdom/modules/dataset'
 import toVNode from 'snabbdom/tovnode'
 
 import { currentTarget, createComponent } from './spect.js'
-import { MultikeyMap } from './util.js'
+import { } from './util.js'
 
 // patcher includes all possible decorators for now
 // TODO: mb remove data-, attr-, class- and props- stuff

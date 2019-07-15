@@ -1,23 +1,28 @@
-// init/render/update effect
-// triggered when aspect is attached to element or on any update
+// main aspect effect (init/render/update/run/etc.)
+// triggered when aspect is attached to element or on any rerender/rerun
 // destroyed when element stops matching aspect or parent element loses its aspect
-import { currentTarget, callFx, beforeFx } from './spect.js'
+import t from 'immutable-tuple'
+import { currentTarget, callFx, beforeFx, SPECT_CLASS, selectors, currentFx } from './spect.js'
 import { MultikeyMap, noop } from './util'
 
-const tracking = new MultikeyMap()
+const tracking = new WeakMap()
+const selCount = new WeakMap()
 
-export default function render (target, selector, listener=noop) {
-  if (selector && !tracking.has(target, listener)) {
-    // register single-instance observer to match element
+export let currentRender = null
+
+
+export default function render (target, selector, fx=noop) {
+  if (selector && !tracking.has(t(target, fx))) {
+    if (!selCount.has(target)) selCount.set(target, 0)
+    selCount.set(target, selCount.get(target) + 1)
+
+    // on attr change
     const observer = new MutationObserver((mutations) => {
-      // TODO: check if no multations
-
-      // dispose element if it doesn't match selector anymore
+      // dispose element and it's nested fxs if it doesn't match selector anymore
       if (!target.matches(selector)) {
-        let {destroy} = tracking.get(target, listener)
-        destroy()
-        tracking.delete(target, listener)
-        observer.disconnect()
+        let { dispose, children } = tracking.get(t(target, fx))
+        for (let [target, fx] of children) tracking.get(t(target, fx)).dispose()
+        dispose()
       }
     })
 
@@ -27,12 +32,56 @@ export default function render (target, selector, listener=noop) {
       // attributeFilter: ['id', 'class']
     })
 
-    tracking.set(target, listener, {
-      observer
+    // init aspect state
+    tracking.set(t(target, fx), {
+      children: new Set,
+      dispose() {
+        let { destroy } = tracking.get(t(target, fx))
+        destroy()
+        tracking.delete(t(target, fx))
+        observer.disconnect()
+      }
     })
   }
 
+  // before hook
+  if (beforeStack.has(target)) beforeStack.get(target).forEach(fn => fn(target))
+
+  // register current target in parent aspect children list
+  let parentState = tracking.get(t(currentTarget, currentRender))
+  if (parentState) parentState.children.add(t(target, fx))
+
+  // reset child aspects count
+  let state = tracking.get(t(target, fx))
+  let prevChildren = state.children
+  let newChildren = state.children = new Set
+
   // rerender
-  let state = tracking.get(target, listener)
-  state.destroy = callFx('render', listener, target) || noop
+  let prevRender = currentRender
+  currentRender = fx
+  state.destroy = callFx('render', fx, target) || noop
+  currentRender = prevRender
+
+  // check if some old children need disposal
+  for (let [target, fx] of prevChildren) {
+    if (!newChildren.has(t(target, fx))) tracking.get(t(target, fx)).dispose()
+  }
+
+  // after hook
+  if (afterStack.has(target)) afterStack.get(target).forEach(fn => fn(target))
+}
+
+
+// render hooks
+const beforeStack = new WeakMap, afterStack = new WeakMap
+
+export function beforeRender(target, fn) {
+  if (!beforeStack.has(target)) beforeStack.set(target, [])
+  let beforeListeners = beforeStack.get(target)
+  if (beforeListeners.indexOf(fn) < 0) beforeListeners.push(fn)
+}
+export function afterRender(target, fn) {
+  if (!afterStack.has(target)) afterStack.set(target, [])
+  let afterListeners = afterStack.get(target)
+  if (afterListeners.indexOf(fn) < 0) afterListeners.push(fn)
 }

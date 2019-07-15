@@ -36,6 +36,33 @@ t('mount: multiple mount callbacks', async t => {
   t.deepEqual(log, ['mount A', 'mount B', 'unmount A', 'unmount B'], 'multiple unmounts')
 })
 
+t('mount: unsynced aspects should not affect mount of each other', async t => {
+  let log = []
+
+  let el = document.createElement('div')
+
+  $(el, () => {
+    mount(() => {
+      log.push('+a')
+      return () => log.push('-a')
+    })
+  })
+
+  $(el, () => {
+    mount(() => {
+      log.push('+b')
+      return () => log.push('-b')
+    })
+  })
+
+  await (_=>_)
+  t.deepEqual(log, [])
+
+  document.body.appendChild(el)
+  await (_=>_)
+  t.deepEqual(log, ['+a', '+b'])
+})
+
 
 t.skip('mount: instant remove/insert shouldn\'t trigger callback', async t => {
   // TODO

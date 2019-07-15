@@ -5,7 +5,7 @@ import render from './render.js';
 // TODO: invalidate html vdom for elements that're being changed by something outside of spect scope
 
 
-// const SPECT_CLASS = '👁' //+ Math.random().toString(36).slice(2)
+export const SPECT_CLASS = '👁' + Math.random().toString(36).slice(2)
 // const CONNECTED = 0, DISCONNECTED = 1
 
 // NOTE: aspect === init effect, that treats returned function as destroy effect
@@ -31,16 +31,16 @@ function getSelectorType (selector) {
 // { selector: listener[] } map
 // FIXME: make a weakmap
 
-export default function spect (selector, listener) {
+export default function spect (selector, fx) {
   if (selector instanceof Node) {
     let target = selector
-    return handleListener(target, null, listener)
+    return handleFx(target, null, fx)
   }
 
   // FIXME: make selectors an array
-  let listeners = selectors[selector] || (selectors[selector] = [])
-  listeners.push(listener)
-  listeners.type = getSelectorType(selector)
+  let fxs = selectors[selector] || (selectors[selector] = [])
+  fxs.push(fx)
+  fxs.type = getSelectorType(selector)
 
   // TODO: create spect.min without mutation observers
   // no-mutations initializer
@@ -88,8 +88,8 @@ function handleElements (nodes) {
 
     // check if target matches any of registered selector listeners
     for (let selector in selectors) {
-      let selListeners = selectors[selector]
-      let selType = selListeners.type
+      let selFxs = selectors[selector]
+      let selType = selFxs.type
 
       let targets = []
 
@@ -114,28 +114,28 @@ function handleElements (nodes) {
 
       targets = targets.filter(Boolean)
 
-      selListeners.forEach(listener => {
-        targets.forEach(target => handleListener(target, selector, listener))
+      selFxs.forEach(fx => {
+        targets.forEach(target => handleFx(target, selector, fx))
       })
     }
   }
 }
 
-function handleListener(target, selector, listener) {
+function handleFx(target, selector, fx) {
   // init state for unknown targets
   if (!tracking.has(target)) {
     tracking.set(target, new WeakMap)
   }
 
-  let targetListeners = tracking.get(target)
+  let targetFxs = tracking.get(target)
 
-  // init run listener
-  if (!targetListeners.has(listener)) {
-    let listenerState = {}
-    targetListeners.set(listener, listenerState)
+  // init render fx
+  if (!targetFxs.has(fx)) {
+    let fxState = {}
+    targetFxs.set(fx, fxState)
 
     // result is destructor function
-    render(target, selector, listener)
+    render(target, selector, fx)
   }
 }
 
@@ -144,13 +144,6 @@ function handleListener(target, selector, listener) {
 export let currentTarget = document.documentElement
 export let currentFx = null
 export let currentFxName = null
-export let currentBeforeFxStack = [], currentAfterFxStack = []
-
-
-// before render hook
-export function beforeFx(fn) {
-  if (currentBeforeFxStack.indexOf(fn) < 0) currentBeforeFxStack.push(fn)
-}
 
 export function callFx(name, fn, target) {
   let prevTarget
@@ -166,12 +159,8 @@ export function callFx(name, fn, target) {
   let prevFxName = currentFxName
   currentFxName = name
 
-  currentBeforeFxStack.forEach(fn => fn())
-
   // current target passed for inline effects `$(target).fx(target => {})`
   let result = fn(currentTarget)
-
-  currentAfterFxStack.forEach(fn => fn())
 
   currentFx = prevFx
   currentFxName = prevFxName
