@@ -355,9 +355,11 @@ $('.mdc-text-field', TextField)
 
 -->
 
-### `$(selector|element, init)`
+### `$(selector|element, fn)`
 
-Register selector observer or direct element aspect. Returned from aspect function is called when aspect is removed.
+Register selector observer or direct element handler `fn`. Returned from `fn` function is invoked when the selector is disabled.
+
+#### Signature
 
 ```js
 import $, from 'spect'
@@ -371,7 +373,7 @@ $('#my-selector', element => {
 })
 ```
 
-Example:
+#### Example
 
 ```js
 import $, { on, state } from 'spect'
@@ -383,7 +385,9 @@ $('#button-container button').on( 'click', e => {
 ```
 
 You may wonder what's the difference with [jQuery](https://jquery.com/)?
-In `spect` selector results are dynamic, so that it doesn't matter when the code is executed or if there are matching elements the DOM. _For any elements ever attached to the DOM, matching the selectors, `spect` runs the described handler, called **aspect**._
+`spect` treats selector dynamically, so that it doesn't matter when the code is executed or if there are matching elements the DOM. _For any elements matching the selector, ever attached to the DOM, `spect` runs the described handler function, called **aspect**._
+
+---
 
 
 ### `mount(() => () => {})`
