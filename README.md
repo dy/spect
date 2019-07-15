@@ -357,7 +357,7 @@ $('.mdc-text-field', TextField)
 
 ### `$(selector|element, fn)`
 
-Register selector observer or direct element handler `fn`. Returned from `fn` function is invoked when the selector is disabled.
+Register selector observer or direct element handler `fn`. Returned from `fn` function is invoked when the aspect is destroyed.
 
 #### Signature
 
@@ -366,11 +366,18 @@ import $, from 'spect'
 
 // API
 $('#my-selector', element => {
-  // ...init
+  console.log('init')
   return () => {
-    // ...destroy
+    console.log('destroy')
   }
 })
+
+let myElement = document.body.appendChild(document.createElement('div'))
+myElement.id = 'my-selector'
+// init
+
+myElement.id = null
+// destroy
 ```
 
 #### Example
