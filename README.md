@@ -359,8 +359,6 @@ $('.mdc-text-field', TextField)
 
 Register selector observer or direct element handler `fn`. Returned from `fn` function is invoked when the aspect is destroyed.
 
-#### Signature
-
 ```js
 import $, from 'spect'
 
@@ -387,12 +385,15 @@ import $, { on, state } from 'spect'
 
 let hiddenBox = $('#banner-message');
 $('#button-container button').on( 'click', e => {
-  hiddenBox.classList.add( 'visible' )
+  hiddenBox.classList.toggle( 'visible' )
 });
 ```
 
 You may wonder what's the difference with [jQuery](https://jquery.com/)?
-`spect` treats selector dynamically, so that it doesn't matter when the code is executed or if there are matching elements the DOM. _For any elements matching the selector, ever attached to the DOM, `spect` runs the described handler function, called **aspect**._
+
+`spect` treats selector dynamically, so that it doesn't matter when the code is executed or if there are matching elements the DOM.
+
+_For any elements matching the selector, ever attached to the DOM, `spect` runs the described handler function, called **aspect**._
 
 ---
 
