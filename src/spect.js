@@ -1,3 +1,4 @@
+import t from 'immutable-tuple'
 import { isAsync, noop } from './util.js'
 import render from './render.js';
 
@@ -12,10 +13,6 @@ export const SPECT_CLASS = '👁' + Math.random().toString(36).slice(2)
 
 // selector effects
 export const selectors = {}
-
-// tracked real elements with their effects
-export const tracking = new WeakMap()
-
 
 const SELECTOR_ID = 1, SELECTOR_CLASS = 2, SELECTOR_QUERY = 3, SELECTOR_ELEMENT = 4
 
@@ -34,7 +31,7 @@ function getSelectorType (selector) {
 export default function spect (selector, fx) {
   if (selector instanceof Node) {
     let target = selector
-    return handleFx(target, null, fx)
+    return render(target, null, fx)
   }
 
   // FIXME: make selectors an array
@@ -72,7 +69,7 @@ function handleMutations (mutations) {
   for (let m = 0; m < mutations.length; m++) {
     const { addedNodes, removedNodes, target, type, attributeName, oldValue } = mutations[m]
 
-    handleElements([...addedNodes, ...removedNodes, target])
+    handleElements([target, ...addedNodes, ...removedNodes])
   }
 }
 
@@ -115,30 +112,13 @@ function handleElements (nodes) {
       targets = targets.filter(Boolean)
 
       selFxs.forEach(fx => {
-        targets.forEach(target => handleFx(target, selector, fx))
+        targets.forEach(target => {
+          render(target, selector, fx)
+        })
       })
     }
   }
 }
-
-function handleFx(target, selector, fx) {
-  // init state for unknown targets
-  if (!tracking.has(target)) {
-    tracking.set(target, new WeakMap)
-  }
-
-  let targetFxs = tracking.get(target)
-
-  // init render fx
-  if (!targetFxs.has(fx)) {
-    let fxState = {}
-    targetFxs.set(fx, fxState)
-
-    // result is destructor function
-    render(target, selector, fx)
-  }
-}
-
 
 // calling fx stack
 export let currentTarget = document.documentElement

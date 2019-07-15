@@ -65,14 +65,16 @@ t.only('core: subaspect init/destroy depending on parent aspect', async t => {
   t.deepEqual(log, ['init a', 'init b'])
 
   a.classList.remove('a')
+  console.log('remove a')
   await (_=>_)
 
   t.deepEqual(log, ['init a', 'init b', 'destroy b', 'destroy a'])
 
-  a.classList.add('a')
-  await (_ => _)
+  // console.log('add class')
+  // a.classList.add('a')
+  // await (_ => _)
 
-  t.deepEqual(log, ['init a', 'init b', 'destroy b', 'destroy a', 'init a', 'init b'])
+  // t.deepEqual(log, ['init a', 'init b', 'destroy b', 'destroy a', 'init a', 'init b'])
 
   // a.classList.remove('a')
   // await (_ => _)

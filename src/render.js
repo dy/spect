@@ -6,42 +6,43 @@ import { currentTarget, callFx, beforeFx, SPECT_CLASS, selectors, currentFx } fr
 import { MultikeyMap, noop } from './util'
 
 const tracking = new WeakMap()
-const selCount = new WeakMap()
 
 export let currentRender = null
 
 
 export default function render (target, selector, fx=noop) {
-  if (selector && !tracking.has(t(target, fx))) {
-    if (!selCount.has(target)) selCount.set(target, 0)
-    selCount.set(target, selCount.get(target) + 1)
+  if (selector) {
+    // make sure rendered function need no disposal
+    if (!target.matches(selector)) return tracking.get(t(target, fx)).dispose()
 
-    // on attr change
-    const observer = new MutationObserver((mutations) => {
-      // dispose element and it's nested fxs if it doesn't match selector anymore
-      if (!target.matches(selector)) {
-        let { dispose, children } = tracking.get(t(target, fx))
-        for (let [target, fx] of children) tracking.get(t(target, fx)).dispose()
-        dispose()
-      }
-    })
+    if (!tracking.has(t(target, fx))) {
+      // on attr change
+      const observer = new MutationObserver((mutations) => {
+        // dispose element and it's nested fxs if it doesn't match selector anymore
+        if (!target.matches(selector)) tracking.get(t(target, fx)).dispose()
+      })
 
-    observer.observe(target, {
-      attributes: true,
-      // FIXME: add correct attribute filter matching the selector
-      // attributeFilter: ['id', 'class']
-    })
+      observer.observe(target, {
+        attributes: true,
+        // FIXME: add correct attribute filter matching the selector
+        // attributeFilter: ['id', 'class']
+      })
 
-    // init aspect state
-    tracking.set(t(target, fx), {
-      children: new Set,
-      dispose() {
-        let { destroy } = tracking.get(t(target, fx))
-        destroy()
-        tracking.delete(t(target, fx))
-        observer.disconnect()
-      }
-    })
+      // init aspect state
+      tracking.set(t(target, fx), {
+        children: new Set,
+        dispose() {
+          let state = tracking.get(t(target, fx))
+          for (let [target, fx] of state.children) {
+            tracking.get(t(target, fx)).dispose()
+          }
+          state.children.clear()
+          state.destroy()
+          observer.disconnect()
+          tracking.delete(t(target, fx))
+        }
+      })
+    }
   }
 
   // before hook
