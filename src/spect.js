@@ -38,7 +38,8 @@ export default function spect (selector, fx) {
   let currentTuple = t(currentTarget, fx)
   if (!tracking.has(currentTuple)) {
     tracking.set(currentTuple, {
-      fxs: new Set,
+      fx: new Set,
+      selectors: null,
       children: new Set,
       dispose() {
         let state = this
@@ -53,6 +54,7 @@ export default function spect (selector, fx) {
           state.observer.disconnect()
           delete state.selectors
         }
+        tracking.delete(currentTuple)
       }
     })
   }
@@ -65,26 +67,19 @@ export default function spect (selector, fx) {
     // TODO: observer allows multiple targets
     // TODO: unregister observer when element is unmounted
     // FIXME: make this observer lazy
-    // Sole purpose observer - init listener for elements matching selector
-    // init mutation observer for the target
-    let observer = new MutationObserver(handleMutations)
 
-    observer.observe(rootTarget, {
+    // init listener for elements matching selector
+    state.observer = new MutationObserver(handleMutations)
+    observer.observe({
       childList: true,
       subtree: true,
       attributes: true,
-      // FIXME: make observer combinatory, so that complex selectors don't register observe-all stuff. `css-what` is nice solution.
-      // FIXME: add correct attribute filter matching the selector
-      // attributeFilter: ['id', 'class']
     })
-
-    state.observer = observer
     state.selectors = {}
   }
 
   // register selector
-  let fxs = state.selectors[selector] || (state.selectors[selector] = [])
-  fxs.push(fx)
+  state.fxs.add(fx)
   fxs.type = ((selector) => {
     if(selector instanceof Node) return SELECTOR_ELEMENT
     if (/^#[^\s] * $ /.test(selector)) return SELECTOR_ID
@@ -92,11 +87,12 @@ export default function spect (selector, fx) {
     return SELECTOR_QUERY
   })(selector)
 
-  // TODO: create spect.min without mutation observers
+  // for direct element - directly call fx
+  if (selector instanceof Node) return callFx(selector, fx)
+
+  // TODO: spect.min without mutation observers
   // no-mutations initializer
   handleElements(document.querySelectorAll(selector))
-
-  // instantly handle accumulated mutations (skips extra tick)
   handleMutations(observer.takeRecords())
 }
 

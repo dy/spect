@@ -336,7 +336,7 @@ $('.mdc-text-field', TextField)
 
 * [x] `$(selector|element, init => destroy)`
 * [x] `mount(mount => unmount)`
-* [ ] html`...content`
+* [ ] `html\`...content\``
 
 <!--
 * [ ] css`style`
@@ -355,9 +355,9 @@ $('.mdc-text-field', TextField)
 
 -->
 
-### `$(selector|element, fn)`
+### `$(selector|element, init => destroy)`
 
-Register selector observer or direct element handler `fn`. Returned from `fn` function is invoked when the aspect is destroyed.
+Attach selector observer or element handler to current target. `fn` result is used as destructor.
 
 ```js
 import $, from 'spect'

@@ -1,7 +1,7 @@
 {
   "name": "spect",
   "version": "0.0.1",
-  "description": "Aspect-oriented virtual-DOM framework",
+  "description": "Aspect-oriented DOM framework",
   "source": "./src/index.js",
   "main": "dist/spect.js",
   "module": "dist/spect.mjs",
@@ -46,13 +46,11 @@
     "fast-on-load": "^1.0.1",
     "htm": "^2.1.1",
     "immutable-tuple": "^0.4.10",
-    "primitive-pool": "^1.1.0",
     "snabbdom": "^0.7.3"
   },
   "devDependencies": {
     "microbundle": "^0.11.0",
     "parcel-bundler": "^1.12.3",
-    "tape": "^4.11.0",
     "tst": "^2.0.2"
   }
 }
