@@ -1,7 +1,6 @@
 import onload from 'fast-on-load'
-import { currentTarget, callFx } from './spect.js'
+import { currentTarget, callFx, beforeRender } from './spect.js'
 import { noop } from './util.js'
-import { beforeRender } from './render.js'
 
 let tracking = new WeakMap()
 

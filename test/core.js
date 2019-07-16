@@ -83,7 +83,30 @@ t.only('core: subaspect init/destroy depending on parent aspect', async t => {
 })
 
 t.skip('core: subaspects init/destroy themselves independent of parent aspects', t => {
+  // TODO: within some aspect - children should be able to mount/unmount themselves (elaborate)
+})
 
+t.skip('core: nested observers should not interfere with parent observers', t => {
+  let fn = (el) => {
+    log.push('b')
+  }
+
+  $('.a', el => {
+    log.push('a')
+    $('.b', fn)
+  })
+
+  $('.b', fn)
+
+  // when we turn out .a aspect, the .b aspect should keep on target, and not duplicate
+
+  document.body.appendChild(a)
+  await(_ => _)
+  t.deepEqual(log, ['a', 'b'])
+
+  a.classList.remove('a')
+  await(_ => _)
+  t.deepEqual(log, ['a', 'b'])
 })
 
 
