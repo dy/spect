@@ -35,7 +35,7 @@ t('core: direct element init, destroy', t => {
   t.notOk(a.classList.contains(SPECT_CLASS), 'spect class')
 })
 
-t.only('core: selector init, destroy', t => {
+t('core: selector init, destroy', t => {
   let a = document.createElement('a')
   document.body.appendChild(a)
 
@@ -66,68 +66,42 @@ t.only('core: selector init, destroy', t => {
 
   t.deepEqual(log, ['create', 'destroy', 'create', 'destroy'])
   t.notOk(a.classList.contains(SPECT_CLASS), 'spect class')
-})
-
-
-
-t('Same aspect different targets', async t => {})
-t('Same target different aspects', async t => {})
-t('Same aspect same target', async t => {})
-
-t('core: Aspect initializes on DOM target')
-
-t('core: Aspects remove themselves if no more match selector', async t => {
-  let log = []
-
-  let a = document.createElement('a')
-  document.body.appendChild(a)
-
-  $('.a', el => {
-    log.push('init')
-    return () => log.push('destroy')
-  })
-
-  await (_ => _)
-  t.deepEqual(log, [])
-
-  a.classList.add('a')
-  await (_ => _)
-  t.deepEqual(log, ['init'])
-
-  a.classList.remove('a')
-  await (_ => _)
-  t.deepEqual(log, ['init', 'destroy'])
 
   document.body.removeChild(a)
 })
 
+t('Same aspect different targets', t => {
+  let log = []
+  function fx (el) {
+    log.push(el.tagName)
+    return () => log.push('destroy ' + el.tagName)
+  }
+
+  let el = $(document.createElement('a'), fx)
+
+  t.equal(el.tagName, log[0])
+  t.deepEqual(log, ['A'])
+
+  el.innerHTML = '<span></span>'
+  $(el.firstChild, fx)
+
+  t.deepEqual(log, ['A', 'SPAN'])
+
+  $.destroy(el)
+  t.deepEqual(log, ['A', 'SPAN', 'destroy A'])
+
+  $.destroy(el.firstChild)
+  t.deepEqual(log, ['A', 'SPAN', 'destroy A', 'destroy SPAN'])
+})
+t.only('Same target different aspects', t => {
+
+})
+t('Same aspect same target', async t => {})
+
+
 t.skip('core: subaspects init/destroy themselves independent of parent aspects', t => {
   // TODO: within some aspect - children should be able to mount/unmount themselves (elaborate)
 })
-
-t.skip('core: nested observers should not interfere with parent observers', async t => {
-  let fn = (el) => {
-    log.push('b')
-  }
-
-  $('.a', el => {
-    log.push('a')
-    $('.b', fn)
-  })
-
-  $('.b', fn)
-
-  // when we turn out .a aspect, the .b aspect should keep on target, and not duplicate
-
-  document.body.appendChild(a)
-  await(_ => _)
-  t.deepEqual(log, ['a', 'b'])
-
-  a.classList.remove('a')
-  await(_ => _)
-  t.deepEqual(log, ['a', 'b'])
-})
-
 
 t.skip('Returned effect acts like destructor', t => {
   let target = document.createElement('div')

@@ -5,16 +5,17 @@ import { isAsync, noop } from './util.js'
 
 export const SPECT_CLASS = '👁'// + Math.random().toString(36).slice(2)
 
-// stores states for target-fx tuples
+// states for target-fx tuples
 const tracking = new WeakMap()
+
+// fxs for targets
 const targets = new WeakMap()
 
-// current rendering context
 export let rootTarget = document.documentElement
 export let currentTarget = rootTarget
 export let currentFx = null // FIXME: logically document.currentScript context
 
-// NOTE: aspect === init effect, that treats returned function as destroy effect
+// returned function is destroy effect
 export const spect = (function spect (selector, fx) {
   if (typeof selector === 'string') {
     let targets = this.querySelectorAll(selector)
@@ -39,7 +40,6 @@ export const spect = (function spect (selector, fx) {
   return selector
 }).bind(currentTarget)
 
-// turn off registered aspects
 export const destroy = spect.destroy = (function destroy (target, fx) {
   if (typeof target === 'string') {
     let targets = this.querySelectorAll(target)
@@ -52,7 +52,7 @@ export const destroy = spect.destroy = (function destroy (target, fx) {
   target.classList.remove(SPECT_CLASS)
 
   if (fx) {
-    tracking.get(t(target, fx)).dispose()
+    destroyState(t(target, fx))
     targets.get(target).delete(fx)
     if (!targets.get(target).size) targets.delete(target)
     return target
@@ -60,7 +60,7 @@ export const destroy = spect.destroy = (function destroy (target, fx) {
 
   let fxs = targets.get(target)
   for (let fx of fxs) {
-    tracking.get(t(target, fx)).dispose()
+    destroyState(t(target, fx))
   }
   fxs.clear()
   targets.delete(target)
@@ -104,8 +104,6 @@ export function callFx(target, fx = noop) {
   return result
 }
 
-
-// render hooks
 const beforeStack = new WeakMap, afterStack = new WeakMap
 
 export function before(target, fn) {
@@ -119,7 +117,6 @@ export function after(target, fn) {
   if (afterListeners.indexOf(fn) < 0) afterListeners.push(fn)
 }
 
-// create state associated with [live] aspect associated with target
 function createState(tuple) {
   return {
     // assigned as result of callFx
@@ -127,23 +124,24 @@ function createState(tuple) {
 
     // list of registered children target-fx couples
     children: new Set,
-
-    // dispose aspect (fx defined on target)
-    dispose() {
-      let state = this
-
-      // clean up children
-      for (let tuple of state.children) tracking.get(tuple).dispose()
-      state.children.clear()
-      delete state.children
-
-      // invoke registered aspect destructors
-      if (state.destroy) state.destroy()
-
-      // clean up parent
-      tracking.delete(tuple)
-    }
   }
+}
+
+function destroyState(tuple) {
+  if (!tracking.has(tuple)) return
+
+  let state = tracking.get(tuple)
+
+  // clean up children
+  for (let tuple of state.children) destroyState(tuple)
+  state.children.clear()
+  delete state.children
+
+  // invoke registered aspect destructors
+  if (state.destroy) state.destroy()
+
+  // clean up parent
+  tracking.delete(tuple)
 }
 
 export default spect
