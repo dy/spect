@@ -16,9 +16,11 @@ export let currentTarget = rootTarget
 export let currentFx = null // FIXME: logically document.currentScript context
 
 // returned function is destroy effect
-export const spect = (function spect (selector, fx) {
+export const spect = function spect (selector, fx) {
+  let that = this || currentTarget
+
   if (typeof selector === 'string') {
-    let targets = this.querySelectorAll(selector)
+    let targets = that.querySelectorAll(selector)
     targets.forEach(target => spect(target, fx))
     return targets
   }
@@ -38,11 +40,13 @@ export const spect = (function spect (selector, fx) {
   targets.get(selector).add(fx)
 
   return selector
-}).bind(currentTarget)
+}
 
-export const destroy = spect.destroy = (function destroy (target, fx) {
+export const destroy = spect.destroy = function destroy (target, fx) {
+  let that = this === spect ? currentTarget : this || currentTarget
+
   if (typeof target === 'string') {
-    let targets = this.querySelectorAll(target)
+    let targets = that.querySelectorAll(target)
     targets.forEach(target => destroy(target, fx))
     return targets
   }
@@ -66,7 +70,7 @@ export const destroy = spect.destroy = (function destroy (target, fx) {
   targets.delete(target)
 
   return target
-}).bind(currentTarget)
+}
 
 export function callFx(target, fx = noop) {
   let tuple = t(target, fx)

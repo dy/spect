@@ -95,3 +95,42 @@ t.skip('core: nested observers should not interfere with parent observers', asyn
   await (_ => _)
   t.deepEqual(log, ['a', 'b'])
 })
+
+
+t.skip('Returned effect acts like destructor', t => {
+  let target = document.createElement('div')
+
+  $('#target', () => {
+    log.push('create')
+    return () => {
+      log.push('destroy')
+    }
+  })
+})
+
+t.skip('Direct aspect and selector aspect should not intersect', async t => {
+  let target = document.createElement('div')
+
+  let aspect = function () {
+    log.push('on')
+    return () => log.push('off')
+  }
+
+  $(target, aspect)
+
+  t.deepEqual(log, ['on'], 'direct element aspect')
+
+  $('[x]', aspect)
+  document.body.appendChild(target)
+  target.setAttribute('x', true)
+
+  await (_ => _)
+
+  t.deepEqual(log, ['on'], 'same aspect doesn\'t cause redundant rendering')
+
+  document.body.removeChild(target)
+
+  await (_ => _)
+
+  t.deepEqual(log, ['on'], 'off should not be called for direct element aspect')
+})

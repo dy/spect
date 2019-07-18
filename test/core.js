@@ -1,6 +1,6 @@
 import t from 'tst'
 import $, { mount } from '../src/index'
-import { SPECT_CLASS } from '../src/spect';
+import { SPECT_CLASS, currentTarget } from '../src/spect';
 
 // FYI: selector <<->> aspect;  selector <<->> target;  aspect <<unique->> target - target aspects are unique
 t('core: direct element init, destroy', t => {
@@ -70,7 +70,7 @@ t('core: selector init, destroy', t => {
   document.body.removeChild(a)
 })
 
-t('Same aspect different targets', t => {
+t('core: same aspect different targets', t => {
   let log = []
   function fx (el) {
     log.push(el.tagName)
@@ -93,50 +93,109 @@ t('Same aspect different targets', t => {
   $.destroy(el.firstChild)
   t.deepEqual(log, ['A', 'SPAN', 'destroy A', 'destroy SPAN'])
 })
-t.only('Same target different aspects', t => {
+t('core: Same target different aspects', t => {
+  let log = []
 
+  let a = document.createElement('a')
+  document.body.appendChild(a)
+
+  let afx, bfx
+  $('a', afx = () => (log.push('a'), () => log.push('de a')) )
+  t.deepEqual(log, ['a'])
+  $('a', bfx = () => (log.push('b'), () => log.push('de b')) )
+  t.deepEqual(log, ['a', 'b'])
+  $.destroy('a', bfx)
+  t.deepEqual(log, ['a', 'b', 'de b'])
+  $.destroy('a', afx)
+  t.deepEqual(log, ['a', 'b', 'de b', 'de a'])
+  $(a, bfx)
+  t.deepEqual(log, ['a', 'b', 'de b', 'de a', 'b'])
+  $(a, afx)
+  t.deepEqual(log, ['a', 'b', 'de b', 'de a', 'b', 'a'])
+  $.destroy(a)
+  t.deepEqual(log, ['a', 'b', 'de b', 'de a', 'b', 'a', 'de b', 'de a'])
+
+  document.body.removeChild(a)
 })
-t('Same aspect same target', async t => {})
+t('core: same aspect same target', t => {
+  let log = []
+  let a = document.createElement('a')
+  document.body.appendChild(a)
 
+  let fx = () => (log.push('a'), () => log.push('z'))
+  $(a, fx)
+  t.deepEqual(log, ['a'])
+  $(a, fx)
+  t.deepEqual(log, ['a'])
+  $('a', fx)
+  t.deepEqual(log, ['a'])
+  $.destroy(a, fx)
+  t.deepEqual(log, ['a', 'z'])
+  $.destroy(a, fx)
+  t.deepEqual(log, ['a', 'z'])
+  $.destroy('a', fx)
+  t.deepEqual(log, ['a', 'z'])
+  $('a', fx)
+  t.deepEqual(log, ['a', 'z', 'a'])
+  $('a', fx)
+  t.deepEqual(log, ['a', 'z', 'a'])
+  $.destroy('a', fx)
+  t.deepEqual(log, ['a', 'z', 'a', 'z'])
 
-t.skip('core: subaspects init/destroy themselves independent of parent aspects', t => {
-  // TODO: within some aspect - children should be able to mount/unmount themselves (elaborate)
+  document.body.removeChild(a)
 })
 
-t.skip('Returned effect acts like destructor', t => {
-  let target = document.createElement('div')
 
-  $('#target', () => {
-    log.push('create')
-    return () => {
-      log.push('destroy')
-    }
+t('core: subaspects init/destroy themselves independent of parent aspects', t => {
+  let log = []
+
+  let a = document.body.appendChild(document.createElement('a'))
+  let b = a.appendChild(document.createElement('b'))
+  let c = b.appendChild(document.createElement('c'))
+
+  $('a', el => {
+    log.push('a')
+    $('b', el => {
+      log.push('b')
+      $('c', el => {
+        log.push('c')
+        return () => log.push('-c')
+      })
+      return () => log.push('-b')
+    })
+    return () => log.push('-a')
   })
+
+  t.deepEqual(log, ['a', 'b', 'c'])
+
+  $.destroy(a)
+
+  t.deepEqual(log, ['a', 'b', 'c', '-c', '-b', '-a'])
+
+  document.body.removeChild(a)
 })
 
-t.skip('Direct aspect and selector aspect should not intersect', async t => {
-  let target = document.createElement('div')
+t('core: contextual effects', t => {
+  let log = []
 
-  let aspect = function () {
-    log.push('on')
-    return () => log.push('off')
-  }
+  let a = document.body.appendChild(document.createElement('a'))
+  let b = document.body.appendChild(document.createElement('b'))
+  let c = document.body.appendChild(document.createElement('c'))
 
-  $(target, aspect)
+  $('a', function () {
+    log.push('a')
+    t.equal(this, a)
 
-  t.deepEqual(log, ['on'], 'direct element aspect')
+    let bfx = () => {
+      log.push('b')
+    }
+    $('b', bfx)
+    t.deepEqual(log, ['a'])
+    $.call(document.body, 'b', bfx)
+    t.deepEqual(log, ['a', 'b'])
+  })
 
-  $('[x]', aspect)
-  document.body.appendChild(target)
-  target.setAttribute('x', true)
-
-  await (_=>_)
-
-  t.deepEqual(log, ['on'], 'same aspect doesn\'t cause redundant rendering')
-
-  document.body.removeChild(target)
-
-  await(_ => _)
-
-  t.deepEqual(log, ['on'], 'off should not be called for direct element aspect')
+  document.body.removeChild(a)
+  document.body.removeChild(b)
+  document.body.removeChild(c)
 })
