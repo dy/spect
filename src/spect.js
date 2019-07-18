@@ -1,170 +1,88 @@
 import t from 'immutable-tuple'
 import { isAsync, noop } from './util.js'
 
-
 // TODO: invalidate html vdom for elements that're being changed by something outside of spect scope
 
-// export const SPECT_CLASS = '👁' + Math.random().toString(36).slice(2)
-// const CONNECTED = 0, DISCONNECTED = 1
+export const SPECT_CLASS = '👁'// + Math.random().toString(36).slice(2)
 
-
-// stores states per target-fx tuples
+// stores states for target-fx tuples
 const tracking = new WeakMap()
+const targets = new WeakMap()
 
 // current rendering context
 export let rootTarget = document.documentElement
 export let currentTarget = rootTarget
-export let currentFx = null
-
+export let currentFx = null // FIXME: logically document.currentScript context
 
 // NOTE: aspect === init effect, that treats returned function as destroy effect
-
-
-export const selectors = new WeakMap
-
-// TODO: selectors must be attached per target per aspect; when aspect destroys, it should remove all associated selectors.
-// mb just easier to store mutation observer per-target-effect, so that it would be easier to handle changes bottom-up, each level would intercept its own relevantn events
-
-const SELECTOR_ID = 1, SELECTOR_CLASS = 2, SELECTOR_QUERY = 3, SELECTOR_ELEMENT = 4
-
-
-
-// TODO: run already existing elements matching selector
-// TODO: return dynamic resulting elements with provided fx on them
-
-
-export default function spect (selector, fx) {
-  // provide state for current target
-  let currentTuple = t(currentTarget, fx)
-  if (!tracking.has(currentTuple)) {
-    tracking.set(currentTuple, {
-      fx: new Set,
-      selectors: null,
-      children: new Set,
-      dispose() {
-        let state = this
-        for (let [target, fx] of state.children) {
-          tracking.get(currentTuple).dispose()
-        }
-        state.children.clear()
-        state.fxs.clear()
-        delete state.children
-        delete state.fxs
-        if (state.observer) {
-          state.observer.disconnect()
-          delete state.selectors
-        }
-        tracking.delete(currentTuple)
-      }
-    })
+export const spect = (function spect (selector, fx) {
+  if (typeof selector === 'string') {
+    let targets = this.querySelectorAll(selector)
+    targets.forEach(target => spect(target, fx))
+    return targets
   }
 
-  let state = tracking.get(currentTuple)
+  // existing targets won't be reinitialized
+  if (tracking.has(t(selector, fx))) return
 
-  // if observing is not set up for the current (parent) aspect - set it up
-  if (typeof selector === 'string' && !state.observer) {
-    // TODO: build an fx depending on type of fx argument?
-    // TODO: observer allows multiple targets
-    // TODO: unregister observer when element is unmounted
-    // FIXME: make this observer lazy
+  // direct element ensures parent, appends child and calls fx
+  let destroy = callFx(selector, fx)
+  tracking.get(t(selector, fx)).destroy = destroy
 
-    // init listener for elements matching selector
-    state.observer = new MutationObserver(handleMutations)
-    observer.observe({
-      childList: true,
-      subtree: true,
-      attributes: true,
-    })
-    state.selectors = {}
+  // register generic known targets
+  if (!targets.has(selector)) {
+    selector.classList.add(SPECT_CLASS)
+    targets.set(selector, new Set)
+  }
+  targets.get(selector).add(fx)
+
+  return selector
+}).bind(currentTarget)
+
+// turn off registered aspects
+export const destroy = spect.destroy = (function destroy (target, fx) {
+  if (typeof target === 'string') {
+    let targets = this.querySelectorAll(target)
+    targets.forEach(target => destroy(target, fx))
+    return targets
   }
 
-  // register selector
-  state.fxs.add(fx)
-  fxs.type = ((selector) => {
-    if(selector instanceof Node) return SELECTOR_ELEMENT
-    if (/^#[^\s] * $ /.test(selector)) return SELECTOR_ID
-    if (/^\.[^\s]*$/.test(selector)) return SELECTOR_CLASS
-    return SELECTOR_QUERY
-  })(selector)
+  if (!targets.has(target)) return target
 
-  // for direct element - directly call fx
-  if (selector instanceof Node) return callFx(selector, fx)
+  target.classList.remove(SPECT_CLASS)
 
-  // TODO: spect.min without mutation observers
-  // no-mutations initializer
-  handleElements(document.querySelectorAll(selector))
-  handleMutations(observer.takeRecords())
-}
-
-function handleMutations (mutations) {
-  for (let m = 0; m < mutations.length; m++) {
-    const { addedNodes, removedNodes, target, type, attributeName, oldValue } = mutations[m]
-
-    handleElements([target, ...addedNodes, ...removedNodes])
+  if (fx) {
+    tracking.get(t(target, fx)).dispose()
+    targets.get(target).delete(fx)
+    if (!targets.get(target).size) targets.delete(target)
+    return target
   }
-}
 
-function handleElements (nodes) {
-  // TODO: inverse querying as `ids[node.id]`, `classes[node.class[i]]`
-  // TODO: cache selectors assigned to targets and check if they're valid still
-  for (let i = 0; i < nodes.length; i++) {
-    let node = nodes[i]
-
-    // ignore non-element nodes
-    // FIXME: there should be a faster way to filter text nodes
-    if (node.nodeType !== 1) continue
-
-    // make sure rendered function need no disposal
-    if (!node.matches(selector)) return tracking.get(t(node, fx)).dispose()
-
-    // check if target matches any of registered selector listeners
-    for (let selector in selectors) {
-      let selFxs = selectors[selector]
-      let selType = selFxs.type
-
-      let targets = []
-
-      if (selType === SELECTOR_ID) {
-        let id = selector.slice(1)
-        if (node.id === id) targets.push(node)
-        else {
-          // FIXME: use more correct root for server-side env
-          const el = document.getElementById(id)
-          if (node.contains(el)) targets.push(el)
-        }
-      }
-      else if (selType === SELECTOR_QUERY) {
-        if (node.matches(selector)) targets.push(node)
-        targets.push(...node.querySelectorAll(selector))
-      }
-      else if (selType === SELECTOR_CLASS) {
-        let elClass = selector.slice(1)
-        if (node.classList.contains(elClass)) targets.push(node)
-        targets.push(...node.getElementsByClassName(elClass))
-      }
-
-      targets = targets.filter(Boolean)
-
-      selFxs.forEach(fx => {
-        targets.forEach(target => {
-          callFx(target, fx)
-        })
-      })
-    }
+  let fxs = targets.get(target)
+  for (let fx of fxs) {
+    tracking.get(t(target, fx)).dispose()
   }
-}
+  fxs.clear()
+  targets.delete(target)
 
+  return target
+}).bind(currentTarget)
 
 export function callFx(target, fx = noop) {
+  let tuple = t(target, fx)
+
   // before hook
   if (beforeStack.has(target)) beforeStack.get(target).forEach(fn => fn(target))
 
   // register current target in parent aspect children list
-  let parentState = tracking.get(t(currentTarget, currentFx))
-  if (parentState) parentState.children.add(t(target, fx))
+  let currentTuple = t(currentTarget, currentFx)
+  if (!tracking.has(currentTuple)) tracking.set(currentTuple, createState(currentTuple))
+  let parentState = tracking.get(currentTuple)
+  if (!parentState.children.has(tuple)) parentState.children.add(tuple)
 
   // reset child fx count
-  let state = tracking.get(t(target, fx))
+  if (!tracking.has(tuple)) tracking.set(tuple, createState(tuple))
+  let state = tracking.get(tuple)
   let prevChildren = state.children
   let newChildren = state.children = new Set
 
@@ -173,14 +91,12 @@ export function callFx(target, fx = noop) {
   let prevFx = currentFx
   currentTarget = target
   currentFx = fx
-  let result = fx(target) || noop
+  let result = fx.call(currentTarget, target) || noop
   currentFx = prevFx
   currentTarget = prevTarget
 
   // check if some old children need disposal
-  for (let [target, fx] of prevChildren) {
-    if (!newChildren.has(t(target, fx))) tracking.get(t(target, fx)).dispose()
-  }
+  for (let tuple of prevChildren) if (!newChildren.has(tuple)) tracking.get(tuple).dispose()
 
   // after hook
   if (afterStack.has(target)) afterStack.get(target).forEach(fn => fn(target))
@@ -202,3 +118,32 @@ export function after(target, fn) {
   let afterListeners = afterStack.get(target)
   if (afterListeners.indexOf(fn) < 0) afterListeners.push(fn)
 }
+
+// create state associated with [live] aspect associated with target
+function createState(tuple) {
+  return {
+    // assigned as result of callFx
+    destroy: null,
+
+    // list of registered children target-fx couples
+    children: new Set,
+
+    // dispose aspect (fx defined on target)
+    dispose() {
+      let state = this
+
+      // clean up children
+      for (let tuple of state.children) tracking.get(tuple).dispose()
+      state.children.clear()
+      delete state.children
+
+      // invoke registered aspect destructors
+      if (state.destroy) state.destroy()
+
+      // clean up parent
+      tracking.delete(tuple)
+    }
+  }
+}
+
+export default spect

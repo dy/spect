@@ -27,6 +27,7 @@ $(document.body, body => {
 
 ## Principles
 
+- expressive, not impressive
 - no bundling
 - JS-less hydration
 - standard html first
@@ -369,13 +370,6 @@ $('#my-selector', element => {
     console.log('destroy')
   }
 })
-
-let myElement = document.body.appendChild(document.createElement('div'))
-myElement.id = 'my-selector'
-// init
-
-myElement.id = null
-// destroy
 ```
 
 #### Example
