@@ -29,12 +29,14 @@ $('#app.loader', app => {
 })
 ```
 
-## Principles
+### Principles
 
-1. Expressive, not impressive.
-2. No building required to use framework.
-3. No JS required to hydrate HTML.
-4. Standard semantic HTML first.
+<ol>
+<li id="principle-1"> Expressive, not impressive.
+<li id="principle-2"> No building required to use framework.
+<li id="principle-3"> No JS required to hydrate HTML.
+<li id="principle-4"> Standard semantic HTML first.
+</ol>
 
 <!--
 TODO: to FAQ?
@@ -61,7 +63,7 @@ TODO: motivate the usefulness of aspects by examples.
 
 ## Installing
 
-_Spect_ that can be used as `npm` package:
+_Spect_ can be used as `npm` package:
 
 [![npm install spect](https://nodei.co/npm/spect.png?mini=true)](https://npmjs.org/package/spect/)
 
@@ -71,7 +73,7 @@ import { $, html, state } from 'spect'
 // ...your elegant UI code
 ```
 
-Or connected directly as module, skipping bundling step<sup>2.</sup>:
+Or connected directly as module, skipping bundling step<sup><a href="#principle-2">2</a></sup>:
 
 ```html
 <script type="module">
