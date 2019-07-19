@@ -1,12 +1,12 @@
 import t from 'tst'
 import $, { mount } from '../src/index.js'
 
-
-// TODO: parcel: export default from;
 t('mount: multiple mount callbacks', async t => {
   let log = []
 
-  $('#x', el => {
+  let x = document.createElement('div')
+
+  $(x, el => {
     mount(() => {
       log.push('mount A')
       return () => {
@@ -19,9 +19,6 @@ t('mount: multiple mount callbacks', async t => {
       return () => log.push('unmount B')
     })
   })
-
-  let x = document.createElement('div')
-  x.id = 'x'
 
   document.documentElement.appendChild(x)
 

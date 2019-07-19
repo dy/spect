@@ -1,41 +1,32 @@
 import onload from 'fast-on-load'
-import { currentTarget, callFx, beforeRender } from './spect.js'
+import { currentTarget, currentFx, callFx, tracking } from './spect.js'
 import { noop } from './util.js'
-
-let tracking = new WeakMap()
+import t from 'immutable-tuple'
 
 export default function mount (fn) {
-  if (!tracking.has(currentTarget)) {
-    // we reset unmounts/mounts each new the same fx call
-    tracking.set(currentTarget, {
-      // planned callbacks
-      mount: [],
-      unmount: []
-    })
+  let currentTuple = t(currentTarget, currentFx)
+  let state = tracking.get(currentTuple)
 
-    let target = currentTarget
+  if (!state.mount) {
+    // we reset unmounts/mounts each new the same fx call
+    state.mount = []
+    state.unmount = null
 
     // FIXME: use native onload multiple binding capability
     onload(currentTarget, () => {
-      let state = tracking.get(target)
-      state.unmount = state.mount.map(fn => callFx('mount', fn || noop) || noop)
+      state.unmount = state.mount.map(fn => callFx(currentTarget, fn || noop) || noop)
     }, () => {
-      let state = tracking.get(target)
-      state.unmount.forEach(fn => callFx('unmount', fn || noop))
+      state.unmount.forEach(fn => callFx(currentTarget, fn || noop))
     })
 
     // if target rerenders, reset mounted listeners (re-registered anyways)
-    beforeRender(target, fn => {
-      if (!tracking.has(target)) return
-
-      let { mount, unmount } = tracking.get(target)
-      mount.length = 0
+    state.on('before', () => {
+      state.mount.length = 0
     })
   }
 
   // mount array is clean for the first mount call
-  let { mount } = tracking.get(currentTarget)
-  mount.push(fn)
+  state.mount.push(fn)
 }
 
 

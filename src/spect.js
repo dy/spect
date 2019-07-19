@@ -1,4 +1,5 @@
 import t from 'immutable-tuple'
+import Events from 'nanoevents'
 import { isAsync, noop } from './util.js'
 
 // TODO: invalidate html vdom for elements that're being changed by something outside of spect scope
@@ -6,10 +7,10 @@ import { isAsync, noop } from './util.js'
 export const SPECT_CLASS = '👁'// + Math.random().toString(36).slice(2)
 
 // states for target-fx tuples
-const tracking = new WeakMap()
+export const tracking = new WeakMap()
 
 // fxs for targets
-const targets = new WeakMap()
+export const targets = new WeakMap()
 
 export let rootTarget = document.documentElement
 export let currentTarget = rootTarget
@@ -75,14 +76,13 @@ export const destroy = spect.destroy = function destroy (target, fx) {
 export function callFx(target, fx = noop) {
   let tuple = t(target, fx)
 
-  // before hook
-  if (beforeStack.has(target)) beforeStack.get(target).forEach(fn => fn(target))
-
   // register current target in parent aspect children list
   let currentTuple = t(currentTarget, currentFx)
   if (!tracking.has(currentTuple)) tracking.set(currentTuple, createState(currentTuple))
   let parentState = tracking.get(currentTuple)
   if (!parentState.children.has(tuple)) parentState.children.add(tuple)
+
+  parentState.emit('before')
 
   // reset child fx count
   if (!tracking.has(tuple)) tracking.set(tuple, createState(tuple))
@@ -99,36 +99,33 @@ export function callFx(target, fx = noop) {
   currentFx = prevFx
   currentTarget = prevTarget
 
+  parentState.emit('after')
+
   // check if some old children need disposal
   for (let tuple of prevChildren) if (!newChildren.has(tuple)) tracking.get(tuple).dispose()
-
-  // after hook
-  if (afterStack.has(target)) afterStack.get(target).forEach(fn => fn(target))
 
   return result
 }
 
-const beforeStack = new WeakMap, afterStack = new WeakMap
 
-export function before(target, fn) {
-  if (!beforeStack.has(target)) beforeStack.set(target, [])
-  let beforeListeners = beforeStack.get(target)
-  if (beforeListeners.indexOf(fn) < 0) beforeListeners.push(fn)
-}
-export function after(target, fn) {
-  if (!afterStack.has(target)) afterStack.set(target, [])
-  let afterListeners = afterStack.get(target)
-  if (afterListeners.indexOf(fn) < 0) afterListeners.push(fn)
-}
 
 function createState(tuple) {
-  return {
+  let emitter = new Events
+  let off = []
+
+  let state = {
     // assigned as result of callFx
     destroy: null,
 
     // list of registered children target-fx couples
     children: new Set,
+
+    // events
+    emit: (evt, arg) => (emitter.emit(evt, arg), state),
+    off: () => off = off.forEach(off => off()),
+    on: (evt, fn) => off.push(emitter.on(evt, fn))
   }
+  return state.emit('create')
 }
 
 function destroyState(tuple) {
@@ -136,10 +133,15 @@ function destroyState(tuple) {
 
   let state = tracking.get(tuple)
 
+  state.emit('destroy')
+
   // clean up children
   for (let tuple of state.children) destroyState(tuple)
   state.children.clear()
   delete state.children
+
+  // unbind all registered events
+  state.off()
 
   // invoke registered aspect destructors
   if (state.destroy) state.destroy()
@@ -147,5 +149,6 @@ function destroyState(tuple) {
   // clean up parent
   tracking.delete(tuple)
 }
+
 
 export default spect
