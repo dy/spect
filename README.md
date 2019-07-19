@@ -7,8 +7,6 @@ import { $, html, state, fx, route } from 'spect'
 
 // main app aspect
 $('#app', app => {
-  let { loading = false } = state()
-
   let [ match, { id } ] = route('user/:id')
 
   let data = fx(async () => {
@@ -22,7 +20,7 @@ $('#app', app => {
 })
 
 // loader aspect
-$('#app.loader', app => {
+$('#app', app => {
   let { loading = false } = state()
 
   if (loading) html`${app.childNodes} <canvas class="spinner" />`
@@ -33,9 +31,9 @@ $('#app.loader', app => {
 
 <ol>
 <li id="principle-1"> Expressive, not impressive.
-<li id="principle-2"> No building required to use framework.
+<li id="principle-2"> No bundling required to use framework.
 <li id="principle-3"> No JS required to hydrate HTML.
-<li id="principle-4"> Standard semantic HTML first.
+<li id="principle-4"> Standard HTML first.
 </ol>
 
 <!--
@@ -63,23 +61,23 @@ TODO: motivate the usefulness of aspects by examples.
 
 ## Installing
 
-_Spect_ can be used as `npm` package:
+**A.** _Spect_ can be used as `npm` package:
 
 [![npm install spect](https://nodei.co/npm/spect.png?mini=true)](https://npmjs.org/package/spect/)
 
 ```js
 import { $, html, state } from 'spect'
 
-// ...your elegant UI code
+// ...your UI code
 ```
 
-Or connected directly as module, skipping bundling step<sup><a href="#principle-2">2</a></sup>:
+**B.** Or connected directly as module, skipping bundling step<sup><a href="#principle-2">2</a></sup>:
 
 ```html
 <script type="module">
 import { $, html, state } from 'https://unpkg.com/spect@latest?module'
 
-// ...your expressive UI code
+// ...your UI code
 </script>
 ```
 
