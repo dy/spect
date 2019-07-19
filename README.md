@@ -7,13 +7,10 @@ import { $, html, state, fx, route } from 'spect'
 
 // main app aspect
 $('#app', app => {
-  // current element state
   let { loading = false } = state()
 
-  // matches current location
   let [ match, { id } ] = route('user/:id')
 
-  // useEffect hook
   let data = fx(async () => {
     state({ loading: true })
     let data = await fetch(url)
@@ -21,7 +18,6 @@ $('#app', app => {
     return data
   }, [id])
 
-  // html effect
   html`${data}`
 })
 
@@ -29,7 +25,6 @@ $('#app', app => {
 $('#app.loader', app => {
   let { loading = false } = state()
 
-  // acts like "HTML reducer"
   if (loading) html`${app.childNodes} <canvas class="spinner" />`
 })
 ```
