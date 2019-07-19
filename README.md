@@ -466,12 +466,36 @@ $('#target', el => {
 
 Note that an aspect can be assigned to existing elements, in that case `mount` will be triggered automatically.
 
+---
+
+
 ### ``html`...markup` ``
 
-HTML effect instantly mounts the provided markup to the current element context, performing necessary updates. It utilizes vdom under the hood, making rendering performant and robust.
+HTML effect provides markup for current element, performing only necessary updates via VDOM diffing. Returned result is HTML content, created by the effect.
 
 ```js
+$('#target', target => {
+  let [text, frag, img, ...nodes] = html`
+    Text content
+    <>Document fragment</>
+    <img/>
+    <hr><br>
+    <div#id.class foo=bar ${el => { /* el === target */}}></div>
+    ${el => { /* el === target */ }}
+    <${Component}/>
+    <${document.body}>Portal</>
+    <#id>Selector portal</>
+    <!-- html comment -->
+    ${ el.childNodes }
+  `
+})
+
+function Component (el) {
+  html`<host foo=bar>Shortcut for current target (el)</host>`
+}
 ```
+
+<!-- TODO: drawbacks of htm: no anonymous aspects; no unclosed tags; no html comments -->
 
 #### Example
 
@@ -498,9 +522,6 @@ function Logs(el) {
 const Log = ({ details, date }) => `<p>${details}</p><time>${ date.toLocalTimeString() }</time>`
 ```
 
-Internally `html` uses [htm](https://ghub.io/htm) and [snabbdom](https://ghub.io/snabbdom) with `class`, `props`, `style`, `attributes`, `eventlisteners` and `dataset` modules.
-
-
 <!--
 
 ### `state(value?)`
@@ -516,6 +537,8 @@ function mod (el) {
   state({ foo: a, bar: b })
 }
 ```
+
+---
 
 ### `attr(value?)`
 
@@ -533,6 +556,7 @@ Same as `state`, but reads an attribute from the element, as well as registers l
 
 Note that attribute value must be a string, for non-string values use `prop` effect.
 
+---
 
 ### `prop(value?)`
 
@@ -553,6 +577,8 @@ function aspectB (el) {
 html`<div ${aspectA} ${aspectB} />`
 ```
 
+---
+
 ### `query(value?)`
 
 Same as `state`, but the value is reflected in `location.search` as `https://url.com/?param=value`.
@@ -565,6 +591,8 @@ Same as `state`, but the value is reflected in `location.search` as `https://url
   // ?param=xyz
 }
 ```
+
+---
 
 ### `local(value?)`
 
@@ -580,9 +608,13 @@ el => {
 }
 ```
 
+---
+
 ### `remote` [pending...]
 
 Same as local, but persists value in remote storage.
+
+---
 
 ### `fx(fn, deps?)`
 
@@ -611,6 +643,8 @@ $(el).fx(() => {
 })
 ```
 
+---
+
 ### `on(event, delegate?, fn?)`
 
 Attach event handler. Listeners are removed automatically when component is unmounted.
@@ -631,6 +665,7 @@ el => {
 $(el).on('click', '#el', fn)
 ```
 
+---
 
 ### `css('styles')`
 
@@ -682,7 +717,21 @@ $('#clock', () => {
 <small>Fixes react shallow `let [, update] = useState` anti-pattern.</small>
 
 
+
+-->
+
 ## Plugins
+
+Official
+
+* [ ] local(value?)
+* [ ] watch
+* [ ] route
+* [ ] isect(fn, target?)
+* [ ] i18n
+* [ ] resize
+
+Community
 
 * [spect-react]() - render react components in spect.
 * [spect-redux]() - use state hooks, connected to redux store.
@@ -693,23 +742,10 @@ $('#clock', () => {
 * [spect-uibox]()
 
 
--->
-
-## Plugins
-
-Official plugins:
-
-* [ ] local(value?)
-* [ ] watch
-* [ ] route
-* [ ] isect(fn, target?)
-* [ ] i18n
-* [ ] resize
-
-
 
 ## FAQ
 
+<!--
 ## Integration with react
 
 Aspects are interoperable with react.
@@ -743,27 +779,21 @@ import App from './App.jsx'
 
 html('.app', el => render(<App/>, el)
 ```
+-->
 
-
-
-## FAQ
-
-### Why aspect, not component?
-
-
-
+<!--
 ### Why aspect, not custom elements?
 
-[Hm](https://twitter.com/Rich_Harris/status/1141689227299737601).
-
+[Hm](https://twitter.com/Rich_Harris/status/1141689227299737601). -->
+<!--
 
 ### Microfrontends?
 
 
-### Complexity?
+### Performance?
 
 Complexity of selectors is O(1) for id selectors and O(n) for class / general case selectors.
-
+ -->
 
 ## Changelog
 
