@@ -1,42 +1,55 @@
 # Spect
 
-`Spect` is [aspect-oriented](https://en.wikipedia.org/wiki/Aspect-oriented_programming) web-framework for building expressive UIs.
+`Spect` is [aspect-oriented](https://en.wikipedia.org/wiki/Aspect-oriented_programming) web-framework for creating expressive UIs. It provides essential DOM toolkit, separating cross-cutting concerns with [_aspects_](https://en.wikipedia.org/wiki/Aspect_(computer_programming)).
 
-<!-- It can be thought of as mixture of jQuery, vdom, hooks and web-components. -->
-
-<!--
 ```js
-import $, { html, state, fx } from 'spect'
+import { $, html, state, fx, route } from 'spect'
 
-// jquery?
-$(document.body, body => {
-  let {data, loading = false} = state()
+// main app aspect
+$('#app', app => {
+  // current element state
+  let { loading = false } = state()
 
-  // react hooks?
-  fx(async () => {
+  // matches current location
+  let [ match, { id } ] = route('user/:id')
+
+  // useEffect hook
+  let data = fx(async () => {
     state({ loading: true })
-    state({ data: await fetch(data) })
+    let data = await fetch(url)
     state({ loading: false })
-  }, [])
+    return data
+  }, [id])
 
-  // htm?
-  html`${loading ? 'Loading...' : data}`
+  // html effect
+  html`${data}`
+})
+
+// loader aspect
+$('#app.loader', app => {
+  let { loading = false } = state()
+
+  // acts like "HTML reducer"
+  if (loading) html`${app.childNodes} <canvas class="spinner" />`
 })
 ```
 
-
 ## Principles
 
-- expressive, not impressive
-- no bundling
-- JS-less hydration
-- standard html first
-- expressiveness
+1. Expressive, not impressive.
+2. No building required to use framework.
+3. No JS required to hydrate HTML.
+4. Standard semantic HTML first.
+
+<!--
+TODO: to FAQ?
 
 _Aspect_ - a functional part, not necessarily linked to the main function [wikipedia](https://en.wikipedia.org/wiki/Aspect_(computer_programming)). Practically, aspects seems to have existed in DOM for a time already - as CSS, with stylesheet as "aspect", selectors as "pointcuts" and rules as "advice"; or as `hidden`, `contenteditable`, `title`, `autocapitalize` and other attributes. Step takes this concept one step forward, enabling generic aspects tooling?.
 
 That turns out to provide elegant solution to many common frontend problems.
 
+TODO: where to list possible aspects?
+TODO: motivate the usefulness of aspects by examples.
 * visual effects (ripple, appearance, parallax, animations etc.)
 * style properties (ui-box, tacjypns, layout polyfills etc.)
 * a11y, l10n
@@ -48,180 +61,222 @@ That turns out to provide elegant solution to many common frontend problems.
 * text formatting, typography
 * additional rendering (portals)
 * etc.
+-->
+
+## Contents
+
+* Principles
+* Installing
+* Getting started
+* Examples
+* API
+* Plugins
+* FAQ
+
+
+## Installing
+
+_Spect_ that can be used as `npm` package:
+
+[![npm install spect](https://nodei.co/npm/spect.png?mini=true)](https://npmjs.org/package/spect/)
+
+```js
+import { $, html, state } from 'spect'
+
+// ...your elegant UI code
+```
+
+Or that can be connected directly as module, skipping bundling step:
+
+```html
+<script type="module">
+import { $, html, state } from 'https://unpkg.com/spect@latest?module'
+
+// ...your expressive UI code
+</script>
+```
+
+<!-- TODO: That can also be used the old way from CDN. -->
 
 
 ## Getting started
 
-Spect can be connected directly to html bypassing bundling as:
-
-```html
-<script type="module">
-import $, * as fx from 'https://unpkg.com/spect@latest?module'
-
-// your expressive UI code
-</script>
-```
-
-Or that can be connected the classical way as:
-
-<samp>npm i spect</samp>
-
-```js
-import $, * as fx from 'spect'
-
-// your elegant UI code
-```
-
-Let's see how [basic react examples](https://reactjs.org/) look like with spect:
+Let's build [basic examples](https://reactjs.org/) with _spect_.
 
 ### A simple aspect
 
-Basic tool of spect is `html` effect. It acts similar to hyperscript, but deploys html instantly to the aspect container:
+The basic tool of _spect_ is `html` effect. It acts similar to hyperscript, but deploys html instantly to the aspected element:
 
 ```js
-import $, { html } from 'spect'
+import { $, html } from 'spect'
 
 $(document.body, body =>
-  html`<host><${hello} id="hello-example" name="Taylor"></>`)
+  html`<div id="hello-example" class="hello" name="Taylor"/>`)
 )
 
-function hello({name}) {
-  html`${name}`
-}
+$('.hello', ({ name }) => html`Hello, ${name}!`)
 ```
+
+Internally `html` is built on [htm](https://ghub.io/htm) and [snabbdom](https://ghub.io/snabbdom), providing performance and robustness.
+
 
 ### A stateful aspect
 
-Spect introduces state and effects, reminding ~~known framework~~ hooks:
+_Spect_ introduces `state`, `mount` and `fx` effects, similar to `useState` and `useEffect` hooks:
 
 ```js
-import $, { html, state, mount } from 'spect'
+import { $, html, state, mount, fx } from 'spect'
 
-// apply timer aspect to #timer-example
 $('#timer-example', timer)
 
 function timer(el) {
   // init defaults
   let { seconds = 0 } = state()
 
-  // called on mount
+  // on mount
   mount(() => {
     let i = setInterval(() => {
       // set state
       state({ seconds: seconds + 1 })
     }, 1000)
 
-    // called on unmount
+    // on unmount
     return () => {
       clearInterval(i)
     }
   })
 
-  html`<host>Seconds: ${seconds}</>`
+  html`Seconds: ${seconds}`
 }
 ```
 
+jQuery powered with react hooks.
+
+
 ### An application
 
+Events subscription is provided by `on` effect, detaching callbacks from markup and enabling event delegation.
+
 ```js
-import $, { html, state, on } from 'spect'
+import { $, html, state, on } from 'spect'
+
+$(`#todos-example`, Todo)
 
 function Todo (el) {
-  let {items=[], text=''} = state()
+  let { items=[], text='' } = state()
 
   // listens for `submit` event on current target
   on('submit', e => {
     e.preventDefault();
-    if (!this.state.text.length) {
-      return;
-    }
+
+    if (!text.length) return;
+
     const newItem = {
       text: this.state.text,
       id: Date.now()
     };
-    this.setState(state => ({
-      items: state.items.concat(newItem),
+
+    state({
+      items: [...items, newItem],
       text: ''
-    }))
+    })
   })
 
   // delegates event to #new-todo element
-  on('change', '#new-todo' e => state({ text: e.target.value });
+  on('change', '#new-todo', e => state({ text: e.target.value });
 
-  html`<host>
+  html`
     <h3>TODO</h3>
     <main items=${items}>${TodoList}</main>
     <form>
       <label for=new-todo>
         What needs to be done?
       </label>
-      <input id=new-todo value=${text}/>
+      <input#new-todo value=${text}/>
       <button>
         Add #${items.length + 1}
       </button>
     </form>
-  </host>`
-}
-
-function TodoList ({items}) {
-  html`
-  <ul>
-    ${items.map(item => `<li>${item.text}</li>`)}
-  </ul>
   `
 }
 
-$(`#todos-example`, Todo)
+function TodoList ({ items }) {
+  html`<ul>${items.map(item => `<li>${item.text}</li>`)}</ul>`
+}
 ```
 
-### A component using external plugins
+`on` effect unbinds listeners when aspect is detached from target. Note that the `on*` html attributes are supported as well.
+
+
+### A web-component aspect
+
+_Spect_ is also able to provide component aspects via native web-components mechanism.
 
 ```js
+// editor.js
+import { html, prop } from 'spect'
 import Remarkable from 'remarkable'
-import $, { html, state } from 'spect'
 
-function MarkdownEditor () {
-  let {value='Hello, **world**!'} = state()
+export default function MarkdownEditor (el) {
+  let { content = 'Hello, **world**!' } = prop()
 
   let getRawMarkup = () => {
     const md = new Remarkable();
-    return md.render(value);
+    return md.render(content);
   }
 
-  html`
-    <div class="MarkdownEditor">
-      <h3>Input</h3>
-      <label for="markdown-content">
-        Enter some markdown
-      </label>
-      <textarea
-        id="markdown-content"
-        onchange=${e => state({value: e.target.value})}
-        defaultValue=${value}
-      />
-      <h3>Output</h3>
-      <div class="content">${el => el.innerHTML = getRawMarkup()}</div>
-    </div>
-  `
-}
+  // obtain reference to `.content`
+  let { lastChild: contentEl } = html`<host class=markdown-editor>
+    <h3>Input</h3>
+    <label for="markdown-content">
+      Enter some markdown
+    </label>
+    <textarea#markdown-content
+      onchange=${e => prop({ content: e.target.value })}
+    >${value}</textarea>
 
-// mount MarkdownEditor aspect on `#markdown-example` element
-$(`#markdown-example`, MarkdownEditor)
+    <h3>Output</h3>
+    <div.content/>
+  </>`
+
+  // look out for XSS
+  lastChild.innerHTML = getRawMarkup()
+}
 ```
 
+```js
+// index.js
+import { $, html, state } from 'spect'
+import MarkdownEditor from './editor.js'
+
+// MarkdownEditor is created as web-component
+$(`#markdown-example`, el => html`<${MarkdownEditor} content='Hello, **world**!'/>`)
+```
+
+Remind [atomico](https://ghub.io/atomico).
+Notice that due to snabbdom, spect allows shorthand id/classes notation in html as `<tag#id.class />`.
 
 ## Examples
 
 [x][counter]
 [x][email validator]
 [ ][TODO: TODO-app]()
-[ ][TODO: search resultt]
 [ ][TODO: form with validation]
+[ ][TODO: 7GUIs]
+[ ][Material components]
+
+<!--
+[ ][TODO: search resultt]
 [ ][TODO: routing]
 [ ][TODO: authorization]
 [ ][TODO: i18n]
 [ ][TODO: suspense]
 [ ][TODO: slideshow]
+
+[ ][TODO: portals]
+[ ][TODO: detailed explanation of html cases]
+[ ][TODO: detailed explanation of fx cases]
+[ ][TODO: useful plugins - i18n, form, route etc.]
 
 [ ][TODO: remount]
 [ ][TODO: react-use]
@@ -229,6 +284,13 @@ $(`#markdown-example`, MarkdownEditor)
 [ ][TODO: ui-box]
 
 [ ][TODO: Sound synthesiser as an aspect]()
+
+[ ][TODO: edge cases, easter eggs: portals, snabbdom id/classname, web-components tricks, obtaining refs, performance hints, direct html use]
+[ ][TODO: providing context to effects]
+[ ][TODO: context-free effects use]
+[ ][TODO: selectors in html effect, nested aspects etc.]
+[ ][TODO: algorithm explanation]
+[ ][TODO: https://github.com/sveltejs/svelte/tree/master/site/content/examples]
 
 
 [Material-components](https://github.com/material-components/material-components-web) example:
@@ -337,22 +399,32 @@ $('.mdc-text-field', TextField)
 
 * [x] `$(selector|element, init => destroy)`
 * [x] `mount(mount => unmount)`
-* [ ] `html\`...content\``
+* [ ] ``html`...markup` ``
+* [ ] `state`
 
 <!--
 * [ ] css`style`
-* [ ] create(() => destroy)
 * [ ] fx(fn, deps?)
-* [ ] update()
 * [ ] on(evt, delegate?, fn)
-* [ ] intersect(fn, target?)
+
 * [ ] state(value?)
 * [ ] attr(value?)
 * [ ] prop(value?)
 * [ ] query(value?)
-* [ ] local(value?)
+* [ ] call(fn)
 
-* [ ] plugins
+* [ ] update()
+* [ ] destroy()
+
+## Plugins
+
+* [ ] local(value?)
+* [ ] watch
+* [ ] route
+* [ ] isect(fn, target?)
+* [ ] i18n
+* [ ] resize
+* [ ] perf
 
 -->
 

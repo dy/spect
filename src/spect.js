@@ -101,7 +101,7 @@ export function callFx(target, fx = noop) {
 
   parentState.emit('after')
 
-  // check if some old children need disposal
+  // check if old children not being called in new fx call and dispose them
   for (let tuple of prevChildren) if (!newChildren.has(tuple)) tracking.get(tuple).dispose()
 
   return result
