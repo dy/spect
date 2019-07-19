@@ -63,16 +63,6 @@ TODO: motivate the usefulness of aspects by examples.
 * etc.
 -->
 
-## Contents
-
-* Principles
-* Installing
-* Getting started
-* Examples
-* API
-* Plugins
-* FAQ
-
 
 ## Installing
 
@@ -97,6 +87,7 @@ import { $, html, state } from 'https://unpkg.com/spect@latest?module'
 ```
 
 <!-- TODO: That can also be used the old way from CDN. -->
+
 
 
 ## Getting started
@@ -127,9 +118,7 @@ _Spect_ introduces `state`, `mount` and `fx` effects, similar to `useState` and 
 ```js
 import { $, html, state, mount, fx } from 'spect'
 
-$('#timer-example', timer)
-
-function timer(el) {
+$('#timer-example', el => {
   // init defaults
   let { seconds = 0 } = state()
 
@@ -147,15 +136,15 @@ function timer(el) {
   })
 
   html`Seconds: ${seconds}`
-}
+})
 ```
 
-jQuery powered with react hooks.
+Hooks-powered jQuery.
 
 
 ### An application
 
-Events subscription is provided by `on` effect, detaching callbacks from markup and enabling event delegation.
+Events subscription is provided by `on` effect, decoupling callbacks from markup and enabling event delegation.
 
 ```js
 import { $, html, state, on } from 'spect'
@@ -208,25 +197,23 @@ function TodoList ({ items }) {
 `on` effect unbinds listeners when aspect is detached from target. Note that the `on*` html attributes are supported as well.
 
 
-### A web-component aspect
+### A web-component
 
 _Spect_ is also able to provide component aspects via native web-components mechanism.
 
 ```js
 // editor.js
-import { html, prop } from 'spect'
+import { html } from 'spect'
 import Remarkable from 'remarkable'
 
-export default function MarkdownEditor (el) {
-  let { content = 'Hello, **world**!' } = prop()
-
+export default function MarkdownEditor ({ content='' }) {
   let getRawMarkup = () => {
     const md = new Remarkable();
     return md.render(content);
   }
 
   // obtain reference to `.content`
-  let { lastChild: contentEl } = html`<host class=markdown-editor>
+  html`<host class=markdown-editor>
     <h3>Input</h3>
     <label for="markdown-content">
       Enter some markdown
@@ -239,8 +226,8 @@ export default function MarkdownEditor (el) {
     <div.content/>
   </>`
 
-  // look out for XSS
-  lastChild.innerHTML = getRawMarkup()
+  // look out for XSS!
+  $('.content').innerHTML = getRawMarkup()
 }
 ```
 
@@ -253,17 +240,19 @@ import MarkdownEditor from './editor.js'
 $(`#markdown-example`, el => html`<${MarkdownEditor} content='Hello, **world**!'/>`)
 ```
 
-Remind [atomico](https://ghub.io/atomico).
 Notice that due to snabbdom, spect allows shorthand id/classes notation in html as `<tag#id.class />`.
+
 
 ## Examples
 
-[x][counter]
-[x][email validator]
-[ ][TODO: TODO-app]()
-[ ][TODO: form with validation]
-[ ][TODO: 7GUIs]
-[ ][Material components]
+<!-- TODO: repl -->
+
+* [x][counter] - source, sandbox
+* [x][email validator] - source, sandbox
+* [ ][TODO: TODO-app]() - source, sandbox
+* [ ][TODO: form with validation] - source, sandbox
+* [ ][TODO: 7GUIs] - source, sandbox
+* [ ][Material components] - source, sandbox
 
 <!--
 [ ][TODO: search resultt]
@@ -282,6 +271,8 @@ Notice that due to snabbdom, spect allows shorthand id/classes notation in html 
 [ ][TODO: react-use]
 [ ][TODO: context]
 [ ][TODO: ui-box]
+
+[ ][TODO: explanation of html an effect, that can be called multiple times]
 
 [ ][TODO: Sound synthesiser as an aspect]()
 
@@ -395,51 +386,37 @@ $('.mdc-text-field', TextField)
 -->
 
 
+
 ## API
 
-* [x] `$(selector|element, init => destroy)`
-* [x] `mount(mount => unmount)`
-* [ ] ``html`...markup` ``
-* [ ] `state`
-
 <!--
-* [ ] css`style`
-* [ ] fx(fn, deps?)
-* [ ] on(evt, delegate?, fn)
-
-* [ ] state(value?)
-* [ ] attr(value?)
-* [ ] prop(value?)
-* [ ] query(value?)
-* [ ] call(fn)
-
-* [ ] update()
-* [ ] destroy()
-
-## Plugins
-
-* [ ] local(value?)
-* [ ] watch
-* [ ] route
-* [ ] isect(fn, target?)
-* [ ] i18n
-* [ ] resize
-* [ ] perf
-
+* [x] `$(selector|element, init => destroy) => el|els`
+* [x] `mount(mount => unmount)`
+* [ ] ``html`...markup` => el|els``
+* [ ] ``css`...rules` => rules``
+* [ ] `state(values?) => values`
+* [ ] `fx(init => destruct, deps?) => result`
+* [ ] `on(evt, delegate?, fn)`
+* [ ] `prop(value?) => values`
+* [ ] `query(value?) => values`
+* [ ] `call(fn) => handle`
+* [ ] `update()`
+* [ ] `destroy(target, aspect)`
 -->
 
-### `$(selector|element, init => destroy)`
+### `$(selector|element|list, init? => destroy?)`
 
-Attach selector observer or element handler to current target. `fn` result is used as destructor.
+Attach an aspect to elements, matching the selector or direct element(s).
+Optional returned function is used as destructor, invoked when the aspect is being removed from element.
+Without an aspect `$` becomes a shortcut for `document.querySelector/All`, returning all matched elements in current aspect context.
 
 ```js
-import $, from 'spect'
+import $ from 'spect'
 
-// API
-$('#my-selector', element => {
-  console.log('init')
+let element = $('#my-selector', element => {
+  // init
   return () => {
-    console.log('destroy')
+    // destroy
   }
 })
 ```
@@ -447,33 +424,31 @@ $('#my-selector', element => {
 #### Example
 
 ```js
-import $, { on, state } from 'spect'
+import { $, on, state } from 'spect'
 
 let hiddenBox = $('#banner-message');
-$('#button-container button').on( 'click', e => {
-  hiddenBox.classList.toggle( 'visible' )
-});
+$('#button-container button', el =>
+  on('click', e => hiddenBox.classList.toggle( 'visible' ))
+);
 ```
 
-You may wonder what's the difference with [jQuery](https://jquery.com/)?
-
-− _Spect_ treats selector dynamically, so that it doesn't matter when the spect code is launched or if there are matching elements the DOM.
-
-_For any elements matching the selector, ever attached to the DOM, `spect` runs the described handler function, called **aspect**._
+<!-- TODO: explain context -->
+<!-- TODO: explain destructor -->
 
 ---
 
 
-### `mount(() => () => {})`
+### `mount(attached => detached)`
 
-Mount effect invokes passed function when target is mounted to the DOM and invokes returned function when unmounted.
+Mount effect invokes passed `attached` function when target is mounted on the DOM, and the optional returned function is called when the target is unmounted.
 
 ```js
 $('#target', el => {
   mount(() => {
-    console.log('element mounted')
-
-    return () => console.log('element unmounted')
+    // mounted
+    return () => {
+      // unmounted
+    }
   })
 })
 ```
@@ -481,51 +456,24 @@ $('#target', el => {
 
 <!-- API improvements -->
 
-<!-- Without an aspect `$` is just a shortcut for `document.querySelector/all`. -->
-
 <!-- Effect === aspect, <div mount=${() => () => {}}></div> -->
 
 <!-- Effects exposed in jquery way: $(els).html(), but realtime via mutation observer -->
 
-<!-- Empty selector cases for fragment construction: $(frag => {}), $().effect() -->
+<!-- Empty selector cases: $(frag => {}), $().effect() -->
 
-<!--
-    Spect-based test-runner. t(name, fn => {}) is exactly the spect syntax. In fact, test is an aspect of some component.
-    The cool thing: it can run asserts as effects.
-
-    import t, {eq, deq} from 'spect/t'
-
-    t('some-target-to-observe', target => {
-      bench()
-      eq(a, b)
-      tick()
-
-      fx()
-    })
--->
-
-<!--
-### `create(() => () => {})`
-
-Called whenever aspect is assigned / unassigned to an element:
-
-```js
-$(el, el => {
-  create(() => {
-    // aspect assigned
-    return () => {
-      // aspect unassigned
-    }
-  })
-}
-```
+<!-- Registering plugins as jQuery $.fn = ... -->
 
 Note that an aspect can be assigned to existing elements, in that case `mount` will be triggered automatically.
--->
 
 ### ``html`...markup` ``
 
-HTML effect builds provided DOM markup and makes sure that's mounted, performing necessary updates.
+HTML effect instantly mounts the provided markup to the current element context, performing necessary updates. It utilizes vdom under the hood, making rendering performant and robust.
+
+```js
+```
+
+#### Example
 
 ```js
 import $, { html, state } from 'spect'
@@ -745,6 +693,23 @@ $('#clock', () => {
 * [spect-uibox]()
 
 
+-->
+
+## Plugins
+
+Official plugins:
+
+* [ ] local(value?)
+* [ ] watch
+* [ ] route
+* [ ] isect(fn, target?)
+* [ ] i18n
+* [ ] resize
+
+
+
+## FAQ
+
 ## Integration with react
 
 Aspects are interoperable with react.
@@ -781,8 +746,6 @@ html('.app', el => render(<App/>, el)
 
 
 
-
-
 ## FAQ
 
 ### Why aspect, not component?
@@ -802,31 +765,34 @@ html('.app', el => render(<App/>, el)
 Complexity of selectors is O(1) for id selectors and O(n) for class / general case selectors.
 
 
-## Inspiration
+## Changelog
 
-`spect` would not be possible without brilliant ideas from many libraries authors, hence the acknowledge:
-
-* react - for jsx, hocs, hooks and pains grandiose job
-* atomico - for novative approach to custom-elements
-* jquery - for old school ground
-* htm - for belief that everything is possible and parser code
-* funkia/turbine - for generators rendering and examples
-* redux - for reducers
-* tachyons, tailwindcss, ui-box - for CSS driving use-case
-* evergreen-ui, material-ui - for many practical examples
-* fast-on-load - for proving fast mutation observer solution
-* [hui](https://github.com/hyperdivision/hui)
-* selector-ovserver - for proving selector observer solution
-* reuse - for aspects hint
-* material-design-lite - for upgrade code ground
-* God - for making this possible
+Version | Changes
+---|---
+1.0.0 | Register `spect` npm name
 
 
-### Principles
+## Credits
 
-* Sat, Chit, Ananda, Vigraha
-* Nama, Rupa, Guna, Lila
+_Spect_ would not be possible without brilliant ideas from many libraries authors, hence the acknowledge:
 
+* react - for jsx, hocs, hooks and pains - grandiose job
+* atomico, hui - for novative approach to web-components
+* jquery - for classical school
+* htm - for mainstream alternative example
+* fast-on-load - for fast mutation observer solution
+* tachyons, tailwindcss, ui-box - for CSS use-cases
+* evergreen-ui, material-ui - for practical components examples
+* reuse - for react-aspects solution
+* selector-observer - for selector observer solution
+* material-design-lite - for upgrading code example and components library
+* funkia/turbine - for generators and examples
+* *** - for letting that be possible
 
+---
 
--->
+Made on Earth by your humble servant.
+
+> Sat, Chit, Ananda, Vigraha
+> Nama, Rupa, Guna, Lila
+
