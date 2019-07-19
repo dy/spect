@@ -71,7 +71,7 @@ import { $, html, state } from 'spect'
 // ...your elegant UI code
 ```
 
-Or that can be connected directly as module, skipping bundling step:
+Or connected directly as module, skipping bundling step<sup>2.</sup>:
 
 ```html
 <script type="module">
