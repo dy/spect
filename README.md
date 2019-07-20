@@ -493,7 +493,7 @@ $('#target', target => {
     <${Component}/>
     <${document.body}>Portal</>
     <#id>Selector portal</>
-    <!-- comment -->
+    <!-- comment --/>
     ${ el.childNodes }
   `
 })
@@ -516,7 +516,7 @@ function Component (el) {
 - [_htm_ transforms](https://github.com/developit/htm/tree/master/packages/) are supported.
 - Unclosed [self-closing tags](http://xahlee.info/js/html5_non-closing_tag.html), such as `<hr>`, `<br>` etc. aren't supported.
 - [Optional closing tags](https://www.w3.org/TR/2014/REC-html5-20141028/syntax.html#optional-tags), such as `<li>`, `<p>` etc. aren't supported.
-- HTML comments `<!-- -->` and declarations `<? ?>` are not supported.
+- HTML comments `<!-- --/>` and declarations `<? ?>` are not supported.
 
 ```js
 import { $, htm } from 'spect'
