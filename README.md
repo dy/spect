@@ -506,7 +506,7 @@ function Component (el) {
 
 <details>
 <summary>
-  <big><strong>htm\`...markup\`</strong></big>
+  <big><strong>htm`...markup`</strong></big>
 </summary>
 
 `htm` provides direct [_htm_](https://ghub.io/htm) syntax, which is different from `html` in the following:
