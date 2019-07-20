@@ -1,6 +1,7 @@
 # Spect
 
-`Spect` is [aspect-oriented](https://en.wikipedia.org/wiki/Aspect-oriented_programming) web-framework for creating expressive UIs. It provides essential DOM toolkit, separating cross-cutting concerns with [_aspects_](https://en.wikipedia.org/wiki/Aspect_(computer_programming)).
+`Spect` is [aspect-oriented](https://en.wikipedia.org/wiki/Aspect-oriented_programming) web-framework for creating expressive UIs.
+It provides essential DOM toolkit, separating cross-cutting concerns with [_aspects_](https://en.wikipedia.org/wiki/Aspect_(computer_programming)).
 
 ```js
 import { $, html, state, fx, route } from 'spect'
@@ -71,7 +72,7 @@ import { $, html, state } from 'spect'
 // ...your UI code
 ```
 
-**B.** Connected directly as module, skipping bundling step<sup><a href="#principle-2">2</a></sup>:
+**B.** _Spect_ can be connected directly<sup><a href="#principle-2">2</a></sup> as module:
 
 ```html
 <script type="module">
@@ -81,7 +82,7 @@ import { $, html, state } from 'https://unpkg.com/spect@latest?module'
 </script>
 ```
 
-**C.** Used standalone from CDN.
+**C.** Or that can be used standalone from CDN.
 
 TODO
 ```html
@@ -96,7 +97,7 @@ let { $, html, ...fx } = spect;
 
 Let's build [basic examples](https://reactjs.org/) with _spect_.
 
-### A simple aspect
+### A simple aspect <small>code | sandbox</small>
 
 The basic tool of _spect_ is `html` effect. It acts similar to hyperscript, but deploys html instantly to the aspected element:
 
@@ -104,7 +105,7 @@ The basic tool of _spect_ is `html` effect. It acts similar to hyperscript, but 
 import { $, html } from 'spect'
 
 $(document.body, body =>
-  html`<div id="hello-example" class="hello" name="Taylor"/>`)
+  html`<div id="hello-example" class="hello" name="Taylor"/>`
 )
 
 $('.hello', ({ name }) => html`Hello, ${name}!`)
@@ -113,7 +114,7 @@ $('.hello', ({ name }) => html`Hello, ${name}!`)
 Internally `html` is built on [htm](https://ghub.io/htm) and [snabbdom](https://ghub.io/snabbdom), providing performance and robustness.
 
 
-### A stateful aspect
+### A stateful aspect <small>code | sandbox</small>
 
 _Spect_ introduces `state`, `mount` and `fx` effects, similar to `useState` and `useEffect` hooks:
 
@@ -141,10 +142,10 @@ $('#timer-example', el => {
 })
 ```
 
-Hooks-powered jQuery.
+> Hooks-powered jQuery.
 
 
-### An application
+### An application <small>code | sandbox</small>
 
 Events subscription is provided by `on` effect, decoupling callbacks from markup and enabling event delegation.
 
@@ -199,7 +200,7 @@ function TodoList ({ items }) {
 `on` effect unbinds listeners when aspect is detached from target. Note that the `on*` html attributes are supported as well.
 
 
-### A web-component
+### A web-component <small>code | sandbox</small>
 
 _Spect_ is also able to provide component aspects via native web-components mechanism.
 
@@ -242,7 +243,7 @@ import MarkdownEditor from './editor.js'
 $(`#markdown-example`, el => html`<${MarkdownEditor} content='Hello, **world**!'/>`)
 ```
 
-Notice that spect allows shorthand id/classes notation in html as `<tag#id.class />`.
+Notice the shorthand id/classes notation as `<tag#id.class />`.
 
 
 ## Examples
@@ -255,6 +256,8 @@ Notice that spect allows shorthand id/classes notation in html as `<tag#id.class
 * [ ][TODO: form with validation] - source, sandbox
 * [ ][TODO: 7GUIs] - source, sandbox
 * [ ][Material components] - source, sandbox
+
+[See all examples]()
 
 <!--
 [ ][TODO: search resultt]
@@ -500,7 +503,9 @@ function Component (el) {
 }
 ```
 
-`html` encompasses two subeffects: `htm` and `h`.
+`html` is expandion of `htm` and `h` subeffects.
+
+---
 
 #### ``htm`...markup` ``
 
@@ -536,6 +541,8 @@ function Component (el) {
   html`<host foo=bar>Shortcut for current target (el)</host>`
 }
 ```
+
+---
 
 #### `h(tagName, props, ...children)`
 
