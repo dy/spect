@@ -474,7 +474,7 @@ Note that an aspect can be assigned to existing elements, in that case `mount` w
 
 
 
-### html`...markup`
+### html\`...markup\`
 
 HTML effect provides markup for current element, performing only necessary updates via VDOM diffing. Returned result is HTML content, created by the effect.
 
@@ -506,7 +506,7 @@ function Component (el) {
 
 <details>
 <summary>
-  <big><strong><code>htm`...markup`</code></strong></big>
+  <big><strong>htm\`...markup\`</strong></big>
 </summary>
 
 `htm` provides direct [_htm_](https://ghub.io/htm) syntax, which is different from `html` in the following:
@@ -545,7 +545,7 @@ function Component (el) {
 
 <details>
 <summary>
-  <big><strong><code>h(tagName, props, ...children)</code></strong></big>
+  <big><strong>h(tagName, props, ...children)</strong></big>
 </summary>
 
 `h` is base hyperscript-compatible function, expecting props and children to reproduce DOM. The parent `h` mounts the received structure to current target. `h` can be useful to harness JSX for HTML:
