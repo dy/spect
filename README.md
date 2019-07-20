@@ -113,6 +113,7 @@ $('.hello', ({ name }) => html`Hello, ${name}!`)
 
 Internally `html` is built on [htm](https://ghub.io/htm) and [snabbdom](https://ghub.io/snabbdom), providing performance and robustness.
 
+<!--
 
 ### A stateful aspect <small>code | sandbox</small>
 
@@ -244,7 +245,7 @@ $(`#markdown-example`, el => html`<${MarkdownEditor} content='Hello, **world**!'
 ```
 
 Notice the shorthand id/classes notation as `<tag#id.class />`.
-
+-->
 
 ## Examples
 
@@ -472,7 +473,7 @@ $('#target', el => {
 Note that an aspect can be assigned to existing elements, in that case `mount` will be triggered automatically.
 
 
-
+<!--
 
 ### html\`...markup\`
 
@@ -511,7 +512,7 @@ function Component (el) {
 
 `htm` provides direct [_htm_](https://ghub.io/htm) syntax, which is different from `html` in the following:
 
-- Anonymous aspects `<a ${foo} ${bar} />` must be put into `use` attribute as `<a use=${[ foo, bar ]} />`
+- Anonymous aspects `<a ${foo} ${bar} />` must be put into `class` as `<a class='${foo} ${bar}' />`
 - [_htm_ transforms](https://github.com/developit/htm/tree/master/packages/) are supported.
 - Unclosed [self-closing tags](http://xahlee.info/js/html5_non-closing_tag.html), such as `<hr>`, `<br>` etc. aren't supported.
 - [Optional closing tags](https://www.w3.org/TR/2014/REC-html5-20141028/syntax.html#optional-tags), such as `<li>`, `<p>` etc. aren't supported.
@@ -575,6 +576,9 @@ function Component (el) {
 }
 ```
 </details>
+
+-->
+
 
 <!--
 #### Example
