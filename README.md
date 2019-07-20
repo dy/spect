@@ -511,12 +511,11 @@ function Component (el) {
 
 `htm` provides direct [_htm_](https://ghub.io/htm) syntax, which is different from `html` in the following:
 
-- Unclosed [self-closing tags](http://xahlee.info/js/html5_non-closing_tag.html) such as `<hr>`, `<br>` etc. are not supported.
-- [Optional closing tags](https://www.w3.org/TR/2014/REC-html5-20141028/syntax.html#optional-tags), such as `<li>`, `<p>` etc. are not supported.
-- HTML comments and declarations are not supported.
 - Anonymous aspects `<a ${foo} ${bar} />` must be put into `use` attribute as `<a use=${[ foo, bar ]} />`
-
-In other regards, `htm` can be used the same way as `html`, but with enabled _htm_ infrastructure, such as transforms etc.
+- [_htm_ transforms](https://github.com/developit/htm/tree/master/packages/) are supported.
+- Unclosed [self-closing tags](http://xahlee.info/js/html5_non-closing_tag.html), such as `<hr>`, `<br>` etc. aren't supported.
+- [Optional closing tags](https://www.w3.org/TR/2014/REC-html5-20141028/syntax.html#optional-tags), such as `<li>`, `<p>` etc. aren't supported.
+- HTML comments `<!-- -->` and declarations `<? ?>` are not supported.
 
 ```js
 import { $, htm } from 'spect'
