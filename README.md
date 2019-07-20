@@ -71,7 +71,7 @@ import { $, html, state } from 'spect'
 // ...your UI code
 ```
 
-**B.** Or connected directly as module, skipping bundling step<sup><a href="#principle-2">2</a></sup>:
+**B.** Connected directly as module, skipping bundling step<sup><a href="#principle-2">2</a></sup>:
 
 ```html
 <script type="module">
@@ -81,8 +81,15 @@ import { $, html, state } from 'https://unpkg.com/spect@latest?module'
 </script>
 ```
 
-<!-- TODO: That can also be used the old way from CDN. -->
+**C.** Used standalone from CDN.
 
+TODO
+```html
+<script src="https://unpkg.com/spect@latest" crossorigin="anonymous"></script>
+<script>
+let { $, html, ...fx } = spect;
+</script>
+```
 
 
 ## Getting started
@@ -235,7 +242,7 @@ import MarkdownEditor from './editor.js'
 $(`#markdown-example`, el => html`<${MarkdownEditor} content='Hello, **world**!'/>`)
 ```
 
-Notice that due to snabbdom, spect allows shorthand id/classes notation in html as `<tag#id.class />`.
+Notice that spect allows shorthand id/classes notation in html as `<tag#id.class />`.
 
 
 ## Examples
@@ -397,6 +404,7 @@ $('.mdc-text-field', TextField)
 * [ ] `call(fn) => handle`
 * [ ] `update()`
 * [ ] `destroy(target, aspect)`
+* [ ] `watch`
 -->
 
 ### `$(selector|element|list, init? => destroy?)`
@@ -469,10 +477,12 @@ Note that an aspect can be assigned to existing elements, in that case `mount` w
 HTML effect provides markup for current element, performing only necessary updates via VDOM diffing. Returned result is HTML content, created by the effect.
 
 ```js
+import { $, html } from 'spect'
+
 $('#target', target => {
   let [text, frag, img, ...nodes] = html`
     Text content
-    <>Document fragment</>
+    <>Fragment</>
     <img/>
     <hr><br>
     <div#id.class foo=bar ${el => { /* el === target */}}></div>
@@ -480,7 +490,7 @@ $('#target', target => {
     <${Component}/>
     <${document.body}>Portal</>
     <#id>Selector portal</>
-    <!-- html comment -->
+    <!-- comment -->
     ${ el.childNodes }
   `
 })
@@ -490,8 +500,74 @@ function Component (el) {
 }
 ```
 
-<!-- TODO: drawbacks of htm: no anonymous aspects; no unclosed tags; no html comments -->
+`html` encompasses two subeffects: `htm` and `h`.
 
+#### ``htm`...markup` ``
+
+`htm` provides direct [_htm_](https://ghub.io/htm) syntax, which is different from `html` in the following:
+
+- Unclosed [self-closing tags](http://xahlee.info/js/html5_non-closing_tag.html) such as `<hr>`, `<br>` etc. are not supported.
+- [Optional closing tags](https://www.w3.org/TR/2014/REC-html5-20141028/syntax.html#optional-tags), such as `<li>`, `<p>` etc. are not supported.
+- HTML comments and declarations are not supported.
+- Anonymous aspects `<a ${foo} ${bar} />` must be put into `use` attribute as `<a use=${[ foo, bar ]} />`
+
+In other regards, `htm` can be used the same way as `html`, but with enabled _htm_ infrastructure, such as transforms etc.
+
+```js
+import { $, htm } from 'spect'
+
+$('#target', target => {
+  let [text, frag, img, ...nodes] = html`
+    Text content
+    <>Fragment</>
+    <img/>
+    <hr/><br/>
+    <div#id.class foo=bar use=${el => { /* el === target */}}></div>
+    ${el => { /* el === target */ }}
+    <${Component}/>
+    <${document.body}>Portal</>
+    <#id>Selector portal</>
+    ${ /* comment */}
+    ${ el.childNodes }
+  `
+})
+
+function Component (el) {
+  html`<host foo=bar>Shortcut for current target (el)</host>`
+}
+```
+
+#### `h(tagName, props, ...children)`
+
+`h` is base hyperscript-compatible function, expecting props and children to reproduce DOM. The parent `h` mounts the received structure to current target. `h` can be useful to harness JSX for HTML:
+
+```jsx
+/** @jsx h */
+
+import { h } from 'spect'
+
+$('#target', target => {
+  <>
+    Text content
+    <>Fragment</>
+    <img/>
+    <hr><br>
+    <div id="id" class="class" foo={bar} use={el => { /* el === target */}}></div>
+    {el => { /* el === target */ }}
+    <Component/>
+    <document.body>Portal</document.body>
+    { let Target = document.querySelector('#id'); <Target>Selector portal</Target> }
+    {/* comment */}
+    { el.childNodes }
+  </>
+})
+
+function Component (el) {
+  <host foo="bar">Shortcut for current target (el)</host>
+}
+```
+
+<!--
 #### Example
 
 ```js
@@ -516,12 +592,13 @@ function Logs(el) {
 
 const Log = ({ details, date }) => `<p>${details}</p><time>${ date.toLocalTimeString() }</time>`
 ```
+-->
 
 <!--
 
 ### `state(value?)`
 
-Component state hook. Provides per-element associated values:
+Provides state, associated with aspect. This way, different aspects can share
 
 ```js
 function mod (el) {
