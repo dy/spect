@@ -507,7 +507,7 @@ function Component (el) {
 
 <details>
 <summary>
-  <strong><code>htm`...markup`</code></strong>
+  <big><strong><code>htm`...markup`</code></strong></big>
 </summary>
 
 `htm` provides direct [_htm_](https://ghub.io/htm) syntax, which is different from `html` in the following:
@@ -546,7 +546,7 @@ function Component (el) {
 
 <details>
 <summary>
-  <strong><code>h(tagName, props, ...children)</code></strong>
+  <big><strong><code>h(tagName, props, ...children)</code></strong></big>
 </summary>
 
 `h` is base hyperscript-compatible function, expecting props and children to reproduce DOM. The parent `h` mounts the received structure to current target. `h` can be useful to harness JSX for HTML:
