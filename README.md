@@ -507,9 +507,10 @@ function Component (el) {
 
 <details>
 <summary>
-### ``htm`...markup` ``
+  <strong><code>htm`...markup`</code></strong>
 </summary>
 
+<br/>
 `htm` provides direct [_htm_](https://ghub.io/htm) syntax, which is different from `html` in the following:
 
 - Unclosed [self-closing tags](http://xahlee.info/js/html5_non-closing_tag.html) such as `<hr>`, `<br>` etc. are not supported.
@@ -546,9 +547,10 @@ function Component (el) {
 
 <details>
 <summary>
-### `h(tagName, props, ...children)`
+  <strong><code>h(tagName, props, ...children)</code></strong>
 </summary>
 
+<br/>
 `h` is base hyperscript-compatible function, expecting props and children to reproduce DOM. The parent `h` mounts the received structure to current target. `h` can be useful to harness JSX for HTML:
 
 ```jsx
