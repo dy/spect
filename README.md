@@ -410,7 +410,7 @@ $('.mdc-text-field', TextField)
 * [ ] `watch`
 -->
 
-### `$(selector|element|list, init? => destroy?)`
+### $(selector|element|list, init => destroy)
 
 Attach an aspect to elements, matching the selector or direct element(s).
 Optional returned function is used as destructor, invoked when the aspect is being removed from element.
@@ -441,10 +441,9 @@ $('#button-container button', el =>
 <!-- TODO: explain context -->
 <!-- TODO: explain destructor -->
 
----
 
 
-### `mount(attached => detached)`
+### mount(attached => detached)
 
 Mount effect invokes passed `attached` function when target is mounted on the DOM, and the optional returned function is called when the target is unmounted.
 
@@ -472,10 +471,10 @@ $('#target', el => {
 
 Note that an aspect can be assigned to existing elements, in that case `mount` will be triggered automatically.
 
----
 
 
-### ``html`...markup` ``
+
+### html`...markup`
 
 HTML effect provides markup for current element, performing only necessary updates via VDOM diffing. Returned result is HTML content, created by the effect.
 
