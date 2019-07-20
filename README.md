@@ -505,9 +505,10 @@ function Component (el) {
 
 `html` is expansion of `htm` and `h` subeffects.
 
----
-
+<details>
+<summary>
 ### ``htm`...markup` ``
+</summary>
 
 `htm` provides direct [_htm_](https://ghub.io/htm) syntax, which is different from `html` in the following:
 
@@ -522,7 +523,7 @@ In other regards, `htm` can be used the same way as `html`, but with enabled _ht
 import { $, htm } from 'spect'
 
 $('#target', target => {
-  let [text, frag, img, ...nodes] = html`
+  let [text, frag, img, ...nodes] = htm`
     Text content
     <>Fragment</>
     <img/>
@@ -541,10 +542,12 @@ function Component (el) {
   html`<host foo=bar>Shortcut for current target (el)</host>`
 }
 ```
+</details>
 
----
-
+<details>
+<summary>
 ### `h(tagName, props, ...children)`
+</summary>
 
 `h` is base hyperscript-compatible function, expecting props and children to reproduce DOM. The parent `h` mounts the received structure to current target. `h` can be useful to harness JSX for HTML:
 
@@ -573,6 +576,7 @@ function Component (el) {
   <host foo="bar">Shortcut for current target (el)</host>
 }
 ```
+</details>
 
 <!--
 #### Example
