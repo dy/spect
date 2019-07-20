@@ -503,11 +503,11 @@ function Component (el) {
 }
 ```
 
-`html` is expandion of `htm` and `h` subeffects.
+`html` is expansion of `htm` and `h` subeffects.
 
 ---
 
-#### ``htm`...markup` ``
+### ``htm`...markup` ``
 
 `htm` provides direct [_htm_](https://ghub.io/htm) syntax, which is different from `html` in the following:
 
@@ -544,7 +544,7 @@ function Component (el) {
 
 ---
 
-#### `h(tagName, props, ...children)`
+### `h(tagName, props, ...children)`
 
 `h` is base hyperscript-compatible function, expecting props and children to reproduce DOM. The parent `h` mounts the received structure to current target. `h` can be useful to harness JSX for HTML:
 
