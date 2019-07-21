@@ -1,9 +1,9 @@
 import onload from 'fast-on-load'
-import { currentTuple, currentTarget, callFx, tracking } from './spect.js'
+import { currentState, currentTarget, callFx } from './spect.js'
 import { noop } from './util.js'
 
 export default function mount (fn) {
-  let state = tracking.get(currentTuple)
+  let state = currentState
 
   if (!state.mount) {
     // we reset unmounts/mounts each new the same fx call
