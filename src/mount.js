@@ -1,10 +1,8 @@
 import onload from 'fast-on-load'
-import { currentTarget, currentFx, callFx, tracking } from './spect.js'
+import { currentTuple, currentTarget, callFx, tracking } from './spect.js'
 import { noop } from './util.js'
-import t from 'immutable-tuple'
 
 export default function mount (fn) {
-  let currentTuple = t(currentTarget, currentFx)
   let state = tracking.get(currentTuple)
 
   if (!state.mount) {
