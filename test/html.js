@@ -1,5 +1,35 @@
 import t from 'tst'
-import $, { html } from '../src/index.js'
+import $, { html, htm } from '../src/index.js'
+
+t.only('html: mounts VDOM built via h', t => {
+  let target = document.createElement('div')
+
+  let h = html.h
+
+  $(target, el => {
+    html(
+      h('', null,
+        'Text content', ' ',
+        // ['Document', h('', {}, [' ', 'fragment'])],
+        // h('img', {}),
+        // h('hr'), h('br'),
+        // h('div#id.class', { foo: 'bar', baz: true, class: el => { t.equal(el.tagName, 'DIV') } }, [ h('div') ]),
+        // el => { t.equal(el, target) },
+        // h(Component),
+        // h(document.body, null, 'Portal'),
+        // h('#id', null, ['Selector portal']),
+        // undefined,
+        // el.childNodes
+      )
+    )
+  })
+
+  function Component (el) {
+
+  }
+
+  t.equal(target.textContent, 'Text content ')
+})
 
 t('html: basic', t => {
   let node = html`<a></a>`

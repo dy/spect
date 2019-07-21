@@ -2,50 +2,38 @@
 import htm from 'htm'
 import { init as snabInit } from 'snabbdom'
 import snabH from 'snabbdom/h'
-import snabClass from 'snabbdom/modules/class'
-import snabProps from 'snabbdom/modules/props'
-import snabStyle from 'snabbdom/modules/style'
-import snabAttrs from 'snabbdom/modules/attributes'
-import snabEvent from 'snabbdom/modules/eventlisteners'
-import snabDataset from 'snabbdom/modules/dataset'
 import toVNode from 'snabbdom/tovnode'
 
-import { currentTarget, createComponent } from './spect.js'
+import { tracking, currentTarget, currentFx } from './spect.js'
 import { } from './util.js'
 
 // patcher includes all possible decorators for now
 // TODO: mb remove data-, attr-, class- and props- stuff
-const patch = snabInit([
-  snabClass, snabProps, snabAttrs, snabStyle, snabEvent, snabDataset
-]);
-
-// vnodes per targets
-const tracking = new WeakMap()
-
+const patch = snabInit();
 
 // wrap snabH to connect to htm
 function h(target, props, ...children) {
   if (!props) props = {}
 
   // DOM targets get their props / content updated
-  if (target instanceof Node) {
-    if (!tracking.has(target)) tracking.set(target, toVNode(target))
-    let oldVnode = tracking.get(target)
-    let newVNode = snabH(oldVnode.sel, {props}, children)
-    tracking.set(target, patch(oldVnode, newVNode))
-    return target
-  }
+  // if (target instanceof Node) {
+  //   if (!tracking.has(target)) tracking.set(target, toVNode(target))
+  //   let oldVnode = tracking.get(target)
+  //   let newVNode = snabH(oldVnode.sel, {props}, children)
+  //   tracking.set(target, patch(oldVnode, newVNode))
+  //   return target
+  // }
 
   //  register web-component
-  if (typeof target === 'function') {
-    if (!tracking.has(target)) {
-      // TODO: differentiate class / function
-      tracking.set(target, createComponent(target, props, children))
-    }
-    let { tagName } = tracking.get(target)
+  // if (typeof target === 'function') {
+  //   if (!tracking.has(target)) {
+  //     // TODO: differentiate class / function
+  //     tracking.set(target, createComponent(target, props, children))
+  //   }
+  //   let { tagName } = tracking.get(target)
 
-    return snabH(tagName, props, children)
-  }
+  //   return snabH(tagName, props, children)
+  // }
 
   // fragment targets return array
   if (target === '') return children

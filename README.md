@@ -473,11 +473,10 @@ $('#target', el => {
 Note that an aspect can be assigned to existing elements, in that case `mount` will be triggered automatically.
 
 
-<!--
 
 ### html\`...markup\`
 
-HTML effect provides markup for current element, performing only necessary updates via VDOM diffing. Returned result is HTML content, created by the effect.
+HTML effect provides markup for current element, performing necessary updates via VDOM diffing. Returned result is HTML content, created by the effect.
 
 ```js
 import { $, html } from 'spect'
@@ -491,8 +490,6 @@ $('#target', target => {
     <div#id.class foo=bar ${el => { /* el === target */}}></div>
     ${el => { /* el === target */ }}
     <${Component}/>
-    <${document.body}>Portal</>
-    <#id>Selector portal</>
     <!-- comment --/>
     ${ el.childNodes }
   `
@@ -503,82 +500,70 @@ function Component (el) {
 }
 ```
 
-`html` is expansion of `htm` and `h` subeffects.
+`html` is expands [_htm_](https://ghub.io/htm) with the following:
 
-<details>
-<summary>
-  <big><strong>htm`...markup`</strong></big>
-</summary>
+- Allows anonymous attributes `<a ${foo} ${bar} />` for connecting aspects.
+- Allows unclosed [self-closing tags](http://xahlee.info/js/html5_non-closing_tag.html), such as `<hr>`, `<br>` etc.
+- Allows [optional closing tags](https://www.w3.org/TR/2014/REC-html5-20141028/syntax.html#optional-tags), such as `<li>`, `<p>` etc..
+- Allows HTML comments `<!-- --/>`.
 
-`htm` provides direct [_htm_](https://ghub.io/htm) syntax, which is different from `html` in the following:
+To use plain `htm` directly, see JSX section.
 
-- Anonymous aspects `<a ${foo} ${bar} />` must be put into `class` as `<a class='${foo} ${bar}' />`
-- [_htm_ transforms](https://github.com/developit/htm/tree/master/packages/) are supported.
-- Unclosed [self-closing tags](http://xahlee.info/js/html5_non-closing_tag.html), such as `<hr>`, `<br>` etc. aren't supported.
-- [Optional closing tags](https://www.w3.org/TR/2014/REC-html5-20141028/syntax.html#optional-tags), such as `<li>`, `<p>` etc. aren't supported.
-- HTML comments `<!-- --/>` and declarations `<? ?>` are not supported.
+#### Attributes & properties
+
+HTML props are passed as props, the elements take handle if they have to expose props as attributes.
+
+#### Fragments
 
 ```js
-import { $, htm } from 'spect'
+html`
+<>Fragment</>
+`
+html`a <b> c`
 
-$('#target', target => {
-  let [text, frag, img, ...nodes] = htm`
-    Text content
-    <>Fragment</>
-    <img/>
-    <hr/><br/>
-    <div#id.class foo=bar use=${el => { /* el === target */}}></div>
-    ${el => { /* el === target */ }}
-    <${Component}/>
-    <${document.body}>Portal</>
-    <#id>Selector portal</>
-    ${ /* comment */}
-    ${ el.childNodes }
-  `
-})
-
-function Component (el) {
-  html`<host foo=bar>Shortcut for current target (el)</host>`
-}
+html(['a', 'b', 'c'])
 ```
-</details>
 
-<details>
-<summary>
-  <big><strong>h(tagName, props, ...children)</strong></big>
-</summary>
+#### Connecting aspects
 
-`h` is base hyperscript-compatible function, expecting props and children to reproduce DOM. The parent `h` mounts the received structure to current target. `h` can be useful to harness JSX for HTML:
+#### Web-components
+
+#### Commentaries
+
+#### Reducing existing DOM
+
+#### JSX / HTM
+
+`html` effect internally uses `html.h` function for building VDOM. `h` is hyperscript-compatible, expecting `h(tagName, props, ...children)` signature. This way either JSX or [HTM](https://ghub.io/htm) (including [transforms](https://github.com/developit/htm/tree/master/packages/)) can be used:
 
 ```jsx
-/** @jsx h */
+import { html } from 'spect'
 
-import { h } from 'spect'
-
+/** @jsx html.h */
 $('#target', target => {
-  <>
-    Text content
-    <>Fragment</>
-    <img/>
-    <hr><br>
-    <div id="id" class="class" foo={bar} use={el => { /* el === target */}}></div>
-    {el => { /* el === target */ }}
-    <Component/>
-    <document.body>Portal</document.body>
-    { let Target = document.querySelector('#id'); <Target>Selector portal</Target> }
-    {/* comment */}
-    { el.childNodes }
-  </>
+  html(
+    <>
+      Text content
+      <>Fragment</>
+      <img/>
+      <hr><br>
+      <div id="id" {...[ foo, bar ]}></div>
+      {el => { /* el === target */ }}
+      <Component/>
+      { let Target = document.querySelector('#id'); <Target>Selector portal</Target> }
+      {/* comment */}
+      { el.childNodes }
+    </>
+  )
 })
 
 function Component (el) {
   <host foo="bar">Shortcut for current target (el)</host>
 }
+
+function foo (el) {}
+function bar (el) {}
 ```
-</details>
-
--->
-
 
 <!--
 #### Example
@@ -825,10 +810,25 @@ Community
 * [spect-dataschema]() - provide dataschema props for the element.
 * [spect-meta]() - set document meta props.
 * [spect-uibox]()
-
+* spect-raf
+* spect-throttle
 
 
 ## FAQ
+
+#### Portals
+
+Portals can be organized via internal aspects:
+
+```js
+$(app, () => {
+  html`Main content`
+
+  let { portal = document.querySelector('#portal') } = state()
+
+  $(portal, () => html`Portal content`)
+})
+```
 
 <!--
 ## Integration with react
