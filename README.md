@@ -97,7 +97,7 @@ let { $, html, ...fx } = spect;
 
 Let's build [basic examples](https://reactjs.org/) with _spect_.
 
-### A simple aspect <small>code | sandbox</small>
+### A simple aspect · <small>code | sandbox</small>
 
 The basic tool of _spect_ is `html` effect. It acts similar to hyperscript, but deploys html instantly to the aspected element:
 
@@ -115,7 +115,7 @@ Internally `html` is built on [htm](https://ghub.io/htm) and [snabbdom](https://
 
 <!--
 
-### A stateful aspect <small>code | sandbox</small>
+### A stateful aspect · <small>code | sandbox</small>
 
 _Spect_ introduces `state`, `mount` and `fx` effects, similar to `useState` and `useEffect` hooks:
 
@@ -146,7 +146,7 @@ $('#timer-example', el => {
 > Hooks-powered jQuery.
 
 
-### An application <small>code | sandbox</small>
+### An application · <small>code | sandbox</small>
 
 Events subscription is provided by `on` effect, decoupling callbacks from markup and enabling event delegation.
 
@@ -500,14 +500,14 @@ function Component (el) {
 }
 ```
 
-`html` is expands [_htm_](https://ghub.io/htm) with the following:
+`html` expands [_htm_](https://ghub.io/htm) syntax with the following:
 
 - Allows anonymous attributes `<a ${foo} ${bar} />` for connecting aspects.
 - Allows unclosed [self-closing tags](http://xahlee.info/js/html5_non-closing_tag.html), such as `<hr>`, `<br>` etc.
 - Allows [optional closing tags](https://www.w3.org/TR/2014/REC-html5-20141028/syntax.html#optional-tags), such as `<li>`, `<p>` etc..
-- Allows HTML comments `<!-- --/>`.
+- Allows HTML comments `<!-- --/>` and declarations `<? ?>`.
 
-To use plain `htm` directly, see JSX section.
+To use `htm` directly, see JSX section.
 
 #### Attributes & properties
 
@@ -534,7 +534,9 @@ html(['a', 'b', 'c'])
 
 #### JSX / HTM
 
-`html` effect internally uses `html.h` function for building VDOM. `h` is hyperscript-compatible, expecting `h(tagName, props, ...children)` signature. This way either JSX or [HTM](https://ghub.io/htm) (including [transforms](https://github.com/developit/htm/tree/master/packages/)) can be used:
+`html` internally uses `html.h` function to build VDOM. `h` is hyperscript-compatible with `h(tagName, props, ...children)` signature.
+
+This way either JSX or [HTM](https://ghub.io/htm) (including [transforms](https://github.com/developit/htm/tree/master/packages/)) can be used:
 
 ```jsx
 import { html } from 'spect'

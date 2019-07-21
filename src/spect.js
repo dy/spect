@@ -15,6 +15,7 @@ export const targets = new WeakMap()
 export let rootTarget = document.documentElement
 export let currentTarget = rootTarget
 export let currentFx = null // FIXME: logically document.currentScript context
+export let currentTuple = t(currentTarget, currentFx)
 
 // returned function is destroy effect
 export const spect = function spect (selector, fx) {
@@ -74,39 +75,40 @@ export const destroy = spect.destroy = function destroy (target, fx) {
 }
 
 export function callFx(target, fx = noop) {
-  let tuple = t(target, fx)
+  let parentTarget = currentTarget
+  let parentFx = currentFx
+  let parentTuple = currentTuple
+  currentTarget = target
+  currentFx = fx
+  currentTuple = t(target, fx)
 
   // register current target in parent aspect children list
-  let currentTuple = t(currentTarget, currentFx)
-  if (!tracking.has(currentTuple)) tracking.set(currentTuple, createState(currentTuple))
-  let parentState = tracking.get(currentTuple)
-  if (!parentState.children.has(tuple)) parentState.children.add(tuple)
+  if (!tracking.has(parentTuple)) tracking.set(parentTuple, createState(parentTuple))
+  let parentState = tracking.get(parentTuple)
+  if (!parentState.children.has(currentTuple)) parentState.children.add(currentTuple)
 
   parentState.emit('before')
 
   // reset child fx count
-  if (!tracking.has(tuple)) tracking.set(tuple, createState(tuple))
-  let state = tracking.get(tuple)
+  // FIXME: here can be redundancy of creating state
+  if (!tracking.has(currentTuple)) tracking.set(currentTuple, createState(currentTuple))
+  let state = tracking.get(currentTuple)
   let prevChildren = state.children
   let newChildren = state.children = new Set
 
-  // call tracking the stack
-  let prevTarget = currentTarget
-  let prevFx = currentFx
-  currentTarget = target
-  currentFx = fx
   let result = fx.call(currentTarget, target) || noop
-  currentFx = prevFx
-  currentTarget = prevTarget
 
   parentState.emit('after')
 
-  // check if old children not being called in new fx call and dispose them
+  // check if old children aren't being called in new fx call and dispose them
   for (let tuple of prevChildren) if (!newChildren.has(tuple)) tracking.get(tuple).dispose()
+
+  currentFx = parentFx
+  currentTarget = parentTarget
+  currentTuple = parentTuple
 
   return result
 }
-
 
 
 function createState(tuple) {

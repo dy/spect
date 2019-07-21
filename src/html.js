@@ -7,12 +7,9 @@ import toVNode from 'snabbdom/tovnode'
 import { tracking, currentTarget, currentFx } from './spect.js'
 import { } from './util.js'
 
-// patcher includes all possible decorators for now
-// TODO: mb remove data-, attr-, class- and props- stuff
-const patch = snabInit();
+html.patch = snabInit([]);
 
-// wrap snabH to connect to htm
-function h(target, props, ...children) {
+html.h = function h(target, props, ...children) {
   if (!props) props = {}
 
   // DOM targets get their props / content updated
@@ -39,26 +36,26 @@ function h(target, props, ...children) {
   if (target === '') return children
 
   // nested fragments create nested arrays
-  children = children.flat()
+  // children = children.flat()
 
   return snabH(target, props, children)
 }
 
+html.htm = htm.bind(html.h)
 
-export default function html(statics) {
-  let vtree = htm.apply(h, arguments)
+export default function html(arg) {
+  // TODO: handle input vtree separately
+  // if (typeof arg === VDom)
 
-  if (Array.isArray(vtree)) return vtree.map(domify)
+  let vtree = html.htm(...arguments)
 
-  return domify(vtree)
-}
-
-export function domify(vnode) {
-  if (vnode instanceof Node) return vnode
+  // if (Array.isArray(vtree)) return vtree.map(domify)
 
   // FIXME: make sure we can't reuse element creation here
+
   let result = document.createElement(vnode.sel)
-  patch(toVNode(result), vnode)
+  html.patch(toVNode(result), vnode)
 
   return result
 }
+

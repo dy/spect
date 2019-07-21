@@ -1,7 +1,7 @@
 import t from 'tst'
 import $, { html, htm } from '../src/index.js'
 
-t.only('html: mounts VDOM built via h', t => {
+t('html: mounts VDOM built via h', t => {
   let target = document.createElement('div')
 
   let h = html.h
