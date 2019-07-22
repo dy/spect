@@ -1,14 +1,16 @@
 import t from 'tst'
-import $, { html, htm } from '../src/index.js'
+import $, { html } from '../src/index.js'
 
-t.only('html: mounts VDOM built via h', t => {
+const h = html.h
+
+t('html: h', t => {
   let target = document.createElement('div')
 
-  let h = html.h
 
   $(target, el => {
+    // fragment
     html(
-      h('', null,
+      h('x', { foo: 'bar' },
         'Text content', ' ',
         // ['Document', h('', {}, [' ', 'fragment'])],
         // h('img', {}),
@@ -30,6 +32,11 @@ t.only('html: mounts VDOM built via h', t => {
 
   t.equal(target.textContent, 'Text content ')
 })
+
+t.skip('html: h fragment')
+t.skip('html: array arg')
+t.skip('html: plain string arg')
+t.skip('html: function arg')
 
 t('html: basic', t => {
   let node = html`<a></a>`

@@ -1,6 +1,6 @@
 import './core.js'
 import './mount.js'
-// import './html.js'
+import './html.js'
 
 // import('./core.js')
 // import('./selector.js')

@@ -1,6 +1,6 @@
 import t from 'tst'
-import $, { mount } from '../src/index'
-import { SPECT_CLASS, currentTarget } from '../src/spect';
+import $ from '../src/index'
+import { SPECT_CLASS } from '../src/spect';
 
 // FYI: selector <<->> aspect;  selector <<->> target;  aspect <<unique->> target - target aspects are unique
 t('core: direct element init, destroy', t => {
