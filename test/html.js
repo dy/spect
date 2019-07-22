@@ -3,12 +3,10 @@ import $, { html } from '../src/index.js'
 
 const h = html.h
 
-t('html: h', t => {
+t.only('html: h', t => {
   let target = document.createElement('div')
 
-
   $(target, el => {
-    // fragment
     html(
       h('x', { foo: 'bar' },
         'Text content', ' ',

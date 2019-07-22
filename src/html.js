@@ -6,6 +6,7 @@ import toVNode from 'snabbdom/tovnode'
 
 import { currentTarget, currentState } from './spect.js'
 import { } from './util.js'
+import { current } from 'tst';
 
 html.patch = snabInit([]);
 
@@ -37,7 +38,6 @@ html.h = function h(target, props, ...children) {
 
   // nested fragments create nested arrays
   // children = children.flat()
-
   return snabH(target, props, children)
 }
 
@@ -45,9 +45,7 @@ html.htm = htm.bind(html.h)
 
 export default function html(arg) {
   // TODO: handle input vtree separately
-  // if (typeof arg === VDom)
-
-  let vdom = html.htm(...arguments)
+  let vdom = isVdom(arg) ? arg : html.htm(...arguments)
 
   // if (Array.isArray(vtree)) return vtree.map(domify)
 
@@ -57,9 +55,13 @@ export default function html(arg) {
 
   // FIXME: check for <host> element to avoid that
   // if (Array.isArray(vdom)) vdom =
+  vdom = snabH(currentState.vdom.sel, currentState.vdom.data, vdom)
 
   currentState.vdom = html.patch(currentState.vdom, vdom)
 
   return currentState.childNodes
 }
 
+function isVdom (arg) {
+  return arg.sel !== undefined
+}
