@@ -31,8 +31,8 @@ $('#app', app => {
 ### Principles
 
 <ol>
-<li id="principle-1"> Expressive, not impressive.
-<li id="principle-2"> No bundling required to use framework.
+<li id="principle-1"> Not impressive, but expressive.
+<li id="principle-2"> No bundling required.
 <li id="principle-3"> No JS required to hydrate HTML.
 <li id="principle-4"> Standard HTML first.
 </ol>
@@ -72,7 +72,7 @@ import { $, html, state } from 'spect'
 // ...your UI code
 ```
 
-**B.** _Spect_ can be connected directly<sup><a href="#principle-2">2</a></sup> as module:
+**B.** Connected directly<sup><a href="#principle-2">2</a></sup> as module:
 
 ```html
 <script type="module">
@@ -81,7 +81,7 @@ import { $, html, state } from 'https://unpkg.com/spect@latest?module'
 // ...your UI code
 </script>
 ```
-
+<!--
 **C.** Or that can be used standalone from CDN.
 
 TODO
@@ -91,15 +91,16 @@ TODO
 let { $, html, ...fx } = spect;
 </script>
 ```
-
+-->
 
 ## Getting started
 
 Let's build [basic examples](https://reactjs.org/) with _spect_.
 
-### A simple aspect · <small>code | sandbox</small>
+### A simple aspect
 
 The basic tool of _spect_ is `html` effect. It acts similar to hyperscript, but deploys html instantly to the aspected element:
+
 
 ```js
 import { $, html } from 'spect'
@@ -110,6 +111,7 @@ $(document.body, body =>
 
 $('.hello', ({ name }) => html`Hello, ${name}!`)
 ```
+<small>[sandbox](https://codesandbox.com)</small>
 
 Internally `html` is built on [htm](https://ghub.io/htm) and [snabbdom](https://ghub.io/snabbdom), providing performance and robustness.
 
