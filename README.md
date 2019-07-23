@@ -479,37 +479,50 @@ Note that an aspect can be assigned to existing elements, in that case `mount` w
 
 ### html\`...markup\`
 
-HTML effect ensures markup for current element, performing necessary updates via dom morhing. Returned result is HTML content, created by the effect.
+HTML effect ensures markup for current element, performing necessary updates via DOM morhing. Returs node or list of nodes, created by the effect.
 
 ```js
 import { $, html } from 'spect'
 
 $('#target', target => {
-  let [text, frag, img, ...nodes] = html`
-    Text content
-    <>Fragment</>
-    <img/>
-    <hr><br>
-    <div#id.class foo=bar ${el => { /* el === target */}}></div>
-    ${el => { /* el === target */ }}
-    <!-- comment --/>
-    ${ el.childNodes }
-  `
+  let div = html`<div#id.class foo=bar>baz</div>`
+
+  // target.innerHTML === div.outerHTML === <div id="id" class="class">baz</div>
 })
 ```
-
-`html` is extension of [_htm_](https://ghub.io/htm) the following:
+<!--
+`html` is [_htm_](https://ghub.io/htm), extended with the following:
 
 - Anonymous attributes `<a ${foo} ${bar} />` for connecting aspects.
 - Unclosed [self-closing tags](http://xahlee.info/js/html5_non-closing_tag.html), such as `<hr>`, `<br>` etc.
 - [Optional closing tags](https://www.w3.org/TR/2014/REC-html5-20141028/syntax.html#optional-tags), such as `<li>`, `<p>` etc..
 - HTML comments `<!-- --/>` and declarations `<? ?>`.
-
-To use `htm` directly, see JSX section.
+- Allows unquoted attribute values containing slashes
+-->
 
 #### Attributes & properties
 
-HTML props are passed as props, the elements take handle if they have to expose props as attributes.
+Attributes defined on tags are set as element properties, the elements decide if passed props should be exposed as DOM Node attributes.
+
+```js
+$(target, el => {
+  let a = html`<a href='/' foo=bar>baz</>`
+  // a.outerHTML === '<a href="/"></a>'
+  // a.foo === 'bar'
+})
+```
+
+For that purpose, the `snabbdom/props` module is used.
+
+<!--
+    // Text content
+    // <>Fragment</>
+    // <img/>
+    // <hr><br>
+    // <div#id.class foo=bar ${el => { /* el === target */}}></div>
+    // ${el => { /* el === target */ }}
+    // <!-- comment --/>
+    // ${ el.childNodes } -->
 
 #### Fragments
 

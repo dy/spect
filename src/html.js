@@ -2,13 +2,13 @@
 import htm from 'htm'
 import { init as snabInit } from 'snabbdom'
 import snabH from 'snabbdom/h'
+import snabProps from 'snabbdom/modules/props'
 import toVNode from 'snabbdom/tovnode'
 
 import { currentTarget, currentState } from './spect.js'
 import { } from './util.js'
-import { current } from 'tst';
 
-html.patch = snabInit([]);
+html.patch = snabInit([snabProps]);
 
 html.h = function h(target, props, ...children) {
   if (!props) props = {}
@@ -39,7 +39,7 @@ html.h = function h(target, props, ...children) {
   // nested fragments create nested arrays
   // children = children.flat()
 
-  return snabH(target, props, children)
+  return snabH(target, {props}, children)
 }
 
 html.htm = htm.bind(html.h)

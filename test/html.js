@@ -3,6 +3,22 @@ import $, { html } from '../src/index.js'
 
 const h = html.h
 
+t('html: readme default', t => {
+  $(document.createElement('div'), el => {
+    let div = html`<div#id.class foo=bar>baz</div>`
+    t.equal(el.innerHTML, '<div id="id" class="class">baz</div>')
+    t.equal(div.foo, 'bar')
+  })
+})
+
+t.only('html: readme attributes', t => {
+  $(document.createElement('div'), el => {
+    let a = html`<a href='/' foo=bar>baz</a>`
+    t.equal(a.outerHTML, '<a href="/">baz</a>')
+    t.equal(a.foo, 'bar')
+  })
+})
+
 t('html: h plain node', t => {
   let target = document.createElement('div')
 
@@ -44,7 +60,7 @@ t('html: direct array', t => {
     })
   })
 })
-t.only('html: h fragment', t => {
+t('html: h fragment', t => {
   $(document.createElement('div'), el => {
     // let x = html`foo`
 
@@ -66,14 +82,11 @@ t.only('html: h fragment', t => {
     t.equal(el.innerHTML, 'Text content ')
   })
 })
-t.todo('html: array arg')
-t.todo('html: plain string arg')
 t.todo('html: function arg')
 t.todo('html: nested HTML arguments')
-
 t.todo('html: <host> tag')
 
-t('html: basic', t => {
+t.skip('html: basic', t => {
   let node = html`<a></a>`
   t.equal(node.outerHTML, '<a></a>')
 
