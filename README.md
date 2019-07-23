@@ -31,7 +31,7 @@ $('#app', app => {
 ### Principles
 
 <ol>
-<li id="principle-1"> Not impressive, but expressive.
+<li id="principle-1"> Expressive not impressive.
 <li id="principle-2"> No bundling required.
 <li id="principle-3"> No JS required to hydrate HTML.
 <li id="principle-4"> Standard HTML first.
@@ -62,7 +62,7 @@ TODO: motivate the usefulness of aspects by examples.
 
 ## Installing
 
-**A.** _Spect_ can be used as `npm` package:
+**A.** As `npm` package:
 
 [![npm install spect](https://nodei.co/npm/spect.png?mini=true)](https://npmjs.org/package/spect/)
 
@@ -111,9 +111,10 @@ $(document.body, body =>
 
 $('.hello', ({ name }) => html`Hello, ${name}!`)
 ```
-<small>[sandbox](https://codesandbox.com)</small>
 
-Internally `html` is built on [htm](https://ghub.io/htm) and [snabbdom](https://ghub.io/snabbdom), providing performance and robustness.
+<small>[Open in sandbox](https://codesandbox.com)</small>
+
+<!-- Internally `html` is built on [htm](https://ghub.io/htm) and [snabbdom](https://ghub.io/snabbdom), providing performance and robustness. -->
 
 <!--
 

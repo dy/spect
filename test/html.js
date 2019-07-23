@@ -19,8 +19,26 @@ t('html: h plain node', t => {
   t.equal(target.textContent, 'Text content ')
 })
 
-t.only('html: text content', t => {
+t('html: text content', t => {
   $(document.createElement('div'), el => {
+    let foo = html`foo`
+
+    t.equal(el.innerHTML, 'foo')
+    t.ok(foo instanceof Node)
+
+    let [bar, baz] = html('bar', 'baz')
+    t.equal(el.innerHTML, 'barbaz')
+    t.ok(bar instanceof Node)
+    t.ok(baz instanceof Node)
+  })
+})
+
+t.only('html: h fragment', t => {
+  $(document.createElement('div'), el => {
+    // let x = html`foo`
+
+    t.equal(el.innerHTML, 'foo')
+
     let x = html(
       'Text content', ' ',
       // ['Document', h('', {}, [' ', 'fragment'])],
@@ -37,8 +55,6 @@ t.only('html: text content', t => {
     t.equal(el.innerHTML, 'Text content ')
   })
 })
-
-t.todo('html: h fragment')
 t.todo('html: array arg')
 t.todo('html: plain string arg')
 t.todo('html: function arg')

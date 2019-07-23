@@ -44,9 +44,12 @@ html.h = function h(target, props, ...children) {
 html.htm = htm.bind(html.h)
 
 export default function html(arg) {
-  // TODO: handle input vtree separately
-  let vdom = isVdom(arg) ? arg : html.htm(...arguments)
-  console.log(arguments)
+  // input vdom
+  let vdom = isVdom(arg) ? arg
+    // template literal
+    : arg && arg.raw ? html.htm(...arguments)
+    // input direct arguments
+    : html.htm(arguments)
 
   // if (Array.isArray(vtree)) return vtree.map(domify)
 
