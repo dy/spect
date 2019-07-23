@@ -46,6 +46,7 @@ html.htm = htm.bind(html.h)
 export default function html(arg) {
   // TODO: handle input vtree separately
   let vdom = isVdom(arg) ? arg : html.htm(...arguments)
+  console.log(arguments)
 
   // if (Array.isArray(vtree)) return vtree.map(domify)
 
@@ -59,7 +60,7 @@ export default function html(arg) {
 
   currentState.vdom = html.patch(currentState.vdom, vdom)
 
-  return currentState.childNodes
+  return currentTarget.childNodes.length === 1 ? currentTarget.firstChild : currentTarget.childNodes
 }
 
 function isVdom (arg) {

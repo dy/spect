@@ -3,38 +3,47 @@ import $, { html } from '../src/index.js'
 
 const h = html.h
 
-t.only('html: h', t => {
+t('html: h plain node', t => {
   let target = document.createElement('div')
 
   $(target, el => {
-    html(
+    let x = html(
       h('x', { foo: 'bar' },
         'Text content', ' ',
-        // ['Document', h('', {}, [' ', 'fragment'])],
-        // h('img', {}),
-        // h('hr'), h('br'),
-        // h('div#id.class', { foo: 'bar', baz: true, class: el => { t.equal(el.tagName, 'DIV') } }, [ h('div') ]),
-        // el => { t.equal(el, target) },
-        // h(Component),
-        // h(document.body, null, 'Portal'),
-        // h('#id', null, ['Selector portal']),
-        // undefined,
-        // el.childNodes
       )
     )
+
+    t.equal(x.tagName, 'X')
   })
-
-  function Component (el) {
-
-  }
 
   t.equal(target.textContent, 'Text content ')
 })
 
-t.skip('html: h fragment')
-t.skip('html: array arg')
-t.skip('html: plain string arg')
-t.skip('html: function arg')
+t.only('html: text content', t => {
+  $(document.createElement('div'), el => {
+    let x = html(
+      'Text content', ' ',
+      // ['Document', h('', {}, [' ', 'fragment'])],
+      // h('img', {}),
+      // h('hr'), h('br'),
+      // h('div#id.class', { foo: 'bar', baz: true, class: el => { t.equal(el.tagName, 'DIV') } }, [ h('div') ]),
+      // el => { t.equal(el, target) },
+      // h(Component),
+      // h(document.body, null, 'Portal'),
+      // h('#id', null, ['Selector portal']),
+      // undefined,
+      // el.childNodes
+    )
+    t.equal(el.innerHTML, 'Text content ')
+  })
+})
+
+t.todo('html: h fragment')
+t.todo('html: array arg')
+t.todo('html: plain string arg')
+t.todo('html: function arg')
+
+t.todo('html: <host> tag')
 
 t('html: basic', t => {
   let node = html`<a></a>`
