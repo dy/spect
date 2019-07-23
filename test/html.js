@@ -25,25 +25,17 @@ t('html: text content', t => {
     t.equal(el.innerHTML, 'foo')
     t.ok(foo instanceof Node)
 
-    let [bar, baz] = html('bar', 'baz')
-    t.equal(el.innerHTML, 'barbaz')
+    let bar = html('bar')
+    t.equal(el.innerHTML, 'bar')
     t.ok(bar instanceof Node)
-    t.ok(baz instanceof Node)
   })
 })
 
-t('html: list of arguments', t => {
+t('html: direct array', t => {
   $(document.createElement('div'), el => {
-    let [foo, bar, baz, qux] = html('foo', ['bar', 'baz'], h('qux'))
-
-    t.equal(el.innerHTML, 'foobarbaz<qux></qux>')
-    t.ok(foo instanceof Node)
-    t.ok(bar instanceof Node)
-    t.ok(baz instanceof Node)
-    t.ok(qux instanceof Element)
-
     $(el, el => {
       let [foo, bar, baz, qux] = html(['foo', ['bar', 'baz'], h('qux')])
+
       t.equal(el.innerHTML, 'foobarbaz<qux></qux>')
       t.ok(foo instanceof Node)
       t.ok(bar instanceof Node)

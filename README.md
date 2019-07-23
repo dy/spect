@@ -479,7 +479,7 @@ Note that an aspect can be assigned to existing elements, in that case `mount` w
 
 ### html\`...markup\`
 
-HTML effect provides markup for current element, performing necessary updates via VDOM diffing. Returned result is HTML content, created by the effect.
+HTML effect ensures markup for current element, performing necessary updates via dom morhing. Returned result is HTML content, created by the effect.
 
 ```js
 import { $, html } from 'spect'
@@ -492,23 +492,18 @@ $('#target', target => {
     <hr><br>
     <div#id.class foo=bar ${el => { /* el === target */}}></div>
     ${el => { /* el === target */ }}
-    <${Component}/>
     <!-- comment --/>
     ${ el.childNodes }
   `
 })
-
-function Component (el) {
-  html`<host foo=bar>Shortcut for current target (el)</host>`
-}
 ```
 
-`html` expands [_htm_](https://ghub.io/htm) syntax with the following:
+`html` is extension of [_htm_](https://ghub.io/htm) the following:
 
-- Allows anonymous attributes `<a ${foo} ${bar} />` for connecting aspects.
-- Allows unclosed [self-closing tags](http://xahlee.info/js/html5_non-closing_tag.html), such as `<hr>`, `<br>` etc.
-- Allows [optional closing tags](https://www.w3.org/TR/2014/REC-html5-20141028/syntax.html#optional-tags), such as `<li>`, `<p>` etc..
-- Allows HTML comments `<!-- --/>` and declarations `<? ?>`.
+- Anonymous attributes `<a ${foo} ${bar} />` for connecting aspects.
+- Unclosed [self-closing tags](http://xahlee.info/js/html5_non-closing_tag.html), such as `<hr>`, `<br>` etc.
+- [Optional closing tags](https://www.w3.org/TR/2014/REC-html5-20141028/syntax.html#optional-tags), such as `<li>`, `<p>` etc..
+- HTML comments `<!-- --/>` and declarations `<? ?>`.
 
 To use `htm` directly, see JSX section.
 
@@ -529,17 +524,29 @@ html(['a', 'b', 'c'])
 
 #### Connecting aspects
 
-#### Web-components
+#### Components
+
+Components work via mechanism of custom-elements as:
+
+```js
+$(target, node => {
+  html`<${Component}/>`
+})
+
+function Component(el) {
+  html`<host foo=bar>baz</>`
+}
+```
 
 #### Commentaries
 
 #### Reducing existing DOM
 
-#### JSX / HTM
+#### HTM / JSX
 
-`html` internally uses `html.h` function to build VDOM. `h` is hyperscript-compatible with `h(tagName, props, ...children)` signature.
+`html` internally uses `html.h` function to build VDOM. `h` has hyperscript-compatible signature `h(tagName, props, ...children)`.
 
-This way either JSX or [HTM](https://ghub.io/htm) (including [transforms](https://github.com/developit/htm/tree/master/packages/)) can be used:
+This way either JSX or [HTM](https://ghub.io/htm) (including [transforms](https://github.com/developit/htm/tree/master/packages/)) can be used in `html` effect:
 
 ```jsx
 import { html } from 'spect'
@@ -562,12 +569,13 @@ $('#target', target => {
   )
 })
 
-function Component (el) {
-  <host foo="bar">Shortcut for current target (el)</host>
-}
-
 function foo (el) {}
 function bar (el) {}
+
+function Component (el) {
+  html(<host foo="bar">Shortcut for current target (el)</host>)
+}
+
 ```
 
 <!--
