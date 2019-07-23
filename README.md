@@ -4,17 +4,17 @@
 It provides essential DOM toolkit, separating cross-cutting concerns with [_aspects_](https://en.wikipedia.org/wiki/Aspect_(computer_programming)).
 
 ```js
-import { $, html, state, fx, route } from 'spect'
+import { $, html, state, fx, route, prop } from 'spect'
 
 // main app aspect
 $('#app', app => {
   let [ match, { id } ] = route('user/:id')
+  let { data } = state()
 
-  let data = fx(async () => {
-    state({ loading: true })
-    let data = await fetch(url)
-    state({ loading: false })
-    return data
+  fx(async () => {
+    prop({ loading: true })
+    state({ data: await fetch(url) })
+    prop({ loading: false })
   }, [id])
 
   html`${data}`
@@ -22,8 +22,7 @@ $('#app', app => {
 
 // loader aspect
 $('#app', app => {
-  let { loading = false } = state()
-
+  let { loading = false } = prop()
   if (loading) html`${app.childNodes} <canvas class="spinner" />`
 })
 ```
@@ -486,8 +485,9 @@ import { $, html } from 'spect'
 
 $('#target', target => {
   let div = html`<div#id.class foo=bar>baz</div>`
-
-  // target.innerHTML === div.outerHTML === <div id="id" class="class">baz</div>
+  // <div id="id" class="class">baz</div>
+  // === target.innerHTML
+  // === div.outerHTML
 })
 ```
 <!--
@@ -502,7 +502,7 @@ $('#target', target => {
 
 #### Attributes & properties
 
-Attributes defined on tags are set as element properties, the elements decide if passed props should be exposed as DOM Node attributes.
+Attributes are set as element properties, the element decides if passed props should be exposed as _Node_ attributes. For that purpose, the `snabbdom/props` module is used.
 
 ```js
 $(target, el => {
@@ -512,7 +512,19 @@ $(target, el => {
 })
 ```
 
-For that purpose, the `snabbdom/props` module is used.
+
+
+#### Fragments
+
+`html` allows multiple first-level elements via any of the following ways:
+
+```js
+$(target, () => {
+  let [foo, bar, baz] = html`<>foo bar baz</>`
+  let [foo1, bar1, baz1] = html`foo <bar/> baz`
+  let [foo2, bar2, baz2] = html(['foo', 'bar', 'baz'])
+})
+```
 
 <!--
     // Text content
@@ -523,17 +535,6 @@ For that purpose, the `snabbdom/props` module is used.
     // ${el => { /* el === target */ }}
     // <!-- comment --/>
     // ${ el.childNodes } -->
-
-#### Fragments
-
-```js
-html`
-<>Fragment</>
-`
-html`a <b> c`
-
-html(['a', 'b', 'c'])
-```
 
 #### Connecting aspects
 
