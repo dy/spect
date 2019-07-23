@@ -38,18 +38,30 @@ html.h = function h(target, props, ...children) {
 
   // nested fragments create nested arrays
   // children = children.flat()
+
   return snabH(target, props, children)
 }
 
 html.htm = htm.bind(html.h)
 
-export default function html(arg) {
-  // input vdom
-  let vdom = isVdom(arg) ? arg
-    // template literal
-    : arg && arg.raw ? html.htm(...arguments)
-    // input direct arguments
-    : html.htm(arguments)
+// build vdom
+export function vhtml(arg) {
+  // template literal
+  if (arg && arg.raw) return html.htm(...arguments)
+
+  if (arguments.length > 1) return [...arguments].map(arg => vhtml(arg))
+
+  if (!arg) return null
+
+  if (isVdom(arg)) return arg
+
+  if (Array.isArray(arg)) return html.htm([arg])
+
+  return html.htm([arg])
+}
+
+export default function html(...args) {
+  let vdom = vhtml(...args.flat(2))
 
   // if (Array.isArray(vtree)) return vtree.map(domify)
 

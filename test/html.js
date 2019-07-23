@@ -22,7 +22,6 @@ t('html: h plain node', t => {
 t('html: text content', t => {
   $(document.createElement('div'), el => {
     let foo = html`foo`
-
     t.equal(el.innerHTML, 'foo')
     t.ok(foo instanceof Node)
 
@@ -33,6 +32,26 @@ t('html: text content', t => {
   })
 })
 
+t('html: list of arguments', t => {
+  $(document.createElement('div'), el => {
+    let [foo, bar, baz, qux] = html('foo', ['bar', 'baz'], h('qux'))
+
+    t.equal(el.innerHTML, 'foobarbaz<qux></qux>')
+    t.ok(foo instanceof Node)
+    t.ok(bar instanceof Node)
+    t.ok(baz instanceof Node)
+    t.ok(qux instanceof Element)
+
+    $(el, el => {
+      let [foo, bar, baz, qux] = html(['foo', ['bar', 'baz'], h('qux')])
+      t.equal(el.innerHTML, 'foobarbaz<qux></qux>')
+      t.ok(foo instanceof Node)
+      t.ok(bar instanceof Node)
+      t.ok(baz instanceof Node)
+      t.ok(qux instanceof Element)
+    })
+  })
+})
 t.only('html: h fragment', t => {
   $(document.createElement('div'), el => {
     // let x = html`foo`
@@ -58,6 +77,7 @@ t.only('html: h fragment', t => {
 t.todo('html: array arg')
 t.todo('html: plain string arg')
 t.todo('html: function arg')
+t.todo('html: nested HTML arguments')
 
 t.todo('html: <host> tag')
 
