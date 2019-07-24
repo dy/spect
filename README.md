@@ -30,7 +30,7 @@ $('#app', app => {
 ### Principles
 
 <ol>
-<li id="principle-1"> Expressive not impressive.
+<li id="principle-1"> Expressive, not impressive.
 <li id="principle-2"> No bundling required.
 <li id="principle-3"> No JS required to hydrate HTML.
 <li id="principle-4"> Standard HTML first.
@@ -59,9 +59,9 @@ TODO: motivate the usefulness of aspects by examples.
 -->
 
 
-## Installing
+## Install
 
-**A.** As `npm` package:
+**A.** As _npm_ package:
 
 [![npm install spect](https://nodei.co/npm/spect.png?mini=true)](https://npmjs.org/package/spect/)
 
@@ -71,7 +71,7 @@ import { $, html, state } from 'spect'
 // ...your UI code
 ```
 
-**B.** Connected directly<sup><a href="#principle-2">2</a></sup> as module:
+**B.** As module<sup><a href="#principle-2">2</a></sup>:
 
 ```html
 <script type="module">
