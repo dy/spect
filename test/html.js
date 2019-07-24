@@ -35,6 +35,28 @@ t('html: readme fragments', t => {
   })
 })
 
+t.only('html: readme reducer', t => {
+  let target = document.createElement('div')
+  target.innerHTML = 'bar <baz/>'
+
+  $(target, el => {
+    html`<div.prepended /> foo ${el.childNodes} qux <div.appended />`
+    t.equal(el.innerHTML, `<div class="prepended"></div> foo bar <baz></baz> qux <div class="appended"></div>`)
+
+    html`foo ${el.childNodes} qux`
+    t.equal(el.innerHTML, `foo bar <baz></baz> qux`)
+
+    html`<div.prepended /> foo ${el.childNodes} qux <div.appended />`
+    t.equal(el.innerHTML, `<div class="prepended"></div> foo bar <baz></baz> qux <div class="appended"></div>`)
+  })
+
+  // TODO: repeatable insertion
+  // TODO: single node inside
+  // TODO: direct node
+  // TODO: direct list
+
+})
+
 t('html: h plain node', t => {
   let target = document.createElement('div')
 
@@ -76,7 +98,7 @@ t('html: direct array', t => {
     })
   })
 })
-t.only('html: h fragment', t => {
+t('html: h fragment', t => {
   $(document.createElement('div'), el => {
     // let x = html`foo`
 
