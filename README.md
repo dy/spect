@@ -253,14 +253,14 @@ Notice the shorthand id/classes notation as `<tag#id.class />`.
 
 <!-- TODO: repl -->
 
-* [x][counter] - source, sandbox
+<!-- * [x][counter] - source, sandbox
 * [x][email validator] - source, sandbox
 * [ ][TODO: TODO-app]() - source, sandbox
 * [ ][TODO: form with validation] - source, sandbox
 * [ ][TODO: 7GUIs] - source, sandbox
-* [ ][Material components] - source, sandbox
+* [ ][Material components] - source, sandbox -->
 
-[See all examples]()
+<!-- [See all examples]() -->
 
 <!--
 [ ][TODO: search resultt]
@@ -413,11 +413,11 @@ $('.mdc-text-field', TextField)
 * [ ] `watch`
 -->
 
-### $(selector|element|list, init => destroy)
+### $(selector|element|list, init => destroy )
 
-Attach an aspect to elements, matching the selector or direct element(s).
-Optional returned function is used as destructor, invoked when the aspect is being removed from element.
-Without an aspect `$` becomes a shortcut for `document.querySelector/All`, returning all matched elements in current aspect context.
+Attach aspect function `fn` to selected elements or direct element(s). The aspect is called on every matched element, taking it as a single argument.
+Aspect can return destructor function, that is invoked when the aspect is detached from element.
+<!-- `$` returns all `document.querySelector/All`, returning all matched elements in current aspect context. -->
 
 ```js
 import $ from 'spect'
@@ -432,14 +432,14 @@ let element = $('#my-selector', element => {
 
 #### Example
 
-```js
+<!-- ```js
 import { $, on, state } from 'spect'
 
 let hiddenBox = $('#banner-message');
 $('#button-container button', el =>
   on('click', e => hiddenBox.classList.toggle( 'visible' ))
 );
-```
+``` -->
 
 <!-- TODO: explain context -->
 <!-- TODO: explain destructor -->
@@ -512,17 +512,17 @@ $(target, el => {
 })
 ```
 
-
-
 #### Fragments
 
-`html` allows multiple first-level elements via any of the following ways:
+`html` supports multiple first-level elements in any of the following ways:
 
 ```js
-$(target, () => {
-  let [foo, bar, baz] = html`<>foo bar baz</>`
+$(target, el => {
+  let [foo, bar, baz] = html`<>foo <bar/> baz</>`
   let [foo1, bar1, baz1] = html`foo <bar/> baz`
-  let [foo2, bar2, baz2] = html(['foo', 'bar', 'baz'])
+  let [foo2, bar2, baz2] = html(['foo ', '<bar/>', ' baz'])
+
+  // el.innerHTML === `foo <bar></bar> baz`
 })
 ```
 

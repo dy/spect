@@ -34,7 +34,7 @@ html.h = function h(target, props, ...children) {
   // }
 
   // fragment targets return array
-  // if (target === '') return children
+  if (target === '') return children
 
   // nested fragments create nested arrays
   // children = children.flat()
@@ -44,14 +44,18 @@ html.h = function h(target, props, ...children) {
 
 html.htm = htm.bind(html.h)
 
+export function vhtml (arg) {
+  return isVdom(arg) ? arg
+    // template literal
+    : (arg && arg.raw) ? html.htm(...arguments)
+    : Array.isArray(arg) ? html.htm`${arg.flat().map(arg => vhtml(arg))}`
+    : html.htm([arg])
+}
+
 export default function html(arg) {
   if (!arg) return null
 
-  let vdom = isVdom(arg) ? arg
-    // template literal
-    : (arg && arg.raw) ? html.htm(...arguments)
-    : Array.isArray(arg) ? html.htm`${arg.flat()}`
-    : html.htm([arg])
+  let vdom = vhtml(...arguments)
 
   // if (Array.isArray(vtree)) return vtree.map(domify)
 
@@ -64,7 +68,6 @@ export default function html(arg) {
   vdom = snabH(currentState.vdom.sel, currentState.vdom.data, vdom)
 
   currentState.vdom = html.patch(currentState.vdom, vdom)
-
   return currentTarget.childNodes.length === 1 ? currentTarget.firstChild : currentTarget.childNodes
 }
 

@@ -11,11 +11,27 @@ t('html: readme default', t => {
   })
 })
 
-t.only('html: readme attributes', t => {
+t('html: readme attributes', t => {
   $(document.createElement('div'), el => {
     let a = html`<a href='/' foo=bar>baz</a>`
     t.equal(a.outerHTML, '<a href="/">baz</a>')
     t.equal(a.foo, 'bar')
+  })
+})
+
+t('html: readme fragments', t => {
+  $(document.createElement('div'), el => {
+    let [foo, bar, baz] = html`<>foo <bar/> baz</>`
+    t.equal(el.innerHTML, 'foo <bar></bar> baz')
+    t.ok(foo instanceof Node)
+
+    let [foo1, bar1, baz1] = html`foo <bar/> baz`
+    t.equal(el.innerHTML, 'foo <bar></bar> baz')
+    t.ok(foo1 instanceof Node)
+
+    let [foo2, bar2, baz2] = html(['foo ', '<bar/>', ' baz'])
+    t.equal(el.innerHTML, 'foo <bar></bar> baz')
+    t.ok(foo2 instanceof Node)
   })
 })
 
@@ -60,7 +76,7 @@ t('html: direct array', t => {
     })
   })
 })
-t('html: h fragment', t => {
+t.only('html: h fragment', t => {
   $(document.createElement('div'), el => {
     // let x = html`foo`
 
