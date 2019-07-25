@@ -19,7 +19,7 @@ t('html: readme attributes', t => {
   })
 })
 
-t('html: readme fragments', t => {
+t.only('html: readme fragments', t => {
   $(document.createElement('div'), el => {
     let [foo, bar, baz] = html`<>foo <bar/> baz</>`
     t.equal(el.innerHTML, 'foo <bar></bar> baz')
@@ -35,7 +35,7 @@ t('html: readme fragments', t => {
   })
 })
 
-t.only('html: readme reducer', t => {
+t('html: readme reducer', t => {
   let target = document.createElement('div')
   target.innerHTML = 'bar <baz/>'
 

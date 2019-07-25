@@ -536,6 +536,14 @@ $(target, el => {
     // <!-- comment --/>
     // ${ el.childNodes } -->
 
+#### DOM Elements
+
+`html` can use existing DOM nodes in content, which is useful to organize reducing/modification of existing content:
+
+```js
+$('#target', el => html`<div.prepended /> ${el.childNodes} <div.appended />`)
+```
+
 #### Connecting aspects
 
 #### Components
@@ -554,10 +562,9 @@ function Component(el) {
 
 #### Commentaries
 
-#### Reducing existing DOM
 
 #### HTM / JSX
-
+<!--
 `html` internally uses `html.h` function to build VDOM. `h` has hyperscript-compatible signature `h(tagName, props, ...children)`.
 
 This way either JSX or [HTM](https://ghub.io/htm) (including [transforms](https://github.com/developit/htm/tree/master/packages/)) can be used in `html` effect:
@@ -591,6 +598,10 @@ function Component (el) {
 }
 
 ```
+
+`html` technically can use any other rendering machinery, eg. preact, nanohtml + nanomorph, snabbdom etc.
+-->
+
 
 <!--
 #### Example

@@ -46,7 +46,9 @@
     "fast-on-load": "^1.0.1",
     "htm": "^2.1.1",
     "immutable-tuple": "^0.4.10",
+    "incremental-dom": "^0.6.0",
     "nanoevents": "^2.0.0",
+    "nanomorph": "^5.4.0",
     "snabbdom": "^0.7.3"
   },
   "devDependencies": {

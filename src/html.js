@@ -1,22 +1,17 @@
 // html effect
 import htm from 'htm'
-import { init as snabInit } from 'snabbdom'
-import snabH from 'snabbdom/h'
-import snabProps from 'snabbdom/modules/props'
-import toVNode from 'snabbdom/tovnode'
-import morph from 'nanomorph'
-
+import { patch, elementOpen, elementClose, elementVoid, text, attributes, symbols, applyProp, applyAttr } from 'incremental-dom'
 import { currentTarget, currentState } from './spect.js'
 import { } from './util.js'
+
+attributes.class = applyAttr
+attributes[symbols.default] = applyProp
+
 
 // cache of vdom states assigned to elements
 let cache = new WeakMap
 
-html.patch = snabInit([snabProps]);
-
 html.h = function h(target, props, ...children) {
-  if (!props) props = {}
-
   // DOM targets get their props / content updated
   // if (target instanceof Node) {
   //   if (!tracking.has(target)) tracking.set(target, toVNode(target))
@@ -44,67 +39,94 @@ html.h = function h(target, props, ...children) {
   // nested fragments create nested arrays
   // children = children.flat()
 
-  let parts = target.split('.')
-  target = parts[0]
-
-  let el = document.createElement(target)
-  Object.assign(el, props)
-  for (let i = 0; i < children.length; i++) {
-    el.appendChild(children[i])
-  }
-  el.className = parts[1]
-
-  return el
   // return snabH(target, {props}, children)
+  let [beforeId, afterId = ''] = target.split('#')
+  let [tag, ...beforeClx] = beforeId.split('.')
+  let [id, ...afterClx] = afterId.split('.')
+  let clx = [...beforeClx, ...afterClx]
+
+  let staticProps = []
+  if (id) staticProps.push('id', id)
+  if (clx.length) staticProps.push('class', clx)
+
+  let key = id || (props && (props.id || props.key))
+
+  // FIXME: use more static props, like type
+  return {
+    tag,
+    key,
+    props: props && Object.entries(props).flat(),
+    staticProps,
+    children: children.length ? children : null
+  }
 }
 
 html.htm = htm.bind(html.h)
 
-// build vdom from arguments
-export function vhtml (arg) {
-  if (!arg) return null
+// build DOM from arguments
+export function render (arg) {
+  if (!arg) return
 
-  if (typeof arg === 'string') return html.htm([arg])
+  // numbers/strings serialized as text
+  if (typeof arg === 'number') return text(arg)
+  if (typeof arg === 'string') return text(arg)
 
-  if (typeof arg === 'number') return arg
+  // objects create elements
+  let { tag, key, props, staticProps, children } = arg
 
-  if (isVdom(arg)) return arg
+  if (!children) return elementVoid(tag, props)
 
-  if (arg.raw) {
-    // html bypasses insertions, so if there's NodeList or Node we have to map again via vhtml
-    let result = html.htm(...arguments)
-    if (Array.isArray(result)) return result.map(vhtml).flat()
-    return result
-  }
+  // fragments
+  if (!tag) return children.forEach(render)
 
-  if (Array.isArray(arg)) return arg.map(vhtml).flat()
+  // direct element
+  elementOpen(tag, key, staticProps, ...props)
+    children.forEach(render)
+  elementClose(tag)
 
-  if (arg instanceof NodeList) {
-    if (!cache.has(arg)) cache.set(arg, vhtml([...arg]))
-    return cache.get(arg)
-    return [...arg]
-  }
 
-  if (arg instanceof Node) {
-    // if (!cache.has(arg)) cache.set(arg, toVNode(arg))
-    // return cache.get(arg)
-    return arg
-  }
 
-  return html.htm([arg])
+
+  // if (isVdom(arg)) return arg
+
+  // if (arg.raw) {
+  //   // html bypasses insertions, so if there's NodeList or Node we have to map again via vhtml
+  //   let result = html.htm(...arguments)
+  //   if (Array.isArray(result)) return result.map(vhtml).flat()
+  //   return result
+  // }
+
+  // if (Array.isArray(arg)) return arg.map(vhtml).flat()
+
+  // if (arg instanceof NodeList) {
+  //   if (!cache.has(arg)) cache.set(arg, vhtml([...arg]))
+  //   return cache.get(arg)
+  //   return [...arg]
+  // }
+
+  // if (arg instanceof Node) {
+  //   // if (!cache.has(arg)) cache.set(arg, toVNode(arg))
+  //   // return cache.get(arg)
+  //   return arg
+  // }
+
+  // return html.htm(args)
 }
 
-export default function html() {
-  let vdom = vhtml(...arguments)
+export default function html(...args) {
+  // incremental-dom
+  patch(currentTarget, render, html.htm(...args))
 
-  let el = document.createElement(currentTarget.tagName)
-  vdom.forEach(e => {
-    if (Array.isArray(e)) e.forEach(e => el.appendChild(e))
-    el.appendChild(typeof e === 'string' ? document.createTextNode(e) : e)
-  })
+  // nanomorph
+  // let vdom = vhtml(...arguments)
+  // let el = document.createElement(currentTarget.tagName)
+  // vdom.forEach(e => {
+  //   if (Array.isArray(e)) e.forEach(e => el.appendChild(e))
+  //   el.appendChild(typeof e === 'string' ? document.createTextNode(e) : e)
+  // })
+  // morph(currentTarget, el)
 
-  // // FIXME: make sure we can't reuse element creation here
-
+  // snabbdom
   // if (!currentState.vdom) currentState.vdom = toVNode(currentTarget)
 
   // // FIXME: check for <host> element to avoid that
@@ -113,7 +135,6 @@ export default function html() {
 
   // currentState.vdom = html.patch(currentState.vdom, vdom)
 
-  morph(currentTarget, el)
 
   return currentTarget.childNodes.length === 1 ? currentTarget.firstChild : currentTarget.childNodes
 }
