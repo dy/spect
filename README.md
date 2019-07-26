@@ -957,23 +957,26 @@ Version | Changes
 
 _Spect_ would not be possible without brilliant ideas from many libraries authors, hence the acknowledge:
 
-* react - for jsx, hocs, hooks and pains - grandiose job
-* atomico, hui - for novative approach to web-components
-* jquery - for classical school
-* htm - for mainstream alternative example
-* fast-on-load - for fast mutation observer solution
-* tachyons, tailwindcss, ui-box - for CSS use-cases
-* evergreen-ui, material-ui - for practical components examples
-* reuse - for react-aspects solution
-* selector-observer - for selector observer solution
-* material-design-lite - for upgrading code example and components library
-* funkia/turbine - for generators and examples
-* *** - for letting that be possible
+* _react_ - for jsx, hocs, hooks and pains - grandiose job.
+* _atomico, hui_ - for novative approach to web-components.
+* _jquery_ - for classic school of API design.
+* _htm_ - for mainstream alternative example.
+* _fast-on-load_ - for fast mutation observer solution.
+* _tachyons, tailwindcss, ui-box_ - for CSS use-cases.
+* _evergreen-ui, material-ui_ - for practical components examples.
+* _reuse_ - for react-aspects solution.
+* _selector-observer_ - for selector observer solution.
+* _material-design-lite_ - for upgrading code example and components library.
+* _funkia/turbine_ - for generators and examples.
+* _***_ - for letting that be possible.
 
 ---
 
+
+<div style="text-align: center">
 Made on Earth by your humble servant.
 
 > Sat, Chit, Ananda, Vigraha
-> Nama, Rupa, Guna, Lila
 
+> Nama, Rupa, Guna, Lila
+</div>
