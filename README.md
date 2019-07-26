@@ -541,8 +541,29 @@ $(target, el => {
 `html` can use existing DOM nodes in content, which is useful to organize reducing/modification of existing content:
 
 ```js
+// wrap current content
 $('#target', el => html`<div.prepended /> ${el.childNodes} <div.appended />`)
+
+// prepend icons to buttons by `icon` attribute
+$('button[icon]', ({
+    attributes: { icon: { value: icon } },
+    childNodes
+  }) => html`<i class="material-icons">${ icon }</i> ${childNodes}`
+)
 ```
+
+`html` caches original element content `el.childNodes` on the first render, so that any subsequent renders will reuse the original content, instead of creating recursive wrapping:
+
+```js
+$(target, el => {
+  html`<div.a>${el.childNodes}</div>`
+  html`<div.a>${el.childNodes}</div>`
+  html`<div.a>${el.childNodes}</div>`
+  // el.innerHTML === `<div class="a">...</div>`
+})
+```
+
+<!-- TODO: For that purpose, the "reducer" tag can be used: `<div.a><...></div>` -->
 
 #### Connecting aspects
 

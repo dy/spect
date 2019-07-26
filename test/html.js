@@ -35,7 +35,7 @@ t('html: readme fragments', t => {
   })
 })
 
-t.only('html: readme reducer', t => {
+t('html: readme reducer', t => {
   let target = document.createElement('div')
   target.innerHTML = '|bar <baz></baz>|'
 
@@ -43,19 +43,32 @@ t.only('html: readme reducer', t => {
     html`<div.prepended /> foo ${el.childNodes} qux <div.appended />`
     t.equal(el.innerHTML, `<div class="prepended"></div> foo |bar <baz></baz>| qux <div class="appended"></div>`)
 
-    // html`foo ${el.childNodes} qux`
-    // t.equal(el.innerHTML, `foo bar <baz></baz> qux`)
+    html`foo ${el.childNodes} qux`
+    t.equal(el.innerHTML, `foo |bar <baz></baz>| qux`)
 
-    // html`<div.prepended /> foo ${el.childNodes} qux <div.appended />`
-    // t.equal(el.innerHTML, `<div class="prepended"></div> foo bar <baz></baz> qux <div class="appended"></div>`)
+    html`<div.prepended /> foo ${el.childNodes} qux <div.appended />`
+    t.equal(el.innerHTML, `<div class="prepended"></div> foo |bar <baz></baz>| qux <div class="appended"></div>`)
   })
 
-  // TODO: repeatable insertion
+  // prepend icons to buttons
+  let b = document.body.appendChild(document.createElement('button'))
+  b.innerHTML = 'Click'
+  b.setAttribute('icon', 'phone_in_talk')
+  $('button[icon]', ({attributes: { icon: { value: icon } }, childNodes}) => html`<i class="material-icons">${ icon }</i> ${childNodes}` )
+
+  t.equal(b.innerHTML, '<i class="material-icons">phone_in_talk</i> Click')
+  document.body.removeChild(b)
+
   // TODO: single node inside
-  // TODO: direct node
-  // TODO: direct list
+  $(document.createElement('div'), el => {
+    let a = document.createElement('a')
+    html`<x>${a}</x>`
+    t.equal(el.innerHTML, `<x><a></a></x>`)
+  })
 
 })
+
+t.todo('re-rendering inner nodes shouldn\'t trigger mount callback')
 
 t('html: h plain node', t => {
   let target = document.createElement('div')

@@ -21,9 +21,6 @@ attributes.class = applyAttr
 attributes[symbols.default] = applyProp
 
 
-// cache of vdom states assigned to elements
-let cache = new WeakMap
-
 html.h = function h(target, props, ...children) {
   // DOM targets get their props / content updated
   // if (target instanceof Node) {
@@ -67,7 +64,7 @@ html.h = function h(target, props, ...children) {
 
   let staticProps = []
   if (id) staticProps.push('id', id)
-  if (clx.length) staticProps.push('class', clx)
+  if (clx.length) staticProps.push('class', clx.join(' '))
 
   let key = id || (props && (props.id || props.key))
 
@@ -75,7 +72,7 @@ html.h = function h(target, props, ...children) {
   return {
     tag,
     key,
-    props: props && Object.entries(props).flat(),
+    props: props && Object.entries(props).flat() || [],
     staticProps,
     children: children.length ? children : null
   }
@@ -91,15 +88,10 @@ export function render (arg) {
   if (typeof arg === 'number') return text(arg)
   if (typeof arg === 'string') return text(arg)
 
-  if (arg.frag) {
-    const el = elementOpen('x')
+  if (arg.ref) {
+    elementOpen('ref', arg.ref, ['id', arg.ref])
       skip()
-    elementClose('x')
-  //   return
-  //   // if (arg === currentPointer()) skipNode()
-  //   // // currentElement().appendChild(arg)
-    // currentElement().insertBefore(arg, currentPointer())
-  //   // console.log(currentElement().innerHTML)
+    elementClose('ref')
     return
   }
 
@@ -107,7 +99,8 @@ export function render (arg) {
 
   // objects create elements
   let { tag, key, props, staticProps, children } = arg
-  if (!children) return elementVoid(tag, props)
+
+  if (!children) return elementVoid(tag, key, staticProps, ...props)
 
   // fragments
   if (!tag) return children.forEach(render)
@@ -145,11 +138,28 @@ export function render (arg) {
 }
 
 export default function html(...args) {
-  // preserve childNodes insertions
+  let cache = currentState.htmlCache || (currentState.htmlCache = new WeakMap())
+
+  let count = 0, refs = {}
+
+  // put child nodes aside
   args = args.map(arg => {
     if (arg instanceof NodeList) {
-      let frag = [...arg].map(arg => (arg._initial = true, arg))
-      return { frag }
+      // cache initial nodes contents
+      if (!cache.has(arg)) cache.set(arg, [...arg])
+
+      // put nodes aside into fragment, to reinsert after re-rendered wrapper
+      let frag = document.createDocumentFragment()
+      cache.get(arg).forEach(arg => frag.appendChild(arg))
+      let id = 'frag-' + count++
+      refs[id] = frag
+      return {ref: id}
+    }
+    if (arg instanceof Node) {
+      arg.remove()
+      let id = 'el-' + count++
+      refs[id] = arg
+      return {ref: id}
     }
     return arg
   })
@@ -157,7 +167,12 @@ export default function html(...args) {
   // incremental-dom
   patch(currentTarget, render, html.htm(...args))
 
-  // post-processing
+  // reinsert fragments
+  for (let id in refs) {
+    let frag = refs[id]
+    let holder = currentTarget.querySelector('#' + id)
+    holder.replaceWith(frag)
+  }
 
 
   // nanomorph
