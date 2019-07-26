@@ -207,13 +207,16 @@ t.skip('html: function components', t => {
 })
 
 t('html: connecting aspect as child function', t => {
+  let log = []
   let target = document.createElement('div')
 
   $(target, el => {
     html`<a foo=bar>${a}</a>`
+    t.deepEqual(log, ['a'])
   })
 
   function a(el) {
+    log.push('a')
     t.equal(el.tagName, 'A')
     t.equal(el.foo, 'bar')
   }
@@ -221,8 +224,23 @@ t('html: connecting aspect as child function', t => {
 t.todo('html: connecting aspect as anonymous attribute', t => {
 
 })
-t.todo('html: connecting aspect as array spread', t => {
+t('html: connecting aspect as array spread', t => {
+  let log = []
+  let target = document.createElement('div')
 
+  $(target, el => {
+    html`<a foo=bar ...${[a]}/>`
+    t.deepEqual(log, ['a'])
+  })
+
+  function a(el) {
+    log.push('a')
+    el.innerHTML = el.foo
+  }
+
+  t.equal(target.firstChild.tagName, 'A')
+  t.equal(target.textContent, 'bar')
+  t.deepEqual(log, ['a'])
 })
 
 t('html: class components')

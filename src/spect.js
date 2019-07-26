@@ -5,54 +5,54 @@ import { isAsync, noop } from './util.js'
 
 export const SPECT_CLASS = '👁'// + Math.random().toString(36).slice(2)
 
-// states for target-fx tuples
+// states for target-aspect tuples
 export const tracking = new WeakMap()
 
-// fxs for targets
+// aspects for targets
 export const targets = new WeakMap()
 
 export let rootTarget = document.documentElement
 
 // FIXME: use only currentTuple, or even just currentState instead
 export let currentTarget = rootTarget
-export let currentFx = null // FIXME: logically document.currentScript context
-export let currentTuple = t(currentTarget, currentFx)
+export let currentAspect = null // FIXME: logically document.currentScript context
+export let currentTuple = t(currentTarget, currentAspect)
 export let currentState = createState(currentTuple)
 tracking.set(currentTuple, currentState)
 
 // returned function is destroy effect
-export const spect = function spect (selector, fx) {
+export const spect = function spect (selector, aspect) {
   let that = this || currentTarget
 
   if (typeof selector === 'string') {
     let targets = that.querySelectorAll(selector)
-    targets.forEach(target => spect(target, fx))
+    targets.forEach(target => spect(target, aspect))
     return targets
   }
 
   // existing targets won't be reinitialized
-  if (tracking.has(t(selector, fx))) return
+  if (tracking.has(t(selector, aspect))) return
 
-  // direct element ensures parent, appends child and calls fx
-  let destroy = callFx(selector, fx)
-  tracking.get(t(selector, fx)).destroy = destroy
+  // direct element ensures parent, appends child and calls aspect
+  let destroy = callAspect(selector, aspect)
+  tracking.get(t(selector, aspect)).destroy = destroy
 
   // register generic known targets
   if (!targets.has(selector)) {
     selector.classList.add(SPECT_CLASS)
     targets.set(selector, new Set)
   }
-  targets.get(selector).add(fx)
+  targets.get(selector).add(aspect)
 
   return selector
 }
 
-export const destroy = spect.destroy = function destroy (target, fx) {
+export const destroy = spect.destroy = function destroy (target, aspect) {
   let that = this === spect ? currentTarget : this || currentTarget
 
   if (typeof target === 'string') {
     let targets = that.querySelectorAll(target)
-    targets.forEach(target => destroy(target, fx))
+    targets.forEach(target => destroy(target, aspect))
     return targets
   }
 
@@ -60,31 +60,32 @@ export const destroy = spect.destroy = function destroy (target, fx) {
 
   target.classList.remove(SPECT_CLASS)
 
-  if (fx) {
-    destroyState(t(target, fx))
-    targets.get(target).delete(fx)
+  if (aspect) {
+    destroyState(t(target, aspect))
+    targets.get(target).delete(aspect)
     if (!targets.get(target).size) targets.delete(target)
     return target
   }
 
-  let fxs = targets.get(target)
-  for (let fx of fxs) {
-    destroyState(t(target, fx))
+  let aspects = targets.get(target)
+  for (let aspect of aspects) {
+    destroyState(t(target, aspect))
   }
-  fxs.clear()
+  aspects.clear()
   targets.delete(target)
 
   return target
 }
 
-export function callFx(target, fx = noop) {
+
+export function callAspect(target, aspect = noop) {
   let parentTarget = currentTarget
-  let parentFx = currentFx
+  let parentAspect = currentAspect
   let parentTuple = currentTuple
   let parentState = currentState
   currentTarget = target
-  currentFx = fx
-  currentTuple = t(target, fx)
+  currentAspect = aspect
+  currentTuple = t(target, aspect)
   if (!tracking.has(currentTuple)) tracking.set(currentTuple, createState(currentTuple))
   currentState = tracking.get(currentTuple)
 
@@ -93,18 +94,18 @@ export function callFx(target, fx = noop) {
 
   currentState.before.forEach(fn => fn())
 
-  // reset child fx count
+  // reset child aspect count
   let prevChildren = currentState.children
   let newChildren = currentState.children = new Set
 
-  let result = fx.call(currentTarget, currentTarget) || noop
+  let result = aspect.call(currentTarget, currentTarget) || noop
+
+  // check if old children aren't being called in new aspect call and dispose them
+  for (let tuple of prevChildren) if (!newChildren.has(tuple)) tracking.get(tuple).dispose()
 
   currentState.after.forEach(fn => fn())
 
-  // check if old children aren't being called in new fx call and dispose them
-  for (let tuple of prevChildren) if (!newChildren.has(tuple)) tracking.get(tuple).dispose()
-
-  currentFx = parentFx
+  currentAspect = parentAspect
   currentTarget = parentTarget
   currentTuple = parentTuple
   currentState = parentState
@@ -115,10 +116,10 @@ export function callFx(target, fx = noop) {
 
 function createState(tuple) {
   let state = {
-    // assigned as result of callFx
+    // assigned as result of callAspect
     destroy: null,
 
-    // list of registered children target-fx couples
+    // list of registered children target-aspect couples
     children: new Set,
 
     // hooks

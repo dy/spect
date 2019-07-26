@@ -28,6 +28,18 @@ html.h = function h(target, props, ...children) {
   let [id, ...afterClx] = afterId.split('.')
   let clx = [...beforeClx, ...afterClx]
 
+  // figure out effects: array props, anonymous aspects or child functions
+  let aspects = [], propsArr = []
+  for (let prop in props) {
+    let val = props[prop]
+    if (typeof val === 'function' && /[0-9]+/.test(prop)) aspects[parseInt(prop)] = val
+    else propsArr.push(prop, val)
+  }
+  if (children.length) children = children.filter(child => {
+    if (typeof child !== 'function') return true
+    aspects.push(child)
+  })
+
   let staticProps = []
   if (id) staticProps.push('id', id)
   if (clx.length) staticProps.push('class', clx.join(' '))
@@ -38,7 +50,8 @@ html.h = function h(target, props, ...children) {
   return {
     tag,
     key,
-    props: props && Object.entries(props).flat() || [],
+    aspects,
+    props: propsArr,
     staticProps,
     children: children.length ? children : null
   }
@@ -55,17 +68,6 @@ html.render = function render (arg) {
   if (typeof arg === 'number') return text(arg)
   if (typeof arg === 'string') return text(arg)
 
-  // plan function to be called after current effect
-  if (typeof arg === 'function') {
-    let el = currentElement()
-    let fx = arg
-    currentState.after.push(function initFx() {
-      currentState.after = currentState.after.filter(fn => fn !== initFx)
-      $(el, fx)
-    })
-    return arg
-  }
-
   if (arg.ref) {
     elementOpen('ref', arg.ref, ['id', arg.ref])
     skip()
@@ -76,17 +78,23 @@ html.render = function render (arg) {
   if (arg.length) return [...arg].forEach(render)
 
   // objects create elements
-  let { tag, key, props, staticProps, children } = arg
+  let { tag, key, props, staticProps, children, aspects } = arg
 
-  if (!children) return elementVoid(tag, key, staticProps, ...props)
-
-  // fragments
+  // fragment
+  // FIXME: seems that unreal case
   if (!tag) return children.forEach(render)
 
-  // direct element
-  elementOpen(tag, key, staticProps, ...props)
-  children.forEach(render)
-  elementClose(tag)
+  let el
+  if (!children) el = elementVoid(tag, key, staticProps, ...props)
+  else {
+    elementOpen(tag, key, staticProps, ...props)
+      children.forEach(render)
+    elementClose(tag)
+  }
+
+  // register aspects
+  let state = currentState
+  aspects.forEach(aspect => state.htmlAfter.push([el, aspect]))
 }
 
 
@@ -102,8 +110,7 @@ export default function html(...args) {
   if (!Array.isArray(vdom)) vdom = [vdom]
 
   // put DOM nodes aside
-  let count = 0,
-      refs = currentState.htmlRefs = {}
+  let count = 0, refs = {}
 
   vdom = vdom.map(function map(arg) {
     if (arg instanceof Array) return arg.map(map)
@@ -132,7 +139,7 @@ export default function html(...args) {
   })
 
   // incremental-dom
-  currentState.htmlFx = []
+  currentState.htmlAfter = []
   patch(currentTarget, html.render, vdom)
 
   // reinsert nodes
@@ -141,7 +148,11 @@ export default function html(...args) {
     let holder = currentTarget.querySelector('#' + id)
     holder.replaceWith(frag)
   }
-  currentState.htmlRefs = null
+
+  // init aspects
+  let newAspects = currentState.htmlAfter
+  currentState.htmlAfter = null
+  newAspects.forEach(([el, fn]) => $(el, fn))
 
   return currentTarget.childNodes.length === 1 ? currentTarget.firstChild : currentTarget.childNodes
 }

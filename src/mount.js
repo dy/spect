@@ -1,5 +1,5 @@
 import onload from 'fast-on-load'
-import { currentState, currentTarget, callFx } from './spect.js'
+import { currentState, currentTarget, callAspect } from './spect.js'
 import { noop } from './util.js'
 
 export default function mount (fn) {
@@ -12,9 +12,9 @@ export default function mount (fn) {
 
     // FIXME: use native onload multiple binding capability
     onload(currentTarget, () => {
-      state.unmount = state.mount.map(fn => callFx(currentTarget, fn || noop) || noop)
+      state.unmount = state.mount.map(fn => callAspect(currentTarget, fn || noop) || noop)
     }, () => {
-      state.unmount.forEach(fn => callFx(currentTarget, fn || noop))
+      state.unmount.forEach(fn => callAspect(currentTarget, fn || noop))
     })
 
     // if target rerenders, reset mounted listeners (re-registered anyways)
