@@ -145,31 +145,17 @@ t('html: direct array', t => {
     })
   })
 })
+
 t('html: h fragment', t => {
   $(document.createElement('div'), el => {
-    // let x = html`foo`
-
-    t.equal(el.innerHTML, 'foo')
-
-    let x = html(
-      'Text content', ' ',
-      // ['Document', h('', {}, [' ', 'fragment'])],
-      // h('img', {}),
-      // h('hr'), h('br'),
-      // h('div#id.class', { foo: 'bar', baz: true, class: el => { t.equal(el.tagName, 'DIV') } }, [ h('div') ]),
-      // el => { t.equal(el, target) },
-      // h(Component),
-      // h(document.body, null, 'Portal'),
-      // h('#id', null, ['Selector portal']),
-      // undefined,
-      // el.childNodes
-    )
-    t.equal(el.innerHTML, 'Text content ')
+    let x = html`<>A<>B<>C<d/></></></>`
+    t.equal(el.innerHTML, 'ABC<d></d>')
   })
 })
+
 t.todo('html: function arg')
-t.todo('html: nested HTML arguments')
-t.todo('html: <host> tag')
+t.skip('html: nested HTML arguments')
+t.skip('html: <host> tag')
 
 t.skip('html: basic', t => {
   let node = html`<a></a>`
@@ -187,7 +173,7 @@ t.skip('html: basic', t => {
   t.equal(el, el1)
 })
 
-t('html: function components', t=> {
+t.skip('html: function components', t => {
   let c = html`<${C} x y=1 z=${2} />`
 
   function C (el) {
@@ -211,7 +197,7 @@ t('html: class components')
 
 t('html: extended web-components')
 
-t('html: DOM attrs/props', t => {
+t.skip('html: DOM attrs/props', t => {
   let el = document.createElement('x')
   $(el, el => {
     html`<${el} x y=1><a z=${() => {}}>b</a></>`
@@ -244,17 +230,17 @@ t('html: wrapping', t => {
   })
 })
 
-t('html: adjacent node', t => {
+t.skip('html: adjacent node', t => {
 
 })
 
-t('html: external node', t => {
+t.skip('html: external node', t => {
   html`<${el}>content</>`
 })
 
 t('html: two wrapping aspects', async t => {
   function b (el) {
-    html`<div#b>${el}</div>`
+    html`<div#b>${el.childNodes}</div>`
   }
 
   let el = document.createElement('div')
@@ -263,10 +249,9 @@ t('html: two wrapping aspects', async t => {
   $(el, b)
 
   function a (el) {
-    html`<div#a>${el}</div>`
+    html`<div#a>${el.childNodes}</div>`
   }
 
-  await (() => {})
   t.equal(el.innerHTML, `<div id="b"><div id="a">content</div></div>`)
 })
 

@@ -522,16 +522,11 @@ $(target, el => {
 $(target, el => {
   let [foo, bar, baz] = html`<>foo <bar/> baz</>`
   let [foo1, bar1, baz1] = html`foo <bar/> baz`
-  let [foo2, bar2, baz2] = html(['foo ', '<bar/>', ' baz'])
+  let [foo2, bar2, baz2] = html(['foo ', html`<bar/>`, ' baz'])
 
   // el.innerHTML === `foo <bar></bar> baz`
 })
 ```
-
-<!--
-    // ${el => { /* el === target */ }}
-    // <!-- comment --/>
-    // ${ el.childNodes } -->
 
 #### DOM Elements
 
@@ -579,7 +574,6 @@ function Component(el) {
   html`<host foo=bar>baz</>`
 }
 ```
-
 
 <!--
 #### JSX
