@@ -413,7 +413,7 @@ $('.mdc-text-field', TextField)
 * [ ] `watch`
 -->
 
-### $(selector|element|list, init => destroy )
+### $(selector|element[s], init => destroy )
 
 Attach aspect function `fn` to selected elements or direct element(s). The aspect is called on every matched element, taking it as a single argument.
 Aspect can return destructor function, that is invoked when the aspect is detached from element.
@@ -478,31 +478,33 @@ Note that an aspect can be assigned to existing elements, in that case `mount` w
 
 ### html\`...markup\`
 
-HTML effect ensures markup for current element, performing necessary updates via DOM morhing. Returs node or list of nodes, created by the effect.
+HTML effect ensures markup for current element, performing necessary updates via DOM morhing. Returs node or nodes, created by the effect.
 
 ```js
 import { $, html } from 'spect'
 
-$('#target', target => {
+$('#target', el => {
   let div = html`<div#id.class foo=bar>baz</div>`
+
+  // el.innerHTML ===
+  // div.outerHTML ===
   // <div id="id" class="class">baz</div>
-  // === target.innerHTML
-  // === div.outerHTML
 })
 ```
+
 <!--
-`html` is [_htm_](https://ghub.io/htm), extended with the following:
+`html` is extension of [_htm_](https://ghub.io/htm) with the following:
 
 - Anonymous attributes `<a ${foo} ${bar} />` for connecting aspects.
 - Unclosed [self-closing tags](http://xahlee.info/js/html5_non-closing_tag.html), such as `<hr>`, `<br>` etc.
-- [Optional closing tags](https://www.w3.org/TR/2014/REC-html5-20141028/syntax.html#optional-tags), such as `<li>`, `<p>` etc..
-- HTML comments `<!-- --/>` and declarations `<? ?>`.
-- Allows unquoted attribute values containing slashes
+- [Optional closing tags](https://www.w3.org/TR/2014/REC-html5-20141028/syntax.html#optional-tags), such as `<li>`, `<p>` etc.
+- Allows unquoted attribute values containing slashes.
+- HTML reducer
 -->
 
 #### Attributes & properties
 
-Attributes are set as element properties, the element decides if passed props should be exposed as _Node_ attributes. For that purpose, the `snabbdom/props` module is used.
+Attributes are set as element properties, the element decides if passed props should be exposed as _Node_ attributes.
 
 ```js
 $(target, el => {
@@ -514,7 +516,7 @@ $(target, el => {
 
 #### Fragments
 
-`html` supports multiple first-level elements in any of the following ways:
+`html` supports multiple first-level elements in any way:
 
 ```js
 $(target, el => {
@@ -527,24 +529,19 @@ $(target, el => {
 ```
 
 <!--
-    // Text content
-    // <>Fragment</>
-    // <img/>
-    // <hr><br>
-    // <div#id.class foo=bar ${el => { /* el === target */}}></div>
     // ${el => { /* el === target */ }}
     // <!-- comment --/>
     // ${ el.childNodes } -->
 
 #### DOM Elements
 
-`html` can use existing DOM nodes in content, which is useful to organize reducing/modification of existing content:
+`html` can insert DOM nodes, which is useful for modification or reducing some existing markup:
 
 ```js
-// wrap current content
+// wrap
 $('#target', el => html`<div.prepended /> ${el.childNodes} <div.appended />`)
 
-// prepend icons to buttons by `icon` attribute
+// prepend icons to buttons
 $('button[icon]', ({
     attributes: { icon: { value: icon } },
     childNodes
@@ -552,7 +549,7 @@ $('button[icon]', ({
 )
 ```
 
-`html` caches original element content `el.childNodes` on the first render, so that any subsequent renders will reuse the original content, instead of creating recursive wrapping:
+`html` caches original `el.childNodes` on the first render, so that any subsequent render reuses the cached content:
 
 ```js
 $(target, el => {
@@ -560,12 +557,14 @@ $(target, el => {
   html`<div.a>${el.childNodes}</div>`
   html`<div.a>${el.childNodes}</div>`
   // el.innerHTML === `<div class="a">...</div>`
+  // no recursion
 })
 ```
 
 <!-- TODO: For that purpose, the "reducer" tag can be used: `<div.a><...></div>` -->
 
 #### Connecting aspects
+
 
 #### Components
 
@@ -581,14 +580,14 @@ function Component(el) {
 }
 ```
 
-#### Commentaries
 
-
-#### HTM / JSX
 <!--
-`html` internally uses `html.h` function to build VDOM. `h` has hyperscript-compatible signature `h(tagName, props, ...children)`.
+#### JSX
 
-This way either JSX or [HTM](https://ghub.io/htm) (including [transforms](https://github.com/developit/htm/tree/master/packages/)) can be used in `html` effect:
+TODO: reducing via JSX
+`html` internally uses `html.h` function to build VDOM, which has hyperscript-compatible signature `h(tagName, props, ...children)`.
+
+This way JSX can be used in `html` effect as:
 
 ```jsx
 import { html } from 'spect'
@@ -620,7 +619,7 @@ function Component (el) {
 
 ```
 
-`html` technically can use any other rendering machinery, eg. preact, nanohtml + nanomorph, snabbdom etc.
+Also `html` internally uses `html.htm` and `html.render` functions, which are compatible with any virtual-dom machinery: preact, nanohtml + nanomorph, snabbdom, react, virtual-dom etc.
 -->
 
 

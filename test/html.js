@@ -24,12 +24,13 @@ t('html: readme fragments', t => {
     let [foo, bar, baz] = html`<>foo <bar/> baz</>`
     t.equal(el.innerHTML, 'foo <bar></bar> baz')
     t.ok(foo instanceof Node)
+    console.log(foo)
 
     let [foo1, bar1, baz1] = html`foo <bar/> baz`
     t.equal(el.innerHTML, 'foo <bar></bar> baz')
     t.ok(foo1 instanceof Node)
 
-    let [foo2, bar2, baz2] = html(['foo ', '<bar/>', ' baz'])
+    let [foo2, bar2, baz2] = html(['foo ', html`<bar/>`, ' baz'])
     t.equal(el.innerHTML, 'foo <bar></bar> baz')
     t.ok(foo2 instanceof Node)
   })
@@ -50,11 +51,43 @@ t('html: readme reducer', t => {
     t.equal(el.innerHTML, `<div class="prepended"></div> foo |bar <baz></baz>| qux <div class="appended"></div>`)
   })
 
-  // prepend icons to buttons
+  // // prepend icons to buttons
   let b = document.body.appendChild(document.createElement('button'))
   b.innerHTML = 'Click'
   b.setAttribute('icon', 'phone_in_talk')
   $('button[icon]', ({attributes: { icon: { value: icon } }, childNodes}) => html`<i class="material-icons">${ icon }</i> ${childNodes}` )
+
+  t.equal(b.innerHTML, '<i class="material-icons">phone_in_talk</i> Click')
+  document.body.removeChild(b)
+
+  // single node
+  $(document.createElement('div'), el => {
+    let a = document.createElement('a')
+    html`<x>${a}</x>`
+    t.equal(el.innerHTML, `<x><a></a></x>`)
+  })
+})
+
+t('html: JSX reducer', t => {
+  let target = document.createElement('div')
+  target.innerHTML = '|bar <baz></baz>|'
+
+  $(target, el => {
+    html([h('div.prepended'), ' foo ',  el.childNodes, ' qux ', h('div.appended')])
+    t.equal(el.innerHTML, `<div class="prepended"></div> foo |bar <baz></baz>| qux <div class="appended"></div>`)
+
+    html`foo ${el.childNodes} qux`
+    t.equal(el.innerHTML, `foo |bar <baz></baz>| qux`)
+
+    html`<div.prepended /> foo ${el.childNodes} qux <div.appended />`
+    t.equal(el.innerHTML, `<div class="prepended"></div> foo |bar <baz></baz>| qux <div class="appended"></div>`)
+  })
+
+  // prepend icons to buttons
+  let b = document.body.appendChild(document.createElement('button'))
+  b.innerHTML = 'Click'
+  b.setAttribute('icon', 'phone_in_talk')
+  $('button[icon]', ({ attributes: { icon: { value: icon } }, childNodes }) => html`<i class="material-icons">${icon}</i> ${childNodes}`)
 
   t.equal(b.innerHTML, '<i class="material-icons">phone_in_talk</i> Click')
   document.body.removeChild(b)
@@ -65,10 +98,11 @@ t('html: readme reducer', t => {
     html`<x>${a}</x>`
     t.equal(el.innerHTML, `<x><a></a></x>`)
   })
-
 })
 
-t.todo('re-rendering inner nodes shouldn\'t trigger mount callback')
+t('html: html inside of html')
+
+t.todo('html: re-rendering inner nodes shouldn\'t trigger mount callback')
 
 t('html: h plain node', t => {
   let target = document.createElement('div')

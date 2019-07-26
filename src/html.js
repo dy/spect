@@ -9,54 +9,19 @@ import { patch,
   symbols,
   applyProp,
   applyAttr,
-  skipNode,
-  skip,
-  currentElement,
-  currentPointer
+  skip
 } from 'incremental-dom'
 import { currentTarget, currentState } from './spect.js'
 import { } from './util.js'
 
+
+// configure incremental-dom
 attributes.class = applyAttr
 attributes[symbols.default] = applyProp
 
 
+// build vdom
 html.h = function h(target, props, ...children) {
-  // DOM targets get their props / content updated
-  // if (target instanceof Node) {
-  //   if (!tracking.has(target)) tracking.set(target, toVNode(target))
-  //   let oldVnode = tracking.get(target)
-  //   let newVNode = snabH(oldVnode.sel, {props}, children)
-  //   tracking.set(target, patch(oldVnode, newVNode))
-  //   return target
-  // }
-
-  //  register web-component
-  // if (typeof target === 'function') {
-  //   if (!tracking.has(target)) {
-  //     // TODO: differentiate class / function
-  //     tracking.set(target, createComponent(target, props, children))
-  //   }
-  //   let { tagName } = tracking.get(target)
-
-  //   return snabH(tagName, props, children)
-  // }
-
-
-  // fragment targets return array
-  // if (target === '') return children
-
-  // nested fragments create nested arrays
-  // children = children.flat()
-
-  // return snabH(target, {props}, children)
-
-  if (target instanceof Node || target instanceof NodeList) {
-    // if unchanged node is passed - cache it as initial content to skip
-    if (!cache.has(target)) cache.set(target, [].concat(target))
-    return target
-  }
-
   let [beforeId, afterId = ''] = target.split('#')
   let [tag, ...beforeClx] = beforeId.split('.')
   let [id, ...afterClx] = afterId.split('.')
@@ -80,8 +45,9 @@ html.h = function h(target, props, ...children) {
 
 html.htm = htm.bind(html.h)
 
-// build DOM from arguments
-export function render (arg) {
+
+// render vdom
+html.render = function render (arg) {
   if (!arg) return
 
   // numbers/strings serialized as text
@@ -90,7 +56,7 @@ export function render (arg) {
 
   if (arg.ref) {
     elementOpen('ref', arg.ref, ['id', arg.ref])
-      skip()
+    skip()
     elementClose('ref')
     return
   }
@@ -109,41 +75,25 @@ export function render (arg) {
   elementOpen(tag, key, staticProps, ...props)
   children.forEach(render)
   elementClose(tag)
-
-
-  // if (isVdom(arg)) return arg
-
-  // if (arg.raw) {
-  //   // html bypasses insertions, so if there's NodeList or Node we have to map again via vhtml
-  //   let result = html.htm(...arguments)
-  //   if (Array.isArray(result)) return result.map(vhtml).flat()
-  //   return result
-  // }
-
-  // if (Array.isArray(arg)) return arg.map(vhtml).flat()
-
-  // if (arg instanceof NodeList) {
-  //   if (!cache.has(arg)) cache.set(arg, vhtml([...arg]))
-  //   return cache.get(arg)
-  //   return [...arg]
-  // }
-
-  // if (arg instanceof Node) {
-  //   // if (!cache.has(arg)) cache.set(arg, toVNode(arg))
-  //   // return cache.get(arg)
-  //   return arg
-  // }
-
-  // return html.htm(args)
 }
+
 
 export default function html(...args) {
   let cache = currentState.htmlCache || (currentState.htmlCache = new WeakMap())
 
-  let count = 0, refs = {}
+  // tpl string
+  let vdom
+  if (args[0].raw) vdom = html.htm(...args)
+
+  // direct JSX
+  else vdom = args[0]
+  if (!Array.isArray(vdom)) vdom = [vdom]
 
   // put child nodes aside
-  args = args.map(arg => {
+  let count = 0, refs = {}
+  vdom = vdom.map(function map(arg) {
+    if (arg instanceof Array) return arg.map(map)
+
     if (arg instanceof NodeList) {
       // cache initial nodes contents
       if (!cache.has(arg)) cache.set(arg, [...arg])
@@ -161,11 +111,14 @@ export default function html(...args) {
       refs[id] = arg
       return {ref: id}
     }
+
+    if (arg.children) arg.children = map(arg.children)
+
     return arg
   })
 
   // incremental-dom
-  patch(currentTarget, render, html.htm(...args))
+  patch(currentTarget, html.render, vdom)
 
   // reinsert fragments
   for (let id in refs) {
@@ -173,41 +126,5 @@ export default function html(...args) {
     let holder = currentTarget.querySelector('#' + id)
     holder.replaceWith(frag)
   }
-
-
-  // nanomorph
-  // let vdom = vhtml(...arguments)
-  // let el = document.createElement(currentTarget.tagName)
-  // vdom.forEach(e => {
-  //   if (Array.isArray(e)) e.forEach(e => el.appendChild(e))
-  //   el.appendChild(typeof e === 'string' ? document.createTextNode(e) : e)
-  // })
-  // morph(currentTarget, el)
-
-  // snabbdom
-  // if (!currentState.vdom) currentState.vdom = toVNode(currentTarget)
-
-  // // FIXME: check for <host> element to avoid that
-  // // if (Array.isArray(vdom)) vdom =
-  // vdom = snabH(currentState.vdom.sel, currentState.vdom.data, vdom)
-
-  // currentState.vdom = html.patch(currentState.vdom, vdom)
-
-
   return currentTarget.childNodes.length === 1 ? currentTarget.firstChild : currentTarget.childNodes
-}
-
-function raw(content) {
-  const el = elementOpen('html-blob');
-  if (el.__cachedInnerHtml !== content) {
-    el.__cachedInnerHtml = content;
-    // el.innerHTML = content;
-    if (content.length) content.forEach(c => el.appendChild(c))
-  }
-  skip()
-  elementClose('html-blob');
-}
-
-function isVdom (arg) {
-  return arg.sel !== undefined
 }
