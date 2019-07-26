@@ -413,7 +413,7 @@ $('.mdc-text-field', TextField)
 * [ ] `watch`
 -->
 
-### $(selector|element[s], init => destroy )
+### `$(selector|element[s], init => destroy )`
 
 Attach aspect function `fn` to selected elements or direct element(s). The aspect is called on every matched element, taking it as a single argument.
 Aspect can return destructor function, that is invoked when the aspect is detached from element.
@@ -446,7 +446,7 @@ $('#button-container button', el =>
 
 
 
-### mount(attached => detached)
+### `mount(attached => detached)`
 
 Mount effect invokes passed `attached` function when target is mounted on the DOM, and the optional returned function is called when the target is unmounted.
 
@@ -476,7 +476,7 @@ Note that an aspect can be assigned to existing elements, in that case `mount` w
 
 
 
-### html\`...markup\`
+### ``html`...markup` ``
 
 HTML effect ensures markup for current element, performing necessary updates via DOM morhing. Returs node or nodes, created by the effect.
 
@@ -569,12 +569,12 @@ const bar = el => {}
 // as a child node
 html`<div.el>${ foo }${ bar }</div>`
 
-// TODO: as anonymous attribute
-html`<div.el ${foo} ${bar} />`
-
 // as array spread
 html`<div.el ...${[foo, bar]} />`
 ```
+
+<!-- // TODO: as anonymous attribute
+html`<div.el ${foo} ${bar} />` -->
 
 #### Components
 
