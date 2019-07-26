@@ -141,11 +141,11 @@ $('#timer-example', el => {
   html`Seconds: ${seconds}`
 })
 
-// hooks-powered jQuery
 
 ```
 <!--
 
+// ...hooks-powered jQuery
 
 
 ### An application · <small>code | sandbox</small>
@@ -415,13 +415,11 @@ $('.mdc-text-field', TextField)
 
 ### `$(selector|element[s], init => destroy )`
 
-Attach aspect function `fn` to selected elements or direct element(s). The aspect is called on every matched element, taking it as a single argument.
-Aspect can return destructor function, that is invoked when the aspect is detached from element.
+Attach aspect function to selector or direct element(s). The aspect is called on every matched element, receiving it as single argument.
+Aspect can return destructor function, which is invoked when the aspect is removed from element.
 <!-- `$` returns all `document.querySelector/All`, returning all matched elements in current aspect context. -->
 
 ```js
-import $ from 'spect'
-
 let element = $('#my-selector', element => {
   // init
   return () => {
@@ -429,10 +427,11 @@ let element = $('#my-selector', element => {
   }
 })
 ```
+<!--
 
 #### Example
 
-<!-- ```js
+```js
 import { $, on, state } from 'spect'
 
 let hiddenBox = $('#banner-message');
@@ -448,7 +447,7 @@ $('#button-container button', el =>
 
 ### `mount(attached => detached)`
 
-Mount effect invokes passed `attached` function when target is mounted on the DOM, and the optional returned function is called when the target is unmounted.
+Mount effect invokes passed `attached` function when target is mounted on the DOM. Optional returned function is called when the target is unmounted.
 
 ```js
 $('#target', el => {
@@ -472,7 +471,7 @@ $('#target', el => {
 
 <!-- Registering plugins as jQuery $.fn = ... -->
 
-Note that an aspect can be assigned to existing elements, in that case `mount` will be triggered automatically.
+If an aspect is attached to mounted elements, the `mount` will be triggered automatically.
 
 
 
@@ -516,13 +515,13 @@ $(target, el => {
 
 #### Fragments
 
-`html` supports multiple first-level elements in any way:
+`html` supports multiple first-level elements in any of the following ways:
 
 ```js
 $(target, el => {
-  let [foo, bar, baz] = html`<>foo <bar/> baz</>`
-  let [foo1, bar1, baz1] = html`foo <bar/> baz`
-  let [foo2, bar2, baz2] = html(['foo ', html`<bar/>`, ' baz'])
+  html`<>foo <bar/> baz</>`
+  html`foo <bar/> baz`
+  html(['foo ', html`<bar/>`, ' baz'])
 
   // el.innerHTML === `foo <bar></bar> baz`
 })
@@ -530,7 +529,7 @@ $(target, el => {
 
 #### DOM Elements
 
-`html` can insert DOM nodes, which is useful for modification or reducing some existing markup:
+`html` can insert DOM nodes directly, which can be used to preserve original markup:
 
 ```js
 // wrap
@@ -551,8 +550,8 @@ $(target, el => {
   html`<div.a>${ el.childNodes }</div>`
   html`<div.a>${ el.childNodes }</div>`
   html`<div.a>${ el.childNodes }</div>`
+
   // el.innerHTML === `<div class="a">...</div>`
-  // no recursion
 })
 ```
 
@@ -563,14 +562,14 @@ $(target, el => {
 Aspects can be hooked up to elements via `html` in one of the following ways:
 
 ```js
-const foo = el => {}
-const bar = el => {}
-
 // as a child node
 html`<div.el>${ foo }${ bar }</div>`
 
 // as array spread
 html`<div.el ...${[foo, bar]} />`
+
+const foo = el => {}
+const bar = el => {}
 ```
 
 <!-- // TODO: as anonymous attribute
