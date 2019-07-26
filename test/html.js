@@ -68,7 +68,7 @@ t('html: readme reducer', t => {
   })
 })
 
-t('html: JSX reducer', t => {
+t('html: h- reducer', t => {
   let target = document.createElement('div')
   target.innerHTML = '|bar <baz></baz>|'
 
@@ -153,50 +153,6 @@ t('html: h fragment', t => {
   })
 })
 
-t.todo('html: function arg')
-t.skip('html: nested HTML arguments')
-t.skip('html: <host> tag')
-
-t.skip('html: basic', t => {
-  let node = html`<a></a>`
-  t.equal(node.outerHTML, '<a></a>')
-
-  let [a, b] = html`<a/><b/>`
-  t.equal(a.outerHTML, `<a></a>`)
-  t.equal(b.outerHTML, `<b></b>`)
-
-  let el = document.createElement('div')
-  let el1 = html`<${el}><foo/></>`
-  t.equal(el, el1)
-  t.equal(el.outerHTML, '<div><foo></foo></div>')
-
-  t.equal(el, el1)
-})
-
-t.skip('html: function components', t => {
-  let c = html`<${C} x y=1 z=${2} />`
-
-  function C (el) {
-    t.deepEqual({x: el.x, y: el.y, z: el.z}, {x: true, y: '1', z: 2})
-
-    html`<${el}><div></div></>`
-  }
-
-  t.equal(c.outerHTML, '<div></div>')
-})
-
-t.skip('html: function as a child (invalid in react)', t => {
-  html`<a>${C}</a>`
-
-  function C () {
-
-  }
-})
-
-t('html: class components')
-
-t('html: extended web-components')
-
 t.skip('html: DOM attrs/props', t => {
   let el = document.createElement('x')
   $(el, el => {
@@ -213,29 +169,11 @@ t('html: multiple root nodes', t => {
   })
 })
 
-t('html: fragment', t => {
+t('html: nested fragments', t => {
   $(document.createElement('div'), el => {
     html`<><a>a</a><b><>b<c/></></b></>`
     t.equal(el.innerHTML, '<a>a</a><b>b<c></c></b>')
   })
-})
-
-t('html: wrapping', t => {
-  let el = document.createElement('div')
-  el.innerHTML = '<a>b</a>'
-
-  $(el, el => {
-    html`<b>${el.childNodes}</b>`
-    t.equal(el.innerHTML, '<b><a>b</a></b>')
-  })
-})
-
-t.skip('html: adjacent node', t => {
-
-})
-
-t.skip('html: external node', t => {
-  html`<${el}>content</>`
 })
 
 t('html: two wrapping aspects', async t => {
@@ -255,6 +193,42 @@ t('html: two wrapping aspects', async t => {
   t.equal(el.innerHTML, `<div id="b"><div id="a">content</div></div>`)
 })
 
+t.skip('html: <host> tag')
+t.skip('html: function components', t => {
+  let c = html`<${C} x y=1 z=${2} />`
+
+  function C(el) {
+    t.deepEqual({ x: el.x, y: el.y, z: el.z }, { x: true, y: '1', z: 2 })
+
+    html`<${el}><div></div></>`
+  }
+
+  t.equal(c.outerHTML, '<div></div>')
+})
+
+t('html: connecting aspect as child function', t => {
+  let target = document.createElement('div')
+
+  $(target, el => {
+    html`<a foo=bar>${a}</a>`
+  })
+
+  function a(el) {
+    t.equal(el.tagName, 'A')
+    t.equal(el.foo, 'bar')
+  }
+})
+t.todo('html: connecting aspect as anonymous attribute', t => {
+
+})
+t.todo('html: connecting aspect as array spread', t => {
+
+})
+
+t('html: class components')
+
+t('html: extended web-components')
+
 t.skip('duplicate id warning', t => {
   let el = document.createElement('div')
   el.innerHTML = '<div id="a"></div>'
@@ -262,13 +236,4 @@ t.skip('duplicate id warning', t => {
   t.throws(() => {
     $(el, el => html`<div id="a"></div><...>`)
   })
-})
-
-t('html: destructuring result nodes')
-t('html: destructuring result ids')
-
-
-t('html: nested fragments', t => {
-  `<><></></>`
-
 })

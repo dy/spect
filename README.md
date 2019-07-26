@@ -6,11 +6,12 @@ It provides essential DOM toolkit, separating cross-cutting concerns with [_aspe
 ```js
 import { $, html, state, fx, route, prop } from 'spect'
 
-// main app aspect
+// main aspect
 $('#app', app => {
   let [ match, { id } ] = route('user/:id')
   let { data } = state()
 
+  // TODO
   fx(async () => {
     prop({ loading: true })
     state({ data: await fetch(url) })
@@ -111,13 +112,10 @@ $(document.body, body =>
 $('.hello', ({ name }) => html`Hello, ${name}!`)
 ```
 
-<small>[Open in sandbox](https://codesandbox.com)</small>
+<small>[TODO: Open in sandbox](https://codesandbox.com)</small>
 
-<!-- Internally `html` is built on [htm](https://ghub.io/htm) and [snabbdom](https://ghub.io/snabbdom), providing performance and robustness. -->
 
-<!--
-
-### A stateful aspect · <small>code | sandbox</small>
+### A stateful aspect
 
 _Spect_ introduces `state`, `mount` and `fx` effects, similar to `useState` and `useEffect` hooks:
 
@@ -125,27 +123,29 @@ _Spect_ introduces `state`, `mount` and `fx` effects, similar to `useState` and 
 import { $, html, state, mount, fx } from 'spect'
 
 $('#timer-example', el => {
-  // init defaults
+  // TODO: state
   let { seconds = 0 } = state()
 
   // on mount
   mount(() => {
-    let i = setInterval(() => {
-      // set state
-      state({ seconds: seconds + 1 })
-    }, 1000)
+    // set state
+    let i = setInterval(
+      () => state({ seconds: seconds + 1 }),
+      1000
+    )
 
     // on unmount
-    return () => {
-      clearInterval(i)
-    }
+    return () => clearInterval(i)
   })
 
   html`Seconds: ${seconds}`
 })
-```
 
-> Hooks-powered jQuery.
+// hooks-powered jQuery
+
+```
+<!--
+
 
 
 ### An application · <small>code | sandbox</small>
@@ -534,13 +534,13 @@ $(target, el => {
 
 ```js
 // wrap
-$('#target', el => html`<div.prepended /> ${el.childNodes} <div.appended />`)
+$('#target', el => html`<div.prepended /> ${ el.childNodes } <div.appended />`)
 
 // prepend icons to buttons
 $('button[icon]', ({
     attributes: { icon: { value: icon } },
     childNodes
-  }) => html`<i class="material-icons">${ icon }</i> ${childNodes}`
+  }) => html`<i class="material-icons">${ icon }</i> ${ childNodes }`
 )
 ```
 
@@ -548,9 +548,9 @@ $('button[icon]', ({
 
 ```js
 $(target, el => {
-  html`<div.a>${el.childNodes}</div>`
-  html`<div.a>${el.childNodes}</div>`
-  html`<div.a>${el.childNodes}</div>`
+  html`<div.a>${ el.childNodes }</div>`
+  html`<div.a>${ el.childNodes }</div>`
+  html`<div.a>${ el.childNodes }</div>`
   // el.innerHTML === `<div class="a">...</div>`
   // no recursion
 })
@@ -560,6 +560,21 @@ $(target, el => {
 
 #### Connecting aspects
 
+Aspects can be hooked up to elements via `html` in one of the following ways:
+
+```js
+const foo = el => {}
+const bar = el => {}
+
+// as a child node
+html`<div.el>${ foo }${ bar }</div>`
+
+// TODO: as anonymous attribute
+html`<div.el ${foo} ${bar} />`
+
+// as array spread
+html`<div.el ...${[foo, bar]} />`
+```
 
 #### Components
 

@@ -1,5 +1,4 @@
 import t from 'immutable-tuple'
-import Events from 'nanoevents'
 import { isAsync, noop } from './util.js'
 
 // TODO: invalidate html vdom for elements that're being changed by something outside of spect scope
@@ -91,15 +90,16 @@ export function callFx(target, fx = noop) {
 
   // register current target in parent aspect children list
   if (!parentState.children.has(currentTuple)) parentState.children.add(currentTuple)
-  parentState.emit('before')
+
+  currentState.before.forEach(fn => fn())
 
   // reset child fx count
   let prevChildren = currentState.children
   let newChildren = currentState.children = new Set
 
-  let result = fx.call(currentTarget, target) || noop
+  let result = fx.call(currentTarget, currentTarget) || noop
 
-  parentState.emit('after')
+  currentState.after.forEach(fn => fn())
 
   // check if old children aren't being called in new fx call and dispose them
   for (let tuple of prevChildren) if (!newChildren.has(tuple)) tracking.get(tuple).dispose()
@@ -114,9 +114,6 @@ export function callFx(target, fx = noop) {
 
 
 function createState(tuple) {
-  let emitter = new Events
-  let off = []
-
   let state = {
     // assigned as result of callFx
     destroy: null,
@@ -124,12 +121,12 @@ function createState(tuple) {
     // list of registered children target-fx couples
     children: new Set,
 
-    // events
-    emit: (evt, arg) => (emitter.emit(evt, arg), state),
-    off: () => off = off.forEach(off => off()),
-    on: (evt, fn) => off.push(emitter.on(evt, fn))
+    // hooks
+    before: [],
+    after: []
   }
-  return state.emit('create')
+
+  return state
 }
 
 function destroyState(tuple) {
@@ -137,15 +134,14 @@ function destroyState(tuple) {
 
   let state = tracking.get(tuple)
 
-  state.emit('destroy')
-
   // clean up children
   for (let tuple of state.children) destroyState(tuple)
   state.children.clear()
   delete state.children
 
-  // unbind all registered events
-  state.off()
+  // unbind all registered hooks
+  state.before.length = 0
+  state.after.length = 0
 
   // invoke registered aspect destructors
   if (state.destroy) state.destroy()

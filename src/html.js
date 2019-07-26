@@ -9,9 +9,10 @@ import { patch,
   symbols,
   applyProp,
   applyAttr,
-  skip
+  skip,
+  currentElement
 } from 'incremental-dom'
-import { currentTarget, currentState } from './spect.js'
+import $, { currentTarget, currentState } from './spect.js'
 import { } from './util.js'
 
 
@@ -54,6 +55,17 @@ html.render = function render (arg) {
   if (typeof arg === 'number') return text(arg)
   if (typeof arg === 'string') return text(arg)
 
+  // plan function to be called after current effect
+  if (typeof arg === 'function') {
+    let el = currentElement()
+    let fx = arg
+    currentState.after.push(function initFx() {
+      currentState.after = currentState.after.filter(fn => fn !== initFx)
+      $(el, fx)
+    })
+    return arg
+  }
+
   if (arg.ref) {
     elementOpen('ref', arg.ref, ['id', arg.ref])
     skip()
@@ -89,8 +101,10 @@ export default function html(...args) {
   else vdom = args[0]
   if (!Array.isArray(vdom)) vdom = [vdom]
 
-  // put child nodes aside
-  let count = 0, refs = {}
+  // put DOM nodes aside
+  let count = 0,
+      refs = currentState.htmlRefs = {}
+
   vdom = vdom.map(function map(arg) {
     if (arg instanceof Array) return arg.map(map)
 
@@ -118,13 +132,16 @@ export default function html(...args) {
   })
 
   // incremental-dom
+  currentState.htmlFx = []
   patch(currentTarget, html.render, vdom)
 
-  // reinsert fragments
+  // reinsert nodes
   for (let id in refs) {
     let frag = refs[id]
     let holder = currentTarget.querySelector('#' + id)
     holder.replaceWith(frag)
   }
+  currentState.htmlRefs = null
+
   return currentTarget.childNodes.length === 1 ? currentTarget.firstChild : currentTarget.childNodes
 }
