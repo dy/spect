@@ -1,6 +1,19 @@
 // html effect
 import htm from 'htm'
-import { patch, elementOpen, elementClose, elementVoid, text, attributes, symbols, applyProp, applyAttr } from 'incremental-dom'
+import { patch,
+  elementOpen,
+  elementClose,
+  elementVoid,
+  text,
+  attributes,
+  symbols,
+  applyProp,
+  applyAttr,
+  skipNode,
+  skip,
+  currentElement,
+  currentPointer
+} from 'incremental-dom'
 import { currentTarget, currentState } from './spect.js'
 import { } from './util.js'
 
@@ -40,6 +53,13 @@ html.h = function h(target, props, ...children) {
   // children = children.flat()
 
   // return snabH(target, {props}, children)
+
+  if (target instanceof Node || target instanceof NodeList) {
+    // if unchanged node is passed - cache it as initial content to skip
+    if (!cache.has(target)) cache.set(target, [].concat(target))
+    return target
+  }
+
   let [beforeId, afterId = ''] = target.split('#')
   let [tag, ...beforeClx] = beforeId.split('.')
   let [id, ...afterClx] = afterId.split('.')
@@ -71,9 +91,22 @@ export function render (arg) {
   if (typeof arg === 'number') return text(arg)
   if (typeof arg === 'string') return text(arg)
 
+  if (arg.frag) {
+    const el = elementOpen('x')
+      skip()
+    elementClose('x')
+  //   return
+  //   // if (arg === currentPointer()) skipNode()
+  //   // // currentElement().appendChild(arg)
+    // currentElement().insertBefore(arg, currentPointer())
+  //   // console.log(currentElement().innerHTML)
+    return
+  }
+
+  if (arg.length) return [...arg].forEach(render)
+
   // objects create elements
   let { tag, key, props, staticProps, children } = arg
-
   if (!children) return elementVoid(tag, props)
 
   // fragments
@@ -81,10 +114,8 @@ export function render (arg) {
 
   // direct element
   elementOpen(tag, key, staticProps, ...props)
-    children.forEach(render)
+  children.forEach(render)
   elementClose(tag)
-
-
 
 
   // if (isVdom(arg)) return arg
@@ -114,8 +145,20 @@ export function render (arg) {
 }
 
 export default function html(...args) {
+  // preserve childNodes insertions
+  args = args.map(arg => {
+    if (arg instanceof NodeList) {
+      let frag = [...arg].map(arg => (arg._initial = true, arg))
+      return { frag }
+    }
+    return arg
+  })
+
   // incremental-dom
   patch(currentTarget, render, html.htm(...args))
+
+  // post-processing
+
 
   // nanomorph
   // let vdom = vhtml(...arguments)
@@ -137,6 +180,17 @@ export default function html(...args) {
 
 
   return currentTarget.childNodes.length === 1 ? currentTarget.firstChild : currentTarget.childNodes
+}
+
+function raw(content) {
+  const el = elementOpen('html-blob');
+  if (el.__cachedInnerHtml !== content) {
+    el.__cachedInnerHtml = content;
+    // el.innerHTML = content;
+    if (content.length) content.forEach(c => el.appendChild(c))
+  }
+  skip()
+  elementClose('html-blob');
 }
 
 function isVdom (arg) {

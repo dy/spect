@@ -19,7 +19,7 @@ t('html: readme attributes', t => {
   })
 })
 
-t.only('html: readme fragments', t => {
+t('html: readme fragments', t => {
   $(document.createElement('div'), el => {
     let [foo, bar, baz] = html`<>foo <bar/> baz</>`
     t.equal(el.innerHTML, 'foo <bar></bar> baz')
@@ -35,19 +35,19 @@ t.only('html: readme fragments', t => {
   })
 })
 
-t('html: readme reducer', t => {
+t.only('html: readme reducer', t => {
   let target = document.createElement('div')
-  target.innerHTML = 'bar <baz/>'
+  target.innerHTML = '|bar <baz></baz>|'
 
   $(target, el => {
     html`<div.prepended /> foo ${el.childNodes} qux <div.appended />`
-    t.equal(el.innerHTML, `<div class="prepended"></div> foo bar <baz></baz> qux <div class="appended"></div>`)
+    t.equal(el.innerHTML, `<div class="prepended"></div> foo |bar <baz></baz>| qux <div class="appended"></div>`)
 
-    html`foo ${el.childNodes} qux`
-    t.equal(el.innerHTML, `foo bar <baz></baz> qux`)
+    // html`foo ${el.childNodes} qux`
+    // t.equal(el.innerHTML, `foo bar <baz></baz> qux`)
 
-    html`<div.prepended /> foo ${el.childNodes} qux <div.appended />`
-    t.equal(el.innerHTML, `<div class="prepended"></div> foo bar <baz></baz> qux <div class="appended"></div>`)
+    // html`<div.prepended /> foo ${el.childNodes} qux <div.appended />`
+    // t.equal(el.innerHTML, `<div class="prepended"></div> foo bar <baz></baz> qux <div class="appended"></div>`)
   })
 
   // TODO: repeatable insertion
