@@ -4,27 +4,34 @@
 It provides essential DOM toolkit, separating cross-cutting concerns with [_aspects_](https://en.wikipedia.org/wiki/Aspect_(computer_programming)).
 
 ```js
-import { $, html, state, fx, route, prop } from 'spect'
+import { $, html, state, fx, route, attr } from 'spect'
+import { t } from 'ttag'
 
 // main aspect
 $('#app', app => {
   let [ match, { id } ] = route('user/:id')
-  let { data } = state()
+  let { user } = state()
 
-  // TODO
   fx(async () => {
-    prop({ loading: true })
-    state({ data: await fetch(url) })
-    prop({ loading: false })
+    attr({ loading: true })
+    state({ user: await fetch('/user') })
+    attr({ loading: false })
   }, [id])
 
-  html`${data}`
+  html`<div.preloader.t>Hello, ${user.name}!</div>`
 })
 
-// loader aspect
-$('#app', app => {
-  let { loading = false } = prop()
-  if (loading) html`${app.childNodes} <canvas class="spinner" />`
+// preloader aspect
+$('.preloader', el => {
+  let { loading = false } = attr()
+  if (loading) html`${el.childNodes} <canvas class="spinner" />`
+})
+
+// i18n aspect
+$('.t', el => {
+  let lang = el.lang || document.documentElement.lang
+
+  html`${ t`${el.textContent}` }`
 })
 ```
 
@@ -572,10 +579,14 @@ const foo = el => {}
 const bar = el => {}
 ```
 
-<!-- // TODO: as anonymous attribute
-html`<div.el ${foo} ${bar} />` -->
+<!--
+// TODO: as anonymous attribute
+html`<div.el ${foo} ${bar} />`
 
-#### Components
+// TODO: as classes
+html`<div.el.${foo}.${bar} />` -->
+
+<!-- #### Components
 
 Components work via mechanism of custom-elements as:
 
@@ -587,7 +598,7 @@ $(target, node => {
 function Component(el) {
   html`<host foo=bar>baz</>`
 }
-```
+``` -->
 
 <!--
 #### JSX
@@ -658,11 +669,9 @@ const Log = ({ details, date }) => `<p>${details}</p><time>${ date.toLocalTimeSt
 ```
 -->
 
-<!--
-
 ### `state(value?)`
 
-Provides state, associated with aspect. This way, different aspects can share
+Provides state, associated with aspect. Updating state rerenders aspect. State is limited to single aspect, to share state between aspects use `prop`.
 
 ```js
 function mod (el) {
@@ -674,8 +683,8 @@ function mod (el) {
 }
 ```
 
----
 
+<!--
 ### `attr(value?)`
 
 Same as `state`, but reads an attribute from the element, as well as registers listeners for the defined attribute. Any time attribute value changes, it triggers rerender.

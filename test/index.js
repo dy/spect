@@ -1,9 +1,8 @@
 import './core.js'
 import './mount.js'
 import './html.js'
-
-// import('./core.js')
-// import('./selector.js')
+import './state.js'
+// import './fx.js'
 
 
 // props

@@ -1,40 +1,29 @@
 import t from 'tst'
-import $, { mount, html, state } from '../index.js'
+import $, { state } from '../src/index.js'
 
-t('mount: multiple mount callbacks', async t => {
+t.skip('state: read', async t => {
   let log = []
+  $(document.createElement('div'), el => {
+    // init/get state
+    let { foo = 1, bar } = state()
 
-  $('#x', el => {
-    mount(() => {
-      log.push('mount A')
-      return () => {
-        log.push('unmount A')
-      }
-    })
+    log.push('get foo,bar', foo, bar)
 
-    mount(() => {
-      log.push('mount B')
-      return () => log.push('unmount B')
-    })
+    // set registered listener updates element
+    state({ foo: 'a', bar: 'b' })
+
+    log.push('set foo,bar')
+
+    // set unregistered listener - ignores element
+    if (foo === 'a') {
+      state({ baz: c })
+      log.push('set baz')
+    }
   })
 
-  let x = document.createElement('div')
-  x.id = 'x'
-
-  document.documentElement.appendChild(x)
-
-  await (() => {})
-
-  t.deepEqual(log, ['mount A', 'mount B'])
-
-  document.documentElement.removeChild(x)
-
-  await (() => {})
-
-  t.deepEqual(log, ['mount A', 'mount B', 'unmount A', 'unmount B'])
+  t.deepEqual(log, ['get foo,bar', 1, undefined, 'set foo,bar', 'get foo,bar', 'a', 'b', 'set baz'])
 })
 
+t('state: write')
 
-t.skip('mount: instant remove/insert shouldn\'t trigger callback', async t => {
-  // TODO
-})
+t('state: not shared')

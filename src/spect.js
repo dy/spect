@@ -20,31 +20,59 @@ export let currentTuple = t(currentTarget, currentAspect)
 export let currentState = createState(currentTuple)
 tracking.set(currentTuple, currentState)
 
-// returned function is destroy effect
-export const spect = function spect (selector, aspect) {
+// attach aspect to selector
+export const spect = function spect (target, aspect) {
   let that = this || currentTarget
 
-  if (typeof selector === 'string') {
-    let targets = that.querySelectorAll(selector)
+  if (typeof target === 'string') {
+    let targets = that.querySelectorAll(target)
     targets.forEach(target => spect(target, aspect))
     return targets
   }
+  if (Array.isArray(target) || target instanceof NodeList) {
+    target.forEach(target => spect(target, aspect))
+    return target
+  }
+
+  let tuple = t(target, aspect)
 
   // existing targets won't be reinitialized
-  if (tracking.has(t(selector, aspect))) return
+  if (tracking.has(tuple)) return target
 
-  // direct element ensures parent, appends child and calls aspect
-  let destroy = callAspect(selector, aspect)
-  tracking.get(t(selector, aspect)).destroy = destroy
-
-  // register generic known targets
-  if (!targets.has(selector)) {
-    selector.classList.add(SPECT_CLASS)
-    targets.set(selector, new Set)
+  if (!targets.has(target)) {
+    targets.set(target, new Set)
   }
-  targets.get(selector).add(aspect)
+  targets.get(target).add(aspect)
+  tracking.set(tuple, createState(tuple))
 
-  return selector
+  target.classList.add(SPECT_CLASS)
+
+  update(target, aspect)
+
+  return target
+}
+
+// just rerender aspect without checks
+export const update = spect.update = function update(target, aspect) {
+  let that = this === spect ? currentTarget : this || currentTarget
+
+  if (typeof target === 'string') {
+    let targets = that.querySelectorAll(target)
+    targets.forEach(target => update(target, aspect))
+    return targets
+  }
+  if (Array.isArray(target) || target instanceof NodeList) {
+    target.forEach(target => update(target, aspect))
+    return target
+  }
+
+  // ignore unregistered targets
+  if (!targets.has(target)) return target
+
+  // returned function is destroy effect\
+  tracking.get(t(target, aspect)).destroy = callAspect(target, aspect)
+
+  target.classList.add(SPECT_CLASS)
 }
 
 export const destroy = spect.destroy = function destroy (target, aspect) {
@@ -54,6 +82,10 @@ export const destroy = spect.destroy = function destroy (target, aspect) {
     let targets = that.querySelectorAll(target)
     targets.forEach(target => destroy(target, aspect))
     return targets
+  }
+  if (Array.isArray(target) || target instanceof NodeList) {
+    target.forEach(target => destroy(target, aspect))
+    return target
   }
 
   if (!targets.has(target)) return target
@@ -86,7 +118,6 @@ export function callAspect(target, aspect = noop) {
   currentTarget = target
   currentAspect = aspect
   currentTuple = t(target, aspect)
-  if (!tracking.has(currentTuple)) tracking.set(currentTuple, createState(currentTuple))
   currentState = tracking.get(currentTuple)
 
   // register current target in parent aspect children list

@@ -1,4 +1,4 @@
-
+import t from 'tst'
 
 // handlers
 t('function', t => {
