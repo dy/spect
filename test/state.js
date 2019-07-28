@@ -1,7 +1,7 @@
 import t from 'tst'
 import $, { state } from '../src/index.js'
 
-t.skip('state: read', async t => {
+t('state: destructuring', async t => {
   let log = []
   $(document.createElement('div'), el => {
     // init/get state
@@ -13,17 +13,38 @@ t.skip('state: read', async t => {
     state({ foo: 'a', bar: 'b' })
 
     log.push('set foo,bar')
-
-    // set unregistered listener - ignores element
-    if (foo === 'a') {
-      state({ baz: c })
-      log.push('set baz')
-    }
   })
 
-  t.deepEqual(log, ['get foo,bar', 1, undefined, 'set foo,bar', 'get foo,bar', 'a', 'b', 'set baz'])
+  t.deepEqual(log, ['get foo,bar', 1, undefined, 'set foo,bar', 'get foo,bar', 'a', 'b', 'set foo,bar'])
 })
 
-t('state: write')
+t('state: direct state', t => {
+  let log = []
+  $(document.createElement('div'), el => {
+    let s = state()
 
-t('state: not shared')
+    log.push('get foo,bar', s.foo, s.bar)
+
+    Object.assign(s, { foo: 'a', bar: 'b' })
+
+    log.push('set foo,bar')
+  })
+
+  t.deepEqual(log, ['get foo,bar', undefined, undefined, 'set foo,bar', 'get foo,bar', 'a', 'b', 'set foo,bar'])
+})
+
+t('state: not shared between aspects', t => {
+  let log = [], el = document.createElement('div')
+
+  $(el, el => {
+    log.push('a')
+    state({foo: 'bar'})
+  })
+
+  $(el, el => {
+    let { foo } = state()
+    log.push('b', foo)
+  })
+
+  t.deepEqual(log, ['a', 'a', 'b', undefined])
+})

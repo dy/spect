@@ -4,6 +4,7 @@ import { isAsync, noop } from './util.js'
 // TODO: invalidate html vdom for elements that're being changed by something outside of spect scope
 
 export const SPECT_CLASS = '👁'// + Math.random().toString(36).slice(2)
+export const MAX_DEPTH = 50
 
 // states for target-aspect tuples
 export const tracking = new WeakMap()
@@ -70,9 +71,11 @@ export const update = spect.update = function update(target, aspect) {
   if (!targets.has(target)) return target
 
   // returned function is destroy effect\
-  tracking.get(t(target, aspect)).destroy = callAspect(target, aspect)
+  callAspect(target, aspect)
 
   target.classList.add(SPECT_CLASS)
+
+  return target
 }
 
 export const destroy = spect.destroy = function destroy (target, aspect) {
@@ -110,7 +113,7 @@ export const destroy = spect.destroy = function destroy (target, aspect) {
 }
 
 
-export function callAspect(target, aspect = noop) {
+export function callAspect(target, aspect) {
   let parentTarget = currentTarget
   let parentAspect = currentAspect
   let parentTuple = currentTuple
@@ -123,25 +126,33 @@ export function callAspect(target, aspect = noop) {
   // register current target in parent aspect children list
   if (!parentState.children.has(currentTuple)) parentState.children.add(currentTuple)
 
-  currentState.before.forEach(fn => fn())
+  // handle dirty flag for rerenders
+  let count = 0
+  currentState.dirty = true
+  while (currentState.dirty) {
+    if(++count > MAX_DEPTH) throw Error('Max depth limit reached. There\'s recursion')
 
-  // reset child aspect count
-  let prevChildren = currentState.children
-  let newChildren = currentState.children = new Set
+    currentState.before.forEach(fn => fn())
 
-  let result = aspect.call(currentTarget, currentTarget) || noop
+    // reset child aspect count
+    let prevChildren = currentState.children
+    let newChildren = currentState.children = new Set
 
-  // check if old children aren't being called in new aspect call and dispose them
-  for (let tuple of prevChildren) if (!newChildren.has(tuple)) tracking.get(tuple).dispose()
+    currentState.dirty = false
+    currentState.destroy = aspect.call(currentTarget, currentTarget) || noop
 
-  currentState.after.forEach(fn => fn())
+    // check if old children aren't being called in new aspect call and dispose them
+    for (let tuple of prevChildren) if (!newChildren.has(tuple)) {
+      destroyState(tracking.get(tuple))
+    }
+
+    currentState.after.forEach(fn => fn())
+  }
 
   currentAspect = parentAspect
   currentTarget = parentTarget
   currentTuple = parentTuple
   currentState = parentState
-
-  return result
 }
 
 
@@ -155,7 +166,10 @@ function createState(tuple) {
 
     // hooks
     before: [],
-    after: []
+    after: [],
+
+    // redraw flag
+    dirty: false
   }
 
   return state

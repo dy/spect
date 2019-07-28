@@ -450,6 +450,7 @@ $('#button-container button', el =>
 <!-- TODO: explain context -->
 <!-- TODO: explain destructor -->
 
+<!-- Multiple aspects as argument: $(el, foo, bar, baz...) -->
 
 
 ### `mount(attached => detached)`
@@ -466,7 +467,6 @@ $('#target', el => {
   })
 })
 ```
-
 
 <!-- API improvements -->
 
@@ -563,28 +563,43 @@ $(target, el => {
 ```
 
 <!-- TODO: For that purpose, the "reducer" tag can be used: `<div.a><...></div>` -->
-
+<!--
 #### Connecting aspects
 
 Aspects can be hooked up to elements via `html` in one of the following ways:
 
 ```js
 // as a child node
+// FIXME: that's rather a side-effect, not main method
 html`<div.el>${ foo }${ bar }</div>`
 
 // as array spread
+// FIXME: doesn't look elegant, although htm-compatible, but rather side-effect
 html`<div.el ...${[foo, bar]} />`
 
 const foo = el => {}
 const bar = el => {}
-```
+``` -->
 
 <!--
 // TODO: as anonymous attribute
 html`<div.el ${foo} ${bar} />`
 
 // TODO: as classes
-html`<div.el.${foo}.${bar} />` -->
+html`<div.el.${foo}.${bar} />`
+
+// TODO: as ref=
+html`<div.el ref=${el => $(el, foo, bar)} />`
+
+// ?
+html`<div.el aspect=${[foo, bar]} />`
+
+// ?
+html`<div class=`${id(foo)} ${id(bar)}` />`
+
+// ?
+html`<div.foo.bar />`
+-->
 
 <!-- #### Components
 
@@ -671,12 +686,12 @@ const Log = ({ details, date }) => `<p>${details}</p><time>${ date.toLocalTimeSt
 
 ### `state(value?)`
 
-Provides state, associated with aspect. Updating state rerenders aspect. State is limited to single aspect, to share state between aspects use `prop`.
+Provides state, associated with aspect. Updating state rerenders aspect.
 
 ```js
 function mod (el) {
-  // init/get state
-  let { foo=default, bar } = state()
+  // get state
+  let { foo = default, bar, } = state()
 
   // set state
   state({ foo: a, bar: b })
@@ -759,9 +774,9 @@ el => {
 
 Same as local, but persists value in remote storage.
 
----
+-->
 
-### `fx(fn, deps?)`
+<!-- ### `fx(fn, deps?)`
 
 Run side-effect function. Different from `useEffect` in:
 - `fx` can return value
@@ -786,9 +801,9 @@ Run side-effect function. Different from `useEffect` in:
 $(el).fx(() => {
   log('Any update')
 })
-```
+``` -->
 
----
+<!--
 
 ### `on(event, delegate?, fn?)`
 

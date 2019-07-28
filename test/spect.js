@@ -21,7 +21,7 @@ t('props + children', t => {
   $('', {a, b, c}, a, fn, c)
 })
 
-//component tree https://github.com/scrapjs/permanent/issues/2)
+// component tree https://github.com/scrapjs/permanent/issues/2)
 t('text', t => {
   $(target, 'abc')
 })
