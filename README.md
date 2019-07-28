@@ -420,9 +420,9 @@ $('.mdc-text-field', TextField)
 * [ ] `watch`
 -->
 
-### `$(selector|element[s], init => destroy )`
+### `$(selector|elements, fn: init => destroy )`
 
-Attach aspect function to selector or direct element(s). The aspect is called on every matched element, receiving it as single argument.
+Attach aspect function `fn` to selector or direct element(s). The aspect is called on every matched element, receiving it as single argument.
 Aspect can return destructor function, which is invoked when the aspect is removed from element.
 <!-- `$` returns all `document.querySelector/All`, returning all matched elements in current aspect context. -->
 
@@ -453,7 +453,7 @@ $('#button-container button', el =>
 <!-- Multiple aspects as argument: $(el, foo, bar, baz...) -->
 
 
-### `mount(attached => detached)`
+### `mount(fn: attached => detached)`
 
 Mount effect invokes passed `attached` function when target is mounted on the DOM. Optional returned function is called when the target is unmounted.
 
@@ -469,12 +469,6 @@ $('#target', el => {
 ```
 
 <!-- API improvements -->
-
-<!-- Effect === aspect, <div mount=${() => () => {}}></div> -->
-
-<!-- Effects exposed in jquery way: $(els).html(), but realtime via mutation observer -->
-
-<!-- Empty selector cases: $(frag => {}), $().effect() -->
 
 <!-- Registering plugins as jQuery $.fn = ... -->
 
@@ -536,7 +530,7 @@ $(target, el => {
 
 #### DOM Elements
 
-`html` can insert DOM nodes directly, which can be used to preserve original markup:
+`html` can insert DOM nodes directly, which can be used to decorate original markup:
 
 ```js
 // wrap
@@ -684,7 +678,7 @@ const Log = ({ details, date }) => `<p>${details}</p><time>${ date.toLocalTimeSt
 ```
 -->
 
-### `state(value?)`
+### `state(values: object?)`
 
 Provides state, associated with aspect. Updating state rerenders aspect.
 
@@ -776,30 +770,34 @@ Same as local, but persists value in remote storage.
 
 -->
 
-<!-- ### `fx(fn, deps?)`
+### `fx(fn: init => destroy, deps?)`
 
-Run side-effect function. Different from `useEffect` in:
-- `fx` can return value
-- `fx` has no destructor
-- fn can be async function or generator
-- fn may include inner effects
-- fn can be run in unmounted state
+Runs side-effect function if any of the deps has changed.
 
 ```js
-// as an aspect
-(el) => {
-  let result = fx(await () => {
-    html'Pending...'
-    let data = await doRequest(param)
-    html`Result ${data}`
-
-    return data
+$(el, el => {
+  fx(await () => {
+    html`Loading...`
+    html`Loaded ${await request(param)}`
   }, [param])
-}
+})
+```
 
-// as a mod
-$(el).fx(() => {
-  log('Any update')
+<!-- ```js
+import $, { state, fx } from 'spect'
+
+// as an aspect
+$(el, el => {
+  const { count = 0 } = state()
+
+  fx(() => document.title = `You clicked ${count} times`)
+
+  html`<div>
+    <p>You clicked ${count} times</p>
+    <button onclick=${() => state({count: count + 1})}>
+      Click me
+    </button>
+  </div>`
 })
 ``` -->
 
