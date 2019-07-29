@@ -1,7 +1,6 @@
 # Spect
 
-`Spect` is [aspect-oriented](https://en.wikipedia.org/wiki/Aspect-oriented_programming) web-framework for creating expressive UIs.
-It provides essential DOM toolkit, separating cross-cutting concerns with [_aspects_](https://en.wikipedia.org/wiki/Aspect_(computer_programming)).
+`Spect` is [aspect-oriented](https://en.wikipedia.org/wiki/Aspect-oriented_programming) DOM toolkit for creating expressive UIs.
 
 ```js
 import { $, html, state, fx, route, attr } from 'spect'
@@ -42,6 +41,7 @@ $('.t', el => {
 <li id="principle-2"> No bundling required.
 <li id="principle-3"> No JS required to hydrate HTML.
 <li id="principle-4"> Standard HTML first.
+<li id="principle-5"> Utilitary replacement to modern frameworks 🤫.
 </ol>
 
 <!--
@@ -468,10 +468,6 @@ $('#target', el => {
 })
 ```
 
-<!-- API improvements -->
-
-<!-- Registering plugins as jQuery $.fn = ... -->
-
 If an aspect is attached to mounted elements, the `mount` will be triggered automatically.
 
 
@@ -683,13 +679,13 @@ const Log = ({ details, date }) => `<p>${details}</p><time>${ date.toLocalTimeSt
 Provides state, associated with aspect. Updating state rerenders aspect.
 
 ```js
-function mod (el) {
+$(target, el => {
   // get state
   let { foo = default, bar, } = state()
 
   // set state
   state({ foo: a, bar: b })
-}
+})
 ```
 
 
@@ -772,14 +768,18 @@ Same as local, but persists value in remote storage.
 
 ### `fx(fn: init => destroy, deps?)`
 
-Runs side-effect function if any of the deps has changed.
+Runs side-effect function if any of the deps has changed. Deps are compared via (fast) deep-equal, opposed to `useEffect`.
 
 ```js
 $(el, el => {
-  fx(await () => {
+  // sync effect
+  fx(() => document.title = `Welcome, ${ user.name }`, user)
+
+  // async effect
+  fx(async () => {
     html`Loading...`
-    html`Loaded ${await request(param)}`
-  }, [param])
+    html`Loaded ${await request(id)}`
+  }, [ id ])
 })
 ```
 
@@ -979,10 +979,10 @@ Version | Changes
 
 _Spect_ would not be possible without brilliant ideas from many libraries authors, hence the acknowledge:
 
-* _react_ - for jsx, hocs, hooks and pains - grandiose job.
+* _react_ - for JSX, hocs, hooks and pains - grandiose job.
 * _atomico, hui_ - for novative approach to web-components.
 * _jquery_ - for classic school of API design.
-* _htm_ - for mainstream alternative example.
+* _htm_ - for mainstream alternative model.
 * _fast-on-load_ - for fast mutation observer solution.
 * _tachyons, tailwindcss, ui-box_ - for CSS use-cases.
 * _evergreen-ui, material-ui_ - for practical components examples.

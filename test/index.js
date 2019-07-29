@@ -2,7 +2,7 @@ import './core.js'
 import './mount.js'
 import './html.js'
 import './state.js'
-// import './fx.js'
+import './fx.js'
 
 
 // props
