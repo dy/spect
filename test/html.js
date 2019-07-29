@@ -100,7 +100,13 @@ t('html: h- reducer', t => {
   })
 })
 
-t('html: html inside of html')
+t('html: html inside of html', t => {
+  $(document.createElement('div'), el => {
+    html`<foo>${ html`<bar>${ html`<baz></baz>` }</bar>qux` }</foo>`
+
+    t.equal(el.innerHTML, '<foo><bar><baz></baz></bar>qux</foo>')
+  })
+})
 
 t.todo('html: re-rendering inner nodes shouldn\'t trigger mount callback')
 

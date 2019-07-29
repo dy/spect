@@ -6,7 +6,7 @@ export function isObject(x) {
 }
 
 export function isAsync (fn) {
-  return fn.constructor.name === 'AsyncFunction'
+  return fn.constructor.name === 'AsyncFunction' || fn instanceof Promise
 }
 
 export const noop = () => { }

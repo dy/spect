@@ -41,7 +41,7 @@ $('.t', el => {
 <li id="principle-2"> No bundling required.
 <li id="principle-3"> No JS required to hydrate HTML.
 <li id="principle-4"> Standard HTML first.
-<li id="principle-5"> Max utility.
+<li id="principle-5"> Max utility, min externality.
 </ol>
 
 <!--
@@ -407,9 +407,9 @@ $('.mdc-text-field', TextField)
 <!--
 * [x] `$(selector|element, init => destroy) => el|els`
 * [x] `mount(mount => unmount)`
-* [ ] ``html`...markup` => el|els``
+* [x] ``html`...markup` => el|els``
 * [ ] ``css`...rules` => rules``
-* [ ] `state(values?) => values`
+* [x] `state(values?) => values`
 * [ ] `fx(init => destruct, deps?) => result`
 * [ ] `on(evt, delegate?, fn)`
 * [ ] `prop(value?) => values`
@@ -768,7 +768,7 @@ Same as local, but persists value in remote storage.
 
 ### `fx(fn: init => destroy, deps?)`
 
-Runs side-effect function if any of the deps has changed. Deps are compared via (fast) deep-equal, opposed to `useEffect`.
+Runs side-effect function if any of the deps has changed. Deps are compared via (fast) deep-equal, opposed to `useEffect`. Effects are invoked immediately after current call.
 
 ```js
 $(el, el => {

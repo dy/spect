@@ -113,6 +113,9 @@ export const destroy = spect.destroy = function destroy (target, aspect) {
 }
 
 
+// TODO: make currentState/currentElement/currentTarget a function
+// TODO: move state stack to before/after
+
 export function callAspect(target, aspect) {
   let parentTarget = currentTarget
   let parentAspect = currentAspect
