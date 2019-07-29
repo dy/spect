@@ -1,30 +1,36 @@
 # Spect
 
-`Spect` is [aspect-oriented](https://en.wikipedia.org/wiki/Aspect-oriented_programming) web-framework for creating expressive UIs.
-It provides essential DOM toolkit, separating cross-cutting concerns with [_aspects_](https://en.wikipedia.org/wiki/Aspect_(computer_programming)).
+`Spect` is [aspect-oriented](https://en.wikipedia.org/wiki/Aspect-oriented_programming) DOM toolkit for creating expressive UIs.
 
 ```js
-import { $, html, state, fx, route, prop } from 'spect'
+import { $, html, state, fx, route, attr } from 'spect'
+import { t } from 'ttag'
 
 // main aspect
 $('#app', app => {
   let [ match, { id } ] = route('user/:id')
-  let { data } = state()
+  let { user } = state()
 
-  // TODO
   fx(async () => {
-    prop({ loading: true })
-    state({ data: await fetch(url) })
-    prop({ loading: false })
+    attr({ loading: true })
+    state({ user: await fetch('/user') })
+    attr({ loading: false })
   }, [id])
 
-  html`${data}`
+  html`<div.preloader.t>Hello, ${user.name}!</div>`
 })
 
-// loader aspect
-$('#app', app => {
-  let { loading = false } = prop()
-  if (loading) html`${app.childNodes} <canvas class="spinner" />`
+// preloader aspect
+$('.preloader', el => {
+  let { loading = false } = attr()
+  if (loading) html`${el.childNodes} <canvas class="spinner" />`
+})
+
+// i18n aspect
+$('.t', el => {
+  let lang = el.lang || document.documentElement.lang
+
+  html`${ t`${el.textContent}` }`
 })
 ```
 
@@ -35,6 +41,7 @@ $('#app', app => {
 <li id="principle-2"> No bundling required.
 <li id="principle-3"> No JS required to hydrate HTML.
 <li id="principle-4"> Standard HTML first.
+<li id="principle-5"> Utilitary replacement to modern frameworks 🤫.
 </ol>
 
 <!--
@@ -413,9 +420,9 @@ $('.mdc-text-field', TextField)
 * [ ] `watch`
 -->
 
-### `$(selector|element[s], init => destroy )`
+### `$(selector|elements, fn: init => destroy )`
 
-Attach aspect function to selector or direct element(s). The aspect is called on every matched element, receiving it as single argument.
+Attach aspect function `fn` to selector or direct element(s). The aspect is called on every matched element, receiving it as single argument.
 Aspect can return destructor function, which is invoked when the aspect is removed from element.
 <!-- `$` returns all `document.querySelector/All`, returning all matched elements in current aspect context. -->
 
@@ -443,9 +450,10 @@ $('#button-container button', el =>
 <!-- TODO: explain context -->
 <!-- TODO: explain destructor -->
 
+<!-- Multiple aspects as argument: $(el, foo, bar, baz...) -->
 
 
-### `mount(attached => detached)`
+### `mount(fn: attached => detached)`
 
 Mount effect invokes passed `attached` function when target is mounted on the DOM. Optional returned function is called when the target is unmounted.
 
@@ -459,17 +467,6 @@ $('#target', el => {
   })
 })
 ```
-
-
-<!-- API improvements -->
-
-<!-- Effect === aspect, <div mount=${() => () => {}}></div> -->
-
-<!-- Effects exposed in jquery way: $(els).html(), but realtime via mutation observer -->
-
-<!-- Empty selector cases: $(frag => {}), $().effect() -->
-
-<!-- Registering plugins as jQuery $.fn = ... -->
 
 If an aspect is attached to mounted elements, the `mount` will be triggered automatically.
 
@@ -529,7 +526,7 @@ $(target, el => {
 
 #### DOM Elements
 
-`html` can insert DOM nodes directly, which can be used to preserve original markup:
+`html` can insert DOM nodes directly, which can be used to decorate original markup:
 
 ```js
 // wrap
@@ -556,26 +553,45 @@ $(target, el => {
 ```
 
 <!-- TODO: For that purpose, the "reducer" tag can be used: `<div.a><...></div>` -->
-
+<!--
 #### Connecting aspects
 
 Aspects can be hooked up to elements via `html` in one of the following ways:
 
 ```js
 // as a child node
+// FIXME: that's rather a side-effect, not main method
 html`<div.el>${ foo }${ bar }</div>`
 
 // as array spread
+// FIXME: doesn't look elegant, although htm-compatible, but rather side-effect
 html`<div.el ...${[foo, bar]} />`
 
 const foo = el => {}
 const bar = el => {}
-```
+``` -->
 
-<!-- // TODO: as anonymous attribute
-html`<div.el ${foo} ${bar} />` -->
+<!--
+// TODO: as anonymous attribute
+html`<div.el ${foo} ${bar} />`
 
-#### Components
+// TODO: as classes
+html`<div.el.${foo}.${bar} />`
+
+// TODO: as ref=
+html`<div.el ref=${el => $(el, foo, bar)} />`
+
+// ?
+html`<div.el aspect=${[foo, bar]} />`
+
+// ?
+html`<div class=`${id(foo)} ${id(bar)}` />`
+
+// ?
+html`<div.foo.bar />`
+-->
+
+<!-- #### Components
 
 Components work via mechanism of custom-elements as:
 
@@ -587,7 +603,7 @@ $(target, node => {
 function Component(el) {
   html`<host foo=bar>baz</>`
 }
-```
+``` -->
 
 <!--
 #### JSX
@@ -658,24 +674,22 @@ const Log = ({ details, date }) => `<p>${details}</p><time>${ date.toLocalTimeSt
 ```
 -->
 
-<!--
+### `state(values: object?)`
 
-### `state(value?)`
-
-Provides state, associated with aspect. This way, different aspects can share
+Provides state, associated with aspect. Updating state rerenders aspect.
 
 ```js
-function mod (el) {
-  // init/get state
-  let { foo=default, bar } = state()
+$(target, el => {
+  // get state
+  let { foo = default, bar, } = state()
 
   // set state
   state({ foo: a, bar: b })
-}
+})
 ```
 
----
 
+<!--
 ### `attr(value?)`
 
 Same as `state`, but reads an attribute from the element, as well as registers listeners for the defined attribute. Any time attribute value changes, it triggers rerender.
@@ -750,36 +764,44 @@ el => {
 
 Same as local, but persists value in remote storage.
 
----
+-->
 
-### `fx(fn, deps?)`
+### `fx(fn: init => destroy, deps?)`
 
-Run side-effect function. Different from `useEffect` in:
-- `fx` can return value
-- `fx` has no destructor
-- fn can be async function or generator
-- fn may include inner effects
-- fn can be run in unmounted state
+Runs side-effect function if any of the deps has changed. Deps are compared via (fast) deep-equal, opposed to `useEffect`.
 
 ```js
-// as an aspect
-(el) => {
-  let result = fx(await () => {
-    html'Pending...'
-    let data = await doRequest(param)
-    html`Result ${data}`
+$(el, el => {
+  // sync effect
+  fx(() => document.title = `Welcome, ${ user.name }`, user)
 
-    return data
-  }, [param])
-}
-
-// as a mod
-$(el).fx(() => {
-  log('Any update')
+  // async effect
+  fx(async () => {
+    html`Loading...`
+    html`Loaded ${await request(id)}`
+  }, [ id ])
 })
 ```
 
----
+<!-- ```js
+import $, { state, fx } from 'spect'
+
+// as an aspect
+$(el, el => {
+  const { count = 0 } = state()
+
+  fx(() => document.title = `You clicked ${count} times`)
+
+  html`<div>
+    <p>You clicked ${count} times</p>
+    <button onclick=${() => state({count: count + 1})}>
+      Click me
+    </button>
+  </div>`
+})
+``` -->
+
+<!--
 
 ### `on(event, delegate?, fn?)`
 
@@ -957,10 +979,10 @@ Version | Changes
 
 _Spect_ would not be possible without brilliant ideas from many libraries authors, hence the acknowledge:
 
-* _react_ - for jsx, hocs, hooks and pains - grandiose job.
+* _react_ - for JSX, hocs, hooks and pains - grandiose job.
 * _atomico, hui_ - for novative approach to web-components.
 * _jquery_ - for classic school of API design.
-* _htm_ - for mainstream alternative example.
+* _htm_ - for mainstream alternative model.
 * _fast-on-load_ - for fast mutation observer solution.
 * _tachyons, tailwindcss, ui-box_ - for CSS use-cases.
 * _evergreen-ui, material-ui_ - for practical components examples.

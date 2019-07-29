@@ -12,9 +12,9 @@ export default function mount (fn) {
 
     // FIXME: use native onload multiple binding capability
     onload(currentTarget, () => {
-      state.unmount = state.mount.map(fn => callAspect(currentTarget, fn || noop) || noop)
+      state.unmount = state.mount.map(fn => fn())
     }, () => {
-      state.unmount.forEach(fn => callAspect(currentTarget, fn || noop))
+      state.unmount.forEach(fn => fn())
     })
 
     // if target rerenders, reset mounted listeners (re-registered anyways)

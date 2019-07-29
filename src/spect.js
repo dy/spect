@@ -4,6 +4,7 @@ import { isAsync, noop } from './util.js'
 // TODO: invalidate html vdom for elements that're being changed by something outside of spect scope
 
 export const SPECT_CLASS = '👁'// + Math.random().toString(36).slice(2)
+export const MAX_DEPTH = 50
 
 // states for target-aspect tuples
 export const tracking = new WeakMap()
@@ -20,31 +21,61 @@ export let currentTuple = t(currentTarget, currentAspect)
 export let currentState = createState(currentTuple)
 tracking.set(currentTuple, currentState)
 
-// returned function is destroy effect
-export const spect = function spect (selector, aspect) {
+// attach aspect to selector
+export const spect = function spect (target, aspect) {
   let that = this || currentTarget
 
-  if (typeof selector === 'string') {
-    let targets = that.querySelectorAll(selector)
+  if (typeof target === 'string') {
+    let targets = that.querySelectorAll(target)
     targets.forEach(target => spect(target, aspect))
     return targets
   }
+  if (Array.isArray(target) || target instanceof NodeList) {
+    target.forEach(target => spect(target, aspect))
+    return target
+  }
+
+  let tuple = t(target, aspect)
 
   // existing targets won't be reinitialized
-  if (tracking.has(t(selector, aspect))) return
+  if (tracking.has(tuple)) return target
 
-  // direct element ensures parent, appends child and calls aspect
-  let destroy = callAspect(selector, aspect)
-  tracking.get(t(selector, aspect)).destroy = destroy
-
-  // register generic known targets
-  if (!targets.has(selector)) {
-    selector.classList.add(SPECT_CLASS)
-    targets.set(selector, new Set)
+  if (!targets.has(target)) {
+    targets.set(target, new Set)
   }
-  targets.get(selector).add(aspect)
+  targets.get(target).add(aspect)
+  tracking.set(tuple, createState(tuple))
 
-  return selector
+  target.classList.add(SPECT_CLASS)
+
+  update(target, aspect)
+
+  return target
+}
+
+// just rerender aspect without checks
+export const update = spect.update = function update(target, aspect) {
+  let that = this === spect ? currentTarget : this || currentTarget
+
+  if (typeof target === 'string') {
+    let targets = that.querySelectorAll(target)
+    targets.forEach(target => update(target, aspect))
+    return targets
+  }
+  if (Array.isArray(target) || target instanceof NodeList) {
+    target.forEach(target => update(target, aspect))
+    return target
+  }
+
+  // ignore unregistered targets
+  if (!targets.has(target)) return target
+
+  // returned function is destroy effect\
+  callAspect(target, aspect)
+
+  target.classList.add(SPECT_CLASS)
+
+  return target
 }
 
 export const destroy = spect.destroy = function destroy (target, aspect) {
@@ -54,6 +85,10 @@ export const destroy = spect.destroy = function destroy (target, aspect) {
     let targets = that.querySelectorAll(target)
     targets.forEach(target => destroy(target, aspect))
     return targets
+  }
+  if (Array.isArray(target) || target instanceof NodeList) {
+    target.forEach(target => destroy(target, aspect))
+    return target
   }
 
   if (!targets.has(target)) return target
@@ -78,7 +113,7 @@ export const destroy = spect.destroy = function destroy (target, aspect) {
 }
 
 
-export function callAspect(target, aspect = noop) {
+export function callAspect(target, aspect) {
   let parentTarget = currentTarget
   let parentAspect = currentAspect
   let parentTuple = currentTuple
@@ -86,31 +121,38 @@ export function callAspect(target, aspect = noop) {
   currentTarget = target
   currentAspect = aspect
   currentTuple = t(target, aspect)
-  if (!tracking.has(currentTuple)) tracking.set(currentTuple, createState(currentTuple))
   currentState = tracking.get(currentTuple)
 
   // register current target in parent aspect children list
   if (!parentState.children.has(currentTuple)) parentState.children.add(currentTuple)
 
-  currentState.before.forEach(fn => fn())
+  // handle dirty flag for rerenders
+  let count = 0
+  currentState.dirty = true
+  while (currentState.dirty) {
+    if(++count > MAX_DEPTH) throw Error('Max depth limit reached. There\'s recursion')
 
-  // reset child aspect count
-  let prevChildren = currentState.children
-  let newChildren = currentState.children = new Set
+    currentState.before.forEach(fn => fn())
 
-  let result = aspect.call(currentTarget, currentTarget) || noop
+    // reset child aspect count
+    let prevChildren = currentState.children
+    let newChildren = currentState.children = new Set
 
-  // check if old children aren't being called in new aspect call and dispose them
-  for (let tuple of prevChildren) if (!newChildren.has(tuple)) tracking.get(tuple).dispose()
+    currentState.dirty = false
+    currentState.destroy = aspect.call(currentTarget, currentTarget) || noop
 
-  currentState.after.forEach(fn => fn())
+    // check if old children aren't being called in new aspect call and dispose them
+    for (let tuple of prevChildren) if (!newChildren.has(tuple)) {
+      destroyState(tracking.get(tuple))
+    }
+
+    currentState.after.forEach(fn => fn())
+  }
 
   currentAspect = parentAspect
   currentTarget = parentTarget
   currentTuple = parentTuple
   currentState = parentState
-
-  return result
 }
 
 
@@ -124,7 +166,10 @@ function createState(tuple) {
 
     // hooks
     before: [],
-    after: []
+    after: [],
+
+    // redraw flag
+    dirty: false
   }
 
   return state

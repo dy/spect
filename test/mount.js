@@ -60,7 +60,10 @@ t('mount: unsynced aspects should not affect mount of each other', async t => {
   t.deepEqual(log, ['+a', '+b'])
 })
 
-
 t.skip('mount: instant remove/insert shouldn\'t trigger callback', async t => {
   // TODO
 })
+
+t('mount: async callback')
+
+t('mount: generator callback')

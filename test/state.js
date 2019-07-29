@@ -1,40 +1,50 @@
 import t from 'tst'
-import $, { mount, html, state } from '../index.js'
+import $, { state } from '../src/index.js'
 
-t('mount: multiple mount callbacks', async t => {
+t('state: destructuring', async t => {
   let log = []
+  $(document.createElement('div'), el => {
+    // init/get state
+    let { foo = 1, bar } = state()
 
-  $('#x', el => {
-    mount(() => {
-      log.push('mount A')
-      return () => {
-        log.push('unmount A')
-      }
-    })
+    log.push('get foo,bar', foo, bar)
 
-    mount(() => {
-      log.push('mount B')
-      return () => log.push('unmount B')
-    })
+    // set registered listener updates element
+    state({ foo: 'a', bar: 'b' })
+
+    log.push('set foo,bar')
   })
 
-  let x = document.createElement('div')
-  x.id = 'x'
-
-  document.documentElement.appendChild(x)
-
-  await (() => {})
-
-  t.deepEqual(log, ['mount A', 'mount B'])
-
-  document.documentElement.removeChild(x)
-
-  await (() => {})
-
-  t.deepEqual(log, ['mount A', 'mount B', 'unmount A', 'unmount B'])
+  t.deepEqual(log, ['get foo,bar', 1, undefined, 'set foo,bar', 'get foo,bar', 'a', 'b', 'set foo,bar'])
 })
 
+t('state: direct state', t => {
+  let log = []
+  $(document.createElement('div'), el => {
+    let s = state()
 
-t.skip('mount: instant remove/insert shouldn\'t trigger callback', async t => {
-  // TODO
+    log.push('get foo,bar', s.foo, s.bar)
+
+    Object.assign(s, { foo: 'a', bar: 'b' })
+
+    log.push('set foo,bar')
+  })
+
+  t.deepEqual(log, ['get foo,bar', undefined, undefined, 'set foo,bar', 'get foo,bar', 'a', 'b', 'set foo,bar'])
+})
+
+t('state: not shared between aspects', t => {
+  let log = [], el = document.createElement('div')
+
+  $(el, el => {
+    log.push('a')
+    state({foo: 'bar'})
+  })
+
+  $(el, el => {
+    let { foo } = state()
+    log.push('b', foo)
+  })
+
+  t.deepEqual(log, ['a', 'a', 'b', undefined])
 })
