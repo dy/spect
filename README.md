@@ -994,7 +994,7 @@ _Spect_ would not be possible without brilliant ideas from many libraries author
 
 ---
 
-
+<!--
 <p align="center">Made on Earth by your humble servant.
 
-<p align="center"><em>Sat, Chit, Ananda, Vigraha.</em><br/><em>Nama, Rupa, Guna, Lila.</em></p>
+<p align="center"><em>Sat, Chit, Ananda, Vigraha.</em><br/><em>Nama, Rupa, Guna, Lila.</em></p> -->
