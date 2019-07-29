@@ -856,7 +856,7 @@ $('#clock', () => {
 
 -->
 
-## Plugins
+<!-- ## Plugins
 
 Official
 
@@ -877,7 +877,7 @@ Community
 * [spect-meta]() - set document meta props.
 * [spect-uibox]()
 * spect-raf
-* spect-throttle
+* spect-throttle -->
 
 
 ## FAQ
