@@ -2,32 +2,45 @@
 import equal from 'fast-deep-equal'
 import * as stack from 'stacktrace-parser'
 import { currentState } from './spect.js'
-import { isAsync } from './util.js'
+import { isAsync, noop } from './util.js'
 import { current } from 'tst';
 
-const fxCache = {}
+const asyncFx = {}
 
 // planning fx, opposed to immediate call, is useful to obtain refs to variables declared after the effect (even to rendered html)
 export default function fx(fn, deps) {
   // create fx cache per state
   if (!currentState.fx) {
-    currentState.prevFx = []
-    currentState.fx = []
+    let state = currentState
+    state.prevFx = []
+    state.fx = []
 
-    currentState.before.push(() => {
-      currentState.prevFx = currentState.fx || []
-      currentState.fx = []
+    state.onBefore.push(() => {
+      state.prevFx = state.fx || []
+      state.fx = []
     })
 
-    currentState.after.push(() => {
-      let prev = currentState.prevFx, curr = currentState.fx
-      prev.forEach(({id}) => {
-        // destroy skipped effects
-        if (!curr[id]) prev[id].destroy()
+    state.onAfter.push(() => {
+      let prev = state.prevFx, curr = state.fx
+      prev.forEach(fn => {
+        // destroy abandoned effects
+        if (!curr[fn.id] || fn.delete) {
+          fn.destroy()
+        }
       })
       // run new effects
-      curr = curr.map(fn => fn())
-      currentState.prevFx = null
+      curr.forEach(fn => {
+        // if (isAsync(fn)) asyncFx[fn.id] =
+        if (fn.update) {
+          fn.destroy = fn() || noop
+        }
+      })
+      state.prevFx = null
+    })
+
+    state.onDestroy.push(() => {
+      state.fx.forEach(fn => fn.destroy())
+      state.fx = null
     })
   }
 
@@ -35,17 +48,25 @@ export default function fx(fn, deps) {
   // FIXME: that can be useful outside of here as well
   // FIXME: possibly faster to cache by effect id and calc stack in after-call
   // FIXME: these stacktrace calcs can be done statically
-  let [fxCallsite, ...trace] = stack.parse((new Error).stack)
-  if (fxCallsite.methodName !== 'fx') throw Error('Wrong callsite of `fx`')
-  let fxId = fxCallsite.lineNumber + '-' + fxCallsite.column
+  let [, callsite, ...trace] = stack.parse((new Error).stack)
+  let fxId = callsite.lineNumber + '-' + callsite.column
 
-  if (!currentState.prevFx[fxId] || !equal(currentState.prevFx[fxId].deps, deps)) {
-    currentState.fx.push(fn)
-    currentState.fx[fxId] = fn
+  fn.id = fxId
+  fn.deps = deps
+  currentState.fx.push(fn)
+  currentState.fx[fxId] = fn
+
+  if (currentState.prevFx[fxId]) {
+    // destroy changed effect
+    if (deps === undefined || !equal(currentState.prevFx[fxId].deps, deps)) {
+      currentState.prevFx[fxId].delete = true
+      fn.update = true
+    }
+    else {
+      fn.destroy = currentState.prevFx[fxId].destroy
+    }
   }
-}
-
-export function asyncFx(id, fn, deps) {
-  let e = new Error()
-  console.log(stack.parse(e.stack))
+  else {
+    fn.update = true
+  }
 }

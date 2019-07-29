@@ -18,7 +18,7 @@ export default function mount (fn) {
     })
 
     // if target rerenders, reset mounted listeners (re-registered anyways)
-    state.before.push(() => {
+    state.onBefore.push(() => {
       state.mount.length = 0
     })
   }

@@ -21,12 +21,12 @@ export let currentTuple = t(currentTarget, currentAspect)
 export let currentState = createState(currentTuple)
 tracking.set(currentTuple, currentState)
 
+// FIXME: figure out if `this` should be a tuple, not just target
+
 // attach aspect to selector
 export const spect = function spect (target, aspect) {
-  let that = this || currentTarget
-
   if (typeof target === 'string') {
-    let targets = that.querySelectorAll(target)
+    let targets = (this && this.querySelectorAll ? this : currentTarget).querySelectorAll(target)
     targets.forEach(target => spect(target, aspect))
     return targets
   }
@@ -55,10 +55,8 @@ export const spect = function spect (target, aspect) {
 
 // just rerender aspect without checks
 export const update = spect.update = function update(target, aspect) {
-  let that = this === spect ? currentTarget : this || currentTarget
-
   if (typeof target === 'string') {
-    let targets = that.querySelectorAll(target)
+    let targets = (this && this.querySelectorAll ? this : currentTarget).querySelectorAll(target)
     targets.forEach(target => update(target, aspect))
     return targets
   }
@@ -78,11 +76,9 @@ export const update = spect.update = function update(target, aspect) {
   return target
 }
 
-export const destroy = spect.destroy = function destroy (target, aspect) {
-  let that = this === spect ? currentTarget : this || currentTarget
-
+export const destroy = spect.destroy = function destroy(target, aspect) {
   if (typeof target === 'string') {
-    let targets = that.querySelectorAll(target)
+    let targets = (this && this.querySelectorAll ? this : currentTarget).querySelectorAll(target)
     targets.forEach(target => destroy(target, aspect))
     return targets
   }
@@ -135,7 +131,7 @@ export function callAspect(target, aspect) {
   while (currentState.dirty) {
     if(++count > MAX_DEPTH) throw Error('Max depth limit reached. There\'s recursion')
 
-    currentState.before.forEach(fn => fn())
+    currentState.onBefore.forEach(fn => fn())
 
     // reset child aspect count
     let prevChildren = currentState.children
@@ -149,7 +145,7 @@ export function callAspect(target, aspect) {
       destroyState(tracking.get(tuple))
     }
 
-    currentState.after.forEach(fn => fn())
+    currentState.onAfter.forEach(fn => fn())
   }
 
   currentAspect = parentAspect
@@ -168,8 +164,9 @@ function createState(tuple) {
     children: new Set,
 
     // hooks
-    before: [],
-    after: [],
+    onBefore: [],
+    onAfter: [],
+    onDestroy: [],
 
     // redraw flag
     dirty: false
@@ -183,14 +180,16 @@ function destroyState(tuple) {
 
   let state = tracking.get(tuple)
 
+  state.onDestroy.forEach(fn => fn())
+
   // clean up children
   for (let tuple of state.children) destroyState(tuple)
   state.children.clear()
   delete state.children
 
   // unbind all registered hooks
-  state.before.length = 0
-  state.after.length = 0
+  state.onBefore.length = 0
+  state.onAfter.length = 0
 
   // invoke registered aspect destructors
   if (state.destroy) state.destroy()

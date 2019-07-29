@@ -18,35 +18,87 @@ t.skip('fx: readme case', t => {
   })
 })
 
-t.only('fx: sync fx', t => {
+t('fx: sync fx', t => {
   let log = []
-  $(document.createElement('div'), el => {
+  let target = document.createElement('div')
+  let count = 0
+
+  const aspect = el => {
     log.push('before')
+
+    // unchanged dep
     fx(() => {
       log.push('foo')
       html`<foo/>`
       t.equal(el.innerHTML, '<foo></foo>', 'html aftereffect')
+
+      return () => log.push('un-foo')
     }, [])
-    log.push('between')
+
+    // direct dep
     fx(() => {
-      t.equal(el.innerHTML, '<foo></foo>')
       html`<bar/>`
       t.equal(el.innerHTML, '<bar></bar>')
       log.push('bar')
-    }, [])
+
+      return () => log.push('un-bar')
+    }, count)
+
+    // no deps
+    fx(() => {
+      html`<baz/>`
+      t.equal(el.innerHTML, '<baz></baz>')
+      log.push('baz')
+
+      return () => log.push('un-baz')
+    })
+
     log.push('after')
-  })
-  t.deepEqual(log, ['before', 'between', 'after', 'foo', 'bar'], 'correct sequence of calls')
+  }
+
+  $(target, aspect)
+  t.deepEqual(log, ['before', 'after', 'foo', 'bar', 'baz'], 'correct sequence of calls')
+
+  // console.log('---update')
+  count++
+  log = []
+  $.update(target, aspect)
+  t.deepEqual(log, ['before', 'after', 'un-bar', 'un-baz', 'bar', 'baz'], 'correct repeated call')
+
+  // console.log('---destroy')
+  log = []
+  $.destroy(target, aspect)
+  t.deepEqual(log, ['un-foo', 'un-bar', 'un-baz'], 'correct destroyal')
+
 })
 
-t('fx: async fx')
+t.skip('fx: async fx', t => {
+  let log = []
+
+  $(document.createElement('div'), el => {
+    fx(async () => {
+      html`<foo/>`
+      t.equal(el.innerHTML, '<foo></foo>', 'html aftereffect')
+    }, [])
+
+    // fx(async () => {
+    //   t.equal(el.innerHTML, '<foo></foo>')
+    //   html`<bar/>`
+    //   t.equal(el.innerHTML, '<bar></bar>')
+    // }, [])
+  })
+
+  // t.deepEqual(log, ['before', 'between', 'after', 'foo', 'bar'], 'correct sequence of calls')
+})
 
 t('fx: generator fx')
 
 t('fx: promise')
 
-t('fx: dep types')
+t('fx: dep cases')
 
 t('fx: no-deps call')
 
 t('fx: varying number of effects')
+
+t('fx: removes all effects on aspect removal')
