@@ -41,7 +41,7 @@ $('.t', el => {
 <li id="principle-2"> No bundling required.
 <li id="principle-3"> No JS required to hydrate HTML.
 <li id="principle-4"> Standard HTML first.
-<li id="principle-5"> Utilitary replacement to modern frameworks 🤫.
+<li id="principle-5"> Max utility.
 </ol>
 
 <!--
