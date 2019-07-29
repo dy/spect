@@ -106,7 +106,7 @@ Let's build [basic examples](https://reactjs.org/) with _spect_.
 
 ### A simple aspect
 
-The basic tool of _spect_ is `html` effect. It acts similar to hyperscript, but deploys html instantly to the aspected element:
+The basic tool of _spect_ is `html` effect. It acts as hyperscript, deploying html instantly to the aspected element:
 
 
 ```js
@@ -130,7 +130,6 @@ _Spect_ introduces `state`, `mount` and `fx` effects, similar to `useState` and 
 import { $, html, state, mount, fx } from 'spect'
 
 $('#timer-example', el => {
-  // TODO: state
   let { seconds = 0 } = state()
 
   // on mount
@@ -148,16 +147,13 @@ $('#timer-example', el => {
   html`Seconds: ${seconds}`
 })
 
-
 ```
-<!--
-
-// ...hooks-powered jQuery
+<small>[TODO: Open in sandbox](https://codesandbox.com)</small>
 
 
-### An application · <small>code | sandbox</small>
+### An application
 
-Events subscription is provided by `on` effect, decoupling callbacks from markup and enabling event delegation.
+Events provided by `on` effect, decoupling callbacks from markup and enabling event delegation.
 
 ```js
 import { $, html, state, on } from 'spect'
@@ -207,9 +203,9 @@ function TodoList ({ items }) {
 }
 ```
 
-`on` effect unbinds listeners when aspect is detached from target. Note that the `on*` html attributes are supported as well.
+<small>[TODO: Open in sandbox](https://codesandbox.com)</small>
 
-
+<!--
 ### A web-component <small>code | sandbox</small>
 
 _Spect_ is also able to provide component aspects via native web-components mechanism.
@@ -404,21 +400,20 @@ $('.mdc-text-field', TextField)
 
 ## API
 
-<!--
-* [x] `$(selector|element, init => destroy) => el|els`
+* [x] `$(target, aspect) => els`
 * [x] `mount(mount => unmount)`
-* [x] ``html`...markup` => el|els``
-* [ ] ``css`...rules` => rules``
-* [x] `state(values?) => values`
-* [ ] `fx(init => destruct, deps?) => result`
+* [x] ``html`...markup` => els``
+* [x] `state(vals?) => vals`
+* [x] `fx(init => destroy, deps?)`
 * [ ] `on(evt, delegate?, fn)`
 * [ ] `prop(value?) => values`
+* [ ] ``css`...rules` => rules``
 * [ ] `query(value?) => values`
 * [ ] `call(fn) => handle`
 * [ ] `update()`
 * [ ] `destroy(target, aspect)`
-* [ ] `watch`
--->
+<!-- * [ ] `watch()` -->
+
 
 ### `$(selector|elements, fn: init => destroy )`
 
@@ -801,11 +796,10 @@ $(el, el => {
 })
 ``` -->
 
-<!--
 
 ### `on(event, delegate?, fn?)`
 
-Attach event handler. Listeners are removed automatically when component is unmounted.
+Attaches event handler to current target. Listeners are removed automatically when component is unmounted. `on*` html attributes are supported independently.
 
 ```js
 // as effect
@@ -823,6 +817,7 @@ el => {
 $(el).on('click', '#el', fn)
 ```
 
+<!--
 ---
 
 ### `css('styles')`
