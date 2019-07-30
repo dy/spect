@@ -8,7 +8,7 @@ import { $, html, state, fx, route, attr } from 'spect'
 import { t } from 'ttag'
 
 // main aspect
-$('#app', app => {
+const app = app => {
   let [ match, { id } ] = route('user/:id')
   let { user } = state()
 
@@ -18,21 +18,28 @@ $('#app', app => {
     attr({ loading: false })
   }, [id])
 
-  html`<div.preloader.t>Hello, ${user.name}!</div>`
-})
+  html`<div>Hello, ${user.name}!</div>`
+
+  // run secondary aspects
+  preloader(app)
+  t(app)
+}
 
 // preloader aspect
-$('.preloader', el => {
+const preloader = el => {
   let { loading = false } = attr()
   if (loading) html`${el.childNodes} <canvas class="spinner" />`
-})
+}
 
 // i18n aspect
-$('.t', el => {
+const t = el => {
   let lang = el.lang || document.documentElement.lang
 
   html`${ t`${el.textContent}` }`
-})
+}
+
+// run main aspect
+app(document.querySelector('#app'))
 ```
 
 ### Principles
@@ -398,13 +405,15 @@ $('.mdc-text-field', TextField)
 
 [`$`](#$) · [`mount`]() · [`html`]() · [`state`]() · [`fx`]() · [`on`]() · [`css`]() · [`prop`]() · [`query`]() · [`route`]()
 
-<!-- * [ ] `call` -->
-<!-- * [ ] `update` -->
-<!-- * [ ] `destroy` -->
-<!-- * [ ] `watch()` -->
+<!-- `call` -->
+<!-- `update` -->
+<!-- `destroy` -->
+<!-- `watch()` -->
+<!-- `cls()` -->
 
+##
 
-### `$(selector|elements, fn: oninit => ondestroy )`
+### `$( selector|elements, fn: oninit => ondestroy )`
 
 Attach aspect function `fn` to selector or direct element(s). The aspect is called on every matched element, receiving it as single argument.
 Aspect can return destructor function, which is invoked when the aspect is removed from element.
@@ -437,7 +446,7 @@ $('#button-container button', el =>
 <!-- Multiple aspects as argument: $(el, foo, bar, baz...) -->
 
 
-### `mount(fn: onmount => onunmount)`
+### `mount( fn: onmount => onunmount )`
 
 Mount effect invokes passed `fn` when target is mounted on the DOM. Optional returned function is called when the target is unmounted.
 If an aspect is attached to mounted elements, the `onmount` will be triggered automatically.
@@ -455,7 +464,7 @@ $('#target', el => {
 
 
 
-### ``html`...markup` ``
+### ``html` ...markup ` ``
 
 HTML effect ensures markup for current element, performing necessary updates via DOM morhing. Returs node or nodes, created by the effect.
 
@@ -659,7 +668,7 @@ const Log = ({ details, date }) => `<p>${details}</p><time>${ date.toLocalTimeSt
 ```
 -->
 
-### `state(values: object?)`
+### `state( values: object? )`
 
 State provider, associated with aspect. Updating state rerenders aspect.
 
@@ -749,9 +758,9 @@ Same as local, but persists value in remote storage.
 
 -->
 
-### `fx(fn: onchange => ondispose, deps?)`
+### `fx( fn: onchange => ondispose, deps? )`
 
-Run side-effect function if any of the deps has changed. Deps are compared via (fast) deep-equal, opposed to `useEffect`. Effects are invoked immediately after current call.
+Run side-effect function if any of the deps has changed. Deps are compared via (fast) deep-equal, opposed to `useEffect`. Effects are invoked immediately after current aspect call.
 
 ```js
 $(el, el => {
@@ -785,7 +794,7 @@ $(el, el => {
 ``` -->
 
 
-### `on(event, delegate?, fn?)`
+### `on( event, delegate?, fn? )`
 
 Attaches event handler to current target. Listeners are removed automatically when component is unmounted. `on*` html attributes are supported independently.
 
