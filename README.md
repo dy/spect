@@ -35,7 +35,7 @@ $('.t', el => {
 })
 ```
 
-#### Principles
+### Principles
 
 <ol>
 <li id="principle-1"> Expressive, not impressive.
@@ -405,7 +405,6 @@ $('.mdc-text-field', TextField)
 <!-- * [ ] `destroy` -->
 <!-- * [ ] `watch()` -->
 
----
 
 ### `$(selector|elements, fn: oninit => ondestroy )`
 
@@ -979,7 +978,7 @@ _Spect_ would not be possible without brilliant ideas from many libraries author
 <!-- * _***_ - for letting that be possible. -->
 
 <br/>
-<p align="center"><strong>∽ HK ∼</strong></p>
+<p align="center">∽ HK ∼</p>
 
 <!--
 <p align="center">Made on Earth by your humble servant.
