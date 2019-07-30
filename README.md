@@ -970,7 +970,7 @@ Version | Changes
 
 ## Credits
 
-_Spect_ would not be possible without brilliant ideas from many libraries authors, hence the acknowledge to:
+_Spect_ would not be possible without brilliant ideas from many libraries authors, hence the acknowledge:
 
 * _react_ - for JSX, hocs, hooks and pains - grandiose job.
 * _atomico, hui_ - for novative approach to web-components.
@@ -987,7 +987,7 @@ _Spect_ would not be possible without brilliant ideas from many libraries author
 
 ---
 
-<p align="center">∽ HK ∼</p>
+<p align="center"><strong>∽ HK ∼</strong></p>
 
 <!--
 <p align="center">Made on Earth by your humble servant.
