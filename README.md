@@ -414,7 +414,7 @@ $('.mdc-text-field', TextField)
 
 ---
 
-### `$(selector|elements, fn: init => destroy )`
+### `$(selector|elements, fn: oninit => ondestroy )`
 
 Attach aspect function `fn` to selector or direct element(s). The aspect is called on every matched element, receiving it as single argument.
 Aspect can return destructor function, which is invoked when the aspect is removed from element.
@@ -447,9 +447,10 @@ $('#button-container button', el =>
 <!-- Multiple aspects as argument: $(el, foo, bar, baz...) -->
 
 
-### `mount(fn: attached => detached)`
+### `mount(fn: onmount => onunmount)`
 
-Mount effect invokes passed `attached` function when target is mounted on the DOM. Optional returned function is called when the target is unmounted.
+Mount effect invokes passed `fn` when target is mounted on the DOM. Optional returned function is called when the target is unmounted.
+If an aspect is attached to mounted elements, the `onmount` will be triggered automatically.
 
 ```js
 $('#target', el => {
@@ -461,8 +462,6 @@ $('#target', el => {
   })
 })
 ```
-
-If an aspect is attached to mounted elements, the `mount` will be triggered automatically.
 
 
 
@@ -476,8 +475,7 @@ import { $, html } from 'spect'
 $('#target', el => {
   let div = html`<div#id.class foo=bar>baz</div>`
 
-  // el.innerHTML ===
-  // div.outerHTML ===
+  // el.innerHTML === div.outerHTML ===
   // <div id="id" class="class">baz</div>
 })
 ```
@@ -525,13 +523,6 @@ $(target, el => {
 ```js
 // wrap
 $('#target', el => html`<div.prepended /> ${ el.childNodes } <div.appended />`)
-
-// prepend icons to buttons
-$('button[icon]', ({
-    attributes: { icon: { value: icon } },
-    childNodes
-  }) => html`<i class="material-icons">${ icon }</i> ${ childNodes }`
-)
 ```
 
 `html` caches original `el.childNodes` on the first render, so that any subsequent render reuses the cached content:
@@ -540,11 +531,21 @@ $('button[icon]', ({
 $(target, el => {
   html`<div.a>${ el.childNodes }</div>`
   html`<div.a>${ el.childNodes }</div>`
-  html`<div.a>${ el.childNodes }</div>`
 
   // el.innerHTML === `<div class="a">...</div>`
 })
 ```
+
+<!-- #### Example
+
+```js
+// prepend icons to buttons
+$('button[icon]', ({
+    attributes: { icon: { value: icon } },
+    childNodes
+  }) => html`<i class="material-icons">${ icon }</i> ${ childNodes }`
+)
+``` -->
 
 <!-- TODO: For that purpose, the "reducer" tag can be used: `<div.a><...></div>` -->
 <!--
@@ -670,15 +671,13 @@ const Log = ({ details, date }) => `<p>${details}</p><time>${ date.toLocalTimeSt
 
 ### `state(values: object?)`
 
-Provides state, associated with aspect. Updating state rerenders aspect.
+State provider, associated with aspect. Updating state rerenders aspect.
 
 ```js
 $(target, el => {
-  // get state
-  let { foo = default, bar, } = state()
+  let { foo = default, bar } = state() // get state
 
-  // set state
-  state({ foo: a, bar: b })
+  state({ bar: 'baz' }) // set state
 })
 ```
 
@@ -760,9 +759,9 @@ Same as local, but persists value in remote storage.
 
 -->
 
-### `fx(fn: init => destroy, deps?)`
+### `fx(fn: onchange => ondispose, deps?)`
 
-Runs side-effect function if any of the deps has changed. Deps are compared via (fast) deep-equal, opposed to `useEffect`. Effects are invoked immediately after current call.
+Run side-effect function if any of the deps has changed. Deps are compared via (fast) deep-equal, opposed to `useEffect`. Effects are invoked immediately after current call.
 
 ```js
 $(el, el => {
@@ -971,7 +970,7 @@ Version | Changes
 
 ## Credits
 
-_Spect_ would not be possible without brilliant ideas from many libraries authors, hence the acknowledge:
+_Spect_ would not be possible without brilliant ideas from many libraries authors, hence the acknowledge to:
 
 * _react_ - for JSX, hocs, hooks and pains - grandiose job.
 * _atomico, hui_ - for novative approach to web-components.
@@ -980,13 +979,15 @@ _Spect_ would not be possible without brilliant ideas from many libraries author
 * _fast-on-load_ - for fast mutation observer solution.
 * _tachyons, tailwindcss, ui-box_ - for CSS use-cases.
 * _evergreen-ui, material-ui_ - for practical components examples.
-* _reuse_ - for react-aspects solution.
-* _selector-observer_ - for selector observer solution.
+* _reuse_ - for react aspects insight.
+* _selector-observer_ - for selector observer example.
 * _material-design-lite_ - for upgrading code example and components library.
 * _funkia/turbine_ - for generators and examples.
-* _***_ - for letting that be possible.
+<!-- * _***_ - for letting that be possible. -->
 
 ---
+
+<p align="center">∽ HK ∼</p>
 
 <!--
 <p align="center">Made on Earth by your humble servant.
