@@ -664,15 +664,19 @@ const Log = ({ details, date }) => `<p>${details}</p><time>${ date.toLocalTimeSt
 ### `state( values: object? )`
 
 State provider, associated with aspect. Updating state rerenders aspect.
+<!-- State includes optional chaining, allowing to safely access null-able values. -->
 
 ```js
 $(target, el => {
   let { foo = default, bar } = state() // get state
 
   state({ bar: 'baz' }) // set state
+
 })
 ```
 
+  <!-- // optional chaining
+  state().bar.baz.qux -->
 
 <!--
 ### `attr(value?)`

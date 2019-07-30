@@ -48,3 +48,20 @@ t('state: not shared between aspects', t => {
 
   t.deepEqual(log, ['a', 'a', 'b', undefined])
 })
+
+t.only('state: render from another tick', t => {
+  let log = [], el = document.createElement('div')
+
+  $(el, el => {
+    log.push(1)
+    setTimeout(() => {
+      state({x: 1})
+    })
+  })
+
+  t.deepEqual(log, [1])
+
+  setTimeout(() => {
+    t.deepEqual(log, [1, 1])
+  }, 10)
+})

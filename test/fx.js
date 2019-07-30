@@ -1,6 +1,6 @@
 import t from 'tst'
 import { $, fx, html } from '../src/index.js'
-import { currentState } from '../src/spect.js';
+import { currentState, currentTarget } from '../src/spect.js';
 
 t.skip('fx: readme case', t => {
   $(document.createElement('div'), el => {
@@ -72,13 +72,19 @@ t('fx: sync fx', t => {
 
 })
 
-t.skip('fx: async fx', t => {
+t('fx: async fx', t => {
   let log = []
 
   $(document.createElement('div'), el => {
     fx(async () => {
+      await null
+      log.push('foo')
       html`<foo/>`
       t.equal(el.innerHTML, '<foo></foo>', 'html aftereffect')
+
+      return () => {
+        log.push('un-foo')
+      }
     }, [])
 
     // fx(async () => {
