@@ -397,16 +397,8 @@ $('.mdc-text-field', TextField)
 
 ## API
 
-* [x] [`$`](#$)
-* [x] `mount`
-* [x] `html`
-* [x] `state`
-* [x] `fx`
-* [ ] `on`
-* [ ] `css`
-* [ ] `prop`
-* [ ] `query`
-* [ ] `route`
+[`$`](#$) · [`mount`]() · [`html`]() · [`state`]() · [`fx`]() · [`on`]() · [`css`]() · [`prop`]() · [`query`]() · [`route`]()
+
 <!-- * [ ] `call` -->
 <!-- * [ ] `update` -->
 <!-- * [ ] `destroy` -->
@@ -961,11 +953,11 @@ html('.app', el => render(<App/>, el)
 Complexity of selectors is O(1) for id selectors and O(n) for class / general case selectors.
  -->
 
-## Changelog
+<!-- ## Changelog
 
 Version | Changes
 ---|---
-1.0.0 | Register `spect` npm name
+1.0.0 | Register `spect` npm name -->
 
 
 ## Credits
@@ -985,7 +977,7 @@ _Spect_ would not be possible without brilliant ideas from many libraries author
 * _funkia/turbine_ - for generators and examples.
 <!-- * _***_ - for letting that be possible. -->
 
-<br/><br/>
+<br/>
 <p align="center"><strong>∽ HK ∼</strong></p>
 
 <!--
