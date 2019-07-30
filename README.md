@@ -984,7 +984,8 @@ _Spect_ would not be possible without brilliant ideas from many libraries author
 * _funkia/turbine_ - for generators and examples.
 <!-- * _***_ - for letting that be possible. -->
 
-<br/>
+##
+
 <p align="center">∽ HK ∼</p>
 
 <!--
