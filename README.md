@@ -4,11 +4,11 @@ _Spect_ is [aspect-oriented](https://en.wikipedia.org/wiki/Aspect-oriented_progr
 
 
 ```js
-import { $, html, state, fx, route, attr } from 'spect'
+import $ { html, state, fx, route, attr } from 'spect'
 import { t } from 'ttag'
 
 // main aspect
-const app = app => {
+$('#app', app => {
   let [ match, { id } ] = route('user/:id')
   let { user } = state()
 
@@ -18,28 +18,21 @@ const app = app => {
     attr({ loading: false })
   }, [id])
 
-  html`<div>Hello, ${user.name}!</div>`
-
-  // run secondary aspects
-  preloader(app)
-  t(app)
-}
+  html`<div.t.preloader>Hello, ${user.name}!</div>`
+})
 
 // preloader aspect
-const preloader = el => {
+$('.preloader', el => {
   let { loading = false } = attr()
   if (loading) html`${el.childNodes} <canvas class="spinner" />`
-}
+})
 
 // i18n aspect
-const t = el => {
+$('.t', el => {
   let lang = el.lang || document.documentElement.lang
 
   html`${ t`${el.textContent}` }`
-}
-
-// run main aspect
-app(document.querySelector('#app'))
+})
 ```
 
 ### Principles
@@ -80,7 +73,7 @@ TODO: motivate the usefulness of aspects by examples.
 [![npm install spect](https://nodei.co/npm/spect.png?mini=true)](https://npmjs.org/package/spect/)
 
 ```js
-import { $, html, state } from 'spect'
+import $, { html, state } from 'spect'
 
 // ...your UI code
 ```
@@ -89,7 +82,7 @@ import { $, html, state } from 'spect'
 
 ```html
 <script type="module">
-import { $, html, state } from 'https://unpkg.com/spect@latest?module'
+import $, { html, state } from 'https://unpkg.com/spect@latest?module'
 
 // ...your UI code
 </script>
@@ -101,7 +94,7 @@ TODO
 ```html
 <script src="https://unpkg.com/spect@latest" crossorigin="anonymous"></script>
 <script>
-let { $, html, ...fx } = spect;
+let $, { html, ...fx } = spect;
 </script>
 ```
 -->
@@ -116,7 +109,7 @@ The basic tool of _spect_ is `html` effect. It acts as hyperscript, deploying ht
 
 
 ```js
-import { $, html } from 'spect'
+import $, { html } from 'spect'
 
 $(document.body, body =>
   html`<div id="hello-example" class="hello" name="Taylor"/>`
@@ -133,7 +126,7 @@ $('.hello', ({ name }) => html`Hello, ${name}!`)
 _Spect_ introduces `state`, `mount` and `fx` effects, similar to `useState` and `useEffect` hooks:
 
 ```js
-import { $, html, state, mount, fx } from 'spect'
+import $, { html, state, mount, fx } from 'spect'
 
 $('#timer-example', el => {
   let { seconds = 0 } = state()
@@ -159,7 +152,7 @@ $('#timer-example', el => {
 Events are provided by `on` effect, decoupling callbacks from markup and enabling event delegation. They can be used along with direct `on*` attributes.
 
 ```js
-import { $, html, state, on } from 'spect'
+import $, { html, state, on } from 'spect'
 
 $(`#todos-example`, Todo)
 
@@ -245,7 +238,7 @@ export default function MarkdownEditor ({ content='' }) {
 
 ```js
 // index.js
-import { $, html, state } from 'spect'
+import $, { html, state } from 'spect'
 import MarkdownEditor from './editor.js'
 
 // MarkdownEditor is created as web-component
@@ -416,7 +409,7 @@ $('.mdc-text-field', TextField)
 ### `$( selector|elements, fn: oninit => ondestroy )`
 
 Attach aspect function `fn` to selector or direct element(s). The aspect is called on every matched element, receiving it as single argument.
-Aspect can return destructor function, which is invoked when the aspect is removed from element.
+Aspect can return destructor function, which is invoked when the aspect is removed from element. The selector is context-dependent, so that if called from another aspect, it will select only elements from the scope.
 <!-- `$` returns all `document.querySelector/All`, returning all matched elements in current aspect context. -->
 
 ```js
@@ -432,7 +425,7 @@ let element = $('#my-selector', element => {
 #### Example
 
 ```js
-import { $, on, state } from 'spect'
+import $, { on, state } from 'spect'
 
 let hiddenBox = $('#banner-message');
 $('#button-container button', el =>
@@ -469,7 +462,7 @@ $('#target', el => {
 HTML effect ensures markup for current element, performing necessary updates via DOM morhing. Returs node or nodes, created by the effect.
 
 ```js
-import { $, html } from 'spect'
+import $, { html } from 'spect'
 
 $('#target', el => {
   let div = html`<div#id.class foo=bar>baz</div>`
