@@ -37,13 +37,11 @@ $('.t', el => {
 
 ### Principles
 
-<ol>
-<li id="principle-1"> Expressive, not impressive.
-<li id="principle-2"> No bundling required.
-<li id="principle-3"> No JS required to hydrate HTML.
-<li id="principle-4"> Standard HTML first.
-<li id="principle-5"> Max utility, min presentation.
-</ol>
+> 1. Expressive, not impressive.
+> 2. No bundling required.
+> 3. No JS required to hydrate HTML.
+> 4. Standard HTML first.
+> 5. Max utility, min presentation.
 
 <!--
 TODO: to FAQ?
