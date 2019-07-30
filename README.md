@@ -1,6 +1,6 @@
 # Spect
 
-`Spect` is [aspect-oriented](https://en.wikipedia.org/wiki/Aspect-oriented_programming) DOM toolkit for creating expressive UIs. It separates cross-cutting concerns with [_aspects_](https://en.wikipedia.org/wiki/Aspect_(computer_programming).
+`Spect` is [aspect-oriented](https://en.wikipedia.org/wiki/Aspect-oriented_programming) DOM toolkit for creating expressive UIs by separating cross-cutting concerns with [_aspects_](https://en.wikipedia.org/wiki/Aspect_(computer_programming)).
 
 ```js
 import { $, html, state, fx, route, attr } from 'spect'
