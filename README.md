@@ -2,15 +2,6 @@
 
 _Spect_ is [aspect-oriented](https://en.wikipedia.org/wiki/Aspect-oriented_programming) DOM toolkit for creating expressive UIs by separating cross-cutting concerns with [_aspects_](https://en.wikipedia.org/wiki/Aspect_(computer_programming)).
 
-### Principles
-
-<ol>
-<li id="principle-1"> Expressive, not impressive.
-<li id="principle-2"> No bundling required.
-<li id="principle-3"> No JS required to hydrate HTML.
-<li id="principle-4"> Standard HTML first.
-<li id="principle-5"> Max utility, min presentation.
-</ol>
 
 ```js
 import { $, html, state, fx, route, attr } from 'spect'
@@ -43,6 +34,16 @@ $('.t', el => {
   html`${ t`${el.textContent}` }`
 })
 ```
+
+#### Principles
+
+<ol>
+<li id="principle-1"> Expressive, not impressive.
+<li id="principle-2"> No bundling required.
+<li id="principle-3"> No JS required to hydrate HTML.
+<li id="principle-4"> Standard HTML first.
+<li id="principle-5"> Max utility, min presentation.
+</ol>
 
 <!--
 TODO: to FAQ?
