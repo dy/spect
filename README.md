@@ -1,6 +1,6 @@
 # Spect
 
-`Spect` is [aspect-oriented](https://en.wikipedia.org/wiki/Aspect-oriented_programming) DOM toolkit for creating expressive UIs.
+`Spect` is [aspect-oriented](https://en.wikipedia.org/wiki/Aspect-oriented_programming) DOM toolkit for creating expressive UIs. It separates cross-cutting concerns with [_aspects_](https://en.wikipedia.org/wiki/Aspect_(computer_programming).
 
 ```js
 import { $, html, state, fx, route, attr } from 'spect'
@@ -132,16 +132,13 @@ import { $, html, state, mount, fx } from 'spect'
 $('#timer-example', el => {
   let { seconds = 0 } = state()
 
-  // on mount
   mount(() => {
-    // set state
+    // on mount
     let i = setInterval(
       () => state({ seconds: seconds + 1 }),
-      1000
-    )
+    1000)
 
-    // on unmount
-    return () => clearInterval(i)
+    return () => clearInterval(i) // on unmount
   })
 
   html`Seconds: ${seconds}`
@@ -153,7 +150,7 @@ $('#timer-example', el => {
 
 ### An application
 
-Events provided by `on` effect, decoupling callbacks from markup and enabling event delegation.
+Events are provided by `on` effect, decoupling callbacks from markup and enabling event delegation. They can be used along with direct `on*` attributes.
 
 ```js
 import { $, html, state, on } from 'spect'
@@ -400,22 +397,23 @@ $('.mdc-text-field', TextField)
 
 ## API
 
-* [x] `$(target, aspect) => els`
-* [x] `mount(mount => unmount)`
-* [x] ``html`...markup` => els``
-* [x] `state(vals?) => vals`
-* [x] `fx(init => destroy, deps?)`
-* [ ] `on(evt, delegate?, fn)`
-* [ ] `prop(value?) => values`
-* [ ] ``css`...rules` => rules``
-* [ ] `query(value?) => values`
-* [ ] `call(fn) => handle`
-* [ ] `update()`
-* [ ] `destroy(target, aspect)`
+* [x] [`$`](#$)
+* [x] `mount`
+* [x] `html`
+* [x] `state`
+* [x] `fx`
+* [ ] `on`
+* [ ] `css`
+* [ ] `prop`
+* [ ] `query`
+* [ ] `route`
+<!-- * [ ] `call` -->
+<!-- * [ ] `update` -->
+<!-- * [ ] `destroy` -->
 <!-- * [ ] `watch()` -->
 
 
-### `$(selector|elements, fn: init => destroy )`
+<h3 id="$"> `$(selector|elements, fn: init => destroy )` </h3>
 
 Attach aspect function `fn` to selector or direct element(s). The aspect is called on every matched element, receiving it as single argument.
 Aspect can return destructor function, which is invoked when the aspect is removed from element.
