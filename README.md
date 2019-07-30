@@ -412,8 +412,9 @@ $('.mdc-text-field', TextField)
 <!-- * [ ] `destroy` -->
 <!-- * [ ] `watch()` -->
 
+---
 
-<h3 id="$"> `$(selector|elements, fn: init => destroy )` </h3>
+### `$(selector|elements, fn: init => destroy )`
 
 Attach aspect function `fn` to selector or direct element(s). The aspect is called on every matched element, receiving it as single argument.
 Aspect can return destructor function, which is invoked when the aspect is removed from element.
