@@ -14,17 +14,19 @@ function app ($app) {
   if (!match) return
 
   $app.fx(async () => {
-    $app.attr.loading = true
+    $app.loading = true
     $app.user = await ky.get(`./api/user/${id}`)
-    $app.attr.loading = false
+    $app.loading = false
   }, id)
+
+  $app.fx(preloader, $app.loading)
 
   $app.html`<div fx=${i18n}>Hello, ${ $app.user.name }!</div>`
 })
 
 // preloader aspect
 function preloader ($el) {
-  if ($el.attr.loading) $el.html`${ $el.children } <canvas class="spinner" />`
+  if ($el.loading) $el.html`${ $el.children } <canvas class="spinner" />`
 })
 
 // i18n aspect
