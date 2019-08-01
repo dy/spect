@@ -21,7 +21,9 @@ function app ($app) {
 
   $app.fx(preloader, $app.loading)
 
-  $app.html`<div fx=${i18n}>Hello, ${ $app.user.name }!</div>`
+  $app.html`<div fx=${i18n}>${
+    $app.loading ? `Hello, ${ $app.user.name }!` : `Thanks for patience...`
+  }</div>`
 })
 
 // preloader aspect
@@ -31,7 +33,7 @@ function preloader ($el) {
 
 // i18n aspect
 function i18n ($el) {
-  useLocale($el.attr.lang || document.documentElement.lang)
+  useLocale($el.attr.lang || $(document.documentElement).attr.lang)
   $el.html`${ t`${ $el.text }` }`
 }
 
