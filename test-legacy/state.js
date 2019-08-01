@@ -38,7 +38,7 @@ t('state: not shared between aspects', t => {
 
   $(el, el => {
     log.push('a')
-    state({foo: 'bar'})
+    state({ foo: 'bar' })
   })
 
   $(el, el => {
@@ -58,13 +58,13 @@ t.only('state: render from another tick from another scope', t => {
   function aspect(el) {
     log.push(state().x)
 
-    $(el2, el2 => {});
+    $(el2, el2 => { });
 
     (
       () => {
-        $(el2, el2 => {});
+        $(el2, el2 => { });
         setTimeout(() => {
-          $(el2, el2 => {});
+          $(el2, el2 => { });
 
           (() => state({ x: 1 }))()
         })

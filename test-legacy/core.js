@@ -72,7 +72,7 @@ t('core: selector init, destroy', t => {
 
 t('core: same aspect different targets', t => {
   let log = []
-  function fx (el) {
+  function fx(el) {
     log.push(el.tagName)
     return () => log.push('destroy ' + el.tagName)
   }
@@ -101,9 +101,9 @@ t('core: Same target different aspects', t => {
   document.body.appendChild(a)
 
   let afx, bfx
-  $('a', afx = () => (log.push('a'), () => log.push('de a')) )
+  $('a', afx = () => (log.push('a'), () => log.push('de a')))
   t.deepEqual(log, ['a'])
-  $('a', bfx = () => (log.push('b'), () => log.push('de b')) )
+  $('a', bfx = () => (log.push('b'), () => log.push('de b')))
   t.deepEqual(log, ['a', 'b'])
   $.destroy('a', bfx)
   t.deepEqual(log, ['a', 'b', 'de b'])
