@@ -4,35 +4,37 @@ _Spect_ is [aspect-oriented](https://en.wikipedia.org/wiki/Aspect-oriented_progr
 
 
 ```js
-import $ { html, state, fx, route, attr } from 'spect'
-import { t } from 'ttag'
+import $ from 'spect'
+import { t, useLocale } from 'ttag'
+import ky from 'ky'
 
 // main aspect
-$('#app', app => {
-  let [ match, { id } ] = route('user/:id')
-  let { user } = state()
+function app ($app) {
+  let [ match, { id } ] = $app.route('user/:id')
+  if (!match) return
 
-  fx(async () => {
-    attr({ loading: true })
-    state({ user: await fetch('/user') })
-    attr({ loading: false })
-  }, [id])
+  $app.fx(async () => {
+    $app.attr.loading = true
+    $app.user = await ky.get(`./api/user/${id}`)
+    $app.attr.loading = false
+  }, id)
 
-  html`<div.t.preloader>Hello, ${user.name}!</div>`
+  $app.html`<div fx=${i18n}>Hello, ${ $app.user.name }!</div>`
 })
 
 // preloader aspect
-$('.preloader', el => {
-  let { loading = false } = attr()
-  if (loading) html`${el.childNodes} <canvas class="spinner" />`
+function preloader ($el) {
+  if ($el.attr.loading) $el.html`${ $el.children } <canvas class="spinner" />`
 })
 
 // i18n aspect
-$('.t', el => {
-  let lang = el.lang || document.documentElement.lang
+function i18n ($el) {
+  useLocale($el.attr.lang || document.documentElement.lang)
+  $el.html`${ t`${ $el.text }` }`
+}
 
-  html`${ t`${el.textContent}` }`
-})
+// run app
+$(document.querySelector('#app')).fx(app)
 ```
 
 ### Principles
@@ -82,7 +84,7 @@ import $, { html, state } from 'spect'
 
 ```html
 <script type="module">
-import $, { html, state } from 'https://unpkg.com/spect@latest?module'
+import $ from 'https://unpkg.com/spect@latest?module'
 
 // ...your UI code
 </script>
@@ -111,11 +113,9 @@ The basic tool of _spect_ is `html` effect. It acts as hyperscript, deploying ht
 ```js
 import $, { html } from 'spect'
 
-$(document.body, body =>
-  html`<div id="hello-example" class="hello" name="Taylor"/>`
-)
+$(document.body).html`<div id="hello-example" class="hello" name="Taylor"/>`
 
-$('.hello', ({ name }) => html`Hello, ${name}!`)
+$('.hello').aspect(({ html, name }) => html`Hello, ${name}!`)
 ```
 
 <small>[TODO: Open in sandbox](https://codesandbox.com)</small>
@@ -128,19 +128,19 @@ _Spect_ introduces `state`, `mount` and `fx` effects, similar to `useState` and 
 ```js
 import $, { html, state, mount, fx } from 'spect'
 
-$('#timer-example', el => {
-  let { seconds = 0 } = state()
+$('#timer-example').aspect($el => {
+  let { seconds = 0 } = $el.state()
 
-  mount(() => {
+  $el.mount(() => {
     // on mount
     let i = setInterval(
-      () => state({ seconds: seconds + 1 }),
+      () => $el.state({ seconds: seconds + 1 }),
     1000)
 
     return () => clearInterval(i) // on unmount
   })
 
-  html`Seconds: ${seconds}`
+  $el.html`Seconds: ${seconds}`
 })
 
 ```
@@ -154,48 +154,48 @@ Events are provided by `on` effect, decoupling callbacks from markup and enablin
 ```js
 import $, { html, state, on } from 'spect'
 
-$(`#todos-example`, Todo)
+$(`#todos-example`).aspect(Todo)
 
-function Todo (el) {
-  let { items=[], text='' } = state()
+function Todo ($el) {
+  $el
 
   // listens for `submit` event on current target
-  on('submit', e => {
+  .on('submit', e => {
     e.preventDefault();
 
-    if (!text.length) return;
+    if (!$el.state('text').length) return;
 
     const newItem = {
-      text: this.state.text,
+      text: $el.state('text'),
       id: Date.now()
     };
 
-    state({
-      items: [...items, newItem],
+    $el.state({
+      items: [...$el.state('items'), newItem],
       text: ''
     })
   })
 
   // delegates event to #new-todo element
-  on('change', '#new-todo', e => state({ text: e.target.value });
+  .on('change', '#new-todo', e => $el.state({ text: e.target.value });
 
-  html`
+  .html`
     <h3>TODO</h3>
-    <main items=${items}>${TodoList}</main>
+    <main is=${TodoList} items=${$el.state('items')} />
     <form>
       <label for=new-todo>
         What needs to be done?
       </label>
       <input#new-todo value=${text}/>
       <button>
-        Add #${items.length + 1}
+        Add #${$el.state('items').length + 1}
       </button>
     </form>
   `
 }
 
-function TodoList ({ items }) {
-  html`<ul>${items.map(item => `<li>${item.text}</li>`)}</ul>`
+function TodoList ($el) {
+  $el.html`<ul>${$el.prop(items).map(item => `<li>${item.text}</li>`)}</ul>`
 }
 ```
 
@@ -406,14 +406,14 @@ $('.mdc-text-field', TextField)
 
 ##
 
-### `$( selector|elements, fn: oninit => ondestroy )`
+### `.aspect( fn: oninit => ondestroy )`
 
-Attach aspect function `fn` to selector or direct element(s). The aspect is called on every matched element, receiving it as single argument.
+Attach aspect function `fn` to the selected elements. The aspect is called on every matched element, receiving it as single argument.
 Aspect can return destructor function, which is invoked when the aspect is removed from element. The selector is context-dependent, so that if called from another aspect, it will select only elements from the scope.
 <!-- `$` returns all `document.querySelector/All`, returning all matched elements in current aspect context. -->
 
 ```js
-let element = $('#my-selector', element => {
+$('#my-selector').aspect(element => {
   // init
   return () => {
     // destroy
@@ -439,7 +439,7 @@ $('#button-container button', el =>
 <!-- Multiple aspects as argument: $(el, foo, bar, baz...) -->
 
 
-### `mount( fn: onmount => onunmount )`
+### `.mount( fn: onmount => onunmount )`
 
 Mount effect invokes passed `fn` when target is mounted on the DOM. Optional returned function is called when the target is unmounted.
 If an aspect is attached to mounted elements, the `onmount` will be triggered automatically.
@@ -457,19 +457,17 @@ $('#target', el => {
 
 
 
-### ``html` ...markup ` ``
+### ``.html` ...markup ` ``
 
 HTML effect ensures markup for current element, performing necessary updates via DOM morhing. Returs node or nodes, created by the effect.
 
 ```js
 import $, { html } from 'spect'
 
-$('#target', el => {
-  let div = html`<div#id.class foo=bar>baz</div>`
+$('#target').html`<div#id.class foo=bar>baz</div>`
 
   // el.innerHTML === div.outerHTML ===
   // <div id="id" class="class">baz</div>
-})
 ```
 
 <!--
