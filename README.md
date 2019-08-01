@@ -89,7 +89,7 @@ function hello ($el) { $el.html`Hello, ${$el.attr.name}!` }
 
 ## API
 
-[`$`](#$) · [`mount`]() · [`html`]() · [`state`]() · [`fx`]() · [`on`]() · [`css`]() · [`prop`]() · [`query`]() · [`route`]()
+[`$`]() · [`fx`]() · [`mount`]() · [`html`]() · [`on`]() · [`css`]() · [`query`]() · [`route`]()
 
 <!-- `call` -->
 <!-- `update` -->
@@ -99,6 +99,30 @@ function hello ($el) { $el.html`Hello, ${$el.attr.name}!` }
 
 ##
 
+
+## FAQ
+
+### Portals?
+
+```js
+$(portal).html`Portal content`
+```
+
+### JSX?
+
+```js
+/* @jsx $.h */
+$el.html(
+  <div>Inner content</div>
+)
+```
+
+### Wrap content?
+
+```js
+$el.html`Wrap outer <div>${ $el }</div>` // $el contains different nodes list!
+$el.html`Wrap inner <div>${ $el.children }</div>` // $el is the same
+```
 
 
 ## Acknowledgement
