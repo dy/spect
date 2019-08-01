@@ -1,6 +1,6 @@
 # Spect
 
-_Spect_ is [aspect-oriented](https://en.wikipedia.org/wiki/Aspect-oriented_programming) framework for creating expressive UIs. It is inspired by jQuery API and react hooks design.
+_Spect_ is [aspect-oriented](https://en.wikipedia.org/wiki/Aspect-oriented_programming) framework for creating expressive UIs.
 
 
 ```js
@@ -19,8 +19,6 @@ function app ($app) {
     $app.loading = false
   }, id)
 
-  $app.fx(preloader, $app.loading)
-
   $app.html`<div fx=${i18n}>${
     $app.loading ? `Hello, ${ $app.user.name }!` : `Thanks for patience...`
   }</div>`
@@ -37,8 +35,8 @@ function i18n ($el) {
   $el.html`${ t`${ $el.text }` }`
 }
 
-// run app aspect
-$(document.querySelector('#app')).fx(app)
+// attach aspects to DOM
+$('#app').fx(app, preloader)
 ```
 
 ### Principles
