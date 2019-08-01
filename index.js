@@ -8,36 +8,39 @@ let cache = new Map
 
 // target is wrapper over collection of items
 export default function $(arg) {
-  if (cache.has(arg)) return cache.get(arg)
-
-  // create nodeList out of any arg
-  let target
-  if (arg instanceof NodeList) target = arg
-  else if (typeof target === 'string') nodeList = document.querySelectorAll(target)
-  else if (Array.isArray(arg)) {
-    let frag = document.createDocumentFragment()
-    arg.forEach(arg => frag.appendChild(arg))
-    target = frag.childNodes
-  }
-  else {
-    let frag = document.createDocumentFragment()
-    frag.appendChild(arg)
-    target = frag.childNodes
+  if (arg instanceof Node) {
+    if (!cache.has(arg)) cache.set(arg, create([arg]))
+    return cache.get(arg)
   }
 
-  // FIXME: possibly create promise here? or extend NodeList? or extend documentFragment?
-  // That can be a single node though. But can be extended any time on.
-  // Ideally we'd have fx, html in prototype.
-  // Ideally, we'd have NodeList in prototype.
-  // Likely, we have to have promise in prototype.
+  // selector can select more nodes than before, so
+  if (!cache.has(arg)) cache.set(arg, create([]))
+
+  let $target = cache.get(arg)
+
+  // selector can include new els, so we update the list
+  if (typeof arg === 'string') {
+    arg = document.querySelectorAll(arg)
+  }
+
+  // nodelist/array could have changed, so make sure new els are in the list
+  // FIXME: that can be done faster
+  $target.length = 0
+  $target.push(...arg)
+
+  return $target
+}
+
+function create (target) {
+  // Ideally we'd have fx, html in prototype to avoid extending each time
+  // Possibly proxy would be able to access els by index
   let $target = Object.assign(target, $.fn)
-
-  cache.set(arg, $target)
 
   states.set($target, {})
 
   return $target
 }
+
 
 $.fn = {}
 

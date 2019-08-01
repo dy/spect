@@ -89,7 +89,7 @@ function hello ($el) { $el.html`Hello, ${$el.attr.name}!` }
 
 ## API
 
-[`$`]() · [`fx`]() · [`mount`]() · [`html`]() · [`on`]() · [`css`]() · [`query`]() · [`route`]()
+[`$`]() · [`.fx`]() · [`.attr`]() · [`.class`]() · [`.mount`]() · [`.html`]() · [`.on`]() · [`.css`]() · [`.query`]() · [`.route`]()
 
 <!-- `call` -->
 <!-- `update` -->

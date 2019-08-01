@@ -2,6 +2,12 @@ import t from 'tst'
 import $ from '../index'
 
 t('readme: intro', t => {
+  let el = document.createElement('div')
+  el.id = 'app'
+  document.body.appendChild(el)
+
+
+
   // main aspect
   function app($app) {
     let id = Math.random()
@@ -15,27 +21,29 @@ t('readme: intro', t => {
       $app.loading = false
     }, id)
 
-    $app.html`<div fx=${i18n}>${ $app.loading ? `Hello, ${$app.user.name}!` : `Thanks for patience...` }</div>`
+    $app.html`<div fx=${i18n}>${ !$app.loading ? `Hello, ${$app.user.name}!` : `Thanks for patience...` }</div>`
   }
 
   // preloader aspect
   function preloader($el) {
     console.log('preloader', $el.loading)
     $el.preloadable = true
-    // if ($el.loading) $el.html`${$el.children} <canvas class="spinner" />`
+    if ($el.loading) $el.html`${$el.children} <canvas class="spinner" />`
   }
 
   // i18n aspect
   function i18n($el) {
-    $el.html=`${$el[0].textContent}`
+    console.log('i18n')
+    // $el.html=`${$el[0].textContent}`
     // useLocale($el.attr.lang || $(document.documentElement).attr.lang)
     // $el.html`${t`${$el.text}`}`
   }
 
   // run app
-  let el = document.createElement('div')
-  document.body.appendChild(el)
-  // $('#app').fx(app)
-  $(el).fx([app, preloader])
+  $('#app').fx([app, preloader])
 
+
+  setTimeout(() => {
+    console.log(el.outerHTML)
+  })
 })
