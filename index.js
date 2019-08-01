@@ -3,15 +3,27 @@ import html from "./src/html"
 
 let states = new WeakMap
 
-let cache = new WeakMap
+// FIXME: replace with primitive-pool WeakMap
+let cache = new Map
 
 // target is wrapper over collection of items
-export default function $(target) {
-  if (cache.has(target)) return cache.get(target)
+export default function $(arg) {
+  if (cache.has(arg)) return cache.get(arg)
 
-  if (typeof target === 'string') target = document.querySelectorAll(target)
-
-  if (target.length == null) target = [target]
+  // create nodeList out of any arg
+  let target
+  if (arg instanceof NodeList) target = arg
+  else if (typeof target === 'string') nodeList = document.querySelectorAll(target)
+  else if (Array.isArray(arg)) {
+    let frag = document.createDocumentFragment()
+    arg.forEach(arg => frag.appendChild(arg))
+    target = frag.childNodes
+  }
+  else {
+    let frag = document.createDocumentFragment()
+    frag.appendChild(arg)
+    target = frag.childNodes
+  }
 
   // FIXME: possibly create promise here? or extend NodeList? or extend documentFragment?
   // That can be a single node though. But can be extended any time on.
@@ -20,7 +32,7 @@ export default function $(target) {
   // Likely, we have to have promise in prototype.
   let $target = Object.assign(target, $.fn)
 
-  cache.set(target, $target)
+  cache.set(arg, $target)
 
   states.set($target, {})
 
@@ -30,7 +42,9 @@ export default function $(target) {
 $.fn = {}
 
 
-$.fn.fx = function (fn, deps) {
+$.fn.fx = function fx(fn, deps) {
+  if (Array.isArray(fn)) return fn.forEach(fn => this.fx(fn, deps))
+
   let state = states.get(this)
   if (!state.fx) state.fx = new WeakSet
 

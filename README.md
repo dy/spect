@@ -36,7 +36,7 @@ function i18n ($el) {
 }
 
 // attach aspects to DOM
-$('#app').fx(app, preloader)
+$('#app').fx([app, preloader])
 ```
 
 ### Principles

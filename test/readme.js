@@ -15,15 +15,15 @@ t('readme: intro', t => {
       $app.loading = false
     }, id)
 
-    // $app.fx(preloader, $app.loading)
-
     $app.html`<div fx=${i18n}>${ $app.loading ? `Hello, ${$app.user.name}!` : `Thanks for patience...` }</div>`
   }
 
-  // // preloader aspect
-  // function preloader($el) {
-  //   if ($el.loading) $el.html`${$el.children} <canvas class="spinner" />`
-  // }
+  // preloader aspect
+  function preloader($el) {
+    console.log('preloader', $el.loading)
+    $el.preloadable = true
+    // if ($el.loading) $el.html`${$el.children} <canvas class="spinner" />`
+  }
 
   // i18n aspect
   function i18n($el) {
@@ -36,6 +36,6 @@ t('readme: intro', t => {
   let el = document.createElement('div')
   document.body.appendChild(el)
   // $('#app').fx(app)
-  $(el).fx(app)
+  $(el).fx([app, preloader])
 
 })
