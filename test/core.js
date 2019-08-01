@@ -176,6 +176,8 @@ t('core: subaspects init/destroy themselves independent of parent aspects', t =>
   document.body.removeChild(a)
 })
 
+t('core: external/hidden aspect fn throws error')
+
 t('core: contextual effects', t => {
   let log = []
 
