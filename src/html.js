@@ -11,7 +11,11 @@ import { patch,
   skip,
   currentElement
 } from 'incremental-dom'
-import $ from '..';
+
+import $ from './$.js'
+
+
+$.fn.html = html
 
 
 // configure incremental-dom

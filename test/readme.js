@@ -7,7 +7,6 @@ t('readme: intro', t => {
   document.body.appendChild(el)
 
 
-
   // main aspect
   function app($app) {
     let id = Math.random()
@@ -15,20 +14,19 @@ t('readme: intro', t => {
     // if (!match) return
 
     $app.fx(async () => {
-      $app.loading = true
+      $app.state.loading = true
       // $app.user = await ky.get(`./api/user/${id}`)
-      $app.user = new Promise(ok => setTimeout(() => ok({name: 'Yaddy'}), 1000))
-      $app.loading = false
+      $app.state.user = new Promise(ok => setTimeout(() => ok({name: 'Yaddy'}), 1000))
+      $app.state.loading = false
     }, id)
 
-    $app.html`<div fx=${i18n}>${ !$app.loading ? `Hello, ${$app.user.name}!` : `Thanks for patience...` }</div>`
+    $app.html`<div fx=${i18n}>${ !$app.state.loading ? `Hello, ${$app.state.user.name}!` : `Thanks for patience...` }</div>`
   }
 
   // preloader aspect
   function preloader($el) {
-    console.log('preloader', $el.loading)
-    $el.preloadable = true
-    if ($el.loading) $el.html`${$el.children} <canvas class="spinner" />`
+    console.log('preloader', $el.state.loading)
+    if ($el.state.loading) $el.html`${$el.children} <canvas class="spinner" />`
   }
 
   // i18n aspect
@@ -42,6 +40,8 @@ t('readme: intro', t => {
   // run app
   $('#app').fx([app, preloader])
 
+
+  // t.deepEqual(log, [])
 
   setTimeout(() => {
     console.log(el.outerHTML)
