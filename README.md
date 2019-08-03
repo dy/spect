@@ -1,6 +1,6 @@
 # Spect
 
-_Spect_ is framework for creating expressive UIs.
+_Spect_ is [aspect-oriented](https://en.wikipedia.org/wiki/Aspect-oriented_programming) framework for creating expressive UIs.
 
 
 ```js
@@ -40,17 +40,39 @@ function i18n ($el) {
 $('#app').fx(app, preloader)
 ```
 
-### Requirements
+## 🕉️ Philosophy
 
 > 1. Expressive. <!-- not impressive, obvoius code -->
 > 2. No bundling. <!-- required -->
 > 3. JS-less hydrate.
 > 4. Standard HTML first.
 > 5. Max utility. <!-- min presentation, min proving. -->
-> 6. Reactivity.
+> 6. Reactive.
+
+_Spect_ can remotely remind _jQuery_, supercharded with _React_ hooks, but not exactly so. Its API is based on a set of modern practices (Proxies, incremental dom, hooks), design research and experiments. The current API is a third iteration.
+
+### ☸️ Reinventing the wheel
+
+_React_ is conceptually a set of _reactions_ to _changes_ in _state_.
+
+In general, a _reaction_ may have various side-_effects_, like changing html, css, page title, sound volume, displaying dialog etc. In _react_ components are tied to html-only side-effect, serving single container. _jQuery_ takes more generic approach - any element may have an effect on any other element 🍝 yum. To overcome that limitation, _react_ introduces hooks, which are essentially side-effect providers.
+
+_State_ can be any structure, representing some domain. In web, main domains are data storage and DOM tree (ignore history, location, web-audio, localstorage, webgl etc. for now). Reactions can be triggered by changes in these domains.
+
+Other approaches include:
+
+* HTML is decomposition of reality, aspects (CSS is aspect).
+* streamlined html (fragment is container, attributes reflect domains, tagname is main domain indicator, children are implicit prop of syntax).
+* streamlined effects (global is effect holder, effect scope is indicated in ref, effect corresponds to domain).
+* streamlined subscription (autosubscribe to domain by reading it, sources of rerendering(target, subscriptions, direct gate call), soft/hard effects).
+* optimization API equation (contextual effects → effect constructors → hooks namespace → html wrappers → events middleware).
+* streamlined updates (batch updates after fx tick, clean up required diffs).
+* streamlized html (orig holder, vdom, attaching fx, API, carrying over DOM nodes)
 
 
-## Install
+## 🎬 Getting started
+
+### Install
 
 **A.** As _npm_ package:
 
@@ -72,28 +94,6 @@ import $ from 'https://unpkg.com/spect@latest?module'
 </script>
 ```
 
-## Getting started
-
-_Spect_ can remotely remind _jQuery_, supercharded with _React_ hooks, but not exactly so. Its API is based on a set of modern practices (Proxies, incremental dom, hooks), design research and experiments. The current API is the third iteration.
-
-### :ferris_wheel: Reinventing the wheel.
-
-_React_ is conceptually a set of _reactions_ with effects_ to _changes_ in _state_.
-
-In general, a _reaction_ may have various side-effects, like changing some _html_, _css_, document title, turning off sound, displaying dialog etc. In React components are tied to html side-effect, serving to component container. But in general that's not the case, and jQuery demonstrates that - any element may have an effect on any other element 🍝. To overcome such limitation, React introduces hooks - a graceful solution to provide side-effects, compared to heap of HOCs, contexts and lifecycle events.
-
-_State_ can be any data structure, related to some domain. In web, main domains are data tree (storage) and DOM tree <small>(ignore history, location, web-audio, localstorage, webgl etc. for now)</small>. In essence, reactions can be triggered by changes in these domains. There are many frameworks, serving well that purpose, like _defi_, _icaro_ etc.
-
-Other approaches include:
-
-* HTML is decomposition of reality, aspects (CSS is aspect).
-* streamlined html (fragment is container, attributes reflect domains, tagname is main domain indicator, children are implicit prop of syntax).
-* streamlined effects (global is effect holder, effect scope is indicated in ref, effect corresponds to domain).
-* streamlined subscription (autosubscribe to domain by reading it, sources of rerendering(target, subscriptions, direct gate call), soft/hard effects).
-* optimization API equation (contextual effects → effect constructors → hooks namespace → html wrappers → events middleware).
-* streamlined updates (batch updates after fx tick, clean up required diffs).
-* streamlized html (orig holder, vdom, )
-
 Let's build [basic examples](https://reactjs.org/) with _Spect_.
 
 ### A simple aspect
@@ -109,7 +109,7 @@ function hello ($el) { $el.html`Hello, ${$el.attr.name}!` }
 ```
 
 
-## API
+## ♻ API
 
 Each effect reflects domain it provides shortcut to.
 
@@ -126,7 +126,7 @@ Each effect reflects domain it provides shortcut to.
 ##
 
 
-## FAQ
+## 🤔 FAQ
 
 ### Portals?
 
@@ -151,7 +151,7 @@ $el.html`Wrap inner <div>${ $el.children }</div>` // $el is the same
 ```
 
 
-## Acknowledgement
+## 🙏 Acknowledgement
 
 * _jquery_ - for classic school of API design.
 * _react_ - for JSX, hocs, hooks and pains.
