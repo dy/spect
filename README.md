@@ -40,7 +40,7 @@ function i18n ($el) {
 $('#app').fx(app, preloader)
 ```
 
-## 🕉️ Philosophy
+## Principles
 
 > 1. Expressive. <!-- not impressive, obvoius code -->
 > 2. No bundling. <!-- required -->
@@ -49,9 +49,11 @@ $('#app').fx(app, preloader)
 > 5. Max utility. <!-- min presentation, min proving. -->
 > 6. Reactive.
 
+## Philosophy
+
 _Spect_ can remotely remind _jQuery_, supercharded with _React_ hooks, but not exactly so. Its API is based on a set of modern practices (Proxies, incremental dom, hooks), design research and experiments. The current API is a third iteration.
 
-### ☸️ Reinventing the wheel
+### :ferris_wheel: Reinventing the wheel
 
 _React_ is conceptually a set of _reactions_ to _changes_ in _state_.
 
@@ -70,9 +72,7 @@ Other approaches include:
 * streamlized html (orig holder, vdom, attaching fx, API, carrying over DOM nodes)
 
 
-## 🎬 Getting started
-
-### Install
+## Install
 
 **A.** As _npm_ package:
 
@@ -94,6 +94,10 @@ import $ from 'https://unpkg.com/spect@latest?module'
 </script>
 ```
 
+
+## 🎬 Getting started
+
+
 Let's build [basic examples](https://reactjs.org/) with _Spect_.
 
 ### A simple aspect
@@ -109,7 +113,7 @@ function hello ($el) { $el.html`Hello, ${$el.attr.name}!` }
 ```
 
 
-## ♻ API
+## API
 
 Each effect reflects domain it provides shortcut to.
 
@@ -126,7 +130,7 @@ Each effect reflects domain it provides shortcut to.
 ##
 
 
-## 🤔 FAQ
+## FAQ
 
 ### Portals?
 
@@ -151,7 +155,7 @@ $el.html`Wrap inner <div>${ $el.children }</div>` // $el is the same
 ```
 
 
-## 🙏 Acknowledgement
+## Acknowledgement
 
 * _jquery_ - for classic school of API design.
 * _react_ - for JSX, hocs, hooks and pains.
