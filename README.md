@@ -4,48 +4,50 @@ _Spect_ is [aspect-oriented](https://en.wikipedia.org/wiki/Aspect-oriented_progr
 
 
 ```js
-import $ from 'spect'
+import { $, route, state, html } from 'spect'
 import { t, useLocale } from 'ttag'
 import ky from 'ky'
 
 // main aspect
 function app ($app) {
-  let [ match, { id } ] = $app.route('user/:id')
+  let [ match, { id } ] = route('user/:id')
   if (!match) return
 
   $app.fx(async () => {
-    $app.loading = true
-    $app.user = await ky.get(`./api/user/${id}`)
-    $app.loading = false
+    $app.state.loading = true
+    state.user = await ky.get(`./api/user/${id}`)
+    $app.state.loading = false
   }, id)
 
-  $app.html`<div fx=${i18n}>${
-    $app.loading ? `Hello, ${ $app.user.name }!` : `Thanks for patience...`
+  $app.html = html`<div fx=${i18n}>${
+    $app.loading ? `Hello, ${ state.user.name }!` : `Thanks for patience...`
   }</div>`
 }
 
 // preloader aspect
 function preloader ($el) {
-  if ($el.loading) $el.html`${ $el.children } <canvas class="spinner" />`
+  if ($el.state.loading) $el.html`${ $el.children } <canvas class="spinner" />`
 }
 
 // i18n aspect
 function i18n ($el) {
+  // retriggered whenever $el.attr.lang, html.lang or el.text change
   useLocale($el.attr.lang || $(document.documentElement).attr.lang)
-  $el.html`${ t`${ $el.text }` }`
+  $el.text = t`${ $el.text }`
 }
 
 // attach aspects to DOM
-$('#app').fx([app, preloader])
+$('#app').fx(app, preloader)
 ```
 
-### Principles
+### Requirements
 
 > 1. Expressive. <!-- not impressive, obvoius code -->
 > 2. No bundling. <!-- required -->
 > 3. JS-less hydrate.
 > 4. Standard HTML first.
 > 5. Max utility. <!-- min presentation, min proving. -->
+> 6. Reactivity.
 
 
 ## Install
@@ -72,14 +74,32 @@ import $ from 'https://unpkg.com/spect@latest?module'
 
 ## Getting started
 
-[Basic examples](https://reactjs.org/).
+_Spect_ can remotely remind _jQuery_, supercharded with _React_ hooks, but not exactly so. Its API is based on a set of modern practices (Proxies, incremental dom, hooks), design research and experiments. The current API is the third iteration.
+
+### :ferris_wheel: Reinventing the wheel.
+
+_React_ is conceptually a set of _reactions_ with effects_ to _changes_ in _state_.
+
+In general, a _reaction_ may have various side-effects, like changing some _html_, _css_, document title, turning off sound, displaying dialog etc. In React components are tied to html side-effect, serving to component container. But in general that's not the case, and jQuery demonstrates that - any element may have an effect on any other element 🍝. To overcome such limitation, React introduces hooks - a graceful solution to provide side-effects, compared to heap of HOCs, contexts and lifecycle events.
+
+_State_ can be any data structure, related to some domain. In web, main domains are data tree (storage) and DOM tree <small>(ignore history, location, web-audio, localstorage, webgl etc. for now)</small>. In essence, reactions can be triggered by changes in these domains. There are many frameworks, serving well that purpose, like _defi_, _icaro_ etc.
+
+Other approaches include:
+
+* HTML is decomposition of reality, aspects (CSS is aspect).
+* streamlined html (fragment is container, attributes reflect domains, tagname is main domain indicator, children are implicit prop of syntax).
+* streamlined effects (global is effect holder, effect scope is indicated in ref, effect corresponds to domain).
+* streamlined subscription (reading value or selector subscribes to path in that domain, soft/hard effects).
+* optimization API equation (contextual effects → effect constructors → hooks namespace → html wrappers → events middleware).
+
+Let's build [basic examples](https://reactjs.org/) with _Spect_.
 
 ### A simple aspect
 
 This example provides _html_ in body and assigns aspect to it.
 
 ```js
-import $ from 'spect'
+import { $ } from 'spect'
 
 $(document.body).html`<div id="hello-example" class="hello" name="Taylor" fx=${hello}/>`
 
@@ -89,7 +109,11 @@ function hello ($el) { $el.html`Hello, ${$el.attr.name}!` }
 
 ## API
 
-[`$`]() · [`.fx`]() · [`.attr`]() · [`.class`]() · [`.mount`]() · [`.html`]() · [`.on`]() · [`.css`]() · [`.query`]() · [`.route`]()
+Each effect reflects domain it provides shortcut to.
+
+<!-- mount is a hook on html domain -->
+
+[`.$`]() · [`.fx`]() · [`.state`]() · [`.html`]() · [`.class`]() · [`.attr`]() · [`.on`]() · [`.css`]() · [`.query`]() · [`.route`]()
 
 <!-- `call` -->
 <!-- `update` -->
