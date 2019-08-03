@@ -1,6 +1,6 @@
 # Spect
 
-_Spect_ is [aspect-oriented](https://en.wikipedia.org/wiki/Aspect-oriented_programming) framework for creating expressive UIs.
+_Spect_ is framework for creating expressive UIs.
 
 
 ```js
@@ -20,13 +20,13 @@ function app ($app) {
   }, id)
 
   $app.html = html`<div fx=${i18n}>${
-    $app.loading ? `Hello, ${ state.user.name }!` : `Thanks for patience...`
+    $app.state.loading ? `Hello, ${ state.user.name }!` : `Thanks for patience...`
   }</div>`
 }
 
 // preloader aspect
 function preloader ($el) {
-  if ($el.state.loading) $el.html`${ $el.children } <canvas class="spinner" />`
+  $el.html`${el.html.orig} ${ $el.state.loading && html`<canvas class="spinner" />` }`
 }
 
 // i18n aspect
@@ -89,8 +89,10 @@ Other approaches include:
 * HTML is decomposition of reality, aspects (CSS is aspect).
 * streamlined html (fragment is container, attributes reflect domains, tagname is main domain indicator, children are implicit prop of syntax).
 * streamlined effects (global is effect holder, effect scope is indicated in ref, effect corresponds to domain).
-* streamlined subscription (reading value or selector subscribes to path in that domain, soft/hard effects).
+* streamlined subscription (autosubscribe to domain by reading it, sources of rerendering(target, subscriptions, direct gate call), soft/hard effects).
 * optimization API equation (contextual effects → effect constructors → hooks namespace → html wrappers → events middleware).
+* streamlined updates (batch updates after fx tick, clean up required diffs).
+* streamlized html (orig holder, vdom, )
 
 Let's build [basic examples](https://reactjs.org/) with _Spect_.
 
@@ -113,7 +115,7 @@ Each effect reflects domain it provides shortcut to.
 
 <!-- mount is a hook on html domain -->
 
-[`.$`]() · [`.fx`]() · [`.state`]() · [`.html`]() · [`.class`]() · [`.attr`]() · [`.on`]() · [`.css`]() · [`.query`]() · [`.route`]()
+[`.$`]() · [`.fx`]() · [`.state`]() · [`.html`]() · [`.text`]() · [`.class`]() · [`.attr`]() · [`.on`]() · [`.css`]() · [`.query`]() · [`.route`]()
 
 <!-- `call` -->
 <!-- `update` -->
