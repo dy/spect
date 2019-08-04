@@ -56,15 +56,17 @@ _Spect_ can remotely remind _jQuery_, supercharded with _React_ hooks, but not e
 
 ### :ferris_wheel: Reinventing the wheel
 
-_React_ is conceptually a set of _reactions_ to _changes_ in _state_.
+Conceptually, app is a set of _reactions_ to _changes_ in _state_.
 
-In general, a _reaction_ may have various side-_effects_, like changing html, css, page title, sound volume, displaying dialog etc. In _react_ components are tied to html-only side-effect of a single container. _jQuery_ takes more generic approach - any element may have an effect on any other element 🍝 yum. To overcome that limitation, _react_ introduces hooks, which are essentially side-effect providers.
+_Reaction_ may have various side-_effects_, like changing html, css, page title, sound volume, displaying dialog etc. In _react_, components have html-only side-effect of a single container, to provide other side-effects, the mechanism of hooks is introduced. In _jQuery_, any element may have an effect on any other element, but lack of component composition is 🍝.
 
-_State_ can be any structure, representing some domain. In web, main domains are data storage and DOM tree (ignore history, location, web-audio, localstorage, webgl etc. for now). Reactions can be triggered by changes in these domains.
+_State_ can be any structure, representing some domain. In web, main domains are - data storage and DOM tree (besides navigation, web-audio, localstorage, webgl etc.). Reactions can be triggered by changes in these domains.
+
+`$` function wraps any group of DOM nodes, providing connections to different domains - html, css, navigation, storage, events etc. The `fx` method serves as aspect for group, it works as `useEffect` merged with component renderer (component renderer conceptually _is_ effect too).
 
 Other approaches include:
 
-* HTML is decomposition of reality, aspects (CSS is aspect).
+* Decomposition algorithm, aspects (CSS is aspect).
 * streamlined html (fragment is container, attributes reflect domains, tagname is main domain indicator, children are implicit prop of syntax).
 * streamlined effects (global is effect holder, effect scope is indicated in ref, effect corresponds to domain).
 * streamlined subscription (autosubscribe to domain by reading it, sources of rerendering(target, subscriptions, direct gate call), soft/hard effects).
