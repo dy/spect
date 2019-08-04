@@ -132,7 +132,7 @@ Each effect reflects domain it provides shortcut to.
 
 ##
 
-## `$`
+### `$`
 
 Select group of elements, very much like jQuery.
 
@@ -140,7 +140,7 @@ Select group of elements, very much like jQuery.
 // TODO
 ```
 
-## `.fx`
+### `.fx` - aspect provider
 
 Register aspect function for group of elements.
 
@@ -148,7 +148,7 @@ Register aspect function for group of elements.
 // TODO
 ```
 
-## `.state`
+### `.state` - data provider
 
 Read or write state, associated with an element. Read returns state of the first item in the set. Reading state subscribes current aspect to rerender whenever that state changes.
 
@@ -162,7 +162,7 @@ $(target).fx(function fn ($el) {
 })
 ```
 
-## `.html`
+### `.html` - DOM provider
 
 Provide HTML content for group of elements.
 
