@@ -4,41 +4,41 @@ _Spect_ is [aspect-oriented](https://en.wikipedia.org/wiki/Aspect-oriented_progr
 
 
 ```js
-import { $, state, html } from 'spect'
-import { route } from 'spect-router'
-import { t, useLocale } from 'ttag'
-import ky from 'ky'
+import { $, state, html } from 'spect';
+import { route } from 'spect-router';
+import { t, useLocale } from 'ttag';
+import ky from 'ky';
 
 // main aspect
 function app ($app) {
-  let [ match, { id } ] = route('user/:id')
-  if (!match) return
+  let [ match, { id } ] = route('user/:id');
+  if (!match) return;
 
   $app.fx(async () => {
-    $app.state.loading = true
-    state.user = await ky.get(`./api/user/${id}`)
-    $app.state.loading = false
-  }, id)
+    $app.state.loading = true;
+    state.user = await ky.get(`./api/user/${id}`);
+    $app.state.loading = false;
+  }, id);
 
   $app.html = html`<div fx=${i18n}>${
     $app.state.loading ? `Hello, ${ state.user.name }!` : `Thanks for patience...`
-  }</div>`
+  }</div>`;
 }
 
 // preloader aspect
 function preloader ($el) {
-  $el.html`${el.html.original} ${ $el.state.loading && html`<canvas class="spinner" />` }`
+  $el.html`${el.html.original} ${ $el.state.loading && html`<canvas class="spinner" />` }`;
 }
 
 // i18n aspect
 function i18n ($el) {
   // retriggered whenever $el.attr.lang, html.lang or el.text change
-  useLocale($el.attr.lang || $(document.documentElement).attr.lang)
-  $el.text = t`${ $el.text }`
+  useLocale($el.attr.lang || $(document.documentElement).attr.lang);
+  $el.text = t`${ $el.text }`;
 }
 
 // attach aspects to DOM
-$('#app').fx(app, preloader)
+$('#app').fx(app, preloader);
 ```
 
 ## Principles
@@ -154,6 +154,7 @@ Read or write state, associated with an element. Read returns state of the first
 
 ```js
 $(target).fx(function fn ($el) {
+  $els.state('x')
   $els.state.x = 1
   $els.state.x // 1
 
@@ -165,6 +166,37 @@ $(target).fx(function fn ($el) {
 ### `.html` - DOM provider
 
 Provide HTML content for group of elements.
+
+```js
+// set html
+$target.html``
+$target.html = <div>Markup</div>
+
+// get html
+$target.html
+```
+
+### `.text` - Text content provider
+
+### `.css` - CSS provider
+
+```js
+$target.css`...style rules`
+
+$target.css
+```
+
+### `.route` - Navigation provider
+
+Provide navigation domain. Responsible for reading routes, navigating routes.
+
+```js
+// read route
+let [match, {id}] = $nav.route('/user/:id')
+
+$nav.route = `/user/${lang}/page`
+```
+
 
 ## FAQ
 
