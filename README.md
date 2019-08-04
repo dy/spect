@@ -4,7 +4,8 @@ _Spect_ is [aspect-oriented](https://en.wikipedia.org/wiki/Aspect-oriented_progr
 
 
 ```js
-import { $, route, state, html } from 'spect'
+import { $, state, html } from 'spect'
+import { route } from 'spect-router'
 import { t, useLocale } from 'ttag'
 import ky from 'ky'
 
@@ -26,7 +27,7 @@ function app ($app) {
 
 // preloader aspect
 function preloader ($el) {
-  $el.html`${el.html.orig} ${ $el.state.loading && html`<canvas class="spinner" />` }`
+  $el.html`${el.html.original} ${ $el.state.loading && html`<canvas class="spinner" />` }`
 }
 
 // i18n aspect
@@ -51,13 +52,13 @@ $('#app').fx(app, preloader)
 
 ## Philosophy
 
-_Spect_ can remotely remind _jQuery_, supercharded with _React_ hooks, but not exactly so. Its API is based on a set of modern practices (Proxies, incremental dom, hooks), design research and experiments. The current API is a third iteration.
+_Spect_ can remotely remind _jQuery_, supercharded with _React_ hooks, but not exactly so. Its API is based on a set of modern practices (Proxies, incremental dom, hooks), design research and experiments. The current API is third iteration.
 
 ### :ferris_wheel: Reinventing the wheel
 
 _React_ is conceptually a set of _reactions_ to _changes_ in _state_.
 
-In general, a _reaction_ may have various side-_effects_, like changing html, css, page title, sound volume, displaying dialog etc. In _react_ components are tied to html-only side-effect, serving single container. _jQuery_ takes more generic approach - any element may have an effect on any other element 🍝 yum. To overcome that limitation, _react_ introduces hooks, which are essentially side-effect providers.
+In general, a _reaction_ may have various side-_effects_, like changing html, css, page title, sound volume, displaying dialog etc. In _react_ components are tied to html-only side-effect of a single container. _jQuery_ takes more generic approach - any element may have an effect on any other element 🍝 yum. To overcome that limitation, _react_ introduces hooks, which are essentially side-effect providers.
 
 _State_ can be any structure, representing some domain. In web, main domains are data storage and DOM tree (ignore history, location, web-audio, localstorage, webgl etc. for now). Reactions can be triggered by changes in these domains.
 

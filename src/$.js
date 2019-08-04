@@ -1,4 +1,5 @@
 // FIXME: replace with primitive-pool WeakMap
+// this cache is for faster fetching static targets' aspects
 export const cache = new Map
 
 // target is wrapper over collection of items
@@ -29,11 +30,16 @@ export default function $(arg) {
 class Spect extends Array {
   constructor (...args) {
     super()
+    this.callAfter = []
     this.set(...args)
   }
   set(...args) {
     this.length = 0
     this.push(...args)
+  }
+  after(fn) {
+    this.callAfter.push(fn)
+    this.callAfter = []
   }
 }
 

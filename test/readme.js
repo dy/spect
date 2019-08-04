@@ -9,7 +9,7 @@ t('readme: intro', t => {
 
   // main aspect
   function app($app) {
-    let id = Math.random()
+    let id = 1
     // let [match, { id }] = $app.route('user/:id')
     // if (!match) return
 
@@ -20,7 +20,7 @@ t('readme: intro', t => {
       $app.state.loading = false
     }, id)
 
-    $app.html`<div fx=${i18n}>${ !$app.state.loading ? `Hello, ${$app.state.user.name}!` : `Thanks for patience...` }</div>`
+    $app.html`<div fx=${i18n}>${ !$app.state.loading ? `Hello, ${$app.state.user}!` : `Thanks for patience...` }</div>`
   }
 
   // preloader aspect
