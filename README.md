@@ -122,7 +122,7 @@ Each effect reflects domain it provides shortcut to.
 
 <!-- mount is a hook on html domain -->
 
-[`.$`]() · [`.fx`]() · [`.state`]() · [`.html`]() · [`.text`]() · [`.class`]() · [`.attr`]() · [`.on`]() · [`.css`]() · [`.query`]() · [`.route`]()
+[`$`]() · [`.fx`]() · [`.state`]() · [`.html`]() · [`.text`]() · [`.class`]() · [`.attr`]() · [`.on`]() · [`.css`]() · [`.query`]() · [`.route`]()
 
 <!-- `call` -->
 <!-- `update` -->
@@ -132,6 +132,39 @@ Each effect reflects domain it provides shortcut to.
 
 ##
 
+## `$`
+
+Select group of elements, very much like jQuery.
+
+```js
+// TODO
+```
+
+## `.fx`
+
+Register aspect function for group of elements.
+
+```js
+// TODO
+```
+
+## `.state`
+
+Read or write state, associated with an element. Read returns state of the first item in the set. Reading state subscribes current aspect to rerender whenever that state changes.
+
+```js
+$(target).fx(function fn ($el) {
+  $els.state.x = 1
+  $els.state.x // 1
+
+  // whenever $a.state.x is set, the fn reruns
+  $a.state.x
+})
+```
+
+## `.html`
+
+Provide HTML content for group of elements.
 
 ## FAQ
 
