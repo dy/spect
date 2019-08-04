@@ -13,7 +13,7 @@ Object.defineProperty($.fn, 'state', {
   get() {
     if (!states.has(this)) states.set(this, new Proxy({}, {
       set: (target, prop, value) => {
-        console.log('set', target, prop, value, 'from', currentAspect)
+        // console.log('set', target, prop, value, 'from', currentAspect)
 
         // skip unchanged value
         if (Object.is(target[prop], value)) return true
@@ -37,9 +37,7 @@ Object.defineProperty($.fn, 'state', {
           // FIXME: use setImmediate since afterFx is not available
           let observers = observables.get(observable)
           setImmediate(() => {
-            console.log('setImmediate')
             for (let aspect of observers) {
-              console.log('setImmediate call', aspect[1].name)
               callAspect(aspect)
             }
           })
@@ -50,7 +48,7 @@ Object.defineProperty($.fn, 'state', {
 
       get: (target, prop) => {
         // FIXME: what about nested props access/writing?
-        console.log('get', this, prop, 'from', currentAspect)
+        // console.log('get', this, prop, 'from', currentAspect)
 
         // subscribe updating current aspect, when the prop is changed
         let observable = tuple(this, prop)
@@ -73,7 +71,7 @@ Object.defineProperty($.fn, 'state', {
 
   // set state - reassigns props to current state
   set() {
-    console.log('set', this)
+    console.log('set state', this)
   }
 })
 

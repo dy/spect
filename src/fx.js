@@ -33,7 +33,7 @@ $.fn.fx = function (fn, deps) {
 
   if (Array.isArray(fn)) return fn.forEach(fn => this.fx(fn, deps))
 
-  console.log('fx', fn.name, 'deps', deps)
+  // console.log('fx', fn.name, 'deps', deps)
 
   let thisAspect = tuple(this, fn)
 
