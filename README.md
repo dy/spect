@@ -58,7 +58,7 @@ _Spect_ can remotely remind _jQuery_, supercharded with _React_ hooks, but not e
 
 Conceptually, app is a set of _reactions_ to _changes_ in _state_.
 
-_Reaction_ may have various side-_effects_, like changing html, css, page title, sound volume, displaying dialog etc. In _react_, components have html-only side-effect of a single container, to provide other side-effects, the mechanism of hooks is introduced. In _jQuery_, any element may have an effect on any other element, but lack of component composition is 🍝.
+_Reaction_ may have various side-_effects_, like changing html, css, page title, sound volume, displaying dialog etc. _React_ components have html-only side-effect of a single container, to provide other side-effects, the mechanism of hooks introduced. In _jQuery_, any element may have an effect on any other element, but lack of component composition is 🍝.
 
 _State_ can be any structure, representing some domain. In web, main domains are - data storage and DOM tree (besides navigation, web-audio, localstorage, webgl etc.). Reactions can be triggered by changes in these domains.
 
