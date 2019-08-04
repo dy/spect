@@ -1,6 +1,7 @@
 import $ from './$.js'
-import { currentAspect, currentDiff, observables } from './fx.js'
+import { currentAspect, currentDiff, observables, callAspect } from './fx.js'
 import tuple from 'immutable-tuple'
+import 'setimmediate'
 
 let states = new WeakMap()
 
@@ -12,7 +13,7 @@ Object.defineProperty($.fn, 'state', {
   get() {
     if (!states.has(this)) states.set(this, new Proxy({}, {
       set: (target, prop, value) => {
-        console.log('set', target, prop, value)
+        console.log('set', target, prop, value, 'from', currentAspect)
 
         // skip unchanged value
         if (Object.is(target[prop], value)) return true
@@ -29,9 +30,19 @@ Object.defineProperty($.fn, 'state', {
 
           // diff is handled in fx, all changed fx are notified
         }
-        // async setter or root setter just plans all observers
+        // async setter or root setter just directly updates all fx
         else {
-          console.log('TODO: async set')
+          target[prop] = value
+
+          // FIXME: use setImmediate since afterFx is not available
+          let observers = observables.get(observable)
+          setImmediate(() => {
+            console.log('setImmediate')
+            for (let aspect of observers) {
+              console.log('setImmediate call', aspect[1].name)
+              callAspect(aspect)
+            }
+          })
         }
 
         return true
@@ -39,7 +50,7 @@ Object.defineProperty($.fn, 'state', {
 
       get: (target, prop) => {
         // FIXME: what about nested props access/writing?
-        console.log('get', this, prop)
+        console.log('get', this, prop, 'from', currentAspect)
 
         // subscribe updating current aspect, when the prop is changed
         let observable = tuple(this, prop)

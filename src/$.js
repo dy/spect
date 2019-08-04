@@ -30,16 +30,11 @@ export default function $(arg) {
 class Spect extends Array {
   constructor (...args) {
     super()
-    this.callAfter = []
     this.set(...args)
   }
   set(...args) {
     this.length = 0
     this.push(...args)
-  }
-  after(fn) {
-    this.callAfter.push(fn)
-    this.callAfter = []
   }
 }
 

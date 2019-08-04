@@ -47,7 +47,8 @@
     "fast-on-load": "^1.0.1",
     "htm": "^2.1.1",
     "immutable-tuple": "^0.4.10",
-    "incremental-dom": "^0.6.0"
+    "incremental-dom": "^0.6.0",
+    "setimmediate": "^1.0.5"
   },
   "devDependencies": {
     "microbundle": "^0.11.0",
