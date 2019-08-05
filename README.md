@@ -122,7 +122,7 @@ Each effect reflects domain it provides shortcut to.
 
 <!-- mount is a hook on html domain -->
 
-[`$`]() · [`.fx`]() · [`.state`]() · [`.html`]() · [`.text`]() · [`.class`]() · [`.attr`]() · [`.on`]() · [`.css`]() · [`.query`]() · [`.route`]()
+[`$`]()  [`.fx`]()  [`.state`]()  [`.html`]()  [`.text`]()  [`.class`]()  [`.attr`]()  [`.on`]()  [`.css`]()  [`.query`]()  [`.route`]()
 
 <!-- `call` -->
 <!-- `update` -->
@@ -137,7 +137,10 @@ Each effect reflects domain it provides shortcut to.
 Select group of elements, very much like jQuery.
 
 ```js
-// TODO
+$('#id.class > div')
+$(document)
+$(element)
+$(elements)
 ```
 
 ### `.fx` - aspect provider
@@ -145,7 +148,10 @@ Select group of elements, very much like jQuery.
 Register aspect function for group of elements.
 
 ```js
-// TODO
+$target.fx = $target => {}
+$target.fx($span => {})
+$target.fx($span => {}, [])
+$target.fx($span => {}, deps)
 ```
 
 ### `.state` - data provider
@@ -153,14 +159,16 @@ Register aspect function for group of elements.
 Read or write state, associated with an element. Read returns state of the first item in the set. Reading state subscribes current aspect to rerender whenever that state changes.
 
 ```js
-$(target).fx(function fn ($el) {
-  $els.state('x')
-  $els.state.x = 1
-  $els.state.x // 1
+// write state
+$target.state = obj
+$target.state(obj)
+$target.state.x = 1
+$target.state('x', 1)
 
-  // whenever $a.state.x is set, the fn reruns
-  $a.state.x
-})
+// read state
+$target.state()
+$target.state.x
+$target.state('x.y.z')
 ```
 
 ### `.html` - DOM provider
@@ -169,21 +177,51 @@ Provide HTML content for group of elements.
 
 ```js
 // set html
-$target.html``
-$target.html = <div>Markup</div>
+$target.html`...markup`
+$target.html = <>Markup</>
+$target.html(<>Markup</>)
+$target.html.id['id'] = <>Markup</>
+$target.html('#id', <>Markup</>)
 
 // get html
-$target.html
+$target.html()
+$target.html.id['id']
+$target.html('#selector')
 ```
 
 ### `.text` - Text content provider
 
-### `.css` - CSS provider
+Provide text content for group of elements.
 
 ```js
-$target.css`...style rules`
+// set text
+$target.text`...text`
+$target.text = <>text</>
+$target.text(<>text</>)
+$target.text.id['id'] = <>text</>
+$target.text('#id', <>text</>)
 
-$target.css
+// get text
+$target.text()
+$target.text
+```
+
+### `.css` - CSS provider
+
+Provide scoped CSS styles for element
+
+```js
+// write css
+$target.css`selector { ...rules }`
+$target.css = `selector { ...rules }`
+$target.css(`selector { ...rules }`)
+$target.css.selector = `...rules`
+$target.css('selector', '...rules')
+
+// read css
+$target.css()
+$target.css['selector'].rule
+$target.css('selector')
 ```
 
 ### `.route` - Navigation provider
@@ -195,6 +233,14 @@ Provide navigation domain. Responsible for reading routes, navigating routes.
 let [match, {id}] = $nav.route('/user/:id')
 
 $nav.route = `/user/${lang}/page`
+
+// write route
+$target.route`/path/${to}/page`
+$target.route = `/path/${to}/page`
+$target.route(`/path/${to}/page`)
+
+// read route
+$target.route()
 ```
 
 
@@ -221,6 +267,10 @@ $el.html(
 $el.html`Wrap outer <div>${ $el }</div>` // $el contains different nodes list!
 $el.html`Wrap inner <div>${ $el.children }</div>` // $el is the same
 ```
+
+### Stages of loading HTML via aspects?
+
+i18n, then app, then auth etc.
 
 
 ## Acknowledgement
