@@ -4,7 +4,7 @@ _Spect_ is [aspect-oriented](https://en.wikipedia.org/wiki/Aspect-oriented_progr
 
 
 ```js
-import { $, state, html, fx } from 'spect';
+import $ from 'spect';
 import { route } from 'spect-router';
 import { t, useLocale } from 'ttag';
 import ky from 'ky';
@@ -16,12 +16,12 @@ function app ($app) {
 
   $app.fx(async () => {
     $app.state.loading = true;
-    state.user = await ky.get(`./api/user/${id}`);
+    $app.state.user = await ky.get(`./api/user/${id}`);
     $app.state.loading = false;
   }, id);
 
   $app.html`<div use=${i18n}>${
-    $app.state.loading ? `Hello, ${ state.user.name }!` : `Thanks for patience...`;
+    $app.state.loading ? `Hello, ${ $app.state.user.name }!` : `Thanks for patience...`;
   }</div>`;
 }
 
@@ -314,7 +314,8 @@ $target.on('connected', e => {
 
 ## Plugins
 
-* [spect-route]() - provide global navigation effect
+* [spect-route]() - provide global navigation effect.
+* [spect-request]() - request provider.
 
 
 ## FAQ
@@ -339,10 +340,31 @@ $el.html`Wrap outer <div>${ $el }</div>` // $el contains different nodes list!
 $el.html`Wrap inner <div>${ $el.children }</div>` // $el is the same
 ```
 
-### Stages of loading HTML via aspects?
+### Code splitting?
 
-i18n, then app, then auth etc.
+Aspects can naturally be split to upgradable parts of html, enabling progressive-enhancement principle and reducing network load:
 
+```html
+<script>
+import $ from 'unpkg.com/spect'
+
+$('#app').is($app => {
+
+})
+
+</script>
+
+<script>
+import $ from 'unpkg.com/spect'
+
+// i18n aspect
+$('.t').use(i18n)
+
+function i18n () {
+
+}
+</script>
+```
 
 ## Acknowledgement
 
