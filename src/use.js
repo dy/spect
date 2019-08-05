@@ -47,6 +47,7 @@ export function run([$target, fn]) {
       // skip unchanged values
       if (Object.is(from, to)) continue
       let observers = observables.get(observable)
+      if (!observers) continue
       for (let aspect of observers) dirtyAspects.add(aspect)
     }
     for (let aspect of dirtyAspects) queue.push(() => run(aspect))

@@ -1,5 +1,6 @@
 import t from 'tst'
-import $ from '../$';
+import $ from '../index';
+
 
 t.todo('state: direct props set', t => {
   $a.fx($a => {
