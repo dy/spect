@@ -14,20 +14,20 @@ function app ($app) {
   let [ match, { id } ] = route('user/:id');
   if (!match) return;
 
-  fx(async () => {
+  $app.fx(async () => {
     $app.state.loading = true;
     state.user = await ky.get(`./api/user/${id}`);
     $app.state.loading = false;
   }, id);
 
-  $app.html = html`<div use=${i18n}>${
-    $app.state.loading ? `Hello, ${ state.user.name }!` : `Thanks for patience...`
+  $app.html`<div use=${i18n}>${
+    $app.state.loading ? `Hello, ${ state.user.name }!` : `Thanks for patience...`;
   }</div>`;
 }
 
 // preloader aspect
 function preloader ($el) {
-  $el.html`${el.html.original} ${ $el.state.loading && html`<canvas class="spinner" />` }`;
+  $el.html`${el.html.original} ${ $el.state.loading && $`<canvas class="spinner" />` }`;
 }
 
 // i18n aspect
@@ -122,36 +122,78 @@ Each effect reflects domain it provides shortcut to.
 
 <!-- mount is a hook on html domain -->
 
-[`$`]()  [`.fx`]()  [`.state`]()  [`.html`]()  [`.text`]()  [`.class`]()  [`.attr`]()  [`.on`]()  [`.css`]()  [`.query`]()  [`.route`]()
-
-<!-- `call` -->
-<!-- `update` -->
-<!-- `destroy` -->
-<!-- `watch()` -->
-<!-- `cls()` -->
+[`$`]()  [`.fx`]()  [`.state`]()  [`.html`]()  [`.text`]()  [`.class`]()  [`.attr`]()  [`.on`]()  [`.css`]()
 
 ##
 
 ### `$`
 
-Select group of elements, very much like jQuery.
+Wrap group of elements, very much like jQuery.
 
 ```js
 $('#id.class > div')
 $(document)
 $(element)
 $(elements)
+$(fn)
 ```
 
-### `.fx` - aspect provider
+### `.is(fn | class)` - component provider
 
-Register aspect function for group of elements.
+Turn target into a web-component. The selected element will be upgraded to provided web-component or aspect-like function.
 
 ```js
-$target.fx = $target => {}
-$target.fx($span => {})
-$target.fx($span => {}, [])
-$target.fx($span => {}, deps)
+$els.is($el => {
+
+})
+```
+
+Components can as well be attached via `.html` effect as:
+
+```js
+$els.html`<div is=${SuperButton}></div>`
+$els.html`<${Component} />`
+
+function SuperButton($el) {
+
+}
+function Component($el) {
+
+}
+```
+
+### `.use( ...fns )` - aspect provider
+
+Attach aspects to targets. Each aspect will be called for each element in selected group, receiving it as single argument.
+
+```js
+$els.use($el => {
+  // ...aspect code
+})
+```
+
+Aspects can be attached via `.html` effect as well:
+
+```js
+$els.html`<div use=${$div => {}}></div>`
+```
+
+### `.fx( fn, ...deps? )` - effect provider
+
+Register effect for group of elements. The effect is called in the next tick if deps are changed.
+
+```js
+// called each time
+$target.fx(() => {})
+
+// called once
+$target.fx(() => {}, [])
+
+// called any time deps change
+$target.fx(() => {}, deps)
+
+// destructor
+$target.fx(() => () => destroy(), deps)
 ```
 
 ### `.state` - data provider
@@ -161,14 +203,12 @@ Read or write state, associated with an element. Read returns state of the first
 ```js
 // write state
 $target.state = obj
-$target.state(obj)
 $target.state.x = 1
-$target.state('x', 1)
+$target.state(_ => _.x.y.z = 1) // safe path setter
 
 // read state
-$target.state()
 $target.state.x
-$target.state('x.y.z')
+$target.state(_ => _.x.y.z) // safe path getter
 ```
 
 ### `.html` - DOM provider
@@ -176,17 +216,15 @@ $target.state('x.y.z')
 Provide HTML content for group of elements.
 
 ```js
-// set html
+// set inner html
 $target.html`...markup`
+$target.html(html => html`...markup ${ html`...inner` }`)
+
+/* @jsx $.h */
 $target.html = <>Markup</>
-$target.html(<>Markup</>)
-$target.html.id['id'] = <>Markup</>
-$target.html('#id', <>Markup</>)
 
 // get html
-$target.html()
-$target.html.id['id']
-$target.html('#selector')
+$target.html
 ```
 
 ### `.text` - Text content provider
@@ -196,13 +234,10 @@ Provide text content for group of elements.
 ```js
 // set text
 $target.text`...text`
-$target.text = <>text</>
-$target.text(<>text</>)
-$target.text.id['id'] = <>text</>
-$target.text('#id', <>text</>)
+$target.text = `...text`
+$target.text(nodes => (nodes[2] = '...text', nodes))
 
 // get text
-$target.text()
 $target.text
 ```
 
@@ -214,34 +249,72 @@ Provide scoped CSS styles for element
 // write css
 $target.css`selector { ...rules }`
 $target.css = `selector { ...rules }`
-$target.css(`selector { ...rules }`)
-$target.css.selector = `...rules`
-$target.css('selector', '...rules')
+$target.css(rules => modifiedRules)
+$target.css.path = obj|str
 
 // read css
-$target.css()
-$target.css['selector'].rule
-$target.css('selector')
+$target.css
+$target.css.path // obj
 ```
 
-### `.route` - Navigation provider
+### `.class` - classList provider
 
-Provide navigation domain. Responsible for reading routes, navigating routes.
+Changes element classList, updates all dependent elements/aspects.
 
 ```js
-// read route
-let [match, {id}] = $nav.route('/user/:id')
+// write classes
+$target.class`foo bar baz`
+$target.class = `foo bar baz`
+$target.class = {foo: true, bar: false, baz: () => false}
+$target.class(({ foo, bar, ...clsx }) => clsx)
 
-$nav.route = `/user/${lang}/page`
-
-// write route
-$target.route`/path/${to}/page`
-$target.route = `/path/${to}/page`
-$target.route(`/path/${to}/page`)
-
-// read route
-$target.route()
+// read classes
+$target.class // { foo: true, bar: true }
+$target.class.foo // true
 ```
+
+### `.attr` - attribute provider
+
+Changes element attributes, updates all dependent elements/aspects.
+
+```js
+// write attributes
+$target.attr`foo bar baz`
+$target.attr = `foo bar baz`
+$target.attr = {foo: true, bar: false, baz: () => false}
+$target.attr(({ foo, bar, ...clsx }) => clsx)
+
+// read attributes
+$target.attr // { foo: true, bar: true }
+$target.attr.foo // true
+```
+
+### `.on` - events provider
+
+Registers event listeners for a target, scoped to current aspect.
+
+```js
+// write events
+$target.on('foo bar', e => {})
+$target.on.foo = e => {}
+$target.on = { foo: e => {} }
+
+// read events
+$target.on // { foo: e => {}, bar: e => {} }
+$target.on.foo // e => {}
+```
+
+`on` provides `connected` and `disconnected` events for all aspects.
+
+```js
+$target.on('connected', e => {
+
+})
+```
+
+## Plugins
+
+* [spect-route]() - provide global navigation effect
 
 
 ## FAQ
@@ -255,10 +328,8 @@ $(portal).html`Portal content`
 ### JSX?
 
 ```js
-/* @jsx $.h */
-$el.html(
-  <div>Inner content</div>
-)
+/* @jsx h */
+$el.html =  <div>Inner content</div>
 ```
 
 ### Wrap content?
