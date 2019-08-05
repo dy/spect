@@ -8,11 +8,13 @@ import { patch,
   symbols,
   applyProp,
   applyAttr,
+  notifications,
   skip,
   currentElement
 } from 'incremental-dom'
 
-import $ from './$.js'
+import { $ } from './$.js'
+import { queue } from './use.js'
 
 
 $.fn.html = html
@@ -22,28 +24,27 @@ $.fn.html = html
 attributes.class = applyAttr
 attributes[symbols.default] = applyProp
 
+// track aspects creation
+// notifications.nodesCreated = function (nodes) {
+//   console.log(nodes)
+// }
+
 
 // build vdom
-html.h = function h(target, props, ...children) {
+$.h = html.h = function h(target, props, ...children) {
   let [beforeId, afterId = ''] = target.split('#')
   let [tag, ...beforeClx] = beforeId.split('.')
   let [id, ...afterClx] = afterId.split('.')
   let clx = [...beforeClx, ...afterClx]
 
   // figure out effects: array props, anonymous aspects or child functions
-  let fx, propsArr = []
+  let use, propsArr = []
   for (let prop in props) {
     let val = props[prop]
-    // <div fx=${fx} />
-    if (prop === 'fx') fx = Array.isArray(val) ? val : [val]
-    // <div ...${fx} />
-    // if (typeof val === 'function' && /[0-9]+/.test(prop)) fx[parseInt(prop)] = val
+    // <div use=${use} />
+    if (prop === 'use') use = Array.isArray(val) ? val : [val]
     else propsArr.push(prop, val)
   }
-  if (children.length) children = children.filter(child => {
-    if (typeof child !== 'function') return true
-    // fx.push(child)
-  })
 
   let staticProps = []
   if (id) staticProps.push('id', id)
@@ -55,14 +56,15 @@ html.h = function h(target, props, ...children) {
   return {
     tag,
     key,
-    fx,
+    use,
     props: propsArr,
     staticProps,
     children: children.length ? children : null
   }
 }
 
-html.htm = htm.bind(html.h)
+$.htm = html.htm = htm.bind(html.h)
+
 
 export default function html(...args) {
   // let cache = currentState.htmlCache || (currentState.htmlCache = new WeakMap())
@@ -132,7 +134,7 @@ export default function html(...args) {
     if (arg.length) return [...arg].forEach(arg => render(arg))
 
     // objects create elements
-    let { tag, key, props, staticProps, children, fx } = arg
+    let { tag, key, props, staticProps, children, use } = arg
 
     // fragment (direct vdom)
     if (!tag) return children.forEach(render)
@@ -146,7 +148,7 @@ export default function html(...args) {
     }
 
     // plan aspects init
-    if (fx) afterFx.push([el, fx])
+    if (use) $(el).use(...use)
   }
 
   // reinsert nodes
@@ -155,9 +157,6 @@ export default function html(...args) {
   //   let holder = currentTarget.querySelector('#' + id)
   //   holder.replaceWith(frag)
   // }
-
-  // init aspects
-  afterFx.forEach(([el, fx]) => fx.forEach(fx => $(el).fx(fx)))
 
   // return currentTarget.childNodes.length === 1 ? currentTarget.firstChild : currentTarget.childNodes
 }

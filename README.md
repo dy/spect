@@ -316,6 +316,7 @@ $target.on('connected', e => {
 
 * [spect-route]() - provide global navigation effect.
 * [spect-request]() - request provider.
+* [spect-observe]() - selector observer.
 
 
 ## FAQ

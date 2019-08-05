@@ -1,18 +1,19 @@
 // FIXME: replace with primitive-pool WeakMap
 // this cache is for faster fetching static targets' aspects
-export const cache = new Map
+export const targetsCache = new Map
+
 
 // target is wrapper over collection of items
 export default function $(arg) {
   if (arg instanceof Node) {
-    if (!cache.has(arg)) cache.set(arg, new Spect(arg))
-    return cache.get(arg)
+    if (!targetsCache.has(arg)) targetsCache.set(arg, new Spect(arg))
+    return targetsCache.get(arg)
   }
 
   // selector can select more nodes than before, so
-  if (!cache.has(arg)) cache.set(arg, new Spect())
+  if (!targetsCache.has(arg)) targetsCache.set(arg, new Spect())
 
-  let spectable = cache.get(arg)
+  let spectable = targetsCache.get(arg)
 
   // selector can query new els set, so we update the list
   if (typeof arg === 'string') {
@@ -26,6 +27,7 @@ export default function $(arg) {
   return spectable
 }
 
+
 // FIXME: enable negative indexes via array
 class Spect extends Array {
   constructor (...args) {
@@ -38,4 +40,6 @@ class Spect extends Array {
   }
 }
 
+
+export { $ }
 export const fn = $.fn = Spect.prototype

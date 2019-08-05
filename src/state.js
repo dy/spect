@@ -1,9 +1,12 @@
-import $ from './$.js'
-import { currentAspect, currentDiff, observables, callAspect } from './fx.js'
+import { $ } from './$.js'
+import { currentAspect, currentDiff, observables, queue, flush, run } from './use.js'
 import tuple from 'immutable-tuple'
 import 'setimmediate'
 
 let states = new WeakMap()
+
+// FIXME: move planned aspects to possibly root aspect updater
+let plannedAspects = new Set
 
 // FIXME: that's super-useful to be moved to a separate lib
 
@@ -36,10 +39,14 @@ Object.defineProperty($.fn, 'state', {
 
           // FIXME: use setImmediate since afterFx is not available
           let observers = observables.get(observable)
+          for (let aspect of observers) {
+            plannedAspects.add(aspect)
+          }
           setImmediate(() => {
-            for (let aspect of observers) {
-              callAspect(aspect)
-            }
+            if (!plannedAspects.size) return
+            for (let aspect of plannedAspects) queue.push(() => run(aspect))
+            plannedAspects.clear()
+            flush()
           })
         }
 
