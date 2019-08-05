@@ -4,7 +4,7 @@ _Spect_ is [aspect-oriented](https://en.wikipedia.org/wiki/Aspect-oriented_progr
 
 
 ```js
-import { $, state, html } from 'spect';
+import { $, state, html, fx } from 'spect';
 import { route } from 'spect-router';
 import { t, useLocale } from 'ttag';
 import ky from 'ky';
@@ -14,13 +14,13 @@ function app ($app) {
   let [ match, { id } ] = route('user/:id');
   if (!match) return;
 
-  $app.fx(async () => {
+  fx(async () => {
     $app.state.loading = true;
     state.user = await ky.get(`./api/user/${id}`);
     $app.state.loading = false;
   }, id);
 
-  $app.html = html`<div fx=${i18n}>${
+  $app.html = html`<div use=${i18n}>${
     $app.state.loading ? `Hello, ${ state.user.name }!` : `Thanks for patience...`
   }</div>`;
 }
@@ -38,7 +38,7 @@ function i18n ($el) {
 }
 
 // attach aspects to DOM
-$('#app').fx(app, preloader);
+$('#app').use(app, preloader);
 ```
 
 ## Principles
