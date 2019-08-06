@@ -227,6 +227,7 @@ Read or write state, associated with an element. Read returns state of the first
 // write state
 $target.state = obj
 $target.state.x = 1
+$target.state({x: 1})
 $target.state(_ => _.x.y.z = 1) // safe path setter
 
 // read state
@@ -241,9 +242,11 @@ Provide HTML content for group of elements.
 ```js
 // set inner html
 $target.html`...markup`
+$target.html(vdom)
+$target.html = vdom | `...markup`
 $target.html(html => html`...markup ${ html`...inner` }`)
 
-/* @jsx $.h */
+/* @jsx $ */
 $target.html = <>Markup</>
 
 // get html
@@ -258,6 +261,7 @@ Provide text content for group of elements.
 // set text
 $target.text`...text`
 $target.text = `...text`
+$target.text('...text')
 $target.text(nodes => (nodes[2] = '...text', nodes))
 
 // get text
@@ -272,6 +276,7 @@ Provide scoped CSS styles for element
 // write css
 $target.css`selector { ...rules }`
 $target.css = `selector { ...rules }`
+$target.css({ rule: styles })
 $target.css(rules => modifiedRules)
 $target.css.path = obj|str
 

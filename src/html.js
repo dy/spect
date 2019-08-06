@@ -113,7 +113,7 @@ export default function html(...args) {
   // incremental-dom
   let afterFx = []
 
-  this.forEach(el => patch(el, render, vdom))
+  patch(el, render, vdom)
 
   function render (arg) {
     if (!arg) return
