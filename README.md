@@ -1,6 +1,6 @@
 # Spect
 
-_Spect_ is [aspect-oriented](https://en.wikipedia.org/wiki/Aspect-oriented_programming) framework with _super-_effects for creating expressive UIs.
+_Spect_ is [aspect-oriented](https://en.wikipedia.org/wiki/Aspect-oriented_programming) framework with _super-effects_ for creating expressive UIs.
 
 
 ```js
