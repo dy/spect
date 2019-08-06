@@ -122,7 +122,7 @@ Each effect reflects domain it provides shortcut to.
 
 <!-- mount is a hook on html domain -->
 
-[`$`]()  [`.fx`]()  [`.state`]()  [`.html`]()  [`.text`]()  [`.class`]()  [`.attr`]()  [`.on`]()  [`.css`]()
+[`$`]()  [`.is`]()  [`.use`]()  [`.fx`]()  [`.state`]()  [`.html`]()  [`.text`]()  [`.class`]()  [`.attr`]()  [`.on`]()  [`.css`]()
 
 ##
 
@@ -160,6 +160,29 @@ function SuperButton($el) {
 function Component($el) {
 
 }
+```
+
+#### Example
+
+Popup-info example from MDN ([ref](https://developer.mozilla.org/en-US/docs/Web/Web_Components/Using_custom_elements#Autonomous_custom_elements)):
+
+```html
+<popup-info img="img/alt.png" text="Your card validation code (CVC)
+  is an extra security feature — it is the last 3 or 4 numbers on the
+  back of your card."></popup-info>
+
+<script>
+  $('popup-info').is($el => {
+    $el.css`.wrapper {
+      padding: 20px
+    }`
+
+    $el.html`<span.wrapper>
+      <span.icon tabindex=0><img src=${ $el.img || 'img/default.png' }/></>
+      <span.info>${ $el.text }</>
+    </span>`
+  })
+</script>
 ```
 
 ### `.use( ...fns )` - aspect provider

@@ -2,7 +2,7 @@ import t from 'tst'
 import $ from '../index'
 import { queue } from '../src/use'
 
-t('readme: intro', t => {
+t('case: readme intro', t => {
   let el = document.createElement('div')
   el.id = 'app'
   document.body.appendChild(el)
