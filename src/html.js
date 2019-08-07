@@ -32,6 +32,12 @@ attributes[symbols.default] = applyProp
 
 // build vdom
 $.h = html.h = function h(target, props, ...children) {
+  // component
+  if (target instanceof Function) {
+    console.log(target)
+    return null
+  }
+
   let [beforeId, afterId = ''] = target.split('#')
   let [tag, ...beforeClx] = beforeId.split('.')
   let [id, ...afterClx] = afterId.split('.')
@@ -109,9 +115,6 @@ export default function html(...args) {
 
   //   return arg
   // })
-
-  // incremental-dom
-  let afterFx = []
 
   this.forEach(el => patch(el, render, vdom))
 

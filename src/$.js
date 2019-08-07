@@ -5,17 +5,17 @@ import { isIterable } from './util'
 export const targetsCache = new WeakMap
 
 
-// Collection keeps unique sequence of elements
-let collectionCache = new WeakMap
-class Collection extends Array {
+// Spect keeps unique sequence of elements
+let spectCache = new WeakMap
+class Spect extends Array {
   constructor (...nodes) {
     super()
     this.push(...nodes)
   }
   push(...els) {
     // don't push existing elements
-    let set = collectionCache.get(this)
-    if (!set) collectionCache.set(this, set = new WeakSet)
+    let set = spectCache.get(this)
+    if (!set) spectCache.set(this, set = new WeakSet)
 
     for (let i = 0; i < els.length; i++) {
       let el = els[i]
@@ -30,19 +30,19 @@ class Collection extends Array {
 }
 
 // Spect is collection, wrapped with effect methods
-export default class $ extends Collection {
+export default class $ extends Spect {
   constructor (arg, ...args) {
     super()
+
+    // $(el|frag|text|node)
+    if (arg instanceof Node) {
+      if (!targetsCache.has(arg)) targetsCache.set(arg, this.push(arg))
+      return targetsCache.get(arg)
+    }
 
     // $`...tpl`
     if (arg && arg.raw) {
       return new $((new $(document.createDocumentFragment())).html(arg, ...args)[0].childNodes)
-    }
-
-    // FIXME: make sure that's worth it over $.h
-    // h case $(tag, props, ...children)
-    if (args.length) {
-      return html.h(arg, ...args)
     }
 
     if (typeof arg === 'string') {
@@ -57,12 +57,6 @@ export default class $ extends Collection {
       }
 
       arg = document.querySelector(arg)
-    }
-
-    // $(el|frag|text|node)
-    if (arg instanceof Node) {
-      if (!targetsCache.has(arg)) targetsCache.set(arg, this.push(arg))
-      return targetsCache.get(arg)
     }
 
     // selector can query new els set, so we update the list

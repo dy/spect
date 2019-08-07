@@ -138,13 +138,17 @@ $(elements)
 $(fn)
 ```
 
-### `.is(fn | class)` - component provider
+### `.is(fn | class, tagName?)` - component provider
 
-Turn target into a web-component. The selected element will be upgraded to provided web-component or aspect-like function.
+Upgrade elements to web-components with optional `tagName`. Uses native mechanism of custom elements.
 
 ```js
 $els.is($el => {
+  // subscribe via `attributeChangedCallback`
+  $el.attr.x
 
+  // subscribe via `connectedCallback` / `disconnectedCallback`
+  $el.on('connected', e => () => {})
 })
 ```
 
@@ -155,35 +159,17 @@ $els.html`<div is=${SuperButton}></div>`
 $els.html`<${Component} />`
 
 function SuperButton($el) {
-
+  // ...
 }
 function Component($el) {
-
+  // ...
 }
 ```
 
-#### Example
+#### Examples
 
-Popup-info example from MDN ([ref](https://developer.mozilla.org/en-US/docs/Web/Web_Components/Using_custom_elements#Autonomous_custom_elements)):
+* [Popup-info example from MDN](https://developer.mozilla.org/en-US/docs/Web/API/CustomElementRegistry/define#Autonomous_custom_element):
 
-```html
-<popup-info img="img/alt.png" text="Your card validation code (CVC)
-  is an extra security feature — it is the last 3 or 4 numbers on the
-  back of your card."></popup-info>
-
-<script>
-  $('popup-info').is($el => {
-    $el.css`.wrapper {
-      padding: 20px
-    }`
-
-    $el.html`<span.wrapper>
-      <span.icon tabindex=0><img src=${ $el.img || 'img/default.png' }/></>
-      <span.info>${ $el.text }</>
-    </span>`
-  })
-</script>
-```
 
 ### `.use( ...fns )` - aspect provider
 
@@ -191,7 +177,11 @@ Attach aspects to targets. Each aspect will be called for each element in select
 
 ```js
 $els.use($el => {
-  // ...aspect code
+  // subscribe via mutation observer
+  $el.attr.x
+
+  // subscribe via fast-on-load
+  $el.on('connected', e => () => {})
 })
 ```
 
@@ -339,6 +329,10 @@ $target.on('connected', e => {
 
 })
 ```
+
+#### Related packages
+
+* [use-event-listener](https://github.com/donavon/use-event-listener)
 
 ## Plugins
 
