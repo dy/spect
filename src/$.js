@@ -1,101 +1,80 @@
+import { isIterable } from './util'
+
 // FIXME: replace with primitive-pool WeakMap
 // this cache is for faster fetching static targets' aspects
-export const targetsCache = new Map
+export const targetsCache = new WeakMap
 
 
-// aspect === [node, fn] tuple
-// $ is collections handler, eventually attaching wrappers for set of elements to attach effects
-export default function $(arg, ...args) {
-  // h case $(tag, props, ...children)
-  if (args.length) {
-    let vdom = html.h(arg, ...args)
-    return $(document.createDocumentFragment()).html(arg, ...args)
+// Collection keeps unique sequence of elements
+let collectionCache = new WeakMap
+class Collection extends Array {
+  constructor (...nodes) {
+    super()
+    this.push(...nodes)
   }
+  push(...els) {
+    // don't push existing elements
+    let set = collectionCache.get(this)
+    if (!set) collectionCache.set(this, set = new WeakSet)
 
-  if (typeof arg === 'string') {
-    arg = arg.trim()
-
-    // html case $`<></>`
-    if (arg[0] === '<') {
-      return $(document.createDocumentFragment()).html(arg, ...args)
-    }
-
-    arg = document.querySelector(arg)
-  }
-
-  // $(el|frag|text|node)
-  if (arg instanceof Node) {
-    if (!targetsCache.has(arg)) targetsCache.set(arg, new Spect(arg))
-    return targetsCache.get(arg)
-  }
-
-  throw Error('Collections are unimplemented for now.')
-
-  // selector can select more nodes than before, so
-  if (!targetsCache.has(arg)) targetsCache.set(arg, [])
-
-  let collection = targetsCache.get(arg)
-
-  // selector can query new els set, so we update the list
-  if (typeof arg === 'string') {
-    arg = document.querySelectorAll(arg)
-  }
-
-  // nodelist/array could have changed, so make sure new els are in the list
-  // FIXME: that can be done faster
-  collection.length = 0
-
-
-  return collection
-}
-
-function Spect (...args) {
-  this.nodes = args
-}
-
-// Proxy prototype for collection provides:
-// a. negative array indexes
-// b. transparent mapping of effect call to all elements in collection
-
-Spect.prototype = new Proxy({}, {
-  get: function (target, key, receiver) {
-    console.log(`getting ${key}!`);
-    return Reflect.get(target, key, receiver);
-  },
-  set: function (target, key, value, receiver) {
-    registerEffect(target, key, value)
-    return true
-  }
-})
-
-function registerEffect(target, name, value) {
-  // turn value into callable
-  if (typeof value !== 'function') {
-    value = new Proxy(value, {
-      apply: (...args) => {
-        console.log('call', this)
-        // this.nodes.forEach(el => Reflect.apply(...args))
+    for (let i = 0; i < els.length; i++) {
+      let el = els[i]
+      if (!set.has(el)) {
+        set.add(el)
+        super.push(el)
       }
-    })
-  }
-
-  Object.defineProperty(target, name, {
-    get () {
-      console.log('get', name, this)
-      // return Reflect.get(this.nodes[0], name)
-    },
-    set (value) {
-      console.log('set', this)
-      // this.nodes.forEach(node => Reflect.set(node, name, value))
     }
-  })
+
+    return this
+  }
 }
 
-// FIXME: useful as external lib
-function broadcast(target, key, value, receiver) {
-  // define property on holder so that any interaction with that broadcasts method to all values in the set
+// Spect is collection, wrapped with effect methods
+export default class $ extends Collection {
+  constructor (arg, ...args) {
+    super()
+
+    // $`...tpl`
+    if (arg && arg.raw) {
+      return new $((new $(document.createDocumentFragment())).html(arg, ...args)[0].childNodes)
+    }
+
+    // FIXME: make sure that's worth it over $.h
+    // h case $(tag, props, ...children)
+    if (args.length) {
+      return html.h(arg, ...args)
+    }
+
+    if (typeof arg === 'string') {
+      arg = arg.trim()
+
+      // html case $`<></>`
+      if (arg[0] === '<') {
+        let statics = [arg]
+        statics.raw = [arg]
+        let result = (new $(document.createDocumentFragment())).html(statics, ...args)
+        return new $(result[0].childNodes)
+      }
+
+      arg = document.querySelector(arg)
+    }
+
+    // $(el|frag|text|node)
+    if (arg instanceof Node) {
+      if (!targetsCache.has(arg)) targetsCache.set(arg, this.push(arg))
+      return targetsCache.get(arg)
+    }
+
+    // selector can query new els set, so we update the list
+    if (typeof arg === 'string') {
+      arg = document.querySelectorAll(arg)
+    }
+
+    isIterable(arg) ? this.push(...arg) : this.push(arg)
+  }
 }
 
 
 export { $ }
-export const fn = $.fn = Spect.prototype
+export const fn = $.fn = $.prototype
+

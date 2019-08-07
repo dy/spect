@@ -36,7 +36,7 @@ export function run([$target, fn]) {
   // console.group('run', fn.name)
   $target.forEach(el => {
     // console.log('run', el, fn.name)
-    currentAspect = tuple($(el), fn)
+    currentAspect = tuple(new $(el), fn)
     currentDiff = new Map
 
     fn.call(el, currentAspect[0])

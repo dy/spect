@@ -1,7 +1,7 @@
 import t from 'tst'
 import $ from '../index'
 
-t.only('is: popup-info', t => {
+t('is: popup-info', t => {
   // example from MDN
 
   let $el = $('<div>')

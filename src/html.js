@@ -113,7 +113,7 @@ export default function html(...args) {
   // incremental-dom
   let afterFx = []
 
-  patch(el, render, vdom)
+  this.forEach(el => patch(el, render, vdom))
 
   function render (arg) {
     if (!arg) return
@@ -148,7 +148,7 @@ export default function html(...args) {
     }
 
     // plan aspects init
-    if (use) $(el).use(...use)
+    if (use) (new $(el)).use(...use)
   }
 
   // reinsert nodes
@@ -159,4 +159,6 @@ export default function html(...args) {
   // }
 
   // return currentTarget.childNodes.length === 1 ? currentTarget.firstChild : currentTarget.childNodes
+
+  return this
 }
