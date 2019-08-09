@@ -10,41 +10,48 @@ export function isIterable(val) {
   return (val != null && typeof val[Symbol.iterator] === 'function');
 }
 
-
+// store name correspondance between function/name
+let nameCache = new WeakMap
 export function getTagName (fn) {
   if (!fn.name) throw Error('Component function must have a name.')
-  return SPECT_COMPONENT_PREFIX + kebab(fn.name)
+
+  if (nameCache.has(fn)) return nameCache.get(fn)
+
+  let name = SPECT_COMPONENT_PREFIX + kebab(fn.name)
+
+  nameCache.set(fn, name)
+
+  return name
 }
 
 
 // TODO: custom element must be just a provider of constructor/attr/mount effects for main aspect, the rest is standard fn
-export function getCustomElement (name, fn) {
-  // let SpectComponent = function (...args) {
-  //   HTMLElement.constructor.call(this)
-  //   console.log('Created class', args)
-  // }
-  // SpectComponent.prototype = Object.create(HTMLElement)
+let customTags = new WeakMap
+export function getCustomElement (fn, ext) {
+  let name = getTagName(fn)
 
-  class SpectComponent extends HTMLElement {
-    constructor () {
-      super()
-      console.log('Created class')
+  let ctor = customElements.get(name)
+  if (ctor) return ctor
 
-      ;(new $(this)).use(fn)
-    }
+  let proto = ext ? Object.getPrototypeOf(document.createElement(ext)) : HTMLElement
+
+  function $Component () {
+    console.log('Created class')
+
+    ;(new $(this)).use(fn)
   }
 
-  // SpectComponent.prototype = Object.getPrototypeOf($el[0])
-  // Object.create(Object.getPrototypeOf($el[0]), {
-  //   constructor: {
-  //     value: SpectComponent,
-  //     enumerable: false,
-  //     writable: true,
-  //     configurable: true
-  //   }
-  // })
+  $Component.prototype = proto
+  Object.create(proto, {
+    constructor: {
+      value: $Component,
+      enumerable: false,
+      writable: true,
+      configurable: true
+    }
+  })
 
-  customElements.define(name, SpectComponent)
+  customElements.define(name, $Component, ext ? { extends: ext } : undefined)
 
-  return SpectComponent
+  return $Component
 }

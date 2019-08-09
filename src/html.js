@@ -35,11 +35,11 @@ attributes[symbols.default] = applyProp
 $.h = html.h = function h(target, props={}, ...children) {
   let use, propsArr = []
   let staticProps = []
-  let is, tag, clx = [], id
+  let is, tag, clx = [], id, constructor
 
   if (typeof target === 'function') {
     tag = getTagName(target)
-    is = getCustomElement(tag, target)
+    constructor = getCustomElement(target)
   }
 
   // direct element
@@ -64,12 +64,11 @@ $.h = html.h = function h(target, props={}, ...children) {
     if (prop === 'is') {
       // <div is=${fn}>
       if (typeof val === 'function') {
-        fnComponent;
+        is = getTagName(val)
+        constructor = getCustomElement(val, tag)
       }
       // <div is=name>
-      else if (typeof val === 'string') {
-        namedComponent
-      }
+      // we don't touch that, user knows what he's doing
     }
 
     else propsArr.push(prop, val)
@@ -83,6 +82,7 @@ $.h = html.h = function h(target, props={}, ...children) {
     key,
     use,
     is,
+    constructor,
     props: propsArr,
     staticProps,
     children
@@ -157,18 +157,19 @@ export default function html(...args) {
     if (arg.length) return [...arg].forEach(arg => render(arg))
 
     // objects create elements
-    let { tag, key, props, staticProps, children, use, is } = arg
+    let { tag, key, props, staticProps, children, use, is, constructor } = arg
 
     // fragment (direct vdom)
     if (!tag) return children.forEach(render)
 
     let el
 
-    // custom element
+    // <ul is="custom-el" />
     if (is) {
-      el = elementOpen(is, key, staticProps, ...props)
+      function create() { return document.createElement(tag, { is }) }
+      el = elementOpen(create, key, staticProps, ...props);
       children.forEach(render)
-      elementClose(is)
+      elementClose(create);
     }
 
     // if (!children) el = elementVoid(tag, key, staticProps, ...props)
