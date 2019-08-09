@@ -1,10 +1,11 @@
 import { isIterable } from './util'
 
-// FIXME: replace with primitive-pool WeakMap
-// this cache is for faster fetching static targets' aspects
+// this cache is for faster fetching static targets
 export const targetsCache = new WeakMap
 
 
+// FIXME: don't extend Array, but provide some compatible methods instead
+// length, add, remove, [idx], [-idx], iterator
 // Spect keeps unique sequence of elements
 let spectCache = new WeakMap
 class Spect extends Array {

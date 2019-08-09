@@ -1,3 +1,4 @@
+import "./src/is"
 import "./src/use"
 import "./src/fx"
 import "./src/state"

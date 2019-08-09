@@ -1,7 +1,32 @@
 import t from 'tst'
 import $ from '../index'
 
-t.only('is: popup-info direct html', t => {
+t.todo('is: direct function creates component', t => {
+  let $el = $($el => {
+
+  })
+})
+
+t.skip('is: simple element with no content should  (?) be upgraded', t => {
+  let $el = $`<div/>`.is($el => {
+    console.log($el)
+  })
+})
+
+t.todo('is: existing elements with `is` attr should be hydrated', t => {
+  let $el = $`<div is="foo-bar"></div>`
+  $el.is(FooBar)
+
+  // TODO: and simple tags
+  // `<div is="foo"></div>`
+
+})
+
+t.todo('is: existing element with `is` attr not matching the fn name should throw error', t => {
+  $`<div is="xyz-abc"/>`.is(FooBar)
+})
+
+t.todo('is: popup-info direct html', t => {
 
   let $el = $('<div/>')
 

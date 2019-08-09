@@ -15,6 +15,7 @@ import { patch,
 
 import { $ } from './$.js'
 import { queue } from './use.js'
+import { getTagName, customElement } from './util.js';
 
 
 $.fn.html = html
@@ -31,20 +32,25 @@ attributes[symbols.default] = applyProp
 
 
 // build vdom
-$.h = html.h = function h(target, props, ...children) {
-  // component
-  if (target instanceof Function) {
-    console.log(target)
-    return null
+$.h = html.h = function h(target, props={}, ...children) {
+  let use, propsArr = []
+  let staticProps = []
+  let is
+
+  if (typeof target === 'function') {
+    target = customElement(target)
   }
 
+  // direct element
   let [beforeId, afterId = ''] = target.split('#')
   let [tag, ...beforeClx] = beforeId.split('.')
   let [id, ...afterClx] = afterId.split('.')
   let clx = [...beforeClx, ...afterClx]
 
+  if (id) staticProps.push('id', id)
+  if (clx.length) staticProps.push('class', clx.join(' '))
+
   // figure out effects: array props, anonymous aspects or child functions
-  let use, propsArr = []
   for (let prop in props) {
     let val = props[prop]
     // <div use=${use} />
@@ -52,17 +58,14 @@ $.h = html.h = function h(target, props, ...children) {
     else propsArr.push(prop, val)
   }
 
-  let staticProps = []
-  if (id) staticProps.push('id', id)
-  if (clx.length) staticProps.push('class', clx.join(' '))
-
-  let key = id || (props && (props.id || props.key))
+  let key = id || (props && (props.key || props.id))
 
   // FIXME: use more static props, like type
   return {
     tag,
     key,
     use,
+    is,
     props: propsArr,
     staticProps,
     children: children.length ? children : null
@@ -137,13 +140,21 @@ export default function html(...args) {
     if (arg.length) return [...arg].forEach(arg => render(arg))
 
     // objects create elements
-    let { tag, key, props, staticProps, children, use } = arg
+    let { tag, key, props, staticProps, children, use, is } = arg
 
     // fragment (direct vdom)
     if (!tag) return children.forEach(render)
 
     let el
-    if (!children) el = elementVoid(tag, key, staticProps, ...props)
+
+    // custom element
+    if (is) {
+      el = elementOpen(is, key, staticProps, ...props)
+      children.forEach(render)
+      elementClose(is)
+    }
+
+    // if (!children) el = elementVoid(tag, key, staticProps, ...props)
     else {
       el = elementOpen(tag, key, staticProps, ...props)
       children.forEach(render)
