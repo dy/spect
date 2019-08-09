@@ -3,7 +3,7 @@ import $ from '../index'
 
 t.todo('is: direct function creates component', t => {
   let $el = $($el => {
-
+    console.log('init')
   })
 })
 

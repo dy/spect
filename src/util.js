@@ -1,4 +1,5 @@
 import kebab from 'kebab-case'
+import $ from './$.js'
 
 
 export const SPECT_CLASS = '👁'
@@ -16,14 +17,23 @@ export function getTagName (fn) {
 }
 
 
-// turn function into a custom element class
-// register custom element by name inferred from the function
-// return tag name
-export function customElement (fn) {
-  let SpectComponent = function (...args) {
-    console.log('Created class', args)
+// TODO: custom element must be just a provider of constructor/attr/mount effects for main aspect, the rest is standard fn
+export function getCustomElement (name, fn) {
+  // let SpectComponent = function (...args) {
+  //   HTMLElement.constructor.call(this)
+  //   console.log('Created class', args)
+  // }
+  // SpectComponent.prototype = Object.create(HTMLElement)
+
+  class SpectComponent extends HTMLElement {
+    constructor () {
+      super()
+      console.log('Created class')
+
+      ;(new $(this)).use(fn)
+    }
   }
-  SpectComponent.prototype = Object.create(HTMLElement)
+
   // SpectComponent.prototype = Object.getPrototypeOf($el[0])
   // Object.create(Object.getPrototypeOf($el[0]), {
   //   constructor: {
@@ -33,6 +43,8 @@ export function customElement (fn) {
   //     configurable: true
   //   }
   // })
+
+  customElements.define(name, SpectComponent)
 
   return SpectComponent
 }

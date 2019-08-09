@@ -15,7 +15,7 @@ import { patch,
 
 import { $ } from './$.js'
 import { queue } from './use.js'
-import { getTagName, customElement } from './util.js';
+import { getTagName, getCustomElement } from './util.js';
 
 
 $.fn.html = html
@@ -35,17 +35,22 @@ attributes[symbols.default] = applyProp
 $.h = html.h = function h(target, props={}, ...children) {
   let use, propsArr = []
   let staticProps = []
-  let is
+  let is, tag, clx = [], id
 
   if (typeof target === 'function') {
-    target = customElement(target)
+    tag = getTagName(target)
+    is = getCustomElement(tag, target)
   }
 
   // direct element
-  let [beforeId, afterId = ''] = target.split('#')
-  let [tag, ...beforeClx] = beforeId.split('.')
-  let [id, ...afterClx] = afterId.split('.')
-  let clx = [...beforeClx, ...afterClx]
+  else if (typeof target === 'string') {
+    let [beforeId, afterId = ''] = target.split('#')
+    let beforeClx = beforeId.split('.')
+    tag = beforeClx.shift()
+    let afterClx = afterId.split('.')
+    id = afterClx.shift()
+    clx = [...beforeClx, ...afterClx]
+  }
 
   if (id) staticProps.push('id', id)
   if (clx.length) staticProps.push('class', clx.join(' '))
@@ -53,8 +58,20 @@ $.h = html.h = function h(target, props={}, ...children) {
   // figure out effects: array props, anonymous aspects or child functions
   for (let prop in props) {
     let val = props[prop]
-    // <div use=${use} />
+    // <div use=${use}>
     if (prop === 'use') use = Array.isArray(val) ? val : [val]
+
+    if (prop === 'is') {
+      // <div is=${fn}>
+      if (typeof val === 'function') {
+        fnComponent;
+      }
+      // <div is=name>
+      else if (typeof val === 'string') {
+        namedComponent
+      }
+    }
+
     else propsArr.push(prop, val)
   }
 
@@ -68,7 +85,7 @@ $.h = html.h = function h(target, props={}, ...children) {
     is,
     props: propsArr,
     staticProps,
-    children: children.length ? children : null
+    children
   }
 }
 

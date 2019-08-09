@@ -1,5 +1,5 @@
 import $ from './$.js'
-import kebab from 'kebab-case'
+import { run, flush } from './use.js'
 
 
 $.fn.is = function is (fn) {
@@ -11,46 +11,21 @@ $.fn.is = function is (fn) {
 
   // TODO: register only direct web-components, wait for extended ones from google
   // register class
-  let tagName = getTagName(this, fn)
-  let Class = getClass(this, fn)
-  customElements.define(tagName, Class, { extends: this[0].tagName.toLowerCase() })
+  // let tagName = getTagName(this, fn)
+  // let Class = getClass(this, fn)
+  // customElements.define(tagName, Class, { extends: this[0].tagName.toLowerCase() })
 
-  // turn element into inherited class
-  this.forEach(el => el.setAttribute('is', tagName))
-  this.forEach(el => customElements.upgrade(el))
+  // // turn element into inherited class
+  // this.forEach(el => el.setAttribute('is', tagName))
+  // this.forEach(el => customElements.upgrade(el))
+
+
+  // console.log('use', fn.name)
+  // TODO: some special aspect class would allow for custom effects here
+  // let aspect = tuple(this, fn)
+  // queue.push(() => run(aspect))
+
+  // flush()
 
   return this
 }
-
-
-function getClass($el, fn) {
-  let SpectComponent = function (...args) {
-    console.log('Created class', args)
-  }
-  SpectComponent.prototype = Object.getPrototypeOf($el[0])
-  // Object.create(Object.getPrototypeOf($el[0]), {
-  //   constructor: {
-  //     value: SpectComponent,
-  //     enumerable: false,
-  //     writable: true,
-  //     configurable: true
-  //   }
-  // })
-
-  return SpectComponent
-}
-
-
-let anonCount = 0
-function getTagName ($el, fn) {
-  // FIXME: turn fn name into dash-case
-  if (fn.name) {
-    let name = kebab(fn.name)
-    console.log(name)
-  }
-
-  // FIXME: ignore anonymous function, because we can't identify them by id
-  // throw Error('Component can\'t be anonymous function - it must have a name.')
-  return $el[0].tagName.toLowerCase() + '-' + (anonCount++).toString(36)
-}
-
