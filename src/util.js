@@ -1,23 +1,33 @@
 import kebab from 'kebab-case'
 import $ from './$.js'
+import { create } from 'domain';
 
 
 export const SPECT_CLASS = '👁'
-export const SPECT_COMPONENT_PREFIX = 's'
 
 
 export function isIterable(val) {
   return (val != null && typeof val[Symbol.iterator] === 'function');
 }
 
+
+
 // store name correspondance between function/name
 let nameCache = new WeakMap
+const counters = {}
 export function getTagName (fn) {
   if (!fn.name) throw Error('Component function must have a name.')
 
   if (nameCache.has(fn)) return nameCache.get(fn)
 
-  let name = SPECT_COMPONENT_PREFIX + kebab(fn.name)
+  let name = kebab(fn.name).slice(1)
+
+  // add num suffix to single-word names
+  let parts = name.split('-')
+  if (parts.length < 2) {
+    if (!counters[name]) counters[name] = 0
+    name += '-' + (counters[name]++)
+  }
 
   nameCache.set(fn, name)
 
@@ -33,25 +43,21 @@ export function getCustomElement (fn, ext) {
   let ctor = customElements.get(name)
   if (ctor) return ctor
 
-  let proto = ext ? Object.getPrototypeOf(document.createElement(ext)) : HTMLElement
+  let proto = ext ? Object.getPrototypeOf(document.createElement(ext)).constructor : HTMLElement
+  let Component = createClass(fn, proto)
 
-  function $Component () {
-    console.log('Created class')
+  customElements.define(name, Component, ext ? { extends: ext } : undefined)
 
-    ;(new $(this)).use(fn)
-  }
+  return Component
+}
 
-  $Component.prototype = proto
-  Object.create(proto, {
-    constructor: {
-      value: $Component,
-      enumerable: false,
-      writable: true,
-      configurable: true
+function createClass (fn, HTMLElement) {
+  return class HTMLSpectComponent extends HTMLElement {
+    constructor() {
+      super()
+
+      // FIXME: make sure that's the right place for it
+      ;(new $(this)).use(fn)
     }
-  })
-
-  customElements.define(name, $Component, ext ? { extends: ext } : undefined)
-
-  return $Component
+  }
 }

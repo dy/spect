@@ -42,6 +42,7 @@ export function run([$target, fn]) {
     fn.call(el, currentAspect[0])
 
     // after current fx - figure out aspects to update based on diffs
+    // FIXME: can be outsorced to a separate handler like setimmediate
     let dirtyAspects = new Set
     for (let [observable, [from, to]] of currentDiff) {
       // skip unchanged values

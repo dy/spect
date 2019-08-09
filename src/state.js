@@ -23,6 +23,7 @@ Object.defineProperty($.fn, 'state', {
 
         let observable = tuple(this, prop)
 
+        // FIXME: these two cases are the same, triggered at different times
         // current aspect plans rerendering observering aspects after current scope
         if (currentAspect) {
           // FIXME: probably needs deep clone
@@ -62,6 +63,8 @@ Object.defineProperty($.fn, 'state', {
         if (!observables.has(observable)) observables.set(observable, new Set)
         let observers = observables.get(observable)
         if (!observers.has(currentAspect)) observers.add(currentAspect)
+
+        // FIXME: that could be written to current aspect deps
 
         // add observable to the list of aspect observables (external sources of state updates)
         // if (!aspectObservables.has(currentAspect)) aspectObservables.set(currentAspect, new Set)

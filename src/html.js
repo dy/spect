@@ -21,8 +21,9 @@ import { getTagName, getCustomElement } from './util.js';
 $.fn.html = html
 
 
-// configure incremental-dom
+// configure incremental-dom attributes
 attributes.class = applyAttr
+attributes.is = (...args) => (applyAttr(...args), applyProp(...args))
 attributes[symbols.default] = applyProp
 
 // track aspects creation
@@ -35,7 +36,7 @@ attributes[symbols.default] = applyProp
 $.h = html.h = function h(target, props={}, ...children) {
   let use, propsArr = []
   let staticProps = []
-  let is, tag, clx = [], id, constructor
+  let is, tag, classes = [], id, constructor
 
   if (typeof target === 'function') {
     tag = getTagName(target)
@@ -49,11 +50,11 @@ $.h = html.h = function h(target, props={}, ...children) {
     tag = beforeClx.shift()
     let afterClx = afterId.split('.')
     id = afterClx.shift()
-    clx = [...beforeClx, ...afterClx]
+    classes = [...beforeClx, ...afterClx]
   }
 
   if (id) staticProps.push('id', id)
-  if (clx.length) staticProps.push('class', clx.join(' '))
+  if (classes.length) staticProps.push('class', classes.join(' '))
 
   // figure out effects: array props, anonymous aspects or child functions
   for (let prop in props) {
@@ -66,6 +67,7 @@ $.h = html.h = function h(target, props={}, ...children) {
       if (typeof val === 'function') {
         is = getTagName(val)
         constructor = getCustomElement(val, tag)
+        staticProps.push('is', is)
       }
       // <div is=name>
       // we don't touch that, user knows what he's doing
@@ -157,7 +159,7 @@ export default function html(...args) {
     if (arg.length) return [...arg].forEach(arg => render(arg))
 
     // objects create elements
-    let { tag, key, props, staticProps, children, use, is, constructor } = arg
+    let { tag, key, props, staticProps, children, use, is } = arg
 
     // fragment (direct vdom)
     if (!tag) return children.forEach(render)
