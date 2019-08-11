@@ -1,20 +1,59 @@
 import { isIterable } from './util'
 
-// this cache is for faster fetching static targets
-export const targetsCache = new WeakMap
-
-
-// FIXME: don't extend Array, but provide some compatible methods instead
+// FIXME: don't extend Array, but provide some compatible methods instead:
 // length, add, remove, [idx], [-idx], iterator
-// Spect keeps unique sequence of elements
-let spectCache = new WeakMap
-class Spect extends Array {
-  constructor (...nodes) {
+// these array methods may publish events (see pub/sub below)
+// But it must display as array in console
+
+
+// Spect is a wrapper over any collection of elements
+// It is shallow, ie. doesn't provide any data associated with itself
+// All the data it provides is mirrored to collection
+const spectCache = new WeakMap
+class $ extends Array {
+  constructor (arg, ...args) {
     super()
-    this.push(...nodes)
+
+    // $(el|frag|text|node)
+    if (arg instanceof Node) {
+      this.push(arg)
+      return this
+    }
+
+    // $`...tpl`
+    if (arg && arg.raw) {
+      return create((create(document.createDocumentFragment())).html(arg, ...args)[0].childNodes)
+    }
+
+    if (typeof arg === 'string') {
+      arg = arg.trim()
+
+      // html case $`<></> html content`
+      if (/</.test(arg)) {
+        let statics = [arg]
+        statics.raw = [arg]
+        let result = (create(document.createDocumentFragment())).html(statics, ...args)
+        return create(result[0].childNodes)
+      }
+
+      arg = document.querySelector(arg)
+    }
+
+    // selector can query new els set, so we update the list
+    if (typeof arg === 'string') {
+      arg = document.querySelectorAll(arg)
+    }
+
+    if (isIterable(arg)) {
+      this.add(...arg)
+      // cache first element in the set
+      // Spect(arg[0])
+    }
+    else this.add(arg)
   }
-  push(...els) {
-    // don't push existing elements
+
+  // append elements to the set without duplicates
+  add(...els) {
     let set = spectCache.get(this)
     if (!set) spectCache.set(this, set = new WeakSet)
 
@@ -30,46 +69,29 @@ class Spect extends Array {
   }
 }
 
-// Spect is collection, wrapped with effect methods
-export default class $ extends Spect {
-  constructor (arg, ...args) {
-    super()
+create.fn = $.prototype
 
-    // $(el|frag|text|node)
-    if (arg instanceof Node) {
-      if (!targetsCache.has(arg)) targetsCache.set(arg, this.push(arg))
-      return targetsCache.get(arg)
-    }
+// FIXME: merge with class when browsers support decorators
+export default function create(...args) { return new $(...args) }
+export { create, create as $ }
 
-    // $`...tpl`
-    if (arg && arg.raw) {
-      return new $((new $(document.createDocumentFragment())).html(arg, ...args)[0].childNodes)
-    }
 
-    if (typeof arg === 'string') {
-      arg = arg.trim()
 
-      // html case $`<></>`
-      if (arg[0] === '<') {
-        let statics = [arg]
-        statics.raw = [arg]
-        let result = (new $(document.createDocumentFragment())).html(statics, ...args)
-        return new $(result[0].childNodes)
-      }
+// pubsub for effect changes
+export const  GET = 1, SET = 2
 
-      arg = document.querySelector(arg)
-    }
-
-    // selector can query new els set, so we update the list
-    if (typeof arg === 'string') {
-      arg = document.querySelectorAll(arg)
-    }
-
-    isIterable(arg) ? this.push(...arg) : this.push(arg)
-  }
+export const observers = {
+  [GET]: [],
+  [SET]: []
 }
 
+export const subscribe = create.subscribe = function (TYPE, fn) {
+  if (observers[TYPE].indexOf(fn) >= 0) return
+  observers[TYPE].push(fn)
+}
 
-export { $ }
-export const fn = $.fn = $.prototype
-
+export const publish = create.publish = function (TYPE, element, domain, ...args) {
+  // domain → [domain, path]
+  if (typeof domain === 'string') domain = [domain]
+  observers[TYPE].forEach(fn => fn(element, domain, ...args))
+}

@@ -1,72 +1,116 @@
-import $ from './$.js'
+import { $, GET, SET } from './$.js'
+import { raf } from './util.js'
 import tuple from 'immutable-tuple'
 
-// aspect === [target, fx], a token identifying fn called on target, like $target.fx(fn)
 
-// queue is a sequence of ['fx'|'use'|'is', [context, fn], ...args] to run after current aspect
-export let queue = []
+// target/domainPath can be:
+// [*, `state.x.y.x`]
+// [*, `attr`] (direct domain)
+// [*, `.x.y.z`] (direct props)
+// [null, `router`] (global effect)
+// FIXME: use private values instead of observables
+export let observables = new WeakMap
+$.subscribe(GET, (target, domainPath, ...args) => {
+  // async callsite, outside of aspects - nothing to subscribe
+  if (!currentElement) return
 
-// current aspect [$target, fx]
-export let currentAspect
+  // subscribe currentAspect target to update
+  let observable = tuple(target, ...domainPath)
+  if (!observables.has(observable)) observables.set(observable, new Set)
+  observables.get(observable).add(currentElement)
+})
+$.subscribe(SET, (target, domainPath, value, prev, ...args) => {
+  let observable = tuple(target, ...domainPath)
 
-// [ $target, prop ] : [...aspects] - aspects, assigned to observed data source
-export let observables = new Map
+  // diff is checked in next frame, required targets to update are figured out
+  let observableDiff = diff.get(observable)
+  if (!observableDiff) diff.set(observable, observableDiff = [prev, value])
+  else observableDiff[1] = value
 
-// set of changed observables [ target, prop ] for currentAspect call
-export let currentDiff = null
+  // console.log('set diff', diff)
+
+  // current frame is checked on diff automatically, so schedule only async calls
+  if (!currentElement) scheduleUpdate()
+})
 
 
 // attach aspects to current target
-export const use = $.fn.use = function use(...fns) {
+let useCache = new WeakMap()
+export const use = $.fn.use = function use(fn, ...fns) {
+  // recurse
+  if (fns.length > 1) {
+    this.use(fn)
+    fns.forEach(fn => this.use(fn))
+    return this
+  }
 
-  fns.forEach(fn => {
-    // console.log('use', fn.name)
-    let aspect = tuple(this, fn)
-    queue.push(() => run(aspect))
+  this.forEach(el => {
+    // FIXME: replace with privates
+    let aspects = useCache.get(el)
+    if (!aspects) useCache.set(el, aspects = [])
+
+    // FIXME: take priority into consideration
+    if (aspects.indexOf(fn) < 0) aspects.push(fn)
+
+    // schedule update
+    queue.push(el)
   })
 
-  flush()
+  scheduleUpdate()
 
   return this
 }
 
 
-// run aspect
-export function run([$target, fn]) {
-  // console.group('run', fn.name)
-  $target.forEach(el => {
-    // console.log('run', el, fn.name)
-    currentAspect = tuple(new $(el), fn)
-    currentDiff = new Map
-
-    fn.call(el, currentAspect[0])
-
-    // after current fx - figure out aspects to update based on diffs
-    // FIXME: can be outsorced to a separate handler like setimmediate
-    let dirtyAspects = new Set
-    for (let [observable, [from, to]] of currentDiff) {
-      // skip unchanged values
-      if (Object.is(from, to)) continue
-      let observers = observables.get(observable)
-      if (!observers) continue
-      for (let aspect of observers) dirtyAspects.add(aspect)
-    }
-    for (let aspect of dirtyAspects) queue.push(() => run(aspect))
-
-    currentDiff = null
-    currentAspect = null
+// plans function before the next rerender
+let plannedRaf
+export function scheduleUpdate () {
+  if (plannedRaf) return
+  plannedRaf = raf(() => {
+    plannedRaf = null
+    flush()
   })
-  // console.groupEnd()
 }
 
-// run planned aspects
-let running = false
+// FIXME: add recursion catcher
+// list of planned targets to re-render the next tick
+export const queue = []
 export function flush () {
-  if (running) return
-  running = true
+  if (diff.size) calcDiff()
   while (queue.length) {
-    let fn = queue.shift()
-    fn()
+    let el = queue.shift()
+    let aspects = useCache.get(el)
+    aspects.forEach(aspect => run(el, aspect))
   }
-  running = false
+  // keep flushing while diff is something - leave no diffs in current frame
+  if (diff.size) return flush()
+}
+
+
+// set of changed observables [ target, domainPath ] to check the next frame
+// FIXME: ideally diff is calculated in webworker, but needs benchmarking
+export const diff = new Map
+export function calcDiff() {
+  // console.log('check diff', diff)
+  for (let [observable, [prev, curr]] of diff) {
+    if (Object.is(prev, curr)) continue
+    observables.get(observable).forEach(el => queue.push(el))
+  }
+  diff.clear()
+}
+
+
+// current target/aspect running state
+export let currentAspect, currentElement
+export function run(el, fn) {
+  // console.group('run', fn.name)
+  // console.log('run', el, fn.name)
+  currentElement = el
+  currentAspect = fn
+
+  fn.call(el, $(el))
+
+  currentElement = null
+  currentAspect = null
+  // console.groupEnd()
 }

@@ -2,7 +2,7 @@ import t from 'tst'
 import $ from '../index.js'
 
 
-t.only('attr: component subscribes to attributes', t => {
+t('attr: component subscribes to attributes', t => {
   $`<div is=${C}/>`
   // $`<${C}/>`
 

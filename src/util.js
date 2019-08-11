@@ -1,6 +1,5 @@
 import kebab from 'kebab-case'
 import $ from './$.js'
-import { create } from 'domain';
 
 
 export const SPECT_CLASS = '👁'
@@ -9,6 +8,8 @@ export const SPECT_CLASS = '👁'
 export function isIterable(val) {
   return (val != null && typeof val[Symbol.iterator] === 'function');
 }
+
+export const raf = window.requestAnimationFrame
 
 
 

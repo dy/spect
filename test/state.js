@@ -2,15 +2,20 @@ import t from 'tst'
 import $ from '../index';
 
 
-t.todo('state: direct props set', t => {
-  $a.fx($a => {
+t.only('state: direct props set', t => {
+  // $`<div.a/><div.b/>`
+
+  $`<div.a/>`.use($a => {
     if (!$a.state.count) $a.state.count = 0
 
-    $a.text = $a.state.count
+    // $a.html = $a.state.count
+    console.log($a.state.count)
 
-    setTimeout(() => {
-      $a.state.count++
-    })
+    $a.fx(() =>
+      setTimeout(() => {
+        $a.state.count++
+      }, 1000)
+    , $a.state.count)
   })
 })
 

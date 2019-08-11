@@ -141,6 +141,7 @@ $(fn)
 ### `.is(fn | class, tagName?)` - component provider
 
 Upgrade elements to web-components with optional `tagName`. Uses native mechanism of custom elements.
+Registers main aspect with highest priority, that is called first whenever any of target dependencies has changed.
 
 ```js
 $els.is($el => {
@@ -171,9 +172,10 @@ function Component($el) {
 * [Popup-info example from MDN](https://developer.mozilla.org/en-US/docs/Web/API/CustomElementRegistry/define#Autonomous_custom_element):
 
 
-### `.use( ...fns )` - aspect provider
+### `.use( ...fns, order? )` - aspect provider
 
 Attach aspects to targets. Each aspect will be called for each element in selected group, receiving it as single argument.
+`order` can optionally indicate the priority of aspects, the order in which they should follow each other.
 
 ```js
 $els.use($el => {
