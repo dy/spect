@@ -1,6 +1,6 @@
 # Spect
 
-_Spect_ is [aspect-oriented](https://en.wikipedia.org/wiki/Aspect-oriented_programming) framework with _super-effects_ for creating expressive UIs.
+Spect is [_aspect_-oriented](https://en.wikipedia.org/wiki/Aspect-oriented_programming) _reactive_ framework with _effects_ for creating expressive UIs.
 
 
 ```js
@@ -20,19 +20,18 @@ function app ($app) {
     $app.state.loading = false;
   }, id);
 
-  $app.html`<div use=${i18n}>${
+  $app.html`<p use=${i18n}>${
     $app.state.loading ? `Hello, ${ $app.state.user.name }!` : `Thanks for patience...`;
-  }</div>`;
+  }</p>`;
 }
 
 // preloader aspect
 function preloader ($el) {
-  $el.html`${el.html.original} ${ $el.state.loading && $`<canvas class="spinner" />` }`;
+  if ($el.state.loading) $el.html`${el.html} <canvas class="spinner" />`;
 }
 
 // i18n aspect
 function i18n ($el) {
-  // retriggered whenever $el.attr.lang, html.lang or el.text change
   useLocale($el.attr.lang || $(document.documentElement).attr.lang);
   $el.text = t`${ $el.text }`;
 }
@@ -45,20 +44,20 @@ $('#app').use(app, preloader);
 
 > 1. Expressive. <!-- not impressive, obvoius code -->
 > 2. No bundling. <!-- required -->
-> 3. JS-less hydrate.
+> 3. JS-less hydration.
 > 4. Standard HTML first.
 > 5. Max utility. <!-- min presentation, min proving. -->
-> 6. Reactive.
 
 ## Philosophy
 
-_Spect_ can remotely remind _jQuery_, supercharded with _React_ hooks, but not exactly so. Its API is based on a set of modern practices (Proxies, incremental dom, hooks), design research and experiments. The current API is third iteration.
+_Spect_ can remotely remind _jQuery_ charged with _React_ hooks. Its API is based on a set of modern practices (Proxies, incremental-dom, hooks), design research, experiments and proves. The current design is third iteration.
 
 ### :ferris_wheel: Reinventing the wheel
 
-Conceptually, app is a set of _reactions_ to _changes_ in _state_.
+<!--
+Conceptually, app is a set of _reactions_ to changes in some _domain_.
 
-_Reaction_ may have various side-_effects_, like changing html, css, page title, sound volume, displaying dialog etc. _React_ components have html-only side-effect of a single container, to provide other side-effects, the mechanism of hooks introduced. In _jQuery_, any element may have an effect on any other element, but lack of component composition is 🍝.
+_Reaction_ may have various side-_effects_, like changing html, css, page title, sound volume, displaying dialog etc. _React_ components provide main html side-effect per component, to provide other side-effects, the mechanism of hooks is introduced. In _jQuery_, any element may have an effect on any other element, but lack of component composition is 🍝.
 
 _State_ can be any structure, representing some domain. In web, main domains are - data storage and DOM tree (besides navigation, web-audio, localstorage, webgl etc.). Reactions can be triggered by changes in these domains.
 
@@ -73,7 +72,7 @@ Other approaches include:
 * optimization API equation (contextual effects → effect constructors → hooks namespace → html wrappers → events middleware).
 * streamlined updates (batch updates after fx tick, clean up required diffs).
 * streamlized html (orig holder, vdom, attaching fx, API, carrying over DOM nodes)
-
+-->
 
 ## Install
 
@@ -82,7 +81,7 @@ Other approaches include:
 [![npm install spect](https://nodei.co/npm/spect.png?mini=true)](https://npmjs.org/package/spect/)
 
 ```js
-import $, { html, state } from 'spect'
+import $ from 'spect'
 
 // ...your UI code
 ```
@@ -105,12 +104,12 @@ Let's build [basic examples](https://reactjs.org/) with _Spect_.
 
 ### A simple aspect
 
-This example provides _html_ in body and assigns aspect to it.
+This example creates _html_ in body and assigns single aspect to it.
 
 ```js
 import { $ } from 'spect'
 
-$(document.body).html`<div id="hello-example" class="hello" name="Taylor" fx=${hello}/>`
+$(document.body).html`<div id="hello-example" class="hello" name="Taylor" use=${hello}/>`
 
 function hello ($el) { $el.html`Hello, ${$el.attr.name}!` }
 ```
@@ -122,7 +121,7 @@ Each effect reflects domain it provides shortcut to.
 
 <!-- mount is a hook on html domain -->
 
-[`$`]()  [`.is`]()  [`.use`]()  [`.fx`]()  [`.state`]()  [`.html`]()  [`.text`]()  [`.class`]()  [`.attr`]()  [`.on`]()  [`.css`]()
+[`$`]()  [`.use`]()  [`.state`]()  [`.html`]()  [`.fx`]()  [`.text`]()  [`.class`]()  [`.attr`]()  [`.on`]()  [`.css`]()
 
 ##
 
@@ -137,40 +136,6 @@ $(element)
 $(elements)
 $(fn)
 ```
-
-### `.is(fn | class, tagName?)` - component provider
-
-Upgrade elements to web-components with optional `tagName`. Uses native mechanism of custom elements.
-Registers main aspect with highest priority, that is called first whenever any of target dependencies has changed.
-
-```js
-$els.is($el => {
-  // subscribe via `attributeChangedCallback`
-  $el.attr.x
-
-  // subscribe via `connectedCallback` / `disconnectedCallback`
-  $el.on('connected', e => () => {})
-})
-```
-
-Components can as well be attached via `.html` effect as:
-
-```js
-$els.html`<div is=${SuperButton}></div>`
-$els.html`<${Component} />`
-
-function SuperButton($el) {
-  // ...
-}
-function Component($el) {
-  // ...
-}
-```
-
-#### Examples
-
-* [Popup-info example from MDN](https://developer.mozilla.org/en-US/docs/Web/API/CustomElementRegistry/define#Autonomous_custom_element):
-
 
 ### `.use( ...fns, order? )` - aspect provider
 
@@ -193,7 +158,7 @@ Aspects can be attached via `.html` effect as well:
 $els.html`<div use=${$div => {}}></div>`
 ```
 
-### `.fx( fn, ...deps? )` - effect provider
+### `.fx( fn, ...deps? )` - side-effect provider
 
 Register effect for group of elements. The effect is called in the next tick if deps are changed.
 
@@ -211,7 +176,7 @@ $target.fx(() => {}, deps)
 $target.fx(() => () => destroy(), deps)
 ```
 
-### `.state` - data provider
+### `.state` - element state provider
 
 Read or write state, associated with an element. Read returns state of the first item in the set. Reading state subscribes current aspect to rerender whenever that state changes.
 
@@ -227,9 +192,9 @@ $target.state.x
 $target.state(_ => _.x.y.z) // safe path getter
 ```
 
-### `.html` - DOM provider
+### `.html` - markup provider
 
-Provide HTML content for group of elements.
+Provides HTML content for elements.
 
 ```js
 // set inner html
@@ -245,7 +210,26 @@ $target.html = <>Markup</>
 $target.html
 ```
 
-### `.text` - Text content provider
+#### Components
+
+`html` effect provides ways to assign aspects directly to components or turn elements into custom elements.
+For that purpose, `is` attribute can be used with an aspect as a component constructor:
+
+```js
+$els.html`<button is=${SuperButton}></button>`
+$els.html`<${SuperButton} />`
+
+function SuperButton($el) {
+  // ...
+}
+```
+
+#### Examples
+
+* [Popup-info example from MDN](https://developer.mozilla.org/en-US/docs/Web/API/CustomElementRegistry/define#Autonomous_custom_element):
+
+
+### `.text` - text content provider
 
 Provide text content for group of elements.
 
@@ -260,7 +244,7 @@ $target.text(nodes => (nodes[2] = '...text', nodes))
 $target.text
 ```
 
-### `.css` - CSS provider
+### `.css` - style sheets provider
 
 Provide scoped CSS styles for element
 
@@ -277,7 +261,7 @@ $target.css
 $target.css.path // obj
 ```
 
-### `.class` - classList provider
+### `.class` - classes provider
 
 Changes element classList, updates all dependent elements/aspects.
 
@@ -293,7 +277,7 @@ $target.class // { foo: true, bar: true }
 $target.class.foo // true
 ```
 
-### `.attr` - attribute provider
+### `.attr` - attributes provider
 
 Changes element attributes, updates all dependent elements/aspects.
 
@@ -335,6 +319,7 @@ $target.on('connected', e => {
 #### Related packages
 
 * [use-event-listener](https://github.com/donavon/use-event-listener)
+
 
 ## Plugins
 
@@ -390,6 +375,21 @@ function i18n () {
 }
 </script>
 ```
+
+### Concurrent hydration?
+
+That's built-in.
+
+### Use, is, fx - what's the difference?
+
+`is` provides single main aspect for an element via mechanism of web-components, if that's available. `is` aspect is always called first when element is updated.
+
+`use` provides multiple secondary aspects for an element, called in order after the main one. `use` doesn't use custom elements for rendering themselves.
+
+Both `is` and `use` are rendered in current animation frame, planning rerendering schedules update for the next frame.
+
+`fx` provides a function, called after current aspect call. It is called synchronously in sense of processor ticks, but _after_ current renering aspect. Ie. aspect-less `fx` calls will trigger themselves instantly.
+
 
 ## Acknowledgement
 
