@@ -121,9 +121,8 @@ Each effect reflects domain it provides shortcut to.
 
 <!-- mount is a hook on html domain -->
 
-[`$`]()  [`.use`]()  [`.state`]()  [`.html`]()  [`.fx`]()  [`.text`]()  [`.class`]()  [`.attr`]()  [`.on`]()  [`.css`]()
+[**`$`**]()  [**`.use`**]()  [**`.state`**]()  [**`.html`**]()  [**`.fx`**]()  [**`.text`**]()  [**`.class`**]()  [**`.attr`**]()  [**`.on`**]()  [**`.css`**]()
 
-##
 ##
 
 ### `$( selector | els )` − elements selector
