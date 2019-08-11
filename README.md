@@ -123,9 +123,10 @@ Each effect reflects domain it provides shortcut to.
 
 [`$`]()  [`.use`]()  [`.state`]()  [`.html`]()  [`.fx`]()  [`.text`]()  [`.class`]()  [`.attr`]()  [`.on`]()  [`.css`]()
 
----
+##
+##
 
-### `$( ...els )` − elements selector
+### `$( selector | els )` − elements selector
 
 Select group of elements, provide domain methods for it. The main purpose is to have a shallow reference/wrapper for some node list.
 
