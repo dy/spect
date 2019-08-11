@@ -123,11 +123,11 @@ Each effect reflects domain it provides shortcut to.
 
 [`$`]()  [`.use`]()  [`.state`]()  [`.html`]()  [`.fx`]()  [`.text`]()  [`.class`]()  [`.attr`]()  [`.on`]()  [`.css`]()
 
-##
+---
 
-### `$`
+### `$( ...els )` − elements selector
 
-Wrap group of elements, very much like jQuery.
+Select group of elements, provide domain methods for it. The main purpose is to have a shallow reference/wrapper for some node list.
 
 ```js
 $('#id.class > div')
@@ -137,7 +137,9 @@ $(elements)
 $(fn)
 ```
 
-### `.use( ...fns, order? )` - aspect provider
+Related packages: jquery.
+
+### `.use( ...fns )` − aspects provider
 
 Attach aspects to targets. Each aspect will be called for each element in selected group, receiving it as single argument.
 `order` can optionally indicate the priority of aspects, the order in which they should follow each other.
@@ -158,7 +160,10 @@ Aspects can be attached via `.html` effect as well:
 $els.html`<div use=${$div => {}}></div>`
 ```
 
-### `.fx( fn, ...deps? )` - side-effect provider
+Related packages: reuse.
+
+
+### `.fx( fn, ...deps? )` − side-effects provider
 
 Register effect for group of elements. The effect is called in the next tick if deps are changed.
 
@@ -176,7 +181,10 @@ $target.fx(() => {}, deps)
 $target.fx(() => () => destroy(), deps)
 ```
 
-### `.state` - element state provider
+Related: useEffect.
+
+
+### `.state` − element state provider
 
 Read or write state, associated with an element. Read returns state of the first item in the set. Reading state subscribes current aspect to rerender whenever that state changes.
 
@@ -192,7 +200,10 @@ $target.state.x
 $target.state(_ => _.x.y.z) // safe path getter
 ```
 
-### `.html` - markup provider
+Related: useState.
+
+
+### `.html` − markup provider
 
 Provides HTML content for elements.
 
@@ -209,6 +220,8 @@ $target.html = <>Markup</>
 // get html
 $target.html
 ```
+
+Related: incremental-dom, htm.
 
 #### Components
 
@@ -228,8 +241,10 @@ function SuperButton($el) {
 
 * [Popup-info example from MDN](https://developer.mozilla.org/en-US/docs/Web/API/CustomElementRegistry/define#Autonomous_custom_element):
 
+Related: hui.
 
-### `.text` - text content provider
+
+### `.text` − text content provider
 
 Provide text content for group of elements.
 
@@ -244,7 +259,7 @@ $target.text(nodes => (nodes[2] = '...text', nodes))
 $target.text
 ```
 
-### `.css` - style sheets provider
+### `.css` − style sheets provider
 
 Provide scoped CSS styles for element
 
@@ -261,7 +276,10 @@ $target.css
 $target.css.path // obj
 ```
 
-### `.class` - classes provider
+Related: virtual-css.
+
+
+### `.class` − classes provider
 
 Changes element classList, updates all dependent elements/aspects.
 
@@ -277,7 +295,10 @@ $target.class // { foo: true, bar: true }
 $target.class.foo // true
 ```
 
-### `.attr` - attributes provider
+Related: classes.
+
+
+### `.attr` − attributes provider
 
 Changes element attributes, updates all dependent elements/aspects.
 
@@ -293,7 +314,7 @@ $target.attr // { foo: true, bar: true }
 $target.attr.foo // true
 ```
 
-### `.on` - events provider
+### `.on` − events provider
 
 Registers event listeners for a target, scoped to current aspect.
 
@@ -316,9 +337,7 @@ $target.on('connected', e => {
 })
 ```
 
-#### Related packages
-
-* [use-event-listener](https://github.com/donavon/use-event-listener)
+Related: [use-event-listener](https://github.com/donavon/use-event-listener)
 
 
 ## Plugins
