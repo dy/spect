@@ -1,4 +1,4 @@
-import { $, GET, SET } from './$.js'
+import { $, GET, SET, CALL_START, CALL_END } from './$.js'
 import { raf } from './util.js'
 import tuple from 'immutable-tuple'
 
@@ -26,8 +26,6 @@ $.subscribe(SET, (target, domainPath, value, prev, ...args) => {
   let observableDiff = diff.get(observable)
   if (!observableDiff) diff.set(observable, observableDiff = [prev, value])
   else observableDiff[1] = value
-
-  // console.log('set diff', diff)
 
   // current frame is checked on diff automatically, so schedule only async calls
   if (!currentElement) scheduleUpdate()
@@ -82,7 +80,7 @@ export function flush () {
     let aspects = useCache.get(el)
     aspects.forEach(aspect => run(el, aspect))
   }
-  // keep flushing while diff is something - leave no diffs in current frame
+  // keep flushing until diff is drained
   if (diff.size) return flush()
 }
 
@@ -91,7 +89,6 @@ export function flush () {
 // FIXME: ideally diff is calculated in webworker, but needs benchmarking
 export const diff = new Map
 export function calcDiff() {
-  // console.log('check diff', diff)
   for (let [observable, [prev, curr]] of diff) {
     if (Object.is(prev, curr)) continue
     observables.get(observable).forEach(el => queue.push(el))
@@ -103,14 +100,13 @@ export function calcDiff() {
 // current target/aspect running state
 export let currentAspect, currentElement
 export function run(el, fn) {
-  // console.group('run', fn.name)
-  // console.log('run', el, fn.name)
   currentElement = el
   currentAspect = fn
 
+  $.publish(CALL_START, currentElement, 'use', fn)
   fn.call(el, $(el))
+  $.publish(CALL_END, currentElement, 'use', fn)
 
   currentElement = null
   currentAspect = null
-  // console.groupEnd()
 }

@@ -3,13 +3,11 @@ import $ from '../index';
 
 
 t.only('state: direct props set', t => {
-  // $`<div.a/><div.b/>`
-
-  $`<div.a/>`.use($a => {
+  $`<div.a/><div.b/>`.use($a => {
     if (!$a.state.count) $a.state.count = 0
 
     // $a.html = $a.state.count
-    console.log($a.state.count)
+    // console.log($a.state.count)
 
     $a.fx(() =>
       setTimeout(() => {
