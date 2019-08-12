@@ -48,9 +48,7 @@ $('#app').use(app, preloader);
 > 4. Standard HTML first.
 > 5. Max utility. <!-- min presentation, min proving. -->
 
-#### :ferris_wheel:
-
-_Spect_ can remotely remind _jQuery_ charged with _React_ hooks. Its API is based on a set of modern practices (Proxies, incremental-dom, hooks), design research, experiments and proves. The current design is third iteration.
+:ferris_wheel: _Spect_ can remotely remind _jQuery_ charged with _React_ hooks. Its API is based on a set of modern practices (Proxies, incremental-dom, hooks), design research, experiments and proves. The current design is third iteration.
 
 <!--
 ### :ferris_wheel: Reinventing the wheel
@@ -97,10 +95,10 @@ import $ from 'https://unpkg.com/spect@latest?module'
 ```
 
 
-## 🎬 Getting started
+## Getting started
 
 
-Let's build [basic examples](https://reactjs.org/) with _Spect_.
+🎬 Let's build [basic examples](https://reactjs.org/) with _Spect_.
 
 ### A simple aspect
 
