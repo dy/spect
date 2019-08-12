@@ -163,7 +163,7 @@ Aspects can be attached via `.html` effect as well:
 $els.html`<div use=${$div => {}}></div>`
 ```
 
-<p align="right"># <a href="https://ghub.io/reuse">jquery</a></p>
+<p align="right"># <a href="https://ghub.io/reuse">reuse</a></p>
 
 
 ### `.fx( fn, ...deps? )` − side-effects provider
@@ -203,7 +203,7 @@ $target.state.x
 $target.state(_ => _.x.y.z) // safe path getter
 ```
 
-<p align="right"># <a href="https://reactjs.org/docs/hooks-state.html)>useState</a>, <a href="https://www.npmjs.com/package/icaro)>icaro</a>, <a href="https://www.npmjs.com/package/introspected)>introspected</a></p>
+<p align="right"># <a href="https://reactjs.org/docs/hooks-state.html">useState</a>, <a href="https://www.npmjs.com/package/icaro">icaro</a>, <a href="https://www.npmjs.com/package/introspected">introspected</a></p>
 
 
 ### `.html` − markup provider
@@ -279,7 +279,7 @@ $target.css
 $target.css.path // obj
 ```
 
-<p align="right"># [virtual-css](https://ghub.io/virtual-css).</p>
+<p align="right"># <a href="https://ghub.io/virtual-css">virtual-css</a>.</p>
 
 
 ### `.class` − classes provider
@@ -298,7 +298,7 @@ $target.class // { foo: true, bar: true }
 $target.class.foo // true
 ```
 
-<p align="right"># [clsx](https://ghub.io/clsx), [classes](https://ghub.io/classes).</p>
+<p align="right"># <a href="https://ghub.io/clsx">clsx</a>, <a href="https://ghub.io/classes">classes</a>.</p>
 
 
 ### `.attr` − attributes provider
@@ -317,7 +317,7 @@ $target.attr // { foo: true, bar: true }
 $target.attr.foo // true
 ```
 
-<p align="right"># [attributechanged](https://ghub.io/attributechanged)</p>
+<p align="right"># <a href="https://ghub.io/attributechanged">attributechanged</a></p>
 
 
 ### `.on` − events provider
@@ -343,7 +343,7 @@ $target.on('connected', e => {
 })
 ```
 
-<p align="right"># [use-event-listener](https://github.com/donavon/use-event-listener).</p>
+<p align="right"># <a href="https://github.com/donavon/use-event-listener">use-event-listener</a>.</p>
 
 
 ## Plugins
