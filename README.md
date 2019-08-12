@@ -1,6 +1,6 @@
 # Spect
 
-Spect is [_aspect_-oriented](https://en.wikipedia.org/wiki/Aspect-oriented_programming) _framework with _effects_ for creating expressive UIs.
+Spect is [_aspect_-oriented](https://en.wikipedia.org/wiki/Aspect-oriented_programming) effectful framework for creating expressive UIs.
 
 
 ```js
@@ -40,7 +40,7 @@ function i18n ($el) {
 $('#app').use(app, preloader);
 ```
 
-## Principles
+## Principles / philosophy
 
 > 1. Expressive. <!-- not impressive, obvoius code -->
 > 2. No bundling. <!-- required -->
@@ -48,13 +48,13 @@ $('#app').use(app, preloader);
 > 4. Standard HTML first.
 > 5. Max utility. <!-- min presentation, min proving. -->
 
-## Philosophy
+#### :ferris_wheel:
 
 _Spect_ can remotely remind _jQuery_ charged with _React_ hooks. Its API is based on a set of modern practices (Proxies, incremental-dom, hooks), design research, experiments and proves. The current design is third iteration.
 
+<!--
 ### :ferris_wheel: Reinventing the wheel
 
-<!--
 Conceptually, app is a set of _reactions_ to changes in some _domain_.
 
 _Reaction_ may have various side-_effects_, like changing html, css, page title, sound volume, displaying dialog etc. _React_ components provide main html side-effect per component, to provide other side-effects, the mechanism of hooks is introduced. In _jQuery_, any element may have an effect on any other element, but lack of component composition is 🍝.
