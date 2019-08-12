@@ -34,33 +34,29 @@ $.subscribe(SET, (target, domainPath, value, prev, ...args) => {
 
 // attach aspects to current target
 let useCache = new WeakMap()
-export const use = $.fn.use = function use(fn, ...fns) {
-  // recurse
-  if (fns.length > 1) {
-    this.use(fn)
-    fns.forEach(fn => this.use(fn))
-    return this
-  }
-
+export const use = $.fn.use = function use(...fns) {
   this.forEach(el => {
     // FIXME: replace with privates
     let aspects = useCache.get(el)
     if (!aspects) useCache.set(el, aspects = [])
 
     // FIXME: take priority into consideration
-    if (aspects.indexOf(fn) < 0) aspects.push(fn)
+    fns.forEach(fn => {
+      if (aspects.indexOf(fn) < 0) aspects.push(fn)
+    })
 
     // schedule update
     queue.push(el)
   })
 
-  scheduleUpdate()
+  // if not currently flushing - render instantly
+  if (!currentElement) flush()
 
   return this
 }
 
 
-// plans function before the next rerender
+// schedules flush to the moment before the next frame
 let plannedRaf
 export function scheduleUpdate () {
   if (plannedRaf) return
@@ -75,10 +71,14 @@ export function scheduleUpdate () {
 export const queue = []
 export function flush () {
   if (diff.size) calcDiff()
+  let prev, curr
   while (queue.length) {
-    let el = queue.shift()
-    let aspects = useCache.get(el)
-    aspects.forEach(aspect => run(el, aspect))
+    // skip intermediate duplicates
+    curr = queue.shift()
+    if (curr === prev) continue
+    let aspects = useCache.get(curr)
+    aspects.forEach(aspect => run(curr, aspect))
+    prev = curr
   }
   // keep flushing until diff is drained
   if (diff.size) return flush()

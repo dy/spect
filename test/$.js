@@ -30,7 +30,7 @@ t('$: create new', t => {
   t.equal($tpl.length, 2)
 })
 
-t.skip('$: sustains dynamic nodes list as reference under the hood', t => {
+t.skip('$: sustain dynamic nodes list as reference under the hood', t => {
   // FIXME: that's insustainable for now: we have to extend Spect class from Proxy-ed prototype,
   // providing numeric access to underneath store, like NodeList etc.
   // The proxy prototype looks
@@ -44,3 +44,5 @@ t.skip('$: sustains dynamic nodes list as reference under the hood', t => {
   el.appendChild(document.createElement`div`)
   t.is($children.length, 2)
 })
+
+t('$: ')
