@@ -1,6 +1,6 @@
 # Spect
 
-Spect is [_aspect_-oriented](https://en.wikipedia.org/wiki/Aspect-oriented_programming) _reactive_ framework with _effects_ for creating expressive UIs.
+Spect is [_aspect_-oriented](https://en.wikipedia.org/wiki/Aspect-oriented_programming) _framework with _effects_ for creating expressive UIs.
 
 
 ```js
@@ -83,7 +83,7 @@ Other approaches include:
 ```js
 import $ from 'spect'
 
-// ...your UI code
+// ...UI code
 ```
 
 **B.** As module<sup><a href="#principle-2">2</a></sup>:
@@ -92,7 +92,7 @@ import $ from 'spect'
 <script type="module">
 import $ from 'https://unpkg.com/spect@latest?module'
 
-// ...your UI code
+// ...UI code
 </script>
 ```
 
@@ -127,17 +127,16 @@ Each effect reflects domain it provides shortcut to.
 
 ### `$( selector | els )` − elements selector
 
-Select group of elements, provide domain methods for it. The main purpose is to have a shallow reference/wrapper for some node list.
+Select elements in DOM, provide domain methods for the selected set. The main purpose is shallow reference/wrapper for some nodes collection.
 
 ```js
 $('#id.class > div')
 $(document)
 $(element)
 $(elements)
-$(fn)
 ```
 
-<p align="right">Refs: [jquery](https://jquery.com)</p>
+<p align="right"><a href="https://jquery.com">#jquery</a></p>
 
 
 ### `.use( ...fns )` − aspects provider
