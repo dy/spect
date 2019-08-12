@@ -117,7 +117,7 @@ function hello ($el) { $el.html`Hello, ${$el.attr.name}!` }
 
 ## API
 
-Each effect reflects domain it provides shortcut to.
+<!-- Each effect reflects domain it provides shortcut to. -->
 
 <!-- mount is a hook on html domain -->
 
@@ -136,7 +136,7 @@ $(element)
 $(elements)
 ```
 
-<p align="right"><a href="https://jquery.com">#jquery</a></p>
+<p align="right"># <a href="https://jquery.com">jquery</a></p>
 
 
 ### `.use( ...fns )` − aspects provider
@@ -163,12 +163,12 @@ Aspects can be attached via `.html` effect as well:
 $els.html`<div use=${$div => {}}></div>`
 ```
 
-<p align="right">Ref: [reuse](https://ghub.io/reuse)</p>
+<p align="right"># <a href="https://ghub.io/reuse">jquery</a></p>
 
 
 ### `.fx( fn, ...deps? )` − side-effects provider
 
-Register effect function for set of elements. The effect `fn` is called after current aspect call.
+Register effect function for selected elements. The effect `fn` is called after current aspect call for each element in the set.
 
 ```js
 // called each time
@@ -184,7 +184,7 @@ $target.fx(() => {}, deps)
 $target.fx(() => () => destroy(), deps)
 ```
 
-<p align="right">Ref: [useEffect](https://reactjs.org/docs/hooks-effect.html)</p>
+<p align="right"># <a href='https://reactjs.org/docs/hooks-effect.html'>useEffect</a></p>
 
 
 ### `.state` − element state provider
@@ -203,7 +203,7 @@ $target.state.x
 $target.state(_ => _.x.y.z) // safe path getter
 ```
 
-<p align="right">Ref: [useState](https://reactjs.org/docs/hooks-state.html), [icaro](https://www.npmjs.com/package/icaro), [introspected](https://www.npmjs.com/package/introspected)</p>
+<p align="right"># <a href="https://reactjs.org/docs/hooks-state.html)>useState</a>, <a href="https://www.npmjs.com/package/icaro)>icaro</a>, <a href="https://www.npmjs.com/package/introspected)>introspected</a></p>
 
 
 ### `.html` − markup provider
@@ -243,7 +243,7 @@ function SuperButton($el) {
 * [Popup-info example from MDN](https://developer.mozilla.org/en-US/docs/Web/API/CustomElementRegistry/define#Autonomous_custom_element):
 
 
-<p align="right">Ref: [incremental-dom](https://ghub.io/incremental-dom), [htm](https://ghub.io/htm).</p>
+<p align="right"># <a href"https://ghub.io/incremental-dom">incremental-dom</a>, <a href='https://ghub.io/htm'>htm</a>.</p>
 
 
 ### `.text` − text content provider
@@ -279,7 +279,7 @@ $target.css
 $target.css.path // obj
 ```
 
-<p align="right">Ref: [virtual-css](https://ghub.io/virtual-css).</p>
+<p align="right"># [virtual-css](https://ghub.io/virtual-css).</p>
 
 
 ### `.class` − classes provider
@@ -298,7 +298,7 @@ $target.class // { foo: true, bar: true }
 $target.class.foo // true
 ```
 
-<p align="right">Ref: [clsx](https://ghub.io/clsx), [classes](https://ghub.io/classes).</p>
+<p align="right"># [clsx](https://ghub.io/clsx), [classes](https://ghub.io/classes).</p>
 
 
 ### `.attr` − attributes provider
@@ -317,7 +317,7 @@ $target.attr // { foo: true, bar: true }
 $target.attr.foo // true
 ```
 
-<p align="right">Ref: [attributechanged](https://ghub.io/attributechanged)</p>
+<p align="right"># [attributechanged](https://ghub.io/attributechanged)</p>
 
 
 ### `.on` − events provider
@@ -343,7 +343,7 @@ $target.on('connected', e => {
 })
 ```
 
-<p align="right">Ref: [use-event-listener](https://github.com/donavon/use-event-listener).</p>
+<p align="right"># [use-event-listener](https://github.com/donavon/use-event-listener).</p>
 
 
 ## Plugins
