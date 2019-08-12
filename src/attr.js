@@ -1,26 +1,51 @@
-// attribute effect
+import { $, SET, GET } from './$.js'
 
-import $ from './$.js'
 
-let attrCache = new WeakMap
+// attribute listens for read attributes from elements and modifies set of observed attributes via mutation observer
 
+
+const targetCache = new WeakMap
 Object.defineProperty($.fn, 'attr', {
-  // get state - creates new pubsub proxy, triggering update of all effects, depending on some props
-  // FIXME: for compatibility it should keep orig values, just pubsub
   get() {
-    console.log('Get attr', this)
-
-    if (!attrCache.has(this)) {
-      // FIXME: add to current aspect deps list
-      attrCache.set(this, )
-    }
+    if (!targetCache.has(this)) targetCache.set(this, createAttr(this))
+    return targetCache.get(this)
   },
 
-  // set: ($el, name, value) => {
-  //   console.log('Set attr', $el, name)
-  // },
-
-  // apply: ($el, thisArg, args) => {
-  //   console.log('Apply attr', $el, thisArg)
-  // }
+  set(value) {
+    console.log('TODO set attr', this)
+  }
 })
+
+
+const attrCache = new WeakMap
+function createAttr($el) {
+  let firstEl = $el[0]
+
+  return new Proxy({}, {
+    set: (_, name, value) => {
+      $el.forEach(el => {
+        let prev = el.getAttribute(name)
+
+        // skip unchanged value
+        if (Object.is(prev, value)) return
+
+        el.setAttribute(name, value)
+
+        $.publish(SET, el, ['attr', name], value, prev)
+      })
+
+      return true
+    },
+
+    get: (_, namr) => {
+      // FIXME: what about nested props access/writing?
+
+      // return first element state value
+      $.publish(GET, firstEl, ['attr', namr])
+
+      return firstEl.getAttribute(namr)
+    }
+  })
+}
+
+

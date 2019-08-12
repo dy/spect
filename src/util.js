@@ -57,8 +57,9 @@ function createClass (fn, HTMLElement) {
     constructor() {
       super()
 
-      // FIXME: make sure that's the right place for it
-      ;(new $(this)).use(fn)
+      // FIXME: that's wrong place for init
+      // $(this).is(fn)
+      $(this).use(fn)
     }
   }
 }

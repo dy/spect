@@ -169,9 +169,9 @@ export default function html(...args) {
     // <ul is="custom-el" />
     if (is) {
       function create() { return document.createElement(tag, { is }) }
-      el = elementOpen(create, key, staticProps, ...props);
+      el = elementOpen(create, key, staticProps, ...props)
       children.forEach(render)
-      elementClose(create);
+      elementClose(create)
     }
 
     // if (!children) el = elementVoid(tag, key, staticProps, ...props)

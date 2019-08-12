@@ -3,11 +3,17 @@ import $ from '../index.js'
 
 
 t('attr: component subscribes to attributes', t => {
-  $`<div is=${C}/>`
+  $`<a is=${C} href=/ foo bar="baz"/>`
   // $`<${C}/>`
 
   function C ($el) {
-    console.log($el.attr)
-    console.log($el.state)
+    $el.state.x = 11
+    // console.log($el.state)
+    // console.dir($el[0].attributes[1])
   }
+})
+
+
+t('attr: native attribute changes trigger rerendering', t => {
+
 })

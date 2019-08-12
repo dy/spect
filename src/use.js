@@ -91,6 +91,7 @@ export const diff = new Map
 export function calcDiff() {
   for (let [observable, [prev, curr]] of diff) {
     if (Object.is(prev, curr)) continue
+    if (!observables.has(observable)) continue
     observables.get(observable).forEach(el => queue.push(el))
   }
   diff.clear()
