@@ -112,6 +112,131 @@ $(document.body).html`<div id="hello-example" class="hello" name="Taylor" use=${
 function hello ($el) { $el.html`Hello, ${$el.attr.name}!` }
 ```
 
+### A stateful aspect
+
+_Spect_ introduces `state`, `mount` and `fx` effects, similar to `useState` and `useEffect` hooks:
+
+```js
+import $, { html, state, mount, fx } from 'spect'
+
+$('#timer-example', el => {
+  let { seconds = 0 } = state()
+
+  mount(() => {
+    // on mount
+    let i = setInterval(
+      () => state({ seconds: seconds + 1 }),
+    1000)
+
+    return () => clearInterval(i) // on unmount
+  })
+
+  html`Seconds: ${seconds}`
+})
+
+```
+<small>[TODO: Open in sandbox](https://codesandbox.com)</small>
+
+
+### An application
+
+Events are provided by `on` effect, decoupling callbacks from markup and enabling event delegation. They can be used along with direct `on*` attributes.
+
+```js
+import $, { html, state, on } from 'spect'
+
+$(`#todos-example`, Todo)
+
+function Todo (el) {
+  let { items=[], text='' } = state()
+
+  // listens for `submit` event on current target
+  on('submit', e => {
+    e.preventDefault();
+
+    if (!text.length) return;
+
+    const newItem = {
+      text: this.state.text,
+      id: Date.now()
+    };
+
+    state({
+      items: [...items, newItem],
+      text: ''
+    })
+  })
+
+  // delegates event to #new-todo element
+  on('change', '#new-todo', e => state({ text: e.target.value });
+
+  html`
+    <h3>TODO</h3>
+    <main items=${items}>${TodoList}</main>
+    <form>
+      <label for=new-todo>
+        What needs to be done?
+      </label>
+      <input#new-todo value=${text}/>
+      <button>
+        Add #${items.length + 1}
+      </button>
+    </form>
+  `
+}
+
+function TodoList ({ items }) {
+  html`<ul>${items.map(item => `<li>${item.text}</li>`)}</ul>`
+}
+```
+
+<small>[TODO: Open in sandbox](https://codesandbox.com)</small>
+
+### A web-component <small>code | sandbox</small>
+
+_Spect_ is also able to provide component aspects via native web-components mechanism.
+
+```js
+// editor.js
+import { html } from 'spect'
+import Remarkable from 'remarkable'
+
+export default function MarkdownEditor ({ content='' }) {
+  let getRawMarkup = () => {
+    const md = new Remarkable();
+    return md.render(content);
+  }
+
+  // obtain reference to `.content`
+  html`<host class=markdown-editor>
+    <h3>Input</h3>
+    <label for="markdown-content">
+      Enter some markdown
+    </label>
+    <textarea#markdown-content
+      onchange=${e => prop({ content: e.target.value })}
+    >${value}</textarea>
+
+    <h3>Output</h3>
+    <div.content/>
+  </>`
+
+  // look out for XSS!
+  $('.content').innerHTML = getRawMarkup()
+}
+```
+
+```js
+// index.js
+import $, { html, state } from 'spect'
+import MarkdownEditor from './editor.js'
+
+// MarkdownEditor is created as web-component
+$(`#markdown-example`, el => html`<${MarkdownEditor} content='Hello, **world**!'/>`)
+```
+
+Notice the shorthand id/classes notation as `<tag#id.class />`.
+
 
 ## API
 
@@ -119,7 +244,7 @@ function hello ($el) { $el.html`Hello, ${$el.attr.name}!` }
 
 <!-- mount is a hook on html domain -->
 
-[**`$`**]()  [**`.use`**]()  [**`.state`**]()  [**`.html`**]()  [**`.fx`**]()  [**`.text`**]()  [**`.class`**]()  [**`.attr`**]()  [**`.on`**]()  [**`.css`**]()
+[**`$`**]()  [**`.use`**]()  [**`.state`**]()  [**`.html`**]()  [**`.fx`**]()  [**`.text`**]()  [**`.class`**]()  [**`.attr`**]()  [**`.on`**]()  [**`.css`**]()  [**`.init`**]()  [**`.mount`**]()
 
 ##
 
@@ -344,11 +469,69 @@ $target.on('connected', e => {
 <p align="right">Related: <a href="https://github.com/donavon/use-event-listener">use-event-listener</a></p>
 
 
+### `.init( fn: create => destroy )` - init / destroy lifecycle callbacks
+
+Triggered during the first render, useful to initialize component state and other effects. Any effects or changes made in callback are muted, so rerendering won't trigger, unlike in effect `.fx( fn, [] )`.
+
+```js
+$('#target').use($el => {
+  $el.init(() => {
+    // ...create / init
+
+    $el.state.x = 1
+    $el.state.y = 2
+    let i = setInterval(() => {})
+
+    return () => {
+      // ...destroy
+
+      clearInterval(i)
+    }
+  })
+})
+```
+
+### `.mount( fn: onmount => onunmount )` - connected / disconnected lifecycle callbacks
+
+Triggers callback `fn` when element is connected to the DOM. Optional returned function is triggered when the element is disconnected.
+If an aspect is attached to mounted elements, the `onmount` will be triggered automatically.
+
+```js
+$('#target'.use($el => {
+  $el.mount(() => {
+    // connected
+    return () => {
+      // disconnected
+    }
+  })
+})
+```
+
+<!--
+
 ## Plugins
 
 * [spect-route]() - provide global navigation effect.
-* [spect-request]() - request provider.
+* [spect-request]() - async request provider.
 * [spect-observe]() - selector observer.
+* [spect-isect]() - intersection observer.
+
+* [ ] local(value?)
+* [ ] watch
+* [ ] route
+* [ ] isect(fn, target?)
+* [ ] i18n
+* [ ] resize
+
+Community
+
+* [spect-react]() - render react components in spect.
+* [spect-redux]() - use state hooks, connected to redux store.
+* [spect-gl]() - enable layers for gl-canvas element.
+* [spect-a11y]() - enable a11y props for the element.
+* [spect-dataschema]() - provide dataschema props for the element.
+* [spect-meta]() - set document meta props.
+* [spect-uibox]() -->
 
 
 ## FAQ
@@ -413,20 +596,16 @@ Both `is` and `use` are rendered in current animation frame, planning rerenderin
 
 `fx` provides a function, called after current aspect call. It is called synchronously in sense of processor ticks, but _after_ current renering aspect. Ie. aspect-less `fx` calls will trigger themselves instantly.
 
+### Microfrontends?
 
-<!-- ## Acknowledgement
+### Performance?
 
-* _jquery_ - for classic school of API design.
-* _react_ - for JSX, hocs, hooks and pains.
-* _atomico, hui_ - for novative approach to web-components.
-* _htm_ - for mainstream alternative.
-* _fast-on-load_ - for fast mutation observer solution.
-* _tachyons, tailwindcss, ui-box_ - for CSS use-cases.
-* _evergreen-ui, material-ui_ - for practical components examples.
-* _reuse_ - for react aspects insight.
-* _selector-observer_ - for selector observer example.
-* _material-design-lite_ - for upgrading code example and components library.
-* _funkia/turbine_ - for generators and examples. -->
+
+## Acknowledgement
+
+
+_Spect_ would not be possible without brilliant ideas from many libraries authors, hence the acknowledge to authors of _jquery_, _react_, _atomico, hui_, _htm_, _fast-on-load_, _tachyons, tailwindcss, ui-box_, _evergreen-ui, material-ui_, _reuse_, _selector-observer_, _material-design-lite_, _funkia/turbine_ and others.
+
 <!-- * _***_ - for letting that be possible. -->
 
 ##
