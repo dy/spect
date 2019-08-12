@@ -137,19 +137,23 @@ $(elements)
 $(fn)
 ```
 
-Related packages: jquery.
+<p align="right">Refs: [jquery](https://jquery.com)</p>
+
 
 ### `.use( ...fns )` − aspects provider
 
-Attach aspects to targets. Each aspect will be called for each element in selected group, receiving it as single argument.
-`order` can optionally indicate the priority of aspects, the order in which they should follow each other.
+Assign aspect function(s) to selected elements. Each `fn` is called for every element in the selected set, receiving wrapped element as single argument. Aspect `fn` can be be called multiple times in a frame, if `state`, `attr` or any other data source updates. The data sources are to subscribed to automatically when their values are read.
+
 
 ```js
-$els.use($el => {
-  // subscribe via mutation observer
-  $el.attr.x
+let $outer = $`.outer`
 
-  // subscribe via fast-on-load
+$els.use($el => {
+  // subscribe to attribute updates
+  let x = $el.attr.x
+  let y = $outer.attr.y
+
+  // trigger on mount
   $el.on('connected', e => () => {})
 })
 ```
@@ -160,12 +164,12 @@ Aspects can be attached via `.html` effect as well:
 $els.html`<div use=${$div => {}}></div>`
 ```
 
-Related packages: reuse.
+<p align="right">Ref: [reuse](https://ghub.io/reuse)</p>
 
 
 ### `.fx( fn, ...deps? )` − side-effects provider
 
-Register effect for group of elements. The effect is called in the next tick if deps are changed.
+Register effect function for set of elements. The effect `fn` is called after current aspect call.
 
 ```js
 // called each time
@@ -181,7 +185,7 @@ $target.fx(() => {}, deps)
 $target.fx(() => () => destroy(), deps)
 ```
 
-Related: useEffect.
+<p align="right">Ref: [useEffect](https://reactjs.org/docs/hooks-effect.html)</p>
 
 
 ### `.state` − element state provider
@@ -200,7 +204,7 @@ $target.state.x
 $target.state(_ => _.x.y.z) // safe path getter
 ```
 
-Related: useState.
+<p align="right">Ref: [useState](https://reactjs.org/docs/hooks-state.html), [icaro](https://www.npmjs.com/package/icaro), [introspected](https://www.npmjs.com/package/introspected)</p>
 
 
 ### `.html` − markup provider
@@ -221,8 +225,6 @@ $target.html = <>Markup</>
 $target.html
 ```
 
-Related: incremental-dom, htm.
-
 #### Components
 
 `html` effect provides ways to assign aspects directly to components or turn elements into custom elements.
@@ -241,7 +243,8 @@ function SuperButton($el) {
 
 * [Popup-info example from MDN](https://developer.mozilla.org/en-US/docs/Web/API/CustomElementRegistry/define#Autonomous_custom_element):
 
-Related: hui.
+
+<p align="right">Ref: [incremental-dom](https://ghub.io/incremental-dom), [htm](https://ghub.io/htm).</p>
 
 
 ### `.text` − text content provider
@@ -258,6 +261,7 @@ $target.text(nodes => (nodes[2] = '...text', nodes))
 // get text
 $target.text
 ```
+
 
 ### `.css` − style sheets provider
 
@@ -276,7 +280,7 @@ $target.css
 $target.css.path // obj
 ```
 
-Related: virtual-css.
+<p align="right">Ref: [virtual-css](https://ghub.io/virtual-css).</p>
 
 
 ### `.class` − classes provider
@@ -295,7 +299,7 @@ $target.class // { foo: true, bar: true }
 $target.class.foo // true
 ```
 
-Related: classes.
+<p align="right">Ref: [clsx](https://ghub.io/clsx), [classes](https://ghub.io/classes).</p>
 
 
 ### `.attr` − attributes provider
@@ -313,6 +317,9 @@ $target.attr(({ foo, bar, ...clsx }) => clsx)
 $target.attr // { foo: true, bar: true }
 $target.attr.foo // true
 ```
+
+<p align="right">Ref: [attributechanged](https://ghub.io/attributechanged)</p>
+
 
 ### `.on` − events provider
 
@@ -337,7 +344,7 @@ $target.on('connected', e => {
 })
 ```
 
-Related: [use-event-listener](https://github.com/donavon/use-event-listener)
+<p align="right">Ref: [use-event-listener](https://github.com/donavon/use-event-listener).</p>
 
 
 ## Plugins
@@ -410,7 +417,7 @@ Both `is` and `use` are rendered in current animation frame, planning rerenderin
 `fx` provides a function, called after current aspect call. It is called synchronously in sense of processor ticks, but _after_ current renering aspect. Ie. aspect-less `fx` calls will trigger themselves instantly.
 
 
-## Acknowledgement
+<!-- ## Acknowledgement
 
 * _jquery_ - for classic school of API design.
 * _react_ - for JSX, hocs, hooks and pains.
@@ -422,7 +429,7 @@ Both `is` and `use` are rendered in current animation frame, planning rerenderin
 * _reuse_ - for react aspects insight.
 * _selector-observer_ - for selector observer example.
 * _material-design-lite_ - for upgrading code example and components library.
-* _funkia/turbine_ - for generators and examples.
+* _funkia/turbine_ - for generators and examples. -->
 <!-- * _***_ - for letting that be possible. -->
 
 ##

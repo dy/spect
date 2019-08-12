@@ -1,4 +1,4 @@
-import { $, SET, GET } from './$.js'
+import { $, SET, GET } from './core.js'
 
 
 // state is a proxy, forwarding set/get to all target elements
@@ -49,7 +49,7 @@ function createState($el) {
       // FIXME: what about nested props access/writing?
 
       // return first element state value
-      $.publish(GET, firstEl, ['state', prop])
+      $el.forEach(el => $.publish(GET, el, ['state', prop]))
 
       return state[prop]
     }

@@ -1,4 +1,4 @@
-import { $, GET, SET, CALL_START, CALL_END } from './$.js'
+import { $, GET, SET, CALL_START, CALL_END } from './core.js'
 import { raf } from './util.js'
 import tuple from 'immutable-tuple'
 
@@ -28,7 +28,9 @@ $.subscribe(SET, (target, domainPath, value, prev, ...args) => {
   else observableDiff[1] = value
 
   // current frame is checked on diff automatically, so schedule only async calls
-  if (!currentElement) scheduleUpdate()
+  if (!currentElement) {
+    scheduleUpdate()
+  }
 })
 
 
@@ -59,7 +61,9 @@ export const use = $.fn.use = function use(...fns) {
 // schedules flush to the moment before the next frame
 let plannedRaf
 export function scheduleUpdate () {
-  if (plannedRaf) return
+  if (plannedRaf) {
+    return
+  }
   plannedRaf = raf(() => {
     plannedRaf = null
     flush()

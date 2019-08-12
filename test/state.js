@@ -2,7 +2,7 @@ import t from 'tst'
 import $ from '../index';
 
 
-t.only('state: direct props set', t => {
+t('state: direct props set', t => {
   let $els = $`<div.a/><div.b/><div.c/>`.use($a => {
     $a.fx(() => {
       $a.state.count = 0

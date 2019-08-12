@@ -1,6 +1,7 @@
 import equal from "fast-deep-equal"
-import { $, CALL_START, CALL_END } from './$.js'
+import { $, CALL_START, CALL_END } from './core.js'
 import tuple from 'immutable-tuple'
+import { noop } from './util.js'
 
 // track current aspected element
 // FIXME: possible recursive calls (bad, but still)
@@ -34,10 +35,13 @@ const destroyCache = new Map
 function run (el, fn, idx) {
   // call previous destroy, if any
   let t = tuple(currentElement, currentFn, idx)
+
   if (destroyCache.has(t)) destroyCache.get(t).call(el)
 
   $.publish(CALL_START, el, 'fx', fn)
-  destroyCache.set(t, fn.call(el))
+  let destroy = fn.call(el)
+  if (typeof destroy !== 'function') destroy = noop
+  destroyCache.set(t, destroy)
   $.publish(CALL_START, el, 'fx', fn)
 }
 
@@ -47,7 +51,7 @@ $.fn.fx = function (fn, ...deps) {
   // track deps
   if (deps.length) {
     let depsTuple = tuple(currentElement, currentFn, fxCount)
-    let prevDeps = depsCache.get(depsTuple)
+    let prevDeps = depsCache.get(depsTuple) || []
     if (equal(deps, prevDeps)) {
       fxCount++
       return this

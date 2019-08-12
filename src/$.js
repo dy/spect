@@ -74,26 +74,3 @@ create.fn = $.prototype
 // FIXME: merge with class when browsers support decorators
 export default function create(...args) { return new $(...args) }
 export { create, create as $ }
-
-
-
-// pubsub for effect changes
-export const GET = 1, SET = 2, CALL_START = 3, CALL_END = 4
-
-export const observers = {
-  [GET]: [],
-  [SET]: [],
-  [CALL_START]: [],
-  [CALL_END]: [],
-}
-
-export const subscribe = create.subscribe = function subscribe(TYPE, fn) {
-  if (observers[TYPE].indexOf(fn) >= 0) return
-  observers[TYPE].push(fn)
-}
-
-export const publish = create.publish = function publish(TYPE, element, domain, ...args) {
-  // domain → [domain, path]
-  if (typeof domain === 'string') domain = [domain]
-  observers[TYPE].forEach(fn => fn(element, domain, ...args))
-}
