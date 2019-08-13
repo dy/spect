@@ -1,9 +1,13 @@
-import './src/core.js'
-import "./src/is"
-import "./src/use"
-import "./src/fx"
-import "./src/html"
-import "./src/attr"
-import "./src/state"
+import $ from './$.js'
+import use from "./use"
+import fx from "./fx"
+import html from "./html"
+import attr from "./attr"
+import state from "./state"
+import on from "./on"
 
-export { $ as default } from './src/$.js'
+Object.assign($.fn, {
+  use, fx, html, attr, state, on
+})
+
+export default $

@@ -1,11 +1,10 @@
-import { $ } from './$.js'
 import { paramCase } from './util.js'
 
 // provides event bus, classes creation, attributes tracking
 
 
 // pubsub for effect changes
-export const GET = 1, SET = 2, CALL_START = 3, CALL_END = 4
+export const GET = 1, SET = 2, CALL_START = 3, CALL_END = 4, CREATE = 5
 
 export const observers = {
   [GET]: [],
@@ -14,12 +13,12 @@ export const observers = {
   [CALL_END]: [],
 }
 
-export const subscribe = $.subscribe = function subscribe(TYPE, fn) {
+export function subscribe(TYPE, fn) {
   if (observers[TYPE].indexOf(fn) >= 0) return
   observers[TYPE].push(fn)
 }
 
-export const publish = $.publish = function publish(TYPE, element, domain, ...args) {
+export function publish(TYPE, element, domain, ...args) {
   // domain → [domain, path]
   if (typeof domain === 'string') domain = [domain]
   observers[TYPE].forEach(fn => fn(element, domain, ...args))
@@ -75,6 +74,7 @@ function createClass(fn, HTMLElement) {
       // FIXME: that's wrong place for init
       // $(this).is(fn)
       $(this).use(fn)
+      publish(CREATE, this, ['is'], )
     }
 
     connectedCallback() {
@@ -86,6 +86,3 @@ function createClass(fn, HTMLElement) {
     }
   }
 }
-
-
-export { $ }

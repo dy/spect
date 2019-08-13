@@ -1,4 +1,5 @@
-import { $, SET, GET } from './core.js'
+import { publish, SET, GET } from './src/core.js'
+import $ from './$.js'
 
 
 // state is a proxy, forwarding set/get to all target elements
@@ -39,7 +40,7 @@ function createState($el) {
         let prev = state[prop]
         state[prop] = value
 
-        $.publish(SET, el, ['state', prop], value, prev)
+        publish(SET, el, ['state', prop], value, prev)
       })
 
       return true
@@ -49,7 +50,7 @@ function createState($el) {
       // FIXME: what about nested props access/writing?
 
       // return first element state value
-      $el.forEach(el => $.publish(GET, el, ['state', prop]))
+      $el.forEach(el => publish(GET, el, ['state', prop]))
 
       return state[prop]
     }

@@ -1,6 +1,7 @@
-import { $, GET, SET, CALL_START, CALL_END } from './core.js'
-import { raf } from './util.js'
+import { subscribe, publish, GET, SET, CALL_START, CALL_END } from './src/core.js'
+import { raf } from './src/util.js'
 import tuple from 'immutable-tuple'
+import $ from './$.js'
 
 
 // target/domainPath can be:
@@ -10,7 +11,7 @@ import tuple from 'immutable-tuple'
 // [null, `router`] (global effect)
 // FIXME: use private values instead of observables
 export let observables = new WeakMap
-$.subscribe(GET, (target, domainPath, ...args) => {
+subscribe(GET, (target, domainPath, ...args) => {
   // async callsite, outside of aspects - nothing to subscribe
   if (!currentElement) return
 
@@ -19,7 +20,7 @@ $.subscribe(GET, (target, domainPath, ...args) => {
   if (!observables.has(observable)) observables.set(observable, new Set)
   observables.get(observable).add(currentElement)
 })
-$.subscribe(SET, (target, domainPath, value, prev, ...args) => {
+subscribe(SET, (target, domainPath, value, prev, ...args) => {
   let observable = tuple(target, ...domainPath)
 
   // diff is checked in next frame, required targets to update are figured out
@@ -108,9 +109,9 @@ export function run(el, fn) {
   currentElement = el
   currentAspect = fn
 
-  $.publish(CALL_START, currentElement, 'use', fn)
+  publish(CALL_START, currentElement, 'use', fn)
   fn.call(el, $(el))
-  $.publish(CALL_END, currentElement, 'use', fn)
+  publish(CALL_END, currentElement, 'use', fn)
 
   currentElement = null
   currentAspect = null

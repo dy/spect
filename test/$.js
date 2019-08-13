@@ -45,4 +45,6 @@ t.skip('$: sustain dynamic nodes list as reference under the hood', t => {
   t.is($children.length, 2)
 })
 
-t('$: ')
+t('$: rebinding to other document', t => {
+  let e$ = $.bind(extDoc)
+})

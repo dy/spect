@@ -7,4 +7,5 @@ import './is.js'
 import './state.js'
 import './html.js'
 import './attr.js'
+import './on.js'
 

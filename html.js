@@ -13,7 +13,8 @@ import { patch,
   currentElement
 } from 'incremental-dom'
 
-import { $, getTagName, getCustomElement } from './core.js';
+import { getTagName, getCustomElement } from './src/core.js';
+import $ from './$.js'
 
 
 $.fn.html = html

@@ -480,24 +480,27 @@ $target.attr().foo
 <p align="right">Related: <a href="https://ghub.io/attributechanged">attributechanged</a></p>
 
 
-### `.on( evt + delegate? , fn )` − add/remove event listeners
+### `.on( evt, delegate?, fn )` − add/remove event listeners
 
-Registers event listeners for a target.
+Registers event listeners for a target, optionally pass `delegate` selector.
 
 ```js
 // add event listeners
 $target.on('foo bar', e => {})
-$target.on('foo.delegate', e => {})
+$target.on('foo', '.delegate', e => {})
 $target.on({ foo: e => {} })
 ```
 
-<!-- `on` provides `connected` and `disconnected` events for all aspects.
+`on` provides `mount` and `unmount` events for all aspects and components, to track when element is connected/disconnected from DOM.
 
 ```js
-$target.on('connected', e => {
+$target.on('mount', e => {
+  $target.state({ loading: true })
+})
+$target.on('unmount', e => {
 
 })
-``` -->
+```
 
 <p align="right">Related: <a href="https://github.com/donavon/use-event-listener">use-event-listener</a></p>
 
@@ -568,60 +571,82 @@ Community
 * [spect-uibox]() -->
 
 
-<!--
 ## FAQ
 
 ### Portals?
 
+Portals come out of the box:
+
 ```js
-$(portal).html`Portal content`
+$`#app`.use(el => {
+  $(el).html`Current content`
+
+  $`#external-container`.html`Portal content`
+})
 ```
 
 ### JSX?
 
-```js
-/* @jsx h */
-$el.html =  <div>Inner content</div>
-```
-
-### Wrap content?
+Spect is both jQuery and hyperscript compatible and is able to create vdom or real dom, depending on current effect context. All it takes - providing babel pragma.
 
 ```js
-$el.html`Wrap outer <div>${ $el }</div>` // $el contains different nodes list!
-$el.html`Wrap inner <div>${ $el.children }</div>` // $el is the same
+/* @jsx $ */
+
+// constructed as real DOM, diffed with element HTML
+$el.html(<div>Inner content</div>)
+
+// constructed as VDOM and applied after `html` effect
+$el.html(() => <div>Inner content</div>)
 ```
+
 
 ### Code splitting?
 
-Aspects can naturally be split to upgradable parts of html, enabling progressive-enhancement principle and reducing network load:
+Aspects by design split cross-cutting concerns, enabling progressive-enhancement principle and reducing network load.
+Loading sequence can be ordered by priority of one aspects over the other from UX standpoint.
 
 ```html
 <script>
-import $ from 'unpkg.com/spect'
-
+// main app aspect
 $('#app').is($app => {
-
+  // ...main app
 })
 
 </script>
 
 <script>
-import $ from 'unpkg.com/spect'
-
 // i18n aspect
 $('.t').use(i18n)
 
 function i18n () {
-
+  // ...translate all elements with `t` tag
 }
+</script>
+
+<script>
+// load data aspect
+$`.load-remote`.use(el => {
+  // ...load and display remote data
+})
 </script>
 ```
 
-### Concurrent hydration?
+So UI can be analyzed and decomposed from aspects perspective to multiple parts, not need to invent smart bundlers.
 
-That's built-in.
 
-### Use, is, fx - what's the difference?
+### Hydration?
+
+Hydration in _Spect_ is just a matter of applying HTML effect to any wrapped element:
+
+```js
+$`#app`.html`<div#app-conent>...markup</>`
+```
+
+It comes out of the box and is applicable to any website, not only built with specially crafted backend, that can be just regular PHP worker.
+
+
+<!--
+### `use`, `fx` - what's the difference?
 
 `is` provides single main aspect for an element via mechanism of web-components, if that's available. `is` aspect is always called first when element is updated.
 
@@ -629,12 +654,151 @@ That's built-in.
 
 Both `is` and `use` are rendered in current animation frame, planning rerendering schedules update for the next frame.
 
-`fx` provides a function, called after current aspect call. It is called synchronously in sense of processor ticks, but _after_ current renering aspect. Ie. aspect-less `fx` calls will trigger themselves instantly.
+`fx` provides a function, called after current aspect call. It is called synchronously in sense of processor ticks, but _after_ current renering aspect. Ie. aspect-less `fx` calls will trigger themselves instantly. -->
+
 
 ### Microfrontends?
 
+_Spect_ doen't enforce own paradigm, aspects can be assigned to any target:
+
+```js
+import React from 'react'
+import ReactDOM from 'react-dom'
+import $ from 'spect'
+
+$`#app`.use(el => {
+  let { lang, theme } = $(el).attr()
+
+  $(el).fx(() => {
+    ReactDOM.render(el, <App lang={} theme={theme}/>)
+  }, [lang, theme])
+})
+```
+
+
 ### Performance?
--->
+
+To be estimated and optimized.
+
+In general, to reduce amount of rerendering, provide deps to every effect call:
+
+```js
+$els.use(el => {
+  // bad
+  $(el).fx(() => $(el).state(s => s.x = x))
+
+  // good
+  $(el).fx(() => $(el).state(s => s.x = x), x)
+})
+```
+
+Also, try using VDOM over regular DOM, that promises to be faster (to be estimated):
+
+```js
+$els.use(el => {
+  // slower
+  $(el).html`...heavy markup`
+
+  // faster due to VDOM
+  $(el).html(_ => $`...heavy markup`)
+})
+```
+Although that can be fixed, if decided that HTML must be applied on the next frame only and always be VDOM (to be figured out).
+
+Also, _Spect_ allows a bunch of static optimizations (to be done via bable), such as - unwrapping vdom, unwrapping state/attr/prop access.
+
+
+### Own build?
+
+_Spect_ is fully modular, so that effect are independent and allow creating custom build by requiring sub-modules.
+
+For example, to pick min bundle `$` + `html`, do
+
+```js
+import $ from 'spect/$'
+import on from 'spect/html'
+
+// register effects
+$.fn.on = on
+
+// use effects
+$`#my-element`.html`...markup`
+```
+
+
+### Creating plugins?
+
+As it is seen from the example above, creating plugins for spect is straightforward and can remind jQuery plugins.
+
+Say, we'd like to create new effect, `toString`, serializing components.
+
+```js
+// to-string.js
+export default function toString() {
+  let parts = []
+
+  this.forEach(el => {
+    parts.push(toObject(el))
+  })
+
+  function toObject(el) {
+    let attributes = {}
+    for (let attr of el.attributes) { attributes[attr.name] = attr.value }
+
+    return { tag: el.tagName.toLowerCase, attributes, children: [...el.children].map(toObject) }
+  }
+
+  return JSON.stringify(parts)
+}
+```
+
+```js
+// main.js
+import $ from 'spect/$'
+import toString from './to-string.js'
+
+$.fn.toString = toString
+
+// then use it as
+$`.stringify`.toString() // "[...serialized result]"
+```
+
+
+### Modular use?
+
+
+_Spect_ effects can be used separately:
+
+```js
+import use from 'spect/use'
+import state from 'spect/state'
+import $ from 'spect/$'
+
+
+$(['a', 'b', 'c']).use(str => {
+  let $str = $(str)
+  $str.state({ count: 0 }, [])
+
+  console.log($str.state`count`)
+
+  setTimeout(() => {
+    $str.state(s => s.count++)
+  }, 1000)
+})
+```
+
+### Replace document context
+
+_Spect_ can be assigned to another document context, like [jsdom](https://ghub.io/jsdom):
+
+```js
+import Spect from 'spect'
+const jsdom = require("jsdom")
+const { JSDOM } = jsdom
+const dom = new JSDOM(`<!DOCTYPE html><p>Hello world</p>`)
+
+const $ = Spect.bind(dom.window.document)
+```
 
 
 ## Changelog

@@ -1,4 +1,4 @@
-import { isIterable } from './util'
+import { isIterable } from './src/util'
 
 // FIXME: don't extend Array, but provide some compatible methods instead:
 // length, add, remove, [idx], [-idx], iterator
@@ -73,4 +73,4 @@ create.fn = $.prototype
 
 // FIXME: merge with class when browsers support decorators
 export default function create(...args) { return new $(...args) }
-export { create, create as $ }
+export { create as $ }

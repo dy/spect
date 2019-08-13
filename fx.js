@@ -1,12 +1,13 @@
 import equal from "fast-deep-equal"
-import { $, CALL_START, CALL_END } from './core.js'
+import { CALL_START, CALL_END, publish, subscribe } from './src/core.js'
 import tuple from 'immutable-tuple'
-import { noop } from './util.js'
+import { noop } from './src/util.js'
+import $ from './$.js'
 
 // track current aspected element
 // FIXME: possible recursive calls (bad, but still)
 let currentElement, currentFn, fxCount, currentQueue
-$.subscribe(CALL_START, (element, domain, fn, ...args) => {
+subscribe(CALL_START, (element, domain, fn, ...args) => {
   if (domain[0] !== 'use') return
   currentElement = element
   currentFn = fn
@@ -14,7 +15,7 @@ $.subscribe(CALL_START, (element, domain, fn, ...args) => {
   currentQueue = []
 })
 
-$.subscribe(CALL_END, (element, domain, fn, ...args) => {
+subscribe(CALL_END, (element, domain, fn, ...args) => {
   if (domain[0] !== 'use') return
   flush()
   currentElement = null
@@ -38,11 +39,11 @@ function run (el, fn, idx) {
 
   if (destroyCache.has(t)) destroyCache.get(t).call(el)
 
-  $.publish(CALL_START, el, 'fx', fn)
+  publish(CALL_START, el, 'fx', fn)
   let destroy = fn.call(el)
   if (typeof destroy !== 'function') destroy = noop
   destroyCache.set(t, destroy)
-  $.publish(CALL_START, el, 'fx', fn)
+  publish(CALL_START, el, 'fx', fn)
 }
 
 

@@ -1,4 +1,5 @@
-import { $, GET, SET } from './core'
+import { GET, SET, publish } from './src/core'
+import $ from './$.js'
 
 // TODO attribute listens for read attributes from elements and modifies set of observed attributes via mutation observer
 
@@ -52,7 +53,7 @@ function createAttr($el) {
         let attrs = observedAttributes.get(el)
         if (attrs.indexOf(name) < 0) attrs.push(name)
 
-        $.publish(GET, el, ['attr', name])
+        publish(GET, el, ['attr', name])
       })
 
       // but return only first one
@@ -73,7 +74,7 @@ export function observeAttributes(el) {
   new MutationObserver(records => {
     for (let i = 0, length = records.length; i < length; i++) {
       let { target, oldValue, attributeName } = records[i];
-      $.publish(SET, target, ['attr', attributeName], target.getAttribute(attributeName), oldValue);
+      publish(SET, target, ['attr', attributeName], target.getAttribute(attributeName), oldValue);
     }
   }).observe(el, { attributes: true, attributeOldValue: true })
 }
