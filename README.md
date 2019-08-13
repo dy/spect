@@ -40,7 +40,7 @@ function i18n ($el) {
 $('#app').use(app, preloader);
 ```
 
-## Principles / philosophy
+## Principles
 
 > 1. Expressive. <!-- not impressive, obvoius code -->
 > 2. No bundling. <!-- required -->
@@ -48,7 +48,12 @@ $('#app').use(app, preloader);
 > 4. Standard HTML first.
 > 5. Max utility. <!-- min presentation, min proving. -->
 
-:ferris_wheel: _Spect_ can remotely remind _jQuery_ charged with _React_ hooks. Its API is based on a set of modern practices (Proxies, incremental-dom, hooks), design research, experiments and proves. The current design is third iteration.
+## Alchemy
+
+> :ferris_wheel: reinventing the wheel.
+> _Spect_ ≈ _jQuery_ + (_React hooks_ − _React_).
+
+The API is based on a set of modern practices (Proxies, incremental-dom, hooks), design research, experiments and proofs. Current design is third iteration.
 
 <!--
 ### :ferris_wheel: Reinventing the wheel
