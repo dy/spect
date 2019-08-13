@@ -50,11 +50,10 @@ $('#app').use(app, preloader);
 
 ## Alchemy
 
-> :ferris_wheel: Reinvented wheel formula:
->
+:ferris_wheel: Reinvented wheel formula:
 > _Spect_ ≈ _jQuery_ + (_React hooks_ − _React_).
 
-The API is based on a set of modern framework practices (proxies, vdom/incremental-dom, hooks, observers etc.), design research, experiments and proofs. Current design is third iteration.
+The API is based on a set of modern framework practices (proxies, vdom/incremental-dom, hooks, observers, frp etc.), design research, experiments and proofs. Current design is third iteration.
 
 <!--
 Conceptually, app is a set of _reactions_ to changes in some _domain_.
