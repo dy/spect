@@ -1,6 +1,6 @@
 {
   "name": "spect",
-  "version": "0.0.1",
+  "version": "1.0.0",
   "description": "Aspect-oriented DOM framework",
   "source": "./src/index.js",
   "main": "dist/spect.js",
