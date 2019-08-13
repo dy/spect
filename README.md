@@ -1,4 +1,4 @@
-# Spect
+# Spect ![experimental](https://img.shields.io/badge/stability-experimental-red)
 
 Spect is [_aspect_-oriented](https://en.wikipedia.org/wiki/Aspect-oriented_programming) effectful framework for creating expressive UIs.
 
@@ -10,34 +10,34 @@ import { t, useLocale } from 'ttag';
 import ky from 'ky';
 
 // main aspect
-function app ($app) {
+function main (app) {
   let [ match, { id } ] = route('user/:id');
   if (!match) return;
 
-  $app.fx(async () => {
-    $app.state.loading = true;
-    $app.state.user = await ky.get(`./api/user/${id}`);
-    $app.state.loading = false;
+  app.fx(async () => {
+    app.state.loading = true;
+    app.state.user = await ky.get(`./api/user/${id}`);
+    app.state.loading = false;
   }, id);
 
-  $app.html`<p use=${i18n}>${
-    $app.state.loading ? `Hello, ${ $app.state.user.name }!` : `Thanks for patience...`;
+  app.html`<p use=${i18n}>${
+    app.state.loading ? `Hello, ${ app.state.user.name }!` : `Thanks for patience...`;
   }</p>`;
 }
 
 // preloader aspect
-function preloader ($el) {
-  if ($el.state.loading) $el.html`${el.html} <canvas class="spinner" />`;
+function preloader (el) {
+  if (el.state.loading) el.html`${el.html} <canvas.spinner />`;
 }
 
 // i18n aspect
-function i18n ($el) {
-  useLocale($el.attr.lang || $(document.documentElement).attr.lang);
-  $el.text = t`${ $el.text }`;
+function i18n (el) {
+  useLocale(el.attr.lang || $(document.documentElement).attr.lang);
+  el.text = t`${ el.text }`;
 }
 
 // attach aspects to DOM
-$('#app').use(app, preloader);
+$('main#app').use(main, preloader);
 ```
 
 ## Principles
@@ -51,7 +51,7 @@ $('#app').use(app, preloader);
 ## Alchemy
 
 :ferris_wheel: Reinvented wheel formula:
-> _Spect_ ≈ _jQuery_ + (_React hooks_ − _React_).
+> _Spect_ ≈ _jQuery_ + _React hooks_.
 
 The API is based on a set of modern framework practices (proxies, vdom/incremental-dom, htm, custom elements, hooks, observers, frp etc.), design research, experiments and proofs. Current design is third iteration.
 
