@@ -1,6 +1,6 @@
 # Spect ![experimental](https://img.shields.io/badge/stability-experimental-red)
 
-Spect is [_aspect_-oriented](https://en.wikipedia.org/wiki/Aspect-oriented_programming) effectful framework for creating expressive UIs.
+Spect is [_aspect_-oriented](https://en.wikipedia.org/wiki/Aspect-oriented_programming) framework for creating expressive UIs.
 
 
 ```js
@@ -48,9 +48,7 @@ $('main#app').use(main, preloader);
 > 4. Standard HTML first.
 > 5. Max utility. <!-- min presentation, min proving. -->
 
-## Alchemy
-
-:ferris_wheel: Reinvented wheel formula:
+**:ferris_wheel: Reinvented wheel formula:**
 > _Spect_ ≈ _jQuery_ + _React hooks_.
 
 The API is based on a set of modern framework practices (proxies, vdom/incremental-dom, htm, custom elements, hooks, observers, frp etc.), design research, experiments and proofs. Current design is third iteration.
