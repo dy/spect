@@ -44,6 +44,7 @@
   "type": "module",
   "dependencies": {
     "@ungap/custom-elements-builtin": "^0.2.7",
+    "delegate-it": "^1.1.0",
     "fast-deep-equal": "^2.0.1",
     "fast-on-load": "^1.0.1",
     "htm": "^2.2.1",

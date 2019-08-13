@@ -4,7 +4,7 @@ Spect is [_aspect_-oriented](https://en.wikipedia.org/wiki/Aspect-oriented_progr
 
 :ferris_wheel: Wheel formula:
 
-> _Spect_ ≈ _jQuery_ + _aspects_ + _hooks_ + _side-effects_ + _reactions_
+> _Spect_ ≈ _jQuery_ + _reactive aspects_ + _side-effects_
 
 ```js
 import $ from 'spect';
@@ -14,31 +14,33 @@ import ky from 'ky';
 
 // main aspect
 function main (app) {
-  let [ match, { id } ] = route('user/:id');
+  let $app = $(app)
+
+  let [ match, { id } ] = route`user/:id`;
   if (!match) return;
 
   // useState as useEffect
-  app.state(async state => {
-    state.loading = true
-    state.user = await ky.get(`./api/user/${id}`);
-    state.loading = false
+  $app.state(async state => {
+    state.loading = true;
+    state.user = await ky.get`./api/user/${id}`;
+    state.loading = false;
   }, id);
 
   // html side-effect
-  app.html`<p use=${i18n}>${
-    app.state`loading` ? `Hello, ${ app.state`user.name` }!` : `Thanks for patience...`;
+  $app.html`<p use=${i18n}>${
+    $app.state`loading` ? `Hello, ${ $app.state`user.name` }!` : `Thanks for patience...`;
   }</p>`;
 }
 
 // preloader aspect
 function preloader (el) {
-  el.html(html => $`${ html } ${ el.state`loading` && $`<canvas.spinner />` }`, el.state`loading`);
+  $(el).html(html => $`${ html } ${ $(el).state`loading` && $`<canvas.spinner />` }`, $(el).state`loading`);
 }
 
 // i18n aspect
 function i18n (el) {
-  useLocale(el.attr`lang` || $(document.documentElement).attr`lang`);
-  el.text( text => t`${ text }` );
+  useLocale($(el).attr`lang` || $(document.documentElement).attr`lang`);
+  $(el).text(text => t(text))
 }
 
 // attach aspects to DOM
@@ -316,16 +318,19 @@ Register effect function for selected elements. The effect `fn` is called after 
 
 ```js
 // called each time
-$target.fx(() => {})
+$els.fx(() => {})
 
 // called once
-$target.fx(() => {}, [])
+$els.fx(() => {}, [])
 
 // called any time deps change
-$target.fx(() => {}, deps)
+$els.fx(() => {}, deps)
 
 // destructor
-$target.fx(() => () => destroy(), deps)
+$els.fx(() => () => destroy(), deps)
+
+// called for each element
+$els.fx(el => $(el).something)
 ```
 
 <p align="right">Related: <a href='https://reactjs.org/docs/hooks-effect.html'>useEffect</a></p>

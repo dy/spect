@@ -3,13 +3,13 @@ import $ from '../index.js'
 
 t.only('on: should assign event', t => {
   let log = []
-  let el = $`<a.foo/>`
+  let $el = $`<a.foo/>`
 
-  el.on('click', () => log.push('foo'))
+  $el.on('click', () => log.push('foo'))
 
   t.is(log, [])
 
-  el[0].click()
+  $el[0].click()
 
   t.is(log, ['foo'])
 })
