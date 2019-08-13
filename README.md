@@ -4,7 +4,7 @@ Spect is [_aspect_-oriented](https://en.wikipedia.org/wiki/Aspect-oriented_progr
 
 :ferris_wheel: Wheel formula:
 
-> _Spect_ ≈ _jQuery_ + _aspects_ + _reactions_ + _hooks_ + _side-effects_.
+> _Spect_ ≈ _jQuery_ + _aspects_ + _hooks_ + _side-effects_ + _reactions_.
 
 ```js
 import $ from 'spect';
