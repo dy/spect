@@ -106,7 +106,7 @@ import $ from 'https://unpkg.com/spect@latest?module'
 This example creates _html_ in body and assigns single aspect to it.
 
 ```js
-import { $ } from 'spect'
+import $ from 'spect'
 
 $(document.body).html`<div id="hello-example" class="hello" name="Taylor" use=${hello}/>`
 
@@ -115,24 +115,21 @@ function hello ($el) { $el.html`Hello, ${$el.attr.name}!` }
 
 ### A stateful aspect
 
-_Spect_ introduces `state`, `mount` and `fx` effects, similar to `useState` and `useEffect` hooks:
+_Spect_ introduces `.state`, `.mount` and `.fx` effects, similar to `useState` and `useEffect` hooks:
 
 ```js
-import $, { html, state, mount, fx } from 'spect'
+import $ from 'spect'
 
-$('#timer-example', el => {
-  let { seconds = 0 } = state()
+$('#timer-example').use(el => {
+  el.mount(() => {
+    el.state.seconds = 0
+    let i = setInterval( () => el.state.seconds++, 1000 )
 
-  mount(() => {
-    // on mount
-    let i = setInterval(
-      () => state({ seconds: seconds + 1 }),
-    1000)
-
-    return () => clearInterval(i) // on unmount
+    // on unmount
+    return () => clearInterval(i)
   })
 
-  html`Seconds: ${seconds}`
+  el.html`Seconds: ${el.state.seconds}`
 })
 
 ```
@@ -141,53 +138,58 @@ $('#timer-example', el => {
 
 ### An application
 
-Events are provided by `on` effect, decoupling callbacks from markup and enabling event delegation. They can be used along with direct `on*` attributes.
+Events are provided by `.on` effect, decoupling callbacks from markup and enabling event delegation. They can be used along with direct `on*` attributes.
 
 ```js
-import $, { html, state, on } from 'spect'
+import $ from 'spect'
 
-$(`#todos-example`, Todo)
+$(`#todos-example`).use(Todo)
 
 function Todo (el) {
-  let { items=[], text='' } = state()
+  // init app hook
+  el.init(() => {
+    el.state = { items: [], text: '' }
+  })
 
-  // listens for `submit` event on current target
-  on('submit', e => {
+  // listen for `submit` event on current target
+  el.on('submit', e => {
     e.preventDefault();
 
-    if (!text.length) return;
+    if (!el.state.text.length) return;
 
     const newItem = {
-      text: this.state.text,
+      text: el.state.text,
       id: Date.now()
     };
 
-    state({
+    el.state = {
       items: [...items, newItem],
       text: ''
-    })
+    }
   })
 
-  // delegates event to #new-todo element
-  on('change', '#new-todo', e => state({ text: e.target.value });
+  // delegate event to #new-todo element
+  el.on('change', '#new-todo', e => el.state.text = e.target.value;
 
-  html`
+  // html effect
+  el.html`
     <h3>TODO</h3>
-    <main items=${items}>${TodoList}</main>
+    <main is=${TodoList} items=${ el.state.items }/>
     <form>
       <label for=new-todo>
         What needs to be done?
       </label>
-      <input#new-todo value=${text}/>
+      <input#new-todo value=${ el.state.text }/>
       <button>
-        Add #${items.length + 1}
+        Add #${ el.state.items.length + 1 }
       </button>
     </form>
   `
 }
 
-function TodoList ({ items }) {
-  html`<ul>${items.map(item => `<li>${item.text}</li>`)}</ul>`
+// TodoList component
+function TodoList ({ prop: { items }, html }) {
+  html`<ul>${ items.map(item => html`<li>${ item.text }</li>`) }</ul>`
 }
 ```
 
@@ -195,48 +197,47 @@ function TodoList ({ items }) {
 
 ### A web-component <small>code | sandbox</small>
 
-_Spect_ is also able to provide component aspects via native web-components mechanism.
+_Spect_ is able to create components via native web-components mechanism, as seen in previous example. Let's see how that can be used in composition.
+
+```js
+// index.js
+import $ from 'spect'
+import MarkdownEditor from './editor.js'
+
+// MarkdownEditor is created as web-component
+$(`#markdown-example`).use(el => html`<${MarkdownEditor} content='Hello, **world**!'/>`)
+```
 
 ```js
 // editor.js
-import { html } from 'spect'
+import $ from 'spect'
 import Remarkable from 'remarkable'
 
-export default function MarkdownEditor ({ content='' }) {
-  let getRawMarkup = () => {
-    const md = new Remarkable();
-    return md.render(content);
-  }
+export default function MarkdownEditor (el) {
 
-  // obtain reference to `.content`
-  html`<host class=markdown-editor>
+  el.class`markdown-editor`
+
+  el.html`
     <h3>Input</h3>
     <label for="markdown-content">
       Enter some markdown
     </label>
     <textarea#markdown-content
-      onchange=${e => prop({ content: e.target.value })}
-    >${value}</textarea>
+      onchange=${e => el.prop({ content: e.target.value })}
+    >${ value }</textarea>
 
     <h3>Output</h3>
     <div.content/>
-  </>`
+  `
 
-  // look out for XSS!
-  $('.content').innerHTML = getRawMarkup()
+  el.$`.content`.html`${getRawMarkup()}`
+}
+
+let getRawMarkup = () => {
+  const md = new Remarkable();
+  return md.render(el.prop.content);
 }
 ```
-
-```js
-// index.js
-import $, { html, state } from 'spect'
-import MarkdownEditor from './editor.js'
-
-// MarkdownEditor is created as web-component
-$(`#markdown-example`, el => html`<${MarkdownEditor} content='Hello, **world**!'/>`)
-```
-
-Notice the shorthand id/classes notation as `<tag#id.class />`.
 
 
 ## API
