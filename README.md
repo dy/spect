@@ -113,6 +113,9 @@ $(document.body).html`<div id="hello-example" class="hello" name="Taylor" use=${
 function hello ($el) { $el.html`Hello, ${$el.attr.name}!` }
 ```
 
+<p align='right'><a href="">Open in sandbox</a></p>
+
+
 ### A stateful aspect
 
 _Spect_ introduces `.state`, `.mount` and `.fx` effects, similar to `useState` and `useEffect` hooks:
@@ -133,7 +136,8 @@ $('#timer-example').use(el => {
 })
 
 ```
-<small>[TODO: Open in sandbox](https://codesandbox.com)</small>
+
+<p align='right'><a href="">Open in sandbox</a></p>
 
 
 ### An application
@@ -193,7 +197,8 @@ function TodoList ({ prop: { items }, html }) {
 }
 ```
 
-<small>[TODO: Open in sandbox](https://codesandbox.com)</small>
+<p align='right'><a href="">Open in sandbox</a></p>
+
 
 ### A web-component <small>code | sandbox</small>
 
@@ -238,6 +243,8 @@ let getRawMarkup = () => {
   return md.render(el.prop.content);
 }
 ```
+
+<p align='right'><a href="">Open in sandbox</a></p>
 
 
 ## API
