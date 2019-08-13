@@ -637,7 +637,6 @@ _Spect_ would not be possible without brilliant ideas from many libraries author
 
 <!-- * _***_ - for letting that be possible. -->
 
-##
 
 <p align="right">HK</p>
 
