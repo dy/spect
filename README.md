@@ -50,14 +50,13 @@ $('#app').use(app, preloader);
 
 ## Alchemy
 
-> :ferris_wheel: reinventing the wheel.
+> :ferris_wheel: Reinvented wheel formula:
+>
 > _Spect_ ≈ _jQuery_ + (_React hooks_ − _React_).
 
-The API is based on a set of modern practices (Proxies, incremental-dom, hooks), design research, experiments and proofs. Current design is third iteration.
+The API is based on a set of modern framework practices (proxies, vdom/incremental-dom, hooks, observers etc.), design research, experiments and proofs. Current design is third iteration.
 
 <!--
-### :ferris_wheel: Reinventing the wheel
-
 Conceptually, app is a set of _reactions_ to changes in some _domain_.
 
 _Reaction_ may have various side-_effects_, like changing html, css, page title, sound volume, displaying dialog etc. _React_ components provide main html side-effect per component, to provide other side-effects, the mechanism of hooks is introduced. In _jQuery_, any element may have an effect on any other element, but lack of component composition is 🍝.
