@@ -36,7 +36,7 @@ function main (app) {
 
 // preloader aspect
 function preloader (el) {
-  el.html(h => `${ el.children } ${el.state`loading` && h`<canvas.spinner />`}`, el.state`loading`);
+  el.html(h => `${ el.children } ${ el.state`loading` && h`<canvas.spinner />` }`, el.state`loading`);
 }
 
 // i18n aspect
@@ -117,7 +117,7 @@ import $ from 'spect'
 
 $(document.body).html`<div id="hello-example" class="hello" name="Taylor" use=${hello}/>`
 
-function hello ($el) { $el.html`Hello, ${$el.attr.name}!` }
+function hello (el) { el.html`Hello, ${ el.attr`name` }!` }
 ```
 
 <p align='right'><a href="">Open in sandbox</a></p>
@@ -125,12 +125,12 @@ function hello ($el) { $el.html`Hello, ${$el.attr.name}!` }
 
 ### A stateful aspect
 
-_Spect_ introduces `.state`, `.mount` and `.fx` effects, similar to `useState` and `useEffect` hooks:
+_Spect_ introduces `.state` and `.fx` effects, similar to `useState` and `useEffect` hooks:
 
 ```js
 import $ from 'spect'
 
-$('#timer-example').use(el => {
+$`#timer-example`.use(el => {
   el.state({seconds: 0}, [])
 
   el.mount(() => {
@@ -476,6 +476,8 @@ Registers event listeners for a target, scoped to current aspect.
 ```js
 // add event listeners
 $target.on('foo bar', e => {})
+$target.on({ foo: e => {} })
+$target.on({ foo: e => {} })
 ```
 <!-- // read events -->
 <!-- $target.on // { foo: e => {}, bar: e => {} } -->
