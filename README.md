@@ -247,9 +247,8 @@ Notice the shorthand id/classes notation as `<tag#id.class />`.
 
 <!-- mount is a hook on html domain -->
 
-[**`$`**]()  [**`.use`**]()  [**`.state`**]()  [**`.html`**]()  [**`.fx`**]()  [**`.text`**]()  [**`.class`**]()  [**`.attr`**]()  [**`.on`**]()  [**`.css`**]()  [**`.init`**]()  [**`.mount`**]()
+:microscope: [**`$`**]()  [**`.use`**]()  [**`.state`**]()  [**`.html`**]()  [**`.fx`**]()  [**`.text`**]()  [**`.class`**]()  [**`.attr`**]()  [**`.on`**]()  [**`.css`**]()  [**`.init`**]()  [**`.mount`**]()
 
-##
 
 ### `$( selector | els )` − elements selector
 
@@ -604,10 +603,10 @@ Both `is` and `use` are rendered in current animation frame, planning rerenderin
 ### Performance?
 
 
-## Acknowledgement
+<!-- ## Acknowledgement
 
 
-_Spect_ would not be possible without brilliant ideas from many libraries authors, hence the acknowledge to authors of _jquery_, _react_, _atomico, hui_, _htm_, _fast-on-load_, _tachyons, tailwindcss, ui-box_, _evergreen-ui, material-ui_, _reuse_, _selector-observer_, _material-design-lite_, _funkia/turbine_ and others.
+_Spect_ would not be possible without brilliant ideas from many libraries authors, hence the acknowledge to authors of _jquery_, _react_, _atomico, hui_, _htm_, _fast-on-load_, _tachyons, tailwindcss, ui-box_, _evergreen-ui, material-ui_, _reuse_, _selector-observer_, _material-design-lite_, _funkia/turbine_ and others. -->
 
 <!-- * _***_ - for letting that be possible. -->
 
