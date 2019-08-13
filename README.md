@@ -18,20 +18,24 @@ function main (app) {
   let [ match, { id } ] = route('user/:id');
   if (!match) return;
 
-  app.fx(async () => {
-    app.state.loading = true;
-    app.state.user = await ky.get(`./api/user/${id}`);
-    app.state.loading = false;
+  app.fx(() => {
+    app.state.loading = true
+
+    // batch update
+    app.state(async state => {
+      state.user = await ky.get(`./api/user/${id}`);
+      state.loading = false
+    })
   }, id);
 
   app.html`<p use=${i18n}>${
-    app.state.loading ? `Hello, ${ app.state.user.name }!` : `Thanks for patience...`;
+    app.state`loading` ? `Hello, ${ app.state`user.name` }!` : `Thanks for patience...`;
   }</p>`;
 }
 
 // preloader aspect
 function preloader (el) {
-  if (el.state.loading) el.html`${el.html} <canvas.spinner />`;
+  el.html(h => `${el.html} ${el.state`loading` && h`<canvas.spinner />`}`, el.state`loading`);
 }
 
 // i18n aspect
@@ -273,7 +277,7 @@ $(elements)
 <p align="right">Related: <a href="https://jquery.com">jquery</a></p>
 
 
-### `.use( ...fns )` − attach aspects
+### `.use( ...fns, deps? )` − attach aspects
 
 Assign aspect function(s) to selected elements. Each `fn` is called for every element in the selected set, receiving wrapped element as single argument. Aspect `fn` can be be called multiple times in a frame, if `state`, `attr` or any other data source updates. The data sources are to subscribed to automatically when their values are read.
 
@@ -300,7 +304,7 @@ $els.html`<div use=${$div => {}}></div>`
 <p align="right">Related: <a href="https://ghub.io/reuse">reuse</a></p>
 
 
-### `.fx( fn, ...deps? )` − run side-effects
+### `.fx( fn, deps? )` − run side-effects
 
 Register effect function for selected elements. The effect `fn` is called after current aspect call for each element in the set.
 
@@ -321,26 +325,28 @@ $target.fx(() => () => destroy(), deps)
 <p align="right">Related: <a href='https://reactjs.org/docs/hooks-effect.html'>useEffect</a></p>
 
 
-### `.state.<name>` − get/set elements state
+### `.state( name, deps? )` − get/set elements state
 
 Read or write state, associated with an element. Read returns state of the first item in the set. Reading state subscribes current aspect to rerender whenever that state changes.
 
 ```js
 // write state
-$target.state = obj
-$target.state.x = 1
 $target.state({x: 1})
 $target.state(_ => _.x.y.z = 1) // safe path setter
 
 // read state
-$target.state.x
+$target.state('x')
 $target.state(_ => _.x.y.z) // safe path getter
 ```
+
+<!-- $target.state.x -->
+<!-- $target.state = obj -->
+<!-- $target.state.x = 1 -->
 
 <p align="right">Related: <a href="https://reactjs.org/docs/hooks-state.html">useState</a>, <a href="https://www.npmjs.com/package/icaro">icaro</a>, <a href="https://www.npmjs.com/package/introspected">introspected</a></p>
 
 
-### `.prop.<name>` − get/set elements props
+### `.prop( name, deps? )` − get/set elements props
 
 Read or write elements properties. Read returns first item property value. Set writes property to all elements in the set. Reading prop subscribes current aspect to rerender whenever that property changes.
 
@@ -364,18 +370,18 @@ $target.prop(_ => _.x.y.z) // safe path getter
 Provides HTML content for elements. Internally uses [htm](https://ghub.io/htm) with [incremental-dom](https://ghub.io/incremental-dom) to render tree.
 
 ```js
-// set inner html
+// set html
 $target.html`...markup`
 $target.html(vdom)
-$target.html = vdom | `...markup`
-$target.html(html => html`...markup ${ html`...inner` }`)
+$target.html(h => h`...markup ${ h`...inner` }`)
 
-/* @jsx $ */
-$target.html = <>Markup</>
+/* @jsx h */
+$target.html(h => <>Markup</>)
 
 // get html
 $target.html
 ```
+<!-- $target.html = vdom | `...markup` -->
 
 #### Components
 
@@ -395,7 +401,6 @@ function SuperButton($el) {
 
 * [Popup-info example from MDN](https://developer.mozilla.org/en-US/docs/Web/API/CustomElementRegistry/define#Autonomous_custom_element):
 
-
 <p align="right">Related: <a href="https://ghub.io/incremental-dom">incremental-dom</a>, <a href='https://ghub.io/htm'>htm</a></p>
 
 
@@ -405,14 +410,14 @@ Provide text content for group of elements.
 
 ```js
 // set text
-$target.text`...text`
-$target.text = `...text`
 $target.text('...text')
 $target.text(nodes => (nodes[2] = '...text', nodes))
 
 // get text
-$target.text
+$target.text()
 ```
+<!-- $target.text`...text`
+$target.text = `...text` -->
 
 
 ### ``.css`...styles` `` − render style sheets
@@ -421,72 +426,81 @@ Provide scoped CSS styles for element
 
 ```js
 // write css
-$target.css`selector { ...rules }`
-$target.css = `selector { ...rules }`
-$target.css({ rule: styles })
-$target.css(rules => modifiedRules)
-$target.css.path = obj|str
+$target.css(` :host { width: 100%} `)
+$target.css({ ':host': { width: 100%} })
+$target.css(rules => rules[':host'].width = '100%')
 
 // read css
-$target.css
-$target.css.path // obj
+$target.css(':host').width
 ```
+
+<!-- $target.css.path = obj|str -->
+<!-- $target.css.path // obj -->
+<!-- $target.css`selector { ...rules }` -->
+<!-- $target.css = `selector { ...rules }` -->
 
 <p align="right">Related: <a href="https://ghub.io/virtual-css">virtual-css</a></p>
 
 
-### ``.class`foo bar baz` `` − get/set class list
+### `.class( list, deps? )` − get/set class list
 
 Changes element classList, updates all dependent elements/aspects.
 
 ```js
 // write classes
-$target.class`foo bar baz`
-$target.class = `foo bar baz`
-$target.class = {foo: true, bar: false, baz: () => false}
+$target.class(['foo', true && 'bar', 'baz'])
+$target.class({ foo: true, bar: false, bas: isTrue() })
 $target.class(({ foo, bar, ...clsx }) => clsx)
 
 // read classes
-$target.class // { foo: true, bar: true }
-$target.class.foo // true
+$target.class('foo')
+$target.class().foo
 ```
+
+<!-- $target.class`foo bar baz` -->
+<!-- $target.class = `foo bar baz` -->
+<!-- $target.class = {foo: true, bar: false, baz: () => false} -->
+<!-- $target.class // { foo: true, bar: true } -->
 
 <p align="right">Related: <a href="https://ghub.io/clsx">clsx</a>, <a href="https://ghub.io/classes">classes</a></p>
 
 
-### ``.attr.<name> `` − get/set attributes
+### `.attr(name, deps?)` − get/set attributes
 
 Changes element attributes, updates all dependent elements/aspects.
 
 ```js
 // write attributes
-$target.attr`foo bar baz`
-$target.attr = `foo bar baz`
-$target.attr = {foo: true, bar: false, baz: () => false}
-$target.attr(({ foo, bar, ...clsx }) => clsx)
+$target.attr('foo', 'bar')
+$target.attr({ foo: 'bar'})
+$target.attr(({ foo, bar, baz }) => ({ foo, bar }))
 
 // read attributes
-$target.attr // { foo: true, bar: true }
-$target.attr.foo // true
+$target.attr('foo')
+$target.attr().foo
 ```
+
+<!-- $target.attr('foo') // { foo: true, bar: true } -->
+<!-- $target.attr = {foo: true, bar: false, baz: () => false} -->
+<!-- $target.attr`foo bar baz` -->
+<!-- $target.attr = `foo bar baz` -->
 
 <p align="right">Related: <a href="https://ghub.io/attributechanged">attributechanged</a></p>
 
 
-### `.on( evt, delegate?, fn )` − add/remove event listeners
+### `.on( evt, delegate?, fn, deps? )` − add/remove event listeners
 
 Registers event listeners for a target, scoped to current aspect.
 
 ```js
-// write events
+// add event listeners
 $target.on('foo bar', e => {})
-$target.on.foo = e => {}
-$target.on = { foo: e => {} }
-
-// read events
-$target.on // { foo: e => {}, bar: e => {} }
-$target.on.foo // e => {}
 ```
+<!-- // read events -->
+<!-- $target.on // { foo: e => {}, bar: e => {} } -->
+<!-- $target.on = { foo: e => {} } -->
+<!-- $target.on.foo = e => {} -->
+<!-- $target.on.foo // e => {} -->
 
 `on` provides `connected` and `disconnected` events for all aspects.
 
@@ -498,7 +512,7 @@ $target.on('connected', e => {
 
 <p align="right">Related: <a href="https://github.com/donavon/use-event-listener">use-event-listener</a></p>
 
-
+<!--
 ### `.init( fn: create => destroy )` - init / destroy lifecycle callbacks
 
 Triggered during the first render, useful to initialize component state and other effects. Any effects or changes made in callback are muted, so rerendering won't trigger, unlike in effect `.fx( fn, [] )`.
@@ -520,8 +534,9 @@ $('#target').use($el => {
   })
 })
 ```
+-->
 
-### `.mount( fn: onmount => onunmount )` - connected / disconnected lifecycle callbacks
+<!-- ### `.mount( fn: onmount => onunmount )` - connected / disconnected lifecycle callbacks
 
 Triggers callback `fn` when element is connected to the DOM. Optional returned function is triggered when the element is disconnected.
 If an aspect is attached to mounted elements, the `onmount` will be triggered automatically.
@@ -535,7 +550,7 @@ $('#target'.use($el => {
     }
   })
 })
-```
+``` -->
 
 <!--
 
