@@ -51,7 +51,6 @@ $('#app').use(app, preloader);
 ## Alchemy
 
 > :ferris_wheel: reinventing the wheel.
-
 > _Spect_ ≈ _jQuery_ + (_React hooks_ − _React_).
 
 The API is based on a set of modern practices (Proxies, incremental-dom, hooks), design research, experiments and proofs. Current design is third iteration.
