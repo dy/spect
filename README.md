@@ -20,7 +20,7 @@ function main (app) {
 
   // useEffect
   app.fx(() => {
-    app.state.loading = true
+    app.state({ loading: true })
 
     // batch set state
     app.state(async state => {
@@ -31,19 +31,19 @@ function main (app) {
 
   // html side-effect
   app.html`<p use=${i18n}>${
-    app.state.loading ? `Hello, ${ app.state`user.name` }!` : `Thanks for patience...`;
+    app.state`loading` ? `Hello, ${ app.state`user.name` }!` : `Thanks for patience...`;
   }</p>`;
 }
 
 // preloader aspect
 function preloader (el) {
-  el.html(h => `${el.html} ${el.state.loading && h`<canvas.spinner />`}`, el.state.loading);
+  el.html(h => `${ el.children } ${el.state`loading` && h`<canvas.spinner />`}`, el.state`loading`);
 }
 
 // i18n aspect
 function i18n (el) {
-  useLocale(el.attr.lang || $(document.documentElement).attr.lang);
-  el.text = t`${ el.text }`;
+  useLocale(el.attr`lang` || $(document.documentElement).attr`lang`);
+  el.text( text => t`${ text }` );
 }
 
 // attach aspects to DOM
@@ -59,7 +59,7 @@ $('main#app').use(main, preloader);
 > 5. Max utility. <!-- min presentation, min proving. -->
 
 
-The API is based on a set of modern framework practices (proxies, vdom/incremental-dom, htm, custom elements, hooks, observers, frp etc.), design research, experiments and proofs. Current design is third iteration.
+The API is based on a set of modern framework practices (proxies, vdom/incremental-dom, htm, custom elements, hooks, observers, frp etc.), design research, experiments and proofs.
 
 <!--
 Conceptually, app is a set of _reactions_ to changes in some _domain_.
@@ -132,15 +132,16 @@ _Spect_ introduces `.state`, `.mount` and `.fx` effects, similar to `useState` a
 import $ from 'spect'
 
 $('#timer-example').use(el => {
+  el.state({seconds: 0}, [])
+
   el.mount(() => {
-    el.state.seconds = 0
-    let i = setInterval( () => el.state.seconds++, 1000 )
+    let i = setInterval( () => el.state(s => s.seconds++), 1000 )
 
     // on unmount
     return () => clearInterval(i)
   })
 
-  el.html`Seconds: ${el.state.seconds}`
+  el.html`Seconds: ${el.state`seconds`}`
 })
 
 ```
@@ -158,50 +159,47 @@ import $ from 'spect'
 $(`#todos-example`).use(Todo)
 
 function Todo (el) {
-  // init app hook
-  el.init(() => {
-    el.state = { items: [], text: '' }
-  })
+  el.state({ items: [], text: '' }, [])
 
   // listen for `submit` event on current target
   el.on('submit', e => {
     e.preventDefault();
 
-    if (!el.state.text.length) return;
+    if (!el.state`text.length`) return;
 
     const newItem = {
-      text: el.state.text,
+      text: el.state`text`,
       id: Date.now()
     };
 
-    el.state = {
+    el.state({
       items: [...items, newItem],
       text: ''
-    }
+    })
   })
 
   // delegate event to #new-todo element
-  el.on('change', '#new-todo', e => el.state.text = e.target.value;
+  el.on('change', '#new-todo', e => el.state({ text: e.target.value });
 
   // html effect
   el.html`
     <h3>TODO</h3>
-    <main is=${TodoList} items=${ el.state.items }/>
+    <main is=${TodoList} items=${ el.state`items` }/>
     <form>
       <label for=new-todo>
         What needs to be done?
       </label>
-      <input#new-todo value=${ el.state.text }/>
+      <input#new-todo value=${ el.state`text` }/>
       <button>
-        Add #${ el.state.items.length + 1 }
+        Add #${ el.state`items.length` + 1 }
       </button>
     </form>
   `
 }
 
 // TodoList component
-function TodoList ({ prop: { items }, html }) {
-  html`<ul>${ items.map(item => html`<li>${ item.text }</li>`) }</ul>`
+function TodoList (el) {
+  el.html(h => h`<ul>${ items.map(item => h`<li>${ item.text }</li>`) }</ul>`)
 }
 ```
 
@@ -227,7 +225,6 @@ import $ from 'spect'
 import Remarkable from 'remarkable'
 
 export default function MarkdownEditor (el) {
-
   el.class`markdown-editor`
 
   el.html`
@@ -243,7 +240,7 @@ export default function MarkdownEditor (el) {
     <div.content/>
   `
 
-  el.$`.content`.html`${getRawMarkup()}`
+  el.children`.content`.html`${getRawMarkup()}`
 }
 
 let getRawMarkup = () => {
@@ -261,7 +258,7 @@ let getRawMarkup = () => {
 
 <!-- mount is a hook on html domain -->
 
-[**`$`**]()  [**`.use`**]()  [**`.state`**]()  [**`.html`**]()  [**`.fx`**]()  [**`.text`**]()  [**`.class`**]()  [**`.attr`**]()  [**`.on`**]()  [**`.css`**]()  [**`.init`**]()  [**`.mount`**]()
+[**`$`**]()  [**`.use`**]()  [**`.state`**]()  [**`.html`**]()  [**`.fx`**]()  [**`.text`**]()  [**`.class`**]()  [**`.attr`**]()  [**`.on`**]()  [**`.css`**]()  [**`.children`**]()  [**`.mount`**]()
 
 ---
 
@@ -288,8 +285,8 @@ let $outer = $`.outer`
 
 $els.use($el => {
   // subscribe to attribute updates
-  let x = $el.attr.x
-  let y = $outer.attr.y
+  let x = $el.attr`x`
+  let y = $outer.attr`y`
 
   // trigger on mount
   $el.on('connected', e => () => {})
@@ -332,16 +329,14 @@ Read or write state, associated with an element. Read returns state of the first
 
 ```js
 // write state
-$target.state.x = 1
-$target.state = obj
 $target.state({x: 1}, deps)
-$target.state(_ => _.x.y.z = 1, deps) // safe path setter
+$target.state(_ => _.x.y.z = 1, deps) // safe path / batch setter
 
 // read state
-$target.state.x
+$target.state`x`
 $target.state`x.y.z`
 $target.state('x', deps)
-$target.state(_ => _.x.y.z, deps) // safe path getter
+$target.state(_ => _.x.y.z, deps) // safe path / batch / selector
 ```
 
 
@@ -354,13 +349,11 @@ Read or write elements properties. Read returns first item property value. Set w
 
 ```js
 // write prop
-$target.prop = obj
-$target.prop.x = 1
 $target.prop({x: 1})
 $target.prop(_ => _.x.y.z = 1, deps) // safe path setter
 
 // read prop
-$target.prop.x
+$target.prop`x`
 $target.prop(_ => _.x.y.z, deps) // safe path getter
 ```
 
@@ -375,11 +368,9 @@ Provides HTML content for elements. Internally uses [htm](https://ghub.io/htm) w
 // set html
 $target.html`...markup`
 $target.html(h => h`...markup ${ h`...inner` }`, deps)
+
 /* @jsx h */
 $target.html(h => <>Markup</>)
-
-// get html
-$target.html
 ```
 
 #### Components
@@ -409,10 +400,7 @@ Provide text content for group of elements.
 
 ```js
 // set text
-$target.text = `...text`
 $target.text`...text`
-$target.text('...text')
-$target.text(nodes => (nodes[2] = '...text', nodes))
 
 // get text
 $target.text()
@@ -428,7 +416,7 @@ Provide scoped CSS styles for element
 $target.css` :host { width: 100%} `
 
 // read css
-$target.css
+$target.css()
 ```
 
 <!-- $target.css({ ':host': { width: 100%} }) -->
@@ -442,20 +430,19 @@ $target.css
 <p align="right">Related: <a href="https://ghub.io/virtual-css">virtual-css</a></p>
 
 
-### `.class( list, deps? )` − get/set class list
+### `.class( list )` − get/set class list
 
 Changes element classList, updates all dependent elements/aspects.
 
 ```js
 // write classes
-$target.class = `foo bar baz`
 $target.class`foo bar baz`
-$target.class(['foo', true && 'bar', 'baz'])
+$target.class('foo', true && 'bar', 'baz')
 $target.class({ foo: true, bar: false, bas: isTrue() })
 $target.class(({ foo, bar, ...clsx }) => clsx)
 
 // read classes
-$target.class('foo')
+$target.class`foo`
 $target.class().foo
 ```
 
@@ -471,22 +458,19 @@ Changes element attributes, updates all dependent elements/aspects.
 
 ```js
 // write attributes
-$target.attr.foo = 'bar'
-$target.attr = {foo: true, bar: false, baz: () => false}
-$target.attr('foo', 'bar')
 $target.attr({ foo: 'bar'})
-$target.attr(({ foo, bar, baz }) => ({ foo, bar }))
+$target.attr(a => a.foo = 'bar')
 
 // read attributes
-$target.attr('foo')
-$target.attr.foo
+$target.attr`foo`
+$target.attr().foo
 ```
 
 
 <p align="right">Related: <a href="https://ghub.io/attributechanged">attributechanged</a></p>
 
 
-### `.on( evt, delegate?, fn, deps? )` − add/remove event listeners
+### `.on( evt, delegate?, fn )` − add/remove event listeners
 
 Registers event listeners for a target, scoped to current aspect.
 
