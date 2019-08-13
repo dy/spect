@@ -257,7 +257,7 @@ let getRawMarkup = () => {
 
 [**`$`**]()  [**`.use`**]()  [**`.state`**]()  [**`.html`**]()  [**`.fx`**]()  [**`.text`**]()  [**`.class`**]()  [**`.attr`**]()  [**`.on`**]()  [**`.css`**]()  [**`.init`**]()  [**`.mount`**]()
 
-<br/>
+---
 
 ### `$( selector | els )` − select elements
 
@@ -639,6 +639,7 @@ _Spect_ would not be possible without brilliant ideas from many libraries author
 
 <!-- * _***_ - for letting that be possible. -->
 
+---
 
 <p align="right">HK</p>
 
