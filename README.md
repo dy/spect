@@ -1,7 +1,5 @@
 # Spect ![experimental](https://img.shields.io/badge/stability-experimental-red)
 
---- WORK IN PROGRESS ---
-
 Spect is [_aspect_-oriented](https://en.wikipedia.org/wiki/Aspect-oriented_programming) framework for creating expressive UIs.
 
 :ferris_wheel: Wheel formula:
