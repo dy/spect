@@ -18,24 +18,26 @@ function main (app) {
   let [ match, { id } ] = route('user/:id');
   if (!match) return;
 
+  // useEffect
   app.fx(() => {
     app.state.loading = true
 
-    // batch update
+    // batch set state
     app.state(async state => {
       state.user = await ky.get(`./api/user/${id}`);
       state.loading = false
     })
   }, id);
 
+  // html side-effect
   app.html`<p use=${i18n}>${
-    app.state`loading` ? `Hello, ${ app.state`user.name` }!` : `Thanks for patience...`;
+    app.state.loading ? `Hello, ${ app.state`user.name` }!` : `Thanks for patience...`;
   }</p>`;
 }
 
 // preloader aspect
 function preloader (el) {
-  el.html(h => `${el.html} ${el.state`loading` && h`<canvas.spinner />`}`, el.state`loading`);
+  el.html(h => `${el.html} ${el.state.loading && h`<canvas.spinner />`}`, el.state.loading);
 }
 
 // i18n aspect
@@ -265,13 +267,12 @@ let getRawMarkup = () => {
 
 ### `$( selector | els )` − select elements
 
-Select elements in DOM, provide domain methods for the selected set. The main purpose is shallow reference/wrapper for some nodes collection.
+Select elements in DOM, provide domain methods for the selected set. The main purpose is shallow reference/wrapper for some nodes collection. If html is passed, creates detached DOM.
 
 ```js
 $('#id.class > div')
-$(document)
-$(element)
 $(elements)
+$`<div.a/><div.b/>`
 ```
 
 <p align="right">Related: <a href="https://jquery.com">jquery</a></p>
@@ -331,17 +332,18 @@ Read or write state, associated with an element. Read returns state of the first
 
 ```js
 // write state
-$target.state({x: 1})
-$target.state(_ => _.x.y.z = 1) // safe path setter
+$target.state.x = 1
+$target.state = obj
+$target.state({x: 1}, deps)
+$target.state(_ => _.x.y.z = 1, deps) // safe path setter
 
 // read state
-$target.state('x')
-$target.state(_ => _.x.y.z) // safe path getter
+$target.state.x
+$target.state`x.y.z`
+$target.state('x', deps)
+$target.state(_ => _.x.y.z, deps) // safe path getter
 ```
 
-<!-- $target.state.x -->
-<!-- $target.state = obj -->
-<!-- $target.state.x = 1 -->
 
 <p align="right">Related: <a href="https://reactjs.org/docs/hooks-state.html">useState</a>, <a href="https://www.npmjs.com/package/icaro">icaro</a>, <a href="https://www.npmjs.com/package/introspected">introspected</a></p>
 
@@ -355,11 +357,11 @@ Read or write elements properties. Read returns first item property value. Set w
 $target.prop = obj
 $target.prop.x = 1
 $target.prop({x: 1})
-$target.prop(_ => _.x.y.z = 1) // safe path setter
+$target.prop(_ => _.x.y.z = 1, deps) // safe path setter
 
 // read prop
 $target.prop.x
-$target.prop(_ => _.x.y.z) // safe path getter
+$target.prop(_ => _.x.y.z, deps) // safe path getter
 ```
 
 <p align="right">Related: <a href="https://reactjs.org/docs/hooks-state.html">useState</a></p>
@@ -372,16 +374,13 @@ Provides HTML content for elements. Internally uses [htm](https://ghub.io/htm) w
 ```js
 // set html
 $target.html`...markup`
-$target.html(vdom)
-$target.html(h => h`...markup ${ h`...inner` }`)
-
+$target.html(h => h`...markup ${ h`...inner` }`, deps)
 /* @jsx h */
 $target.html(h => <>Markup</>)
 
 // get html
 $target.html
 ```
-<!-- $target.html = vdom | `...markup` -->
 
 #### Components
 
@@ -410,14 +409,14 @@ Provide text content for group of elements.
 
 ```js
 // set text
+$target.text = `...text`
+$target.text`...text`
 $target.text('...text')
 $target.text(nodes => (nodes[2] = '...text', nodes))
 
 // get text
 $target.text()
 ```
-<!-- $target.text`...text`
-$target.text = `...text` -->
 
 
 ### ``.css`...styles` `` − render style sheets
@@ -426,14 +425,15 @@ Provide scoped CSS styles for element
 
 ```js
 // write css
-$target.css(` :host { width: 100%} `)
-$target.css({ ':host': { width: 100%} })
-$target.css(rules => rules[':host'].width = '100%')
+$target.css` :host { width: 100%} `
 
 // read css
-$target.css(':host').width
+$target.css
 ```
 
+<!-- $target.css({ ':host': { width: 100%} }) -->
+<!-- $target.css(rules => rules[':host'].width = '100%') -->
+<!-- $target.css(':host').width -->
 <!-- $target.css.path = obj|str -->
 <!-- $target.css.path // obj -->
 <!-- $target.css`selector { ...rules }` -->
@@ -448,6 +448,8 @@ Changes element classList, updates all dependent elements/aspects.
 
 ```js
 // write classes
+$target.class = `foo bar baz`
+$target.class`foo bar baz`
 $target.class(['foo', true && 'bar', 'baz'])
 $target.class({ foo: true, bar: false, bas: isTrue() })
 $target.class(({ foo, bar, ...clsx }) => clsx)
@@ -457,8 +459,6 @@ $target.class('foo')
 $target.class().foo
 ```
 
-<!-- $target.class`foo bar baz` -->
-<!-- $target.class = `foo bar baz` -->
 <!-- $target.class = {foo: true, bar: false, baz: () => false} -->
 <!-- $target.class // { foo: true, bar: true } -->
 
@@ -471,19 +471,17 @@ Changes element attributes, updates all dependent elements/aspects.
 
 ```js
 // write attributes
+$target.attr.foo = 'bar'
+$target.attr = {foo: true, bar: false, baz: () => false}
 $target.attr('foo', 'bar')
 $target.attr({ foo: 'bar'})
 $target.attr(({ foo, bar, baz }) => ({ foo, bar }))
 
 // read attributes
 $target.attr('foo')
-$target.attr().foo
+$target.attr.foo
 ```
 
-<!-- $target.attr('foo') // { foo: true, bar: true } -->
-<!-- $target.attr = {foo: true, bar: false, baz: () => false} -->
-<!-- $target.attr`foo bar baz` -->
-<!-- $target.attr = `foo bar baz` -->
 
 <p align="right">Related: <a href="https://ghub.io/attributechanged">attributechanged</a></p>
 
