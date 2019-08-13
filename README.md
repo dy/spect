@@ -4,8 +4,9 @@
 
 Spect is [_aspect_-oriented](https://en.wikipedia.org/wiki/Aspect-oriented_programming) framework for creating expressive UIs.
 
-:ferris_wheel: Reinvented wheel formula:
-> _Spect_ ≈ _jQuery_ + _aspects_ + _hooks_ + _side-effects_.
+:ferris_wheel: Wheel formula:
+
+> _Spect_ ≈ _jQuery_ + _aspects_ + _reactions_ + _hooks_ + _side-effects_.
 
 ```js
 import $ from 'spect';
@@ -635,6 +636,16 @@ Both `is` and `use` are rendered in current animation frame, planning rerenderin
 _Spect_ would not be possible without brilliant ideas from many libraries authors, hence the acknowledge to authors of _jquery_, _react_, _atomico, hui_, _htm_, _fast-on-load_, _tachyons, tailwindcss, ui-box_, _evergreen-ui, material-ui_, _reuse_, _selector-observer_, _material-design-lite_, _funkia/turbine_ and others. -->
 
 <!-- * _***_ - for letting that be possible. -->
+
+## Changelog
+
+Version | Changes
+---|---
+4.0.0 | Functional effects redesign.
+3.0.0 | References set approach.
+2.1.0 | Reintroduce hoooks.
+2.0.0 | Global effects approach.
+1.0.0 | HTM compiler refactored.
 
 ---
 
