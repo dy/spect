@@ -255,6 +255,8 @@ let getRawMarkup = () => {
 
 [**`$`**]()  [**`.use`**]()  [**`.state`**]()  [**`.html`**]()  [**`.fx`**]()  [**`.text`**]()  [**`.class`**]()  [**`.attr`**]()  [**`.on`**]()  [**`.css`**]()  [**`.init`**]()  [**`.mount`**]()
 
+<br/>
+<br/>
 
 ### `$( selector | els )` − elements selector
 
@@ -270,7 +272,7 @@ $(elements)
 <p align="right">Related: <a href="https://jquery.com">jquery</a></p>
 
 
-### `.use( ...fns )` − aspects provider
+### `.use( ...fns )` − attach aspects
 
 Assign aspect function(s) to selected elements. Each `fn` is called for every element in the selected set, receiving wrapped element as single argument. Aspect `fn` can be be called multiple times in a frame, if `state`, `attr` or any other data source updates. The data sources are to subscribed to automatically when their values are read.
 
@@ -297,7 +299,7 @@ $els.html`<div use=${$div => {}}></div>`
 <p align="right">Related: <a href="https://ghub.io/reuse">reuse</a></p>
 
 
-### `.fx( fn, ...deps? )` − side-effects provider
+### `.fx( fn, ...deps? )` − run side-effects
 
 Register effect function for selected elements. The effect `fn` is called after current aspect call for each element in the set.
 
@@ -318,7 +320,7 @@ $target.fx(() => () => destroy(), deps)
 <p align="right">Related: <a href='https://reactjs.org/docs/hooks-effect.html'>useEffect</a></p>
 
 
-### `.state.<name>` − element state
+### `.state.<name>` − get/set elements state
 
 Read or write state, associated with an element. Read returns state of the first item in the set. Reading state subscribes current aspect to rerender whenever that state changes.
 
@@ -337,7 +339,7 @@ $target.state(_ => _.x.y.z) // safe path getter
 <p align="right">Related: <a href="https://reactjs.org/docs/hooks-state.html">useState</a>, <a href="https://www.npmjs.com/package/icaro">icaro</a>, <a href="https://www.npmjs.com/package/introspected">introspected</a></p>
 
 
-### `.prop.<name>` − element props
+### `.prop.<name>` − get/set elements props
 
 Read or write elements properties. Read returns first item property value. Set writes property to all elements in the set. Reading prop subscribes current aspect to rerender whenever that property changes.
 
@@ -356,9 +358,9 @@ $target.prop(_ => _.x.y.z) // safe path getter
 <p align="right">Related: <a href="https://reactjs.org/docs/hooks-state.html">useState</a></p>
 
 
-### ``.html`...markup` `` − markup provider
+### ``.html`...markup` `` − render element markup
 
-Provides HTML content for elements.
+Provides HTML content for elements. Internally uses [htm](https://ghub.io/htm) with [incremental-dom](https://ghub.io/incremental-dom) to render tree.
 
 ```js
 // set inner html
@@ -396,7 +398,7 @@ function SuperButton($el) {
 <p align="right">Related: <a href="https://ghub.io/incremental-dom">incremental-dom</a>, <a href='https://ghub.io/htm'>htm</a></p>
 
 
-### ``.text`...content` `` − text content provider
+### ``.text`...content` `` − get/set text content
 
 Provide text content for group of elements.
 
@@ -412,7 +414,7 @@ $target.text
 ```
 
 
-### ``.css`...styles` `` − style sheets provider
+### ``.css`...styles` `` − render style sheets
 
 Provide scoped CSS styles for element
 
@@ -432,7 +434,7 @@ $target.css.path // obj
 <p align="right">Related: <a href="https://ghub.io/virtual-css">virtual-css</a></p>
 
 
-### ``.class`foo bar baz` `` − class list provider
+### ``.class`foo bar baz` `` − get/set class list
 
 Changes element classList, updates all dependent elements/aspects.
 
@@ -451,7 +453,7 @@ $target.class.foo // true
 <p align="right">Related: <a href="https://ghub.io/clsx">clsx</a>, <a href="https://ghub.io/classes">classes</a></p>
 
 
-### ``.attr.<name> `` − attributes provider
+### ``.attr.<name> `` − get/set attributes
 
 Changes element attributes, updates all dependent elements/aspects.
 
@@ -470,7 +472,7 @@ $target.attr.foo // true
 <p align="right">Related: <a href="https://ghub.io/attributechanged">attributechanged</a></p>
 
 
-### `.on( evt, delegate?, fn )` − events provider
+### `.on( evt, delegate?, fn )` − add/remove event listeners
 
 Registers event listeners for a target, scoped to current aspect.
 
