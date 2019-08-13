@@ -536,6 +536,7 @@ Community
 * [spect-uibox]() -->
 
 
+<!--
 ## FAQ
 
 ### Portals?
@@ -601,7 +602,7 @@ Both `is` and `use` are rendered in current animation frame, planning rerenderin
 ### Microfrontends?
 
 ### Performance?
-
+-->
 
 <!-- ## Acknowledgement
 
