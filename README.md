@@ -49,7 +49,7 @@ $('main#app').use(main, preloader);
 > 5. Max utility. <!-- min presentation, min proving. -->
 
 **:ferris_wheel: Reinvented wheel formula:**
-> _Spect_ ≈ _jQuery_ + _React hooks_.
+> _Spect_ ≈ _jQuery_ + _aspects_ + _hooks_ + _side-effects_.
 
 The API is based on a set of modern framework practices (proxies, vdom/incremental-dom, htm, custom elements, hooks, observers, frp etc.), design research, experiments and proofs. Current design is third iteration.
 
