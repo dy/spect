@@ -256,9 +256,8 @@ let getRawMarkup = () => {
 [**`$`**]()  [**`.use`**]()  [**`.state`**]()  [**`.html`**]()  [**`.fx`**]()  [**`.text`**]()  [**`.class`**]()  [**`.attr`**]()  [**`.on`**]()  [**`.css`**]()  [**`.init`**]()  [**`.mount`**]()
 
 <br/>
-<br/>
 
-### `$( selector | els )` − elements selector
+### `$( selector | els )` − select elements
 
 Select elements in DOM, provide domain methods for the selected set. The main purpose is shallow reference/wrapper for some nodes collection.
 
