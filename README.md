@@ -200,7 +200,7 @@ function TodoList ({ prop: { items }, html }) {
 <p align='right'><a href="">Open in sandbox</a></p>
 
 
-### A web-component <small>code | sandbox</small>
+### A component
 
 _Spect_ is able to create components via native web-components mechanism, as seen in previous example. Let's see how that can be used in composition.
 
@@ -253,7 +253,7 @@ let getRawMarkup = () => {
 
 <!-- mount is a hook on html domain -->
 
-:microscope: [**`$`**]()  [**`.use`**]()  [**`.state`**]()  [**`.html`**]()  [**`.fx`**]()  [**`.text`**]()  [**`.class`**]()  [**`.attr`**]()  [**`.on`**]()  [**`.css`**]()  [**`.init`**]()  [**`.mount`**]()
+[**`$`**]()  [**`.use`**]()  [**`.state`**]()  [**`.html`**]()  [**`.fx`**]()  [**`.text`**]()  [**`.class`**]()  [**`.attr`**]()  [**`.on`**]()  [**`.css`**]()  [**`.init`**]()  [**`.mount`**]()
 
 
 ### `$( selector | els )` − elements selector
@@ -318,7 +318,7 @@ $target.fx(() => () => destroy(), deps)
 <p align="right">Related: <a href='https://reactjs.org/docs/hooks-effect.html'>useEffect</a></p>
 
 
-### `.state` − element state provider
+### `.state.<name>` − element state
 
 Read or write state, associated with an element. Read returns state of the first item in the set. Reading state subscribes current aspect to rerender whenever that state changes.
 
@@ -337,7 +337,26 @@ $target.state(_ => _.x.y.z) // safe path getter
 <p align="right">Related: <a href="https://reactjs.org/docs/hooks-state.html">useState</a>, <a href="https://www.npmjs.com/package/icaro">icaro</a>, <a href="https://www.npmjs.com/package/introspected">introspected</a></p>
 
 
-### `.html` − markup provider
+### `.prop.<name>` − element props
+
+Read or write elements properties. Read returns first item property value. Set writes property to all elements in the set. Reading prop subscribes current aspect to rerender whenever that property changes.
+
+```js
+// write prop
+$target.prop = obj
+$target.prop.x = 1
+$target.prop({x: 1})
+$target.prop(_ => _.x.y.z = 1) // safe path setter
+
+// read prop
+$target.prop.x
+$target.prop(_ => _.x.y.z) // safe path getter
+```
+
+<p align="right">Related: <a href="https://reactjs.org/docs/hooks-state.html">useState</a></p>
+
+
+### ``.html`...markup` `` − markup provider
 
 Provides HTML content for elements.
 
@@ -377,7 +396,7 @@ function SuperButton($el) {
 <p align="right">Related: <a href="https://ghub.io/incremental-dom">incremental-dom</a>, <a href='https://ghub.io/htm'>htm</a></p>
 
 
-### `.text` − text content provider
+### ``.text`...content` `` − text content provider
 
 Provide text content for group of elements.
 
@@ -393,7 +412,7 @@ $target.text
 ```
 
 
-### `.css` − style sheets provider
+### ``.css`...styles` `` − style sheets provider
 
 Provide scoped CSS styles for element
 
@@ -413,7 +432,7 @@ $target.css.path // obj
 <p align="right">Related: <a href="https://ghub.io/virtual-css">virtual-css</a></p>
 
 
-### `.class` − classes provider
+### ``.class`foo bar baz` `` − class list provider
 
 Changes element classList, updates all dependent elements/aspects.
 
@@ -432,7 +451,7 @@ $target.class.foo // true
 <p align="right">Related: <a href="https://ghub.io/clsx">clsx</a>, <a href="https://ghub.io/classes">classes</a></p>
 
 
-### `.attr` − attributes provider
+### ``.attr.<name> `` − attributes provider
 
 Changes element attributes, updates all dependent elements/aspects.
 
@@ -451,7 +470,7 @@ $target.attr.foo // true
 <p align="right">Related: <a href="https://ghub.io/attributechanged">attributechanged</a></p>
 
 
-### `.on` − events provider
+### `.on( evt, delegate?, fn )` − events provider
 
 Registers event listeners for a target, scoped to current aspect.
 
