@@ -1,18 +1,19 @@
 import t from 'tst'
 import $ from '../index.js'
 
-t.only('on: should assign event', t => {
-
+t.only('on: instant trigger must be handled', t => {
   let log = []
-  let $el = $`<a.foo/>`
+  let el = $`<a.foo/>`
 
-  $el.on('click', () => log.push('foo'))
+  el.on('a', () => log.push('a'))
+  el.emit('a')
+  t.is(log, ['a'])
 
-  t.is(log, [])
-
-  $el[0].click()
-
-  t.is(log, ['foo'])
+  // el.use(fn => {
+  //   el.on('b', () => log.push('b'))
+  //   el.emit('b')
+  //   t.is(log, ['b'])
+  // })
 })
 
 t('on: should be available via html', t => {

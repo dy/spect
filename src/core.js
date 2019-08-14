@@ -1,63 +1,41 @@
 import equal from "fast-deep-equal"
 import { paramCase } from './util.js'
 
-// provides event bus, classes creation, attributes tracking
-
-
-// pubsub for effect changes
-export const GET = 1, SET = 2, CALL_START = 3, CALL_END = 4, CREATE = 5
-
-export const observers = {
-  [GET]: [],
-  [SET]: [],
-  [CALL_START]: [],
-  [CALL_END]: [],
-}
-
-export function subscribe(TYPE, fn) {
-  if (observers[TYPE].indexOf(fn) >= 0) return
-  observers[TYPE].push(fn)
-}
-
-export function publish(TYPE, element, domain, ...args) {
-  // domain → [domain, path]
-  if (typeof domain === 'string') domain = [domain]
-  observers[TYPE].forEach(fn => fn(element, domain, ...args))
-}
-
-
-
-// track current aspected element
-// FIXME: possible recursive calls (bad, but still)
-// FIXME: make `use` effect core also
-let currentElement, currentFn, fxCount, currentQueue
-subscribe(CALL_START, (element, domain, fn, ...args) => {
-  if (domain[0] !== 'use') return
-  currentElement = element
-  currentFn = fn
-  fxCount = 0
-  currentQueue = []
-})
-
-subscribe(CALL_END, (element, domain, fn, ...args) => {
-  if (domain[0] !== 'use') return
-  flush()
-  currentElement = null
-  currentFn = null
-  fxCount = null
-  currentQueue = null
-})
+// core manages sequences of planned commands
+// each effect registers a command with params
+// by the end of effect the queue is drained and necessary ops are evaluated
+// like, multiple vdom calls etc.
 
 
 // FIXME: provide customization ways
 export let defaultElement = document
 
+// operations
+export const GET = 1, SET = 2, CALL_START = 3, CALL_END = 4, CREATE = 5
+
+// current effect queue
+export const queue = []
+
+// put command with params into queue, drained after current effect
+// returns promise if fx is updated and false otherwise
+export function commit (command, ...args) {
+  queue.push(command)
+
+}
+
+
+// FIXME: incorporate into single
+let currentElement, currentAspect, currentEffect
 
 // hook for effects, invoking callback at the right moment with right environment
 const destroyCache = new WeakMap
 const depsCache = new Map
 
+
+
+
 // generic fx
+/*
 export function fx (target, fx, fn, deps) {
   let els = this || [ defaultElement ]
 
@@ -96,7 +74,7 @@ export function fx (target, fx, fn, deps) {
 
   fxCount++
 }
-
+*/
 
 
 

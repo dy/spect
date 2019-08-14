@@ -1,5 +1,5 @@
 import delegated from 'delegate-it'
-import { fx } from './src/core.js'
+import { commit } from './src/core.js'
 
 const cbCache = new WeakMap
 
@@ -13,24 +13,28 @@ export default function on (evts, delegate, handler, deps) {
   }
   evts = evts.split(/\s+/)
 
-  // FIXME: figure out if we can factor this element out
+  // listeners must be added instantly
+  // eg. click can be emitted instantly after on call
+  let fx = commit('on', this, deps)
+  if (!fx) return
 
-  fx.call(this, 'on', () => {
-    let destroy = []
+  let destroy = []
 
-    if (delegate) {
-      evts.forEach(evt => els.forEach(el => {
-        const delegation = delegated(el, delegate, evt, handler)
-        destroy.push(delegation.destroy)
-      }))
-    }
-    else {
-      evts.forEach(evt => els.forEach(el => {
-        el.addEventListener(evt, handler)
-        destroy.push(() => el.removeEventListener(evt, handler))
-      }))
-    }
+  if (delegate) {
+    evts.forEach(evt => els.forEach(el => {
+      const delegation = delegated(el, delegate, evt, handler)
+      destroy.push(delegation.destroy)
+    }))
+  }
+  else {
+    evts.forEach(evt => els.forEach(el => {
+      el.addEventListener(evt, handler)
+      destroy.push(() => el.removeEventListener(evt, handler))
+    }))
+  }
 
-    return () => destroy.forEach(fn => fn())
-  }, deps)
+  fx.destroy(() => {
+
+  })
+  return () => destroy.forEach(fn => fn())
 }
