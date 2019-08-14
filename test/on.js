@@ -2,6 +2,7 @@ import t from 'tst'
 import $ from '../index.js'
 
 t.only('on: should assign event', t => {
+
   let log = []
   let $el = $`<a.foo/>`
 
