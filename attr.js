@@ -1,6 +1,33 @@
 import { GET, SET, publish } from './src/core'
 import $ from './$.js'
 
+
+
+
+
+module.exports = registerEffect('attr', ({ onGet, onSet }) => {
+  onGet(name => {
+    return this[0].getAttribute(name)
+  })
+
+  onSet((name, value) => {
+    this.forEach(el => {
+      let prev = el.getAttribute(name)
+
+      if (Object.is(prev, value)) return
+
+      el.setAttribute(name, value)
+    })
+  })
+  deps: true
+})
+
+
+
+
+
+
+
 // TODO attribute listens for read attributes from elements and modifies set of observed attributes via mutation observer
 
 

@@ -487,7 +487,7 @@ $target.class().foo
 
 <p align="right">Related: <a href="https://ghub.io/clsx">clsx</a>, <a href="https://ghub.io/classes">classes</a></p>
 
-### `.on( evt, delegate?, fn )` − events provider
+### `.on( evt, fn )` − events provider
 
 Registers event listeners for a target, optionally pass `delegate` selector.
 
@@ -497,6 +497,7 @@ $target.on('foo bar', e => {})
 $target.on('foo', '.delegate', e => {})
 $target.on({ foo: e => {} })
 ```
+
 
 `on` provides `mount` and `unmount` events for all aspects and components, to track when element is connected/disconnected from DOM.
 

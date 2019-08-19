@@ -1,5 +1,8 @@
 import { fx as _fx } from './src/core.js'
 
-export default function fx (fn, deps) {
-  return _fx.call(this, 'fx', fn, deps)
-}
+
+export default registerEffect('fx', {
+  set: (...fns) => {
+    return { after: () => fns.forEach(fn => fn()) }
+  }
+})

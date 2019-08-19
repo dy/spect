@@ -2,6 +2,19 @@ import { publish, SET, GET } from './src/core.js'
 import $ from './$.js'
 
 
+
+export default registerEffect('state', {
+  get: () => {
+
+  },
+  set: () => {
+
+  },
+  deps: true
+})
+
+
+
 // state is a proxy, forwarding set/get to all target elements
 const targetCache = new WeakMap
 Object.defineProperty($.fn, 'state', {

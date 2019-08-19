@@ -116,3 +116,15 @@ export function run(el, fn) {
   currentElement = null
   currentAspect = null
 }
+
+
+export default registerEffect('use', ({ get, set, destroy, after }) => {
+  after((...fns) => {
+    // TODO: put list
+    return {
+      after: () => {
+
+      }
+    }
+  }, false)
+})

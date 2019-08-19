@@ -13,11 +13,7 @@ import { patch,
   currentElement
 } from 'incremental-dom'
 
-import { getTagName, getCustomElement } from './src/core.js';
-import $ from './$.js'
-
-
-$.fn.html = html
+import { getTagName, getCustomElement, registerEffect } from './src/core.js';
 
 
 // configure incremental-dom attributes
@@ -32,7 +28,7 @@ attributes[symbols.default] = applyProp
 
 
 // build vdom
-$.h = html.h = function h(target, props={}, ...children) {
+html.h = function h(target, props={}, ...children) {
   let use, propsArr = []
   let staticProps = []
   let is, tag, classes = [], id, constructor
@@ -90,10 +86,10 @@ $.h = html.h = function h(target, props={}, ...children) {
   }
 }
 
-$.htm = html.htm = htm.bind(html.h)
+html.htm = htm.bind(html.h)
 
 
-export default function html(...args) {
+export function html(...args) {
   // let cache = currentState.htmlCache || (currentState.htmlCache = new WeakMap())
 
   // tpl string
@@ -195,3 +191,14 @@ export default function html(...args) {
 
   return this
 }
+
+
+
+export default registerEffect('html', {
+  get: html => {
+    // get is actually a set with single argument
+    // for getting HTML use $
+    return this.html(html, [])
+  },
+  set: html
+})

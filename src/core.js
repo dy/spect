@@ -11,16 +11,15 @@ import { paramCase } from './util.js'
 export let defaultElement = document
 
 // operations
-export const GET = 1, SET = 2, CALL_START = 3, CALL_END = 4, CREATE = 5
+export const GET = 1, SET = 2, CREATE = 3, DELETE = 4, START = 5, END = 6
 
 // current effect queue
 export const queue = []
 
 // put command with params into queue, drained after current effect
 // returns promise if fx is updated and false otherwise
-export function commit (command, ...args) {
-  queue.push(command)
-
+export function commit (command, effect, ...args) {
+  queue.push(command, effect)
 }
 
 
@@ -32,25 +31,34 @@ const destroyCache = new WeakMap
 const depsCache = new Map
 
 
+// helper with effect, skipping queue management
+export function registerEffect (name, obj) {
+
+  // actuall effect
+  return function (...args) {
+    let els = this || [ defaultElement ]
+
+    if (obj.deps !== false) {
+      let deps = args.pop()
+
+      if (deps.length) {
+        let depsTuple = tuple(currentElement, currentFn, fxCount)
+        let prevDeps = depsCache.get(depsTuple) || []
+        if (equal(deps, prevDeps)) {
+          fxCount++
+          return this
+        }
+
+        depsCache.set(depsTuple, deps)
+      }
+    }
+  }
+}
 
 
 // generic fx
 /*
 export function fx (target, fx, fn, deps) {
-  let els = this || [ defaultElement ]
-
-  // track deps
-  if (deps.length) {
-    let depsTuple = tuple(currentElement, currentFn, fxCount)
-    let prevDeps = depsCache.get(depsTuple) || []
-    if (equal(deps, prevDeps)) {
-      fxCount++
-      return this
-    }
-
-    depsCache.set(depsTuple, deps)
-  }
-
   // call after aspect, if there's a queue
   if (currentQueue) {
     this.forEach(el => currentQueue.push([el, fn, fxCount]))
