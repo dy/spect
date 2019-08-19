@@ -2,7 +2,7 @@
 
 Spect is [_aspect_-oriented](https://en.wikipedia.org/wiki/Aspect-oriented_programming) framework for creating expressive UIs.
 
-> :ferris_wheel: Formula:
+:ferris_wheel: Formula:
 > _Spect_ ≈ _selectors_ + _reactive aspects_ + _side-effects_
 
 ```js
