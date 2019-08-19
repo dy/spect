@@ -2,9 +2,8 @@
 
 Spect is [_aspect_-oriented](https://en.wikipedia.org/wiki/Aspect-oriented_programming) framework for creating expressive UIs.
 
-:ferris_wheel: Wheel formula:
-
-> _Spect_ ≈ _jQuery_ + _reactive aspects_ + _side-effects_
+> :ferris_wheel: Formula:
+> _Spect_ ≈ _selectors_ + _reactive aspects_ + _side-effects_
 
 ```js
 import $ from 'spect';
@@ -12,51 +11,53 @@ import { route } from 'spect-router';
 import { t, useLocale } from 'ttag';
 import ky from 'ky';
 
-// main aspect
+// main app aspect - loading data logic
 function main (app) {
   let $app = $(app)
 
+  // match route from location
   let [ match, { id } ] = route`user/:id`;
   if (!match) return;
 
-  // useState as useEffect
+  // run state effect when `id` changes (useState + useEffect + idx)
   $app.state(async state => {
     state.loading = true;
     state.user = await ky.get`./api/user/${id}`;
     state.loading = false;
   }, id);
 
-  // html side-effect
+  // render html as side-effect
   $app.html`<p use=${i18n}>${
     $app.state`loading` ? `Hello, ${ $app.state`user.name` }!` : `Thanks for patience...`;
   }</p>`;
 }
 
-// preloader aspect
+// preloader aspect - append spinner when loading state changes
 function preloader (el) {
-  $(el).html(html => $`${ html } ${ $(el).state`loading` && $`<canvas.spinner />` }`, $(el).state`loading`);
+  let $el = $(el)
+  $el.html(html => $`${ html } ${ $el.state`loading` && $`<canvas.spinner />` }`, $el.state`loading`);
 }
 
-// i18n aspect
+// i18n aspect - translate content when `lang` attribute changes
 function i18n (el) {
-  useLocale($(el).attr`lang` || $(document.documentElement).attr`lang`);
-  $(el).text(text => t(text))
+  let $el = $(el)
+  useLocale($el.attr`lang` || $(document.documentElement).attr`lang`);
+  $el.text(text => t(text))
 }
 
 // attach aspects to DOM
 $('main#app').use(main, preloader);
 ```
 
-## Principles
+## Concept
 
-> 1. Expressive. <!-- not impressive, obvoius code -->
-> 2. No bundling. <!-- required -->
-> 3. JS-less hydration.
-> 4. Standard HTML first.
-> 5. Max utility. <!-- min presentation, min proving. -->
+Spect is build with a set of modern framework practices in mind (proxies, tagged strings, virtual dom, incremental dom, htm, custom elements, hooks, observers, frp). It grounds on API design research, experiments and proofs, conducted with purpose of meeting the following principles:
 
-
-The API is based on a set of modern framework practices (proxies, tagged strings, vdom/incremental-dom, htm, custom elements, hooks, observers, frp etc.), design research, experiments and proofs.
+> 1. Expressivity.
+> 2. 0 bundling / building.
+> 3. Soft hydration.
+> 4. Standard HTML.
+> 5. Max utility, min presentation.
 
 <!--
 Conceptually, app is a set of _reactions_ to changes in some _domain_.
@@ -78,7 +79,7 @@ Other approaches include:
 * streamlized html (orig holder, vdom, attaching fx, API, carrying over DOM nodes)
 -->
 
-## Install
+## Installation
 
 **A.** As _npm_ package:
 
@@ -578,9 +579,23 @@ Community
 
 ## FAQ
 
+### Why aspects?
+
+Aspects are, in fact, already a conceptual part of HTML, they manifest as:
+
+* CSS - separation of markup concern from styling concern (selectors act as pointcuts, rules act as as advice) - compared to inline styling;
+* Attributes - `hidden`, `contenteditable`, `title`, `autocapitalize` etc.
+
+That concept is taken a step forward, enabling separation of other [cross-cutting concerns](https://en.wikipedia.org/wiki/Cross-cutting_concern), such as _authorization_, _localization_, _accessibility_, _microformats_, _logging_, _sound_, _formatting_, _analytics_ and others. In fact, any business-logic or domain-related concerns can be separated into own "layer".
+
+The methodology is build based on known patterns/practices, such as selectors (jQuery), rendering functions (React functional components), side-effects (React hooks). <!-- It's proven that other approaches, such as pure hooks, while maintaining similar level of expressivity, provide less robustness for intercom -->
+
+That way aspects gracefully solve many common standard frontend tasks, such as portals, code splitting, hydration etc.
+
+
 ### Portals?
 
-Portals come out of the box:
+Portals come out of the box as easy as:
 
 ```js
 $`#app`.use(el => {
@@ -592,7 +607,7 @@ $`#app`.use(el => {
 
 ### JSX?
 
-Spect is both jQuery and hyperscript compatible and is able to create vdom or real dom, depending on current effect context. All it takes - providing babel pragma.
+Spect is jQuery/hyperscript compatible and is able to create vdom or real dom, depending on current effect context. To use JSX - provide babel pragma:
 
 ```js
 /* @jsx $ */
@@ -607,8 +622,7 @@ $el.html(() => <div>Inner content</div>)
 
 ### Code splitting?
 
-Aspects by design split cross-cutting concerns, enabling progressive-enhancement principle and reducing network load.
-Loading sequence can be ordered by priority of one aspects over the other from UX standpoint.
+Aspects organically embody progressive-enhancement principle, providing preloading parts of functionality in a meaningful way, reducing network load. Loading order can be arranged by priority of aspects from UX standpoint.
 
 ```html
 <script>
@@ -616,7 +630,6 @@ Loading sequence can be ordered by priority of one aspects over the other from U
 $('#app').is($app => {
   // ...main app
 })
-
 </script>
 
 <script>
@@ -624,19 +637,19 @@ $('#app').is($app => {
 $('.t').use(i18n)
 
 function i18n () {
-  // ...translate all elements with `t` tag
+  // ...translate content
 }
 </script>
 
 <script>
-// load data aspect
-$`.load-remote`.use(el => {
-  // ...load and display remote data
+// [lazy]-load data
+$`.load`.use(el => {
+  // ...load and display data for placeholder elements
 })
 </script>
 ```
 
-So UI can be analyzed and decomposed from aspects perspective to multiple parts, not need to invent smart bundlers.
+UI can be analyzed and decomposed from aspects perspective, work delegated to multiple developers, smart bundling with code splitting can be avoided.
 
 
 ### Hydration?
@@ -647,7 +660,7 @@ Hydration in _Spect_ is just a matter of applying HTML effect to any wrapped ele
 $`#app`.html`<div#app-conent>...markup</>`
 ```
 
-It comes out of the box and is applicable to any website, not only built with specially crafted backend, that can be just regular PHP worker.
+It comes out of the box and is applicable to any website, not only built with specially crafted backend, that can be just regular PHP.
 
 
 <!--
@@ -664,7 +677,7 @@ Both `is` and `use` are rendered in current animation frame, planning rerenderin
 
 ### Microfrontends?
 
-_Spect_ doen't enforce own paradigm, aspects can be assigned to any target:
+_Spect_ doen't enforce framework restrictions, aspects can be assigned to any target:
 
 ```js
 import React from 'react'
@@ -708,23 +721,23 @@ $els.use(el => {
   $(el).html(_ => $`...heavy markup`)
 })
 ```
-Although that can be fixed, if decided that HTML must be applied on the next frame only and always be VDOM (to be figured out).
+<!-- Although that can be fixed, if decided that HTML must be applied on the next frame only and always be VDOM (to be figured out). -->
 
-Also, _Spect_ allows a bunch of static optimizations (to be done via bable), such as - unwrapping vdom, unwrapping state/attr/prop access.
+_Spect_ allows a bunch of static optimizations (unwrapping vdom, unwrapping state/attr/prop access etc), potentially even compiled into binary for webassembly (matter of experiments).
 
 
 ### Own build?
 
-_Spect_ is fully modular, so that effect are independent and allow creating custom build by requiring sub-modules.
+_Spect_ is fully modular, so that effects are independent and allow creating custom build by requiring sub-modules.
 
-For example, to pick min bundle `$` + `html`, do
+For example, to pick minimal bundle `$` + `html`:
 
 ```js
 import $ from 'spect/$'
-import on from 'spect/html'
+import html from 'spect/html'
 
 // register effects
-$.fn.on = on
+$.fn.html = html
 
 // use effects
 $`#my-element`.html`...markup`
@@ -733,27 +746,39 @@ $`#my-element`.html`...markup`
 
 ### Creating plugins?
 
-As it is seen from the example above, creating plugins for spect is straightforward and can remind jQuery plugins.
+Creating plugins for Spect can in a way resemble jQuery plugins.
 
-Say, we'd like to create new effect, `toString`, serializing components.
+For example, consider `toString` effect, serializing elements.
 
 ```js
 // to-string.js
-export default function toString() {
+export default function toString({ attr }) {
   let parts = []
 
+  // for all elements in a set
   this.forEach(el => {
-    parts.push(toObject(el))
+    parts.push(toObject(el, attr))
   })
 
-  function toObject(el) {
-    let attributes = {}
-    for (let attr of el.attributes) { attributes[attr.name] = attr.value }
-
-    return { tag: el.tagName.toLowerCase, attributes, children: [...el.children].map(toObject) }
-  }
 
   return JSON.stringify(parts)
+}
+
+function toObject(el, whitelist) {
+  let attributes = {}
+
+  if (whitelist) {
+    for (let attr in whitelist) {
+      attributes[attr] = el.attributes[attr]
+    }
+  }
+  else {
+    for (let attr of el.attributes) {
+      attributes[attr.name] = attr.value
+    }
+  }
+
+  return { tag: el.tagName.toLowerCase, attributes, children: [...el.children].map(el => toObject(el, whitelist)) }
 }
 ```
 
@@ -764,15 +789,15 @@ import toString from './to-string.js'
 
 $.fn.toString = toString
 
-// then use it as
-$`.stringify`.toString() // "[...serialized result]"
+// use `toString` on elements as
+$`.stringify`.toString({ attr: ['href'] }) // "[...serialized result of selected set]"
 ```
 
 
 ### Modular use?
 
 
-_Spect_ effects can be used separately:
+_Spect_ effects can be used on their own, beyond DOM context:
 
 ```js
 import use from 'spect/use'
@@ -792,7 +817,7 @@ $(['a', 'b', 'c']).use(str => {
 })
 ```
 
-### Replace document context
+### Replace document context?
 
 _Spect_ can be assigned to another document context, like [jsdom](https://ghub.io/jsdom):
 
