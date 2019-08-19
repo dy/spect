@@ -54,9 +54,9 @@ $('main#app').use(main, preloader);
 Spect is build with a set of modern framework practices in mind (proxies, tagged strings, virtual dom, incremental dom, htm, custom elements, hooks, observers, frp). It grounds on API design research, experiments and proofs, conducted with purpose of meeting the following principles:
 
 > 1. Expressivity.
-> 2. 0 bundling / building.
-> 3. Soft hydration.
-> 4. Standard HTML.
+> 2. No bundling / building step required.
+> 3. Hydration as part of progressive enhancement.
+> 4. Standard HTML first.
 > 5. Max utility, min presentation.
 
 <!--
@@ -254,6 +254,8 @@ let getRawMarkup = () => {
 
 ## API
 
+
+
 <!-- Each effect reflects domain it provides shortcut to. -->
 
 <!-- mount is a hook on html domain -->
@@ -262,7 +264,7 @@ let getRawMarkup = () => {
 
 
 
-### `$( selector | els | markup )` − hyperselector
+### `$( selector | els | markup )` − selector / wrapper / creator
 
 Select elements in DOM, provide domain methods for the selected set. The main purpose is shallow reference/wrapper for some nodes collection.
 If html string is passed, creates detached DOM - in that case acts like hyperscript.
@@ -281,7 +283,7 @@ $('div', {}, null)
 <p align="right">Related: <a href="https://jquery.com">jquery</a></p>
 
 
-### `.use( ...fns )` − attach aspects
+### `.use( ...fns )` − aspects connector
 
 Assign aspect function(s) to selected elements. Each `fn` is called for every element in the selected set, receiving wrapped element as single argument. Aspect `fn` can be be called multiple times in a frame, if `state`, `attr` or any other data source updates. The data sources are subscribed to automatically when their values are read.
 
@@ -313,7 +315,7 @@ $els.html`<div use=${div => {}}></div>`
 <p align="right">Related: <a href="https://ghub.io/reuse">reuse</a></p>
 
 
-### `.fx( fn, deps? )` − run side-effects
+### `.fx( fn, deps? )` − generic side-effects provider
 
 Register effect function for selected elements. The effect `fn` is called after current aspect call for each element in the set. If called outside of running aspect/fx (global scope), then `fn` is called instantly.
 
@@ -337,7 +339,7 @@ $els.fx(el => $(el).something)
 <p align="right">Related: <a href='https://reactjs.org/docs/hooks-effect.html'>useEffect</a></p>
 
 
-### `.state( name | val, deps? )` − get/set elements state
+### `.state( name | val, deps? )` − state provider
 
 Read or write state, associated with an element. Read returns state of the first element in the set. Reading state subscribes running aspect to rerender whenever that state changes. Writing state rerenders all dependent aspects after the current one.
 
@@ -358,7 +360,7 @@ $target.state(_ => _.x.y.z, deps)
 <p align="right">Related: <a href="https://reactjs.org/docs/hooks-state.html">useState</a>, <a href="https://www.npmjs.com/package/icaro">icaro</a>, <a href="https://www.npmjs.com/package/introspected">introspected</a></p>
 
 
-### `.prop( name | val, deps? )` − get/set elements props
+### `.prop( name | val, deps? )` − properties provider
 
 Read or write elements properties. Read returns first item property value. Set writes property to all elements in the set. Reading prop subscribes current aspect to rerender whenever that property changes.
 
@@ -375,7 +377,25 @@ $target.prop(_ => _.x.y.z, deps) // safe path getter
 <p align="right">Related: <a href="https://reactjs.org/docs/hooks-state.html">useState</a></p>
 
 
-### ``.html( markup, deps? ) `` − render markup
+### `.attr( name, deps? )` − attributes provider
+
+Changes element attributes, updates all dependent elements/aspects.
+
+```js
+// write attributes
+$target.attr({ foo: 'bar'})
+$target.attr(a => a.foo = 'bar')
+
+// read attributes
+$target.attr`foo`
+$target.attr().foo
+```
+
+
+<p align="right">Related: <a href="https://ghub.io/attributechanged">attributechanged</a></p>
+
+
+### ``.html( markup, deps? ) `` − html side-effect
 
 Provides HTML content for elements. Internally uses [htm](https://ghub.io/htm) with [incremental-dom](https://ghub.io/incremental-dom) to render tree.
 
@@ -409,7 +429,7 @@ function SuperButton($el) {
 <p align="right">Related: <a href="https://ghub.io/incremental-dom">incremental-dom</a>, <a href='https://ghub.io/htm'>htm</a></p>
 
 
-### ``.text( content, deps? ) `` − get/set text content
+### ``.text( content, deps? ) `` − text content side-effect
 
 Provide text content for group of elements.
 
@@ -423,7 +443,7 @@ $target.text()
 ```
 
 
-### ``.css( styles, deps?)`` − render style sheets
+### ``.css( styles, deps?)`` − CSS side-effect
 
 Provide scoped CSS styles for element
 
@@ -446,7 +466,7 @@ $target.css()
 <p align="right">Related: <a href="https://ghub.io/virtual-css">virtual-css</a></p>
 
 
-### `.class( ...classes )` − get/set class list
+### `.class( ...classes )` − class list side-effect
 
 Changes element classList, updates all dependent elements/aspects.
 
@@ -467,26 +487,7 @@ $target.class().foo
 
 <p align="right">Related: <a href="https://ghub.io/clsx">clsx</a>, <a href="https://ghub.io/classes">classes</a></p>
 
-
-### `.attr( name, deps? )` − get/set attributes
-
-Changes element attributes, updates all dependent elements/aspects.
-
-```js
-// write attributes
-$target.attr({ foo: 'bar'})
-$target.attr(a => a.foo = 'bar')
-
-// read attributes
-$target.attr`foo`
-$target.attr().foo
-```
-
-
-<p align="right">Related: <a href="https://ghub.io/attributechanged">attributechanged</a></p>
-
-
-### `.on( evt, delegate?, fn )` − add/remove event listeners
+### `.on( evt, delegate?, fn )` − events provider
 
 Registers event listeners for a target, optionally pass `delegate` selector.
 
@@ -575,6 +576,7 @@ Community
 * [spect-dataschema]() - provide dataschema props for the element.
 * [spect-meta]() - set document meta props.
 * [spect-uibox]() -->
+
 
 
 ## FAQ
