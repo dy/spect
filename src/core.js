@@ -14,12 +14,13 @@ export let defaultElement = document
 export const GET = 1, SET = 2, CREATE = 3, DELETE = 4, START = 5, END = 6
 
 // current effect queue
+// the calls to effects are placed to queue as [command, effect, args]
 export const queue = []
 
 // put command with params into queue, drained after current effect
 // returns promise if fx is updated and false otherwise
 export function commit (command, effect, ...args) {
-  queue.push(command, effect)
+  queue.push(command, effect, args)
 }
 
 
@@ -33,7 +34,6 @@ const depsCache = new Map
 
 // helper with effect, skipping queue management
 export function registerEffect (name, obj) {
-
   // actuall effect
   return function (...args) {
     let els = this || [ defaultElement ]

@@ -1,7 +1,7 @@
-import { fx as _fx } from './src/core.js'
+import { hook } from './src/core.js'
 
 
-export default registerEffect('fx', {
+export default hook('fx', {
   set: (...fns) => {
     return { after: () => fns.forEach(fn => fn()) }
   }

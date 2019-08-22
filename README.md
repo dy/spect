@@ -260,8 +260,8 @@ let getRawMarkup = () => {
 
 <!-- mount is a hook on html domain -->
 
-[**`$`**]()  [**`.use`**]()  [**`.fx`**]()  [**`.state`**]()  [**`.prop`**]()  [**`.attr`**]()  [**`.html`**]()  [**`.text`**]()  [**`.class`**]()  [**`.on`**]()  [**`.css`**]()
 
+[**`$`**]()  [**`.use`**]()  [**`.fx`**]()  [**`.state`**]()  [**`.prop`**]()  [**`.attr`**]()  [**`.html`**]()  [**`.text`**]()  [**`.class`**]()  [**`.css`**]()  [**`.on`**]()
 
 
 ### `$( selector | els | markup )` − selector / wrapper / creator
@@ -280,7 +280,7 @@ $`<div.a/><div.b/>`
 $('div', {}, null)
 ```
 
-<p align="right">Related: <a href="https://jquery.com">jquery</a></p>
+<p align="right">Ref: <a href="https://jquery.com">jquery</a></p>
 
 
 ### `.use( ...fns )` − aspects connector
@@ -312,22 +312,25 @@ Aspects can be attached via `.html` effect as well:
 $els.html`<div use=${div => {}}></div>`
 ```
 
-<p align="right">Related: <a href="https://ghub.io/reuse">reuse</a></p>
+<p align="right">Ref: <a href="https://ghub.io/reuse">reuse</a></p>
 
 
-### `.fx( fn, deps? )` − generic side-effects provider
+### `.fx( fn | promise , deps? )` − generic side-effects provider
 
-Register effect function for selected elements. The effect `fn` is called after current aspect call for each element in the set. If called outside of running aspect/fx (global scope), then `fn` is called instantly.
+Register effect function for selected elements. The effect `fn` is called after current aspect call for each element in the set. If called outside of running aspect/fx (global scope), then `fn` is called instantly, unless redefined by custom `timing` (see below).
 
 ```js
 // called each time
 $els.fx(() => {})
 
-// called once
+// called when value changes to non-false value
+$els.fx(() => {}, bool)
+
+// called when deps array changes
 $els.fx(() => {}, [])
 
-// called any time deps change
-$els.fx(() => {}, deps)
+// called at specially defined moments
+$els.fx(() => () => ... => destroy(), nextTick)
 
 // destructor
 $els.fx(() => () => destroy(), deps)
@@ -336,7 +339,62 @@ $els.fx(() => () => destroy(), deps)
 $els.fx(el => $(el).something)
 ```
 
-<p align="right">Related: <a href='https://reactjs.org/docs/hooks-effect.html'>useEffect</a></p>
+#### `.fx.<timing>( fn, deps? )` − effects with custom timing
+
+By default effects are run synchronously, after current running aspect. But a custom timing can be provided for effects to run at other moments, eg. next tick, animation frame, timeout, element lifecycle, events etc. Also, a custom timing function can be provided. The planned effects are grouped per planned tick and only minimal required changes are made.
+
+```js
+// Run effect immediately
+$el.fx.sync(() => {}, deps)
+
+// Run effect after current effect, order can define priority
+$el.fx.plan(() => {}, deps)
+$el.fx.plan(order)(() => {}, deps)
+
+// Run asynchronously in the next tick, as `setImmediate`
+$el.fx.tick(() => {}, deps)
+
+// Run after number of milliseconds, this way acts like `setTimeout`
+$el.fx.timeout(() => {}, deps)
+$el.fx.timeout`1s`(() => {}, deps)
+
+// Run effect before the next animation frame via raf
+$el.fx.frame(() => {}, deps)
+
+// Run when component is mount, destroy on unmount.
+$el.fx.mount(() => () => {})
+
+// Register custom timing
+$.fx.click = function (fn) {
+  let $el = this
+  $el.on('mousedown', () => {
+    fn = fn.next()
+    $el.on('mouseup', () => fn.next())
+  })
+}
+$el.fx.click(() => () => {}, deps)
+
+$el.fx.on`click`(() => () => {}, deps)
+```
+
+The timing functions are available to all other effects:
+
+```js
+// set state after 1s
+$el.state.timeout`1s`(s => s.count++)
+
+// render HTML immediately
+$el.html.sync`...markup`
+
+// attach event on the next tick (skip cu)
+$doc.on.timeout('click', () => {})
+
+//
+await $el.state(async s => fetch`api/${id}` deps)
+$el.state.response(requestPromise)(s => s, deps)
+```
+
+<p align="right">Ref: <a href='https://reactjs.org/docs/hooks-effect.html'>useEffect</a></p>
 
 
 ### `.state( name | val, deps? )` − state provider
@@ -357,7 +415,7 @@ $target.state(_ => _.x.y.z, deps)
 ```
 
 
-<p align="right">Related: <a href="https://reactjs.org/docs/hooks-state.html">useState</a>, <a href="https://www.npmjs.com/package/icaro">icaro</a>, <a href="https://www.npmjs.com/package/introspected">introspected</a></p>
+<p align="right">Ref: <a href="https://reactjs.org/docs/hooks-state.html">useState</a>, <a href="https://www.npmjs.com/package/icaro">icaro</a>, <a href="https://www.npmjs.com/package/introspected">introspected</a></p>
 
 
 ### `.prop( name | val, deps? )` − properties provider
@@ -374,7 +432,7 @@ $target.prop`x`
 $target.prop(_ => _.x.y.z, deps) // safe path getter
 ```
 
-<p align="right">Related: <a href="https://reactjs.org/docs/hooks-state.html">useState</a></p>
+<p align="right">Ref: <a href="https://reactjs.org/docs/hooks-state.html">useState</a></p>
 
 
 ### `.attr( name, deps? )` − attributes provider
@@ -392,7 +450,7 @@ $target.attr().foo
 ```
 
 
-<p align="right">Related: <a href="https://ghub.io/attributechanged">attributechanged</a></p>
+<p align="right">Ref: <a href="https://ghub.io/attributechanged">attributechanged</a></p>
 
 
 ### ``.html( markup, deps? ) `` − html side-effect
@@ -426,7 +484,7 @@ function SuperButton($el) {
 
 * [Popup-info example from MDN](https://developer.mozilla.org/en-US/docs/Web/API/CustomElementRegistry/define#Autonomous_custom_element):
 
-<p align="right">Related: <a href="https://ghub.io/incremental-dom">incremental-dom</a>, <a href='https://ghub.io/htm'>htm</a></p>
+<p align="right">Ref: <a href="https://ghub.io/incremental-dom">incremental-dom</a>, <a href='https://ghub.io/htm'>htm</a></p>
 
 
 ### ``.text( content, deps? ) `` − text content side-effect
@@ -463,7 +521,7 @@ $target.css()
 <!-- $target.css`selector { ...rules }` -->
 <!-- $target.css = `selector { ...rules }` -->
 
-<p align="right">Related: <a href="https://ghub.io/virtual-css">virtual-css</a></p>
+<p align="right">Ref: <a href="https://ghub.io/virtual-css">virtual-css</a></p>
 
 
 ### `.class( ...classes )` − class list side-effect
@@ -485,7 +543,7 @@ $target.class().foo
 <!-- $target.class = {foo: true, bar: false, baz: () => false} -->
 <!-- $target.class // { foo: true, bar: true } -->
 
-<p align="right">Related: <a href="https://ghub.io/clsx">clsx</a>, <a href="https://ghub.io/classes">classes</a></p>
+<p align="right">Ref: <a href="https://ghub.io/clsx">clsx</a>, <a href="https://ghub.io/classes">classes</a></p>
 
 ### `.on( evt, fn )` − events provider
 
@@ -510,7 +568,7 @@ $target.on('unmount', e => {
 })
 ```
 
-<p align="right">Related: <a href="https://github.com/donavon/use-event-listener">use-event-listener</a></p>
+<p align="right">Ref: <a href="https://github.com/donavon/use-event-listener">use-event-listener</a></p>
 
 <!--
 ### `.init( fn: create => destroy )` - init / destroy lifecycle callbacks

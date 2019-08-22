@@ -1,12 +1,13 @@
 import delegated from 'delegate-it'
-import { registerEffect } from './src/core.js'
+import { registerEffect, queue } from './src/core.js'
 
 const cbCache = new WeakMap
 
-export default registerEffect('on', ({onSet}) => {
-  // listeners must be added instantly
-  // eg. click can be emitted instantly after on call
-  onSet((evts, delegate, handler) => {
+// for easiness of effects that must be a simple function
+export default function on(evts, delegate, handler, deps) {
+  commit('on', )
+
+  syncFx(...arguments, (fx) => {
     if (typeof delegate === 'function') {
       deps = handler
       handler = delegate
@@ -30,6 +31,6 @@ export default registerEffect('on', ({onSet}) => {
     }
 
     // first is called after current effect, second is called on destroy
-    return { destroy: () => destroy.forEach(fn => fn()) }
-  })
-})
+    return fx.destroy = () => destroy.forEach(fn => fn())
+  }, { deps: true })
+}
