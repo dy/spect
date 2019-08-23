@@ -8,7 +8,7 @@ import { paramCase } from './util.js'
 
 
 // FIXME: provide customization ways
-export let defaultElement = document
+export let $doc = $(document)
 
 // operations
 export const GET = 1, SET = 2, CREATE = 3, DELETE = 4, START = 5, END = 6
@@ -19,8 +19,32 @@ export const queue = []
 
 // put command with params into queue, drained after current effect
 // returns promise if fx is updated and false otherwise
-export function commit (command, effect, ...args) {
-  queue.push(command, effect, args)
+export function commit (target, effect, args, deps) {
+  let $els = target || $doc
+
+  if (deps !== undefined) {
+    // array dep - enter by change
+    if (Array.isArray(deps)) {
+      let depsTuple = tuple(currentElement, currentFn, fxCount)
+      let prevDeps = depsCache.get(depsTuple) || []
+      if (equal(deps, prevDeps)) {
+        fxCount++
+        return this
+      }
+
+      depsCache.set(depsTuple, deps)
+    }
+
+    // boolean dep - enter by truthy value
+    else if (deps) {
+
+    }
+  }
+  else {
+    return true
+  }
+
+  queue.push(effect, args)
 }
 
 
@@ -33,25 +57,11 @@ const depsCache = new Map
 
 
 // helper with effect, skipping queue management
-export function registerEffect (name, obj) {
+//
+export function createEffect (name, desc) {
   // actuall effect
   return function (...args) {
-    let els = this || [ defaultElement ]
 
-    if (obj.deps !== false) {
-      let deps = args.pop()
-
-      if (deps.length) {
-        let depsTuple = tuple(currentElement, currentFn, fxCount)
-        let prevDeps = depsCache.get(depsTuple) || []
-        if (equal(deps, prevDeps)) {
-          fxCount++
-          return this
-        }
-
-        depsCache.set(depsTuple, deps)
-      }
-    }
   }
 }
 
