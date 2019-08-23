@@ -1,32 +1,32 @@
 import onload from 'fast-on-load'
-import { createEffect } from "./src/core"
+import tuple from 'immutable-tuple'
+import { commit } from "./src/core"
+import { noop } from './src/util';
 
+let tracking = new WeakMap
 
+// mount is post-effect
 export default function mount (fn, deps) {
-  let els = commit(this, 'mount', null, deps)
-  if (!els) return
+  let fx = commit(this, 'mount', deps)
 
-  let state = currentState
+  if (!fx) return
 
-  if (!state.mount) {
-    // we reset unmounts/mounts each new the same fx call
-    state.mount = []
-    state.unmount = null
+  this.forEach(el => {
+    let key = tuple(el, fx.id)
 
-    // FIXME: use native onload multiple binding capability
-    onload(currentTarget, () => {
-      state.unmount = state.mount.map(fn => fn())
-    }, () => {
-      state.unmount.forEach(fn => fn())
-    })
+    let unload
+    let handle = [() => unload = fn(), () => unload && unload()]
 
-    // if target rerenders, reset mounted listeners (re-registered anyways)
-    state.onBefore.push(() => {
-      state.mount.length = 0
+    tracking.set(key, handle)
+    state.onload(el, ...handle)
+  })
+
+  fx.destroy = () => {
+    this.forEach(el => {
+      let key = tuple(el, fx.id)
+      let [load, unload] = tracking.get(key)
+      onload.destroy(el, load, unload)
     })
   }
-
-  // mount array is clean for the first mount call
-  state.mount.push(fn)
 }
 

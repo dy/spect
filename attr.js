@@ -1,91 +1,48 @@
-import { GET, SET, publish } from './src/core'
-import $ from './$.js'
-
-
-
-
-
-module.exports = registerEffect('attr', ({ onGet, onSet }) => {
-  onGet(name => {
-    return this[0].getAttribute(name)
-  })
-
-  onSet((name, value) => {
-    this.forEach(el => {
-      let prev = el.getAttribute(name)
-
-      if (Object.is(prev, value)) return
-
-      el.setAttribute(name, value)
-    })
-  })
-  deps: true
-})
-
-
-
-
-
+import { commit,  } from './src/core'
 
 
 // TODO attribute listens for read attributes from elements and modifies set of observed attributes via mutation observer
 
 
-// observed attribute names assigned to targets, { target: [foo, bar, ...attrs] }
-const observedAttributes = new WeakMap
+export default function attr (...args) {
+  if (args.length <= 1) return this.attr.get(...args)
 
-
-const targetCache = new WeakMap
-Object.defineProperty($.fn, 'attr', {
-  get() {
-    if (!targetCache.has(this)) targetCache.set(this, createAttr(this))
-    return targetCache.get(this)
-  },
-
-  set(value) {
-    console.log('TODO set attr', this)
-  }
-})
-
-
-function createAttr($el) {
-  let firstEl = $el[0]
-
-  // we init attr observer if an element was read
-  $el.forEach(observeAttributes)
-
-  return new Proxy({}, {
-    set: (_, name, value) => {
-      $el.forEach(el => {
-        let prev = el.getAttribute(name)
-
-        // skip unchanged value
-        if (Object.is(prev, value)) return
-
-        el.setAttribute(name, value)
-
-        // that's notified via attribute change listener in mutation observer, no need to publish here
-        // $.publish(SET, el, ['attr', name], value, prev)
-      })
-
-      return true
-    },
-
-    get: (_, name) => {
-
-      // notify all elements in the set
-      $el.forEach(el => {
-        // update observed attributes for target
-        if (!observedAttributes.has(el)) observedAttributes.set(el, [])
-        let attrs = observedAttributes.get(el)
-        if (attrs.indexOf(name) < 0) attrs.push(name)
-
-        publish(GET, el, ['attr', name])
-      })
-
-      // but return only first one
-      return firstEl.getAttribute(name)
+  if (typeof args[0] === 'object') {
+    for (let name in args[0]) {
+      this.attr.set(name, args[0][name])
     }
+    return
+  }
+
+  return this.attr.set(...args)
+}
+
+attr.get = function (name) {
+  // TODO reading attribute should make sure element is clean
+
+  // TODO also reading subscribes current target to updates of the attribute
+
+  // TODO reading turns observer on
+  // this.forEach(observeAttributes)
+
+  // update observed attributes for target
+  // if (!observedAttributes.has(el)) observedAttributes.set(el, [])
+  // let attrs = observedAttributes.get(el)
+  // if (attrs.indexOf(name) < 0) attrs.push(name)
+
+
+  return this[0].getAttribute(name)
+}
+attr.set = function (name, value, deps) {
+  let id = commit(this, 'attr', deps)
+  if (!id) return
+
+  this.forEach(el => {
+    let prev = el.getAttribute(name)
+
+    if (Object.is(prev, value)) return
+
+    el.setAttribute(name, value)
   })
 }
 

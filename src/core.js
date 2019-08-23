@@ -17,9 +17,10 @@ export const GET = 1, SET = 2, CREATE = 3, DELETE = 4, START = 5, END = 6
 // the calls to effects are placed to queue as [command, effect, args]
 export const queue = []
 
-// put command with params into queue, drained after current effect
-// returns promise if fx is updated and false otherwise
-export function commit (target, effect, args, deps) {
+// put command with params into queue
+// returns effect id, if deps changed
+// the effect id reflects target + effect + effect order tuple, so that the callsite can be identified
+export function commit (target, effect, deps) {
   let $els = target || $doc
 
   if (deps !== undefined) {
@@ -48,22 +49,19 @@ export function commit (target, effect, args, deps) {
 }
 
 
+// microtask queue to rerender
+let current = Promise.resolve()
+let plan = function (fn) {
+  current.then(fn)
+}
+
+
 // FIXME: incorporate into single
 let currentElement, currentAspect, currentEffect
 
 // hook for effects, invoking callback at the right moment with right environment
 const destroyCache = new WeakMap
 const depsCache = new Map
-
-
-// helper with effect, skipping queue management
-//
-export function createEffect (name, desc) {
-  // actuall effect
-  return function (...args) {
-
-  }
-}
 
 
 // generic fx

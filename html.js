@@ -13,7 +13,7 @@ import { patch,
   currentElement
 } from 'incremental-dom'
 
-import { getTagName, getCustomElement, registerEffect } from './src/core.js';
+import { getTagName, getCustomElement, registerEffect, commit } from './src/core.js';
 
 
 // configure incremental-dom attributes
@@ -89,7 +89,9 @@ html.h = function h(target, props={}, ...children) {
 html.htm = htm.bind(html.h)
 
 
-export function html(...args) {
+export default function html(el, ...args) {
+  if (!commit(this, 'html', deps)) return
+
   // let cache = currentState.htmlCache || (currentState.htmlCache = new WeakMap())
 
   // tpl string
@@ -193,12 +195,3 @@ export function html(...args) {
 }
 
 
-
-export default registerEffect('html', {
-  get: html => {
-    // get is actually a set with single argument
-    // for getting HTML use $
-    return this.html(html, [])
-  },
-  set: html
-})

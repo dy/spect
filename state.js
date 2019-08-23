@@ -3,30 +3,36 @@ import $ from './$.js'
 
 
 
-export default registerEffect('state', {
-  get: () => {
+export default function state (path, value, deps) {
+  if (args.length <= 1) return this.state.get(...args)
 
-  },
-  set: () => {
-
-  },
-  deps: true
-})
-
-
-
-// state is a proxy, forwarding set/get to all target elements
-const targetCache = new WeakMap
-Object.defineProperty($.fn, 'state', {
-  get() {
-    if (!targetCache.has(this)) targetCache.set(this, createState(this))
-    return targetCache.get(this)
-  },
-
-  set(value) {
-    console.log('TODO set state', this)
+  if (typeof args[0] === 'object') {
+    for (let name in args[0]) {
+      this.state.set(name, args[0][name])
+    }
+    return
   }
-})
+
+  return this.state.set(...args)
+}
+
+export function set () {
+
+}
+
+export function get () {
+  // FIXME: what about nested props access/writing?
+
+  // reading state must render must make sure component is not dirty before read
+  // eg. some component may have planned updating this component state
+  // clean(el)
+  plan(el, 'state')
+
+  // return first element state value
+  this.forEach(el => publish(GET, el, ['state', prop]))
+
+  return state[prop]
+}
 
 
 const stateCache = new WeakMap
