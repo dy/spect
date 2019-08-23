@@ -317,81 +317,23 @@ $els.html`<div use=${div => {}}></div>`
 
 ### `.fx( fn | promise , deps? )` − generic side-effects provider
 
-Register effect function for selected elements. The effect `fn` is called after current aspect call for each element in the set. If called outside of running aspect/fx (global scope), then `fn` is called instantly, unless redefined by custom `timing` (see below).
+Register effect function for selected elements. The effect `fn` is called after current aspect call for each element in the set. If called outside of running aspect/fx (global scope), then `fn` is called instantly, otherwise called after current aspect finishes.
 
 ```js
 // called each time
 $els.fx(() => {})
 
-// called when value changes to non-false value
+// called when value changes to non-false
 $els.fx(() => {}, bool)
 
 // called when deps array changes
 $els.fx(() => {}, [])
 
-// called at specially defined moments
-$els.fx(() => () => ... => destroy(), nextTick)
-
 // destructor
 $els.fx(() => () => destroy(), deps)
 
-// called for each element
+// called for each element in the set
 $els.fx(el => $(el).something)
-```
-
-#### `.fx.<timing>( fn, deps? )` − effects with custom timing
-
-By default effects are run synchronously, after current running aspect. But a custom timing can be provided for effects to run at other moments, eg. next tick, animation frame, timeout, element lifecycle, events etc. Also, a custom timing function can be provided. The planned effects are grouped per planned tick and only minimal required changes are made.
-
-```js
-// Run effect immediately
-$el.fx.sync(() => {}, deps)
-
-// Run effect after current effect, order can define priority
-$el.fx.plan(() => {}, deps)
-$el.fx.plan(order)(() => {}, deps)
-
-// Run asynchronously in the next tick, as `setImmediate`
-$el.fx.tick(() => {}, deps)
-
-// Run after number of milliseconds, this way acts like `setTimeout`
-$el.fx.timeout(() => {}, deps)
-$el.fx.timeout`1s`(() => {}, deps)
-
-// Run effect before the next animation frame via raf
-$el.fx.frame(() => {}, deps)
-
-// Run when component is mount, destroy on unmount.
-$el.fx.mount(() => () => {})
-
-// Register custom timing
-$.fx.click = function (fn) {
-  let $el = this
-  $el.on('mousedown', () => {
-    fn = fn.next()
-    $el.on('mouseup', () => fn.next())
-  })
-}
-$el.fx.click(() => () => {}, deps)
-
-$el.fx.on`click`(() => () => {}, deps)
-```
-
-The timing functions are available to all other effects:
-
-```js
-// set state after 1s
-$el.state.timeout`1s`(s => s.count++)
-
-// render HTML immediately
-$el.html.sync`...markup`
-
-// attach event on the next tick (skip cu)
-$doc.on.timeout('click', () => {})
-
-//
-await $el.state(async s => fetch`api/${id}` deps)
-$el.state.response(requestPromise)(s => s, deps)
 ```
 
 <p align="right">Ref: <a href='https://reactjs.org/docs/hooks-effect.html'>useEffect</a></p>
@@ -399,28 +341,26 @@ $el.state.response(requestPromise)(s => s, deps)
 
 ### `.state( name | val, deps? )` − state provider
 
-Read or write state, associated with an element. Read returns state of the first element in the set. Reading state subscribes running aspect to rerender whenever that state changes. Writing state rerenders all dependent aspects after the current one.
+Read or write state, associated with an element. Read returns state of the first element in the set. Reading state subscribes current aspect to changes. Writing state rerenders all dependent aspects.
 
 ```js
 // write state
-$target.state('x', 1)
+$target.state('x', 1, deps)
 $target.state({x: 1}, deps)
 $target.state(_ => _.x.y.z = 1, deps)
 
 // read state
 $target.state`x`
 $target.state`x.y.z`
-$target.state('x', deps)
-$target.state(_ => _.x.y.z, deps)
+$target.state(_ => _.x.y.z)
 ```
 
-
-<p align="right">Ref: <a href="https://reactjs.org/docs/hooks-state.html">useState</a>, <a href="https://www.npmjs.com/package/icaro">icaro</a>, <a href="https://www.npmjs.com/package/introspected">introspected</a></p>
+<p align="right">Ref: <a href="https://reactjs.org/docs/hooks-state.html">useState</a>, <a href="https://www.npmjs.com/package/icaro">icaro</a>, <a href="https://www.npmjs.com/package/introspected">introspected</a>, <a href="https://ghub.io/idx">idx</a></p>
 
 
 ### `.prop( name | val, deps? )` − properties provider
 
-Read or write elements properties. Read returns first item property value. Set writes property to all elements in the set. Reading prop subscribes current aspect to rerender whenever that property changes.
+Read or write elements properties. Read returns first element property. Write sets property to all elements in the collection. Reading prop subscribes current aspect to changes.
 
 ```js
 // write prop
@@ -429,7 +369,7 @@ $target.prop(_ => _.x.y.z = 1, deps) // safe path setter
 
 // read prop
 $target.prop`x`
-$target.prop(_ => _.x.y.z, deps) // safe path getter
+$target.prop(_ => _.x.y.z) // safe path getter
 ```
 
 <p align="right">Ref: <a href="https://reactjs.org/docs/hooks-state.html">useState</a></p>
@@ -440,15 +380,14 @@ $target.prop(_ => _.x.y.z, deps) // safe path getter
 Changes element attributes, updates all dependent elements/aspects.
 
 ```js
-// write attributes
+// write attribute
 $target.attr({ foo: 'bar'})
 $target.attr(a => a.foo = 'bar')
 
-// read attributes
+// read attribute
 $target.attr`foo`
-$target.attr().foo
+$target.attr()
 ```
-
 
 <p align="right">Ref: <a href="https://ghub.io/attributechanged">attributechanged</a></p>
 
@@ -463,7 +402,7 @@ $target.html`...markup`
 $target.html(html => $`...markup ${ $`...inner wrapped ${ html }` }`, deps)
 
 /* @jsx $ */
-$target.html(html => <>Markup</>)
+$target.html(<>Markup</>)
 ```
 
 #### Components
@@ -475,12 +414,10 @@ For that purpose, `is` attribute can be used:
 $els.html`<button is=${SuperButton}></button>`
 $els.html`<${SuperButton} />`
 
-function SuperButton($el) {
+function SuperButton(el) {
   // ...
 }
 ```
-
-#### Examples
 
 * [Popup-info example from MDN](https://developer.mozilla.org/en-US/docs/Web/API/CustomElementRegistry/define#Autonomous_custom_element):
 
@@ -489,12 +426,12 @@ function SuperButton($el) {
 
 ### ``.text( content, deps? ) `` − text content side-effect
 
-Provide text content for group of elements.
+Provide text content for the collection.
 
 ```js
 // set text
 $target.text`...text`
-$target.text(t => i18n(nbsp(typograf(t))))
+$target.text(str => i18n(nbsp(clean(str))))
 
 // get text
 $target.text()
@@ -503,14 +440,11 @@ $target.text()
 
 ### ``.css( styles, deps?)`` − CSS side-effect
 
-Provide scoped CSS styles for element
+Provide scoped CSS styles for collection.
 
 ```js
 // write css
 $target.css` :host { width: 100%} `
-
-// read css
-$target.css()
 ```
 
 <!-- $target.css({ ':host': { width: 100%} }) -->
@@ -526,7 +460,7 @@ $target.css()
 
 ### `.class( ...classes )` − class list side-effect
 
-Changes element classList, updates all dependent elements/aspects.
+Manipilate classes for elements in collection.
 
 ```js
 // write classes
@@ -537,7 +471,7 @@ $target.class(clsx => clsx.foo = false)
 
 // read classes
 $target.class`foo`
-$target.class().foo
+$target.class()
 ```
 
 <!-- $target.class = {foo: true, bar: false, baz: () => false} -->
@@ -547,68 +481,39 @@ $target.class().foo
 
 ### `.on( evt, fn )` − events provider
 
-Registers event listeners for a target, optionally pass `delegate` selector.
+Registers event listeners for elements in collection.
 
 ```js
-// add event listeners
+// multiple events
 $target.on('foo bar', e => {})
-$target.on('foo', '.delegate', e => {})
-$target.on({ foo: e => {} })
-```
 
+// delegate selector
+$target.on('foo .delegate', e => {})
 
-`on` provides `mount` and `unmount` events for all aspects and components, to track when element is connected/disconnected from DOM.
+// multiple listeners
+$target.on({ foo: e => {}, bar: e => {} })
 
-```js
-$target.on('mount', e => {
-  $target.state({ loading: true })
-})
-$target.on('unmount', e => {
-
-})
+// sequence of events
+$target.on('touchstart', e => e => e => {})
 ```
 
 <p align="right">Ref: <a href="https://github.com/donavon/use-event-listener">use-event-listener</a></p>
 
-<!--
-### `.init( fn: create => destroy )` - init / destroy lifecycle callbacks
 
-Triggered during the first render, useful to initialize component state and other effects. Any effects or changes made in callback are muted, so rerendering won't trigger, unlike in effect `.fx( fn, [] )`.
-
-```js
-$('#target').use($el => {
-  $el.init(() => {
-    // ...create / init
-
-    $el.state.x = 1
-    $el.state.y = 2
-    let i = setInterval(() => {})
-
-    return () => {
-      // ...destroy
-
-      clearInterval(i)
-    }
-  })
-})
-```
--->
-
-<!-- ### `.mount( fn: onmount => onunmount )` - connected / disconnected lifecycle callbacks
+### `.mount( fn: onmount => onunmount, deps? )` - connected / disconnected lifecycle callbacks
 
 Triggers callback `fn` when element is connected to the DOM. Optional returned function is triggered when the element is disconnected.
 If an aspect is attached to mounted elements, the `onmount` will be triggered automatically.
 
 ```js
-$('#target'.use($el => {
-  $el.mount(() => {
-    // connected
-    return () => {
-      // disconnected
-    }
-  })
+$el.mount(() => {
+  // connected
+  return () => {
+    // disconnected
+  }
 })
-``` -->
+```
+
 
 <!--
 
@@ -642,21 +547,21 @@ Community
 
 ### Why aspects?
 
-Aspects are, in fact, already a conceptual part of HTML, they manifest as:
+Aspects are already a conceptual part of HTML:
 
-* CSS - separation of markup concern from styling concern (selectors act as pointcuts, rules act as as advice) - compared to inline styling;
+* CSS - visual aspect, separated from structure (selectors act as pointcuts, rules act as as advice);
 * Attributes - `hidden`, `contenteditable`, `title`, `autocapitalize` etc.
 
-That concept is taken a step forward, enabling separation of other [cross-cutting concerns](https://en.wikipedia.org/wiki/Cross-cutting_concern), such as _authorization_, _localization_, _accessibility_, _microformats_, _logging_, _sound_, _formatting_, _analytics_ and others. In fact, any business-logic or domain-related concerns can be separated into own "layer".
+That concept is taken a step forward, enabling separation of [cross-cutting concerns](https://en.wikipedia.org/wiki/Cross-cutting_concern): _authorization_, _localization_, _accessibility_, _microformats_, _logging_, _sound_, _formatting_, _analytics_ and others. Any business-logic or domain-related concern can be separated into own aspect.
 
-The methodology is build based on known patterns/practices, such as selectors (jQuery), rendering functions (React functional components), side-effects (React hooks). <!-- It's proven that other approaches, such as pure hooks, while maintaining similar level of expressivity, provide less robustness for intercom -->
+<!-- The API is based on known patterns/practices, such as selectors (jQuery), rendering functions (React functional components), side-effects (React hooks). It's proven that other approaches, such as pure hooks, while maintaining similar level of expressivity, provide less robustness for intercom -->
 
-That way aspects gracefully solve many common standard frontend tasks, such as portals, code splitting, hydration etc.
+Aspects gracefully solve many common standard frontend tasks, such as portals, code splitting, hydration etc.
 
 
 ### Portals?
 
-Portals come out of the box as easy as:
+Portals come out of the box:
 
 ```js
 $`#app`.use(el => {
@@ -668,7 +573,7 @@ $`#app`.use(el => {
 
 ### JSX?
 
-Spect is jQuery/hyperscript compatible and is able to create vdom or real dom, depending on current effect context. To use JSX - provide babel pragma:
+Spect is hyperscript compatible and is able to create vdom or real dom, depending on current effect context. To use JSX - provide babel pragma:
 
 ```js
 /* @jsx $ */
@@ -683,7 +588,7 @@ $el.html(() => <div>Inner content</div>)
 
 ### Code splitting?
 
-Aspects organically embody progressive-enhancement principle, providing preloading parts of functionality in a meaningful way, reducing network load. Loading order can be arranged by priority of aspects from UX standpoint.
+Aspects organically embody progressive-enhancement principle, providing loading parts of functionality in a meaningful way, reducing network load. The order can be arranged by priority of aspects from UX standpoint.
 
 ```html
 <script>
