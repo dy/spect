@@ -1,7 +1,7 @@
 import t from 'tst'
 import $ from '../index.js'
 
-t.only('on: instant trigger must be handled', t => {
+t('on: instant trigger must be handled', t => {
   let log = []
   let el = $`<a.foo/>`
 

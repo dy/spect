@@ -15,8 +15,8 @@ t('use: aspects, assigned through parent wrapper', t => {
   let $a5 = $(frag.querySelector('*'))
 
   let log = []
-  $a3.use(($a) => {
-    t.is($a[0], a)
+  $a3.use(el => {
+    t.is(el, a)
     log.push('a3')
   })
 
@@ -25,9 +25,10 @@ t('use: aspects, assigned through parent wrapper', t => {
   t.is($a2[0], a)
   t.is($a3[0], a)
   t.is($a4[0], a)
+  t.is($a5[0], a)
 })
 
-t('use: aspects must be called in order', t => {
+t.only('use: aspects must be called in order', t => {
   let log = []
   $`<a/>`.use(() => log.push(1), () => log.push(2), () => log.push(3))
   t.deepEqual(log, [1,2,3])

@@ -1,21 +1,14 @@
-import { commit, plan } from './src/core.js'
-import tuple from 'immutable-tuple'
+import { commit, SET } from './src/core.js'
 
+export default async function fx (fn, deps) {
+  let p = commit(this, 'fx', SET, () => destroy.forEach(fn => fn && fn()), deps)
+  if (!p) return
 
-let prev = {}
+  await p
 
-export default function fx (fn, deps) {
-  let id = commit(this, 'fx', deps)
-  if (!id) return
+  let destroy = []
 
-  // destroy prev fx
   this.forEach(el => {
-    if (prev[id]) {
-      prev[id]()
-    }
+    destroy.push(fn.call(el, el))
   })
-
-  plan(() => this.forEach(el => {
-    destroyCache.set(fn.call(el, el))
-  }))
 }

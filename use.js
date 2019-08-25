@@ -1,9 +1,35 @@
-import { subscribe, publish, GET, SET, CALL_START, CALL_END } from './src/core.js'
-import { raf } from './src/util.js'
-import tuple from 'immutable-tuple'
+import { commit, GET, SET } from './src/core.js'
 import $ from './$.js'
 
 
+// attach aspects to current target
+export default function use(...fns) {
+  let destroy = []
+
+  commit(this, 'use', SET, () => {
+    destroy.forEach(fn => fn())
+  })
+
+  // use has sync init
+  this.forEach(el => {
+    // // FIXME: replace with privates
+    // let aspects = useCache.get(el)
+    // if (!aspects) useCache.set(el, aspects = [])
+
+    // // FIXME: take priority into consideration
+    // fns.forEach(fn => {
+    //   if (aspects.indexOf(fn) < 0) aspects.push(fn)
+    // })
+
+    fns.forEach(fn => destroy.push(fn.call(this, el)))
+  })
+
+  return this
+}
+
+
+
+/*
 // target/domainPath can be:
 // [*, `state.x.y.x`]
 // [*, `attr`] (direct domain)
@@ -35,41 +61,17 @@ subscribe(SET, (target, domainPath, value, prev, ...args) => {
 })
 
 
-// attach aspects to current target
-let useCache = new WeakMap()
-export const use = $.fn.use = function use(...fns) {
-  this.forEach(el => {
-    // FIXME: replace with privates
-    let aspects = useCache.get(el)
-    if (!aspects) useCache.set(el, aspects = [])
-
-    // FIXME: take priority into consideration
-    fns.forEach(fn => {
-      if (aspects.indexOf(fn) < 0) aspects.push(fn)
-    })
-
-    // schedule update
-    queue.push(el)
-  })
-
-  // if not currently flushing - render instantly
-  if (!currentElement) flush()
-
-  return this
-}
-
-
 // schedules flush to the moment before the next frame
-let plannedRaf
-export function scheduleUpdate () {
-  if (plannedRaf) {
-    return
-  }
-  plannedRaf = raf(() => {
-    plannedRaf = null
-    flush()
-  })
-}
+// let plannedRaf
+// export function scheduleUpdate () {
+//   if (plannedRaf) {
+//     return
+//   }
+//   plannedRaf = raf(() => {
+//     plannedRaf = null
+//     flush()
+//   })
+// }
 
 // FIXME: add recursion catcher
 // list of planned targets to re-render the next tick
@@ -116,15 +118,4 @@ export function run(el, fn) {
   currentElement = null
   currentAspect = null
 }
-
-
-export default registerEffect('use', ({ get, set, destroy, after }) => {
-  after((...fns) => {
-    // TODO: put list
-    return {
-      after: () => {
-
-      }
-    }
-  }, false)
-})
+*/

@@ -1,5 +1,5 @@
 import delegated from 'delegate-it'
-import { commit } from './src/core.js'
+import { commit, SET } from './src/core.js'
 
 // for easiness of effects that must be a simple function
 export default function on(evts, delegate, handler, deps) {
@@ -10,28 +10,24 @@ export default function on(evts, delegate, handler, deps) {
   }
 
   // register effect call
-  let fx = commit(this, 'on', deps)
-  if (!fx) return
+  let p = commit(this, 'on', SET, () => destroy.forEach(fn => fn()), deps)
+  if (!p) return
 
   // attach events
   evts = evts.split(/\s+/)
 
-  let destroyList = []
+  let destroy = []
 
   if (delegate) {
     evts.forEach(evt => this.forEach(el => {
       const delegation = delegated(el, delegate, evt, handler)
-      destroyList.push(delegation.destroy)
+      destroy.push(delegation.destroy)
     }))
   }
   else {
     evts.forEach(evt => this.forEach(el => {
       el.addEventListener(evt, handler)
-      destroyList.push(() => el.removeEventListener(evt, handler))
+      destroy.push(() => el.removeEventListener(evt, handler))
     }))
-  }
-
-  fx.destroy = () => {
-    destroyList && destroyList.forEach(destroy => destroy())
   }
 }

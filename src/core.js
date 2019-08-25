@@ -1,96 +1,60 @@
 import equal from "fast-deep-equal"
 import { paramCase } from './util.js'
 
-// core manages sequences of planned commands
-// each effect registers a command with params
-// by the end of effect the queue is drained and necessary ops are evaluated
-// like, multiple vdom calls etc.
-
-
 // FIXME: provide customization ways
-export let $doc = $(document)
+// export let $doc = $(document)
+
+// current running effect
+export let current = null
 
 // operations
-export const GET = 1, SET = 2, CREATE = 3, DELETE = 4, START = 5, END = 6
+export const GET = 1, SET = 2
 
-// current effect queue
-// the calls to effects are placed to queue as [command, effect, args]
-export const queue = []
+// put command into queue
+// if deps pass, returns promise, resolving when the effect queue comes
+// if deps are skipped, always returns promise
+export function commit (target, effect, command, destroy, deps) {
+  current = target
 
-// put command with params into queue
-// returns effect id, if deps changed
-// the effect id reflects target + effect + effect order tuple, so that the callsite can be identified
-export function commit (target, effect, deps) {
-  let $els = target || $doc
+  // if (arguments.length === 5) {
+  // if (deps !== undefined) {
+  //   // array dep - enter by change
+  //   if (Array.isArray(deps)) {
+  //     let depsTuple = tuple(currentElement, currentFn, fxCount)
+  //     let prevDeps = depsCache.get(depsTuple) || []
+  //     if (equal(deps, prevDeps)) {
+  //       fxCount++
+  //       return
+  //     }
 
-  if (deps !== undefined) {
-    // array dep - enter by change
-    if (Array.isArray(deps)) {
-      let depsTuple = tuple(currentElement, currentFn, fxCount)
-      let prevDeps = depsCache.get(depsTuple) || []
-      if (equal(deps, prevDeps)) {
-        fxCount++
-        return this
-      }
+  //     depsCache.set(depsTuple, deps)
+  //   }
 
-      depsCache.set(depsTuple, deps)
-    }
+  //   // boolean dep - enter by truthy value
+  //   else if (deps) {
 
-    // boolean dep - enter by truthy value
-    else if (deps) {
+  //   }
+  // }
 
-    }
-  }
-  else {
-    return true
-  }
+  // let key = t(current.element, current.fn, idx)
 
-  queue.push(effect, args)
+  // destroy prev call
+  // if (destroyCache.has(key)) destroyCache.get(key).call(el)
+
+  // let destroy = fn.call(el)
+  // if (typeof destroy !== 'function') destroy = noop
+  // destroyCache.set(key, destroy)
+
+  // fxCount++
+
+  // plan call of current effect
+  return new Promise(resolve => {
+    current = target
+    resolve()
+  })
 }
 
 
-// microtask queue to rerender
-let current = Promise.resolve()
-let plan = function (fn) {
-  current.then(fn)
-}
-
-
-// FIXME: incorporate into single
-let currentElement, currentAspect, currentEffect
-
-// hook for effects, invoking callback at the right moment with right environment
-const destroyCache = new WeakMap
-const depsCache = new Map
-
-
-// generic fx
-/*
-export function fx (target, fx, fn, deps) {
-  // call after aspect, if there's a queue
-  if (currentQueue) {
-    this.forEach(el => currentQueue.push([el, fn, fxCount]))
-  }
-  // or instantly - for global effects
-  // FIXME: make sure if that's ok, or better do async next call maybe
-  else {
-    this.forEach(el => run(el, fn))
-  }
-
-  current => {
-    let key = t(current.element, current.fn, idx)
-
-    // destroy prev call
-    if (destroyCache.has(key)) destroyCache.get(key).call(el)
-
-    let destroy = fn.call(el)
-    if (typeof destroy !== 'function') destroy = noop
-    destroyCache.set(key, destroy)
-  }
-
-  fxCount++
-}
-*/
 
 
 
