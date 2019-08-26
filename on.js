@@ -10,8 +10,7 @@ export default function on(evts, delegate, handler, deps) {
   }
 
   // register effect call
-  let p = commit(this, 'on', SET, () => destroy.forEach(fn => fn()), deps)
-  if (!p) return
+  if (!commit(this, 'on', SET, () => destroy.forEach(fn => fn()), deps)) return
 
   // attach events
   evts = evts.split(/\s+/)

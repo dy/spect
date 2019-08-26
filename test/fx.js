@@ -1,15 +1,21 @@
 import t from 'tst'
 import $ from '../index.js'
+import 'setimmediate'
 
-t('fx: global effect is triggered in frame', t => {
+t.only('fx: global effect is triggered after current callstack', async t => {
   let log = []
-  $`<a/>`.fx(() => log.push('a'))
+  $(document.createElement('a')).fx(() => log.push('a'))
+
+  t.is(log, [])
+
+  await Promise.resolve()
+
   t.is(log, ['a'])
 })
 
-t('fx: runs destructor', t => {
+t.only('fx: runs destructor', async t => {
   let log = []
-  let $a = $`<a/>`
+  let $a = $(document.createElement('a'))
 
   let id = 0
   let fn = () => {
@@ -33,13 +39,16 @@ t('fx: runs destructor', t => {
   }
 
   $a.use(fn)
+  await Promise.resolve()
   t.is(log, ['init 1', 'init 2', 'init 3'])
 
   log = []
   $a.use(fn)
+  await Promise.resolve()
   t.is(log, ['destroy 1', 'init 1'])
 
   log = [], id = 1
   $a.use(fn)
-  t.is(log, ['destroy 1', 'init 1', 'destroy 3', 'init 3'])
+  await Promise.resolve()
+  t.is(log, ['destroy 1', 'destroy 3', 'init 1', 'init 3'])
 })

@@ -1,14 +1,18 @@
-import { commit, SET } from './src/core.js'
+import { COMMIT, CALL } from './src/core.js'
 
-export default async function fx (fn, deps) {
-  let p = commit(this, 'fx', SET, () => destroy.forEach(fn => fn && fn()), deps)
-  if (!p) return
-
-  await p
+export default function fx (fn, deps) {
+  if (!COMMIT(this, 'fx', () => destroy.forEach(fn => fn && fn()), deps)) return
 
   let destroy = []
 
-  this.forEach(el => {
-    destroy.push(fn.call(el, el))
+  // microtask fx after current stack
+  Promise.resolve().then(() => {
+    this.forEach(el => {
+      CALL(el, () => {
+        destroy.push(fn.call(el, el))
+      })
+    })
   })
+
+  return this
 }

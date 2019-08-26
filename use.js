@@ -1,27 +1,35 @@
-import { commit, GET, SET } from './src/core.js'
-import $ from './$.js'
+import { COMMIT, CALL } from './src/core.js'
 
+
+const useCache = new WeakMap
 
 // attach aspects to current target
 export default function use(...fns) {
   let destroy = []
 
-  commit(this, 'use', SET, () => {
+  COMMIT(this, 'use', () => {
     destroy.forEach(fn => fn())
   })
 
   // use has sync init
   this.forEach(el => {
-    // // FIXME: replace with privates
-    // let aspects = useCache.get(el)
-    // if (!aspects) useCache.set(el, aspects = [])
+    // FIXME: replace with privates
+    let aspects = useCache.get(el)
+    if (!aspects) useCache.set(el, aspects = [])
 
-    // // FIXME: take priority into consideration
-    // fns.forEach(fn => {
-    //   if (aspects.indexOf(fn) < 0) aspects.push(fn)
-    // })
+    // FIXME: take priority into consideration
+    fns.forEach(fn => {
+      if (aspects.indexOf(fn) < 0) {
+        aspects.push(fn)
+      }
+    })
+  })
 
-    fns.forEach(fn => destroy.push(fn.call(this, el)))
+  // rerender all aspects
+  this.forEach(el => {
+    fns.forEach(fn => {
+      CALL(el, () => destroy.push(fn.call(this, el)))
+    })
   })
 
   return this

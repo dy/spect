@@ -3,9 +3,7 @@ import { commit, SET } from "./src/core"
 
 // mount is post-effect
 export default function mount (fn, deps) {
-  let p = commit(this, 'mount', SET, () => destroy.forEach(fn => fn()), deps)
-
-  if (!p) return
+  if (!commit(this, 'mount', SET, () => destroy.forEach(fn => fn()), deps)) return
 
   let destroy = []
 

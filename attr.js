@@ -20,7 +20,7 @@ export default function attr (...args) {
 function get (target, name) {
   // TODO reading attribute should make sure element is clean
   // TODO also reading subscribes current target to updates of the attribute
-  commit(target, 'attr', GET)
+  GET(target[0], 'attr', name)
 
   // update observed attributes for target
   // if (!observedAttributes.has(el)) observedAttributes.set(el, [])
@@ -31,8 +31,7 @@ function get (target, name) {
 }
 
 function set (target, name, value, deps) {
-  let p = commit(target, 'attr', SET, null, deps)
-  if (!p) return
+  if (!COMMIT(target, 'attr', null, deps)) return
 
   target.forEach(el => {
     let prev = el.getAttribute(name)
@@ -40,6 +39,8 @@ function set (target, name, value, deps) {
     if (Object.is(prev, value)) return
 
     el.setAttribute(name, value)
+
+    SET(el, 'attr', name)
   })
 }
 

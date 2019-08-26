@@ -1,60 +1,67 @@
 import equal from "fast-deep-equal"
 import { paramCase } from './util.js'
+import tuple from 'immutable-tuple'
 
 // FIXME: provide customization ways
 // export let $doc = $(document)
 
 // current running effect
-export let current = null
+export let current = null, count = {}
 
-// operations
-export const GET = 1, SET = 2
+// deps state associated with effect callsite
+const depsCache = new WeakMap, destroyCache = new WeakMap
 
-// put command into queue
-// if deps pass, returns promise, resolving when the effect queue comes
+// record generic effect call
+// if deps passed, returns promise, resolving when the effect queue comes
 // if deps are skipped, always returns promise
-export function commit (target, effect, command, destroy, deps) {
-  current = target
+export function COMMIT (target, effect, destroy, deps) {
+  if (count[effect] === undefined) count[effect] = 0
+  else count[effect]++
+
+  let key = tuple(current, target, effect + '-' + count[effect])
 
   // if (arguments.length === 5) {
-  // if (deps !== undefined) {
-  //   // array dep - enter by change
-  //   if (Array.isArray(deps)) {
-  //     let depsTuple = tuple(currentElement, currentFn, fxCount)
-  //     let prevDeps = depsCache.get(depsTuple) || []
-  //     if (equal(deps, prevDeps)) {
-  //       fxCount++
-  //       return
-  //     }
+    // console.log(effect + '-' + count[effect], deps)
+  if (deps !== undefined) {
+    let prev = depsCache.get(key)
 
-  //     depsCache.set(depsTuple, deps)
-  //   }
+    // array dep - enter by change
+    if (Array.isArray(deps)) {
+      if (equal(deps, prev)) return false
+      depsCache.set(key, deps)
+    }
 
-  //   // boolean dep - enter by truthy value
-  //   else if (deps) {
+    // boolean dep - enter by truthy value
+    // else if (deps) {
+      //   if (equal(deps, prev)) return false
+      //   depsCache.set(key, deps)
+      // }
+    }
 
-  //   }
-  // }
+  if (destroyCache.has(key)) destroyCache.get(key).call(target)
+  destroyCache.set(key, destroy)
 
-  // let key = t(current.element, current.fn, idx)
-
-  // destroy prev call
-  // if (destroyCache.has(key)) destroyCache.get(key).call(el)
-
-  // let destroy = fn.call(el)
-  // if (typeof destroy !== 'function') destroy = noop
-  // destroyCache.set(key, destroy)
-
-  // fxCount++
-
-  // plan call of current effect
-  return new Promise(resolve => {
-    current = target
-    resolve()
-  })
+  return true
 }
 
+// register fx fn invocation
+export function CALL (target, fn) {
+  let prevElement = current
+  let prevCount = count
+  count = {}
+  current = target
+  fn.call(target)
+  current = prevElement
+  count = prevCount
+}
 
+export function SET () {
+
+}
+
+export function GET () {
+
+}
 
 
 
