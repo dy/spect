@@ -13,7 +13,7 @@ import { patch,
   currentElement
 } from 'incremental-dom'
 
-import { getTagName, getCustomElement, registerEffect, commit } from './src/core.js';
+import { getTagName, getCustomElement, COMMIT } from './src/core.js';
 
 
 // configure incremental-dom attributes
@@ -89,22 +89,26 @@ html.h = function h(target, props={}, ...children) {
 html.htm = htm.bind(html.h)
 
 
-export default function html(el, ...args) {
-  if (!commit(this, 'html', deps)) return
-
+export default function html(...args) {
   // let cache = currentState.htmlCache || (currentState.htmlCache = new WeakMap())
 
-  // tpl string
+  // tpl string: html`<a foo=${bar}/>`
   let vdom
   if (args[0].raw) vdom = html.htm(...args)
 
-  // fn renderer html(h => h(...))
-  else if (typeof args[0] === 'function') vdom = args[0](html.h)
+  else {
+    let deps = args[1]
+    if (!COMMIT(this, 'html', deps)) return
 
-  // direct JSX
-  else vdom = args[0]
+    // fn: html(h => h(...))
+    if (typeof args[0] === 'function') vdom = args[0](html.h)
+
+    // direct JSX: html(<a foo={bar}/>)
+    else vdom = args[0]
+  }
 
   if (!Array.isArray(vdom)) vdom = [vdom]
+
 
   // put DOM nodes aside
   // let count = 0, refs = {}

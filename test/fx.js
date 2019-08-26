@@ -2,7 +2,7 @@ import t from 'tst'
 import $ from '../index.js'
 import 'setimmediate'
 
-t.only('fx: global effect is triggered after current callstack', async t => {
+t('fx: global effect is triggered after current callstack', async t => {
   let log = []
   $(document.createElement('a')).fx(() => log.push('a'))
 
@@ -13,7 +13,7 @@ t.only('fx: global effect is triggered after current callstack', async t => {
   t.is(log, ['a'])
 })
 
-t.only('fx: runs destructor', async t => {
+t('fx: runs destructor', async t => {
   let log = []
   let $a = $(document.createElement('a'))
 

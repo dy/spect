@@ -27,7 +27,7 @@ export default function use(...fns) {
 
   // rerender all aspects
   this.forEach(el => {
-    fns.forEach(fn => {
+    useCache.get(el).forEach(fn => {
       CALL(el, () => destroy.push(fn.call(this, el)))
     })
   })

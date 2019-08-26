@@ -3,21 +3,6 @@ import $, { html } from '../src/index.js'
 
 const h = html.h
 
-t('html: readme default', t => {
-  $(document.createElement('div'), el => {
-    let div = html`<div#id.class foo=bar>baz</div>`
-    t.equal(el.innerHTML, '<div id="id" class="class">baz</div>')
-    t.equal(div.foo, 'bar')
-  })
-})
-
-t('html: readme attributes', t => {
-  $(document.createElement('div'), el => {
-    let a = html`<a href='/' foo=bar>baz</a>`
-    t.equal(a.outerHTML, '<a href="/">baz</a>')
-    t.equal(a.foo, 'bar')
-  })
-})
 
 t('html: readme fragments', t => {
   $(document.createElement('div'), el => {
