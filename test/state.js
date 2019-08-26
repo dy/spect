@@ -1,27 +1,58 @@
 import t from 'tst'
 import $ from '../index';
 
+t('state: simple get/set', t => {
+  let $els = $`<div.a/>`.use(el => {
+    let $el = $(el)
 
-t('state: direct props set', t => {
-  let $els = $`<div.a/><div.b/><div.c/>`.use($a => {
-    $a.fx(() => {
-      $a.state.count = 0
-      if ($a[0].classList.contains('a')) $a.state.count = 1
-      else if ($a[0].classList.contains('b')) $a.state.count = 2
-    }, [])
+    $el.state('c', 1)
+
+    t.is($el.state`c`, 1)
+  })
+})
+
+t.only('state: init gate', t => {
+  let log = [], x = 1
+  let $a = $`<a/>`
+
+  $a.use(fn)
+  t.is($a.state`x`, 1)
+
+  x++
+  $a.use(fn)
+  t.is($a.state`x`, 1)
+
+  function fn (el) {
+    $a = $(el)
+
+    $a.init(() => $a.state({ x }))
+  }
+})
+
+t.only('state: trigger rerendering', t => {
+  // let $els = $`<div.a/><div.b/><div.c/>`.use(a => {
+  let $els = $`<div.a/>`.use(a => {
+    let $a = $(a)
+    $a.state({count: 0}, [])
+    // $a.fx(() => {
+    //   $a.state.count = 0
+    //   if ($a[0].classList.contains('a')) $a.state.count = 1
+    //   else if ($a[0].classList.contains('b')) $a.state.count = 2
+    // }, [])
 
 
     // $a.html = $a.state.count
-    // $a.fx(() =>
+    console.log($a.state`count`)
+    // $a.state(s =>
     //   setTimeout(() => {
-    //     $a.state.count++
+    //     $a.state(s => s.count++)
     //   }, 1000)
-    // , $a.state.count)
+    // , $a.state`count`)
   })
 
-  t.is($($els[0]).state.count, 1)
-  t.is($($els[1]).state.count, 2)
-  t.is($($els[2]).state.count, 0)
+  // t.is($($els[0]).state.count, 1)
+  // t.is($($els[1]).state.count, 2)
+  // t.is($($els[2]).state.count, 0)
 })
 
 t.todo('state: functional setter/getter', t => {
@@ -91,3 +122,9 @@ t.todo('state: multiple selectors state', t => {
 
   $ab.state.x //jquery returns $a.state.x
 })
+
+t.todo('state: safe access to props')
+
+t.todo('state: deps cases')
+
+t.todo('state: nested props access')

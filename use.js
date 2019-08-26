@@ -1,15 +1,10 @@
-import { COMMIT, CALL } from './src/core.js'
-
-
-const useCache = new WeakMap
+import { on } from './src/core.js'
 
 // attach aspects to current target
 export default function use(...fns) {
   let destroy = []
 
-  COMMIT(this, 'use', () => {
-    destroy.forEach(fn => fn())
-  })
+  commit(SET, el, 'use', ...fns)
 
   // use has sync init
   this.forEach(el => {
@@ -28,7 +23,7 @@ export default function use(...fns) {
   // rerender all aspects
   this.forEach(el => {
     useCache.get(el).forEach(fn => {
-      CALL(el, () => destroy.push(fn.call(this, el)))
+      ADD(el, () => destroy.push(fn.call(this, el)))
     })
   })
 

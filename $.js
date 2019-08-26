@@ -9,14 +9,17 @@ import { isIterable } from './src/util'
 // Spect is a wrapper over any collection of elements
 // It is shallow, ie. doesn't provide any data associated with itself
 // All the data it provides is mirrored to collection
-const spectCache = new WeakMap
+const cache = new WeakMap
 class $ extends Array {
   constructor (arg, ...args) {
     super()
 
+    if (cache.has(arg)) return cache.get(arg)
+
     // $(el|frag|text|node)
     if (arg instanceof Node) {
       this.push(arg)
+      cache.set(arg, this)
       return this
     }
 
@@ -45,27 +48,19 @@ class $ extends Array {
     }
 
     if (isIterable(arg)) {
-      this.add(...arg)
-      // cache first element in the set
-      // Spect(arg[0])
-    }
-    else this.add(arg)
-  }
+      let set = new Set()
 
-  // append elements to the set without duplicates
-  add(...els) {
-    let set = spectCache.get(this)
-    if (!set) spectCache.set(this, set = new WeakSet)
-
-    for (let i = 0; i < els.length; i++) {
-      let el = els[i]
-      if (!set.has(el)) {
-        set.add(el)
-        super.push(el)
+      for (let i = 0; i < arg.length; i++) {
+        let el = arg[i]
+        if (!set.has(el)) {
+          set.add(el)
+          this.push(el)
+        }
       }
     }
-
-    return this
+    else {
+      this[0] = arg
+    }
   }
 }
 

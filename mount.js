@@ -1,9 +1,9 @@
 import onload from 'fast-on-load'
-import { commit, SET } from "./src/core"
+import { commit } from "./src/core"
 
 // mount is post-effect
-export default function mount (fn, deps) {
-  if (!commit(this, 'mount', SET, () => destroy.forEach(fn => fn()), deps)) return
+export default function mount (fn) {
+  commit(SET, this, 'mount', fn)
 
   let destroy = []
 

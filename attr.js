@@ -1,4 +1,4 @@
-import { commit, SET } from './src/core'
+import { SET } from './src/core'
 
 
 // TODO attribute listens for read attributes from elements and modifies set of observed attributes via mutation observer
@@ -31,8 +31,6 @@ function get (target, name) {
 }
 
 function set (target, name, value, deps) {
-  if (!COMMIT(target, 'attr', null, deps)) return
-
   target.forEach(el => {
     let prev = el.getAttribute(name)
 

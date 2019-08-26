@@ -13,7 +13,7 @@ import { patch,
   currentElement
 } from 'incremental-dom'
 
-import { getTagName, getCustomElement, COMMIT } from './src/core.js';
+import { getTagName, getCustomElement } from './src/core.js';
 
 
 // configure incremental-dom attributes
@@ -91,6 +91,7 @@ html.htm = htm.bind(html.h)
 
 export default function html(...args) {
   // let cache = currentState.htmlCache || (currentState.htmlCache = new WeakMap())
+  let deps
 
   // tpl string: html`<a foo=${bar}/>`
   let vdom
@@ -98,7 +99,6 @@ export default function html(...args) {
 
   else {
     let deps = args[1]
-    if (!COMMIT(this, 'html', deps)) return
 
     // fn: html(h => h(...))
     if (typeof args[0] === 'function') vdom = args[0](html.h)
@@ -160,7 +160,7 @@ export default function html(...args) {
     if (arg.length) return [...arg].forEach(arg => render(arg))
 
     // objects create elements
-    let { tag, key, props, staticProps, children, use, is } = arg
+    let { tag, key, props, staticProps, children, use, is, effects=[] } = arg
 
     // fragment (direct vdom)
     if (!tag) return children.forEach(render)
@@ -184,6 +184,11 @@ export default function html(...args) {
 
     // plan aspects init
     if (use) (new $(el)).use(...use)
+
+    // run provided effects
+    for (let effect in effects) {
+      $(el)[effect](effects[effect])
+    }
   }
 
   // reinsert nodes

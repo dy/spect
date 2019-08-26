@@ -20,10 +20,12 @@ function main (app) {
   if (!match) return;
 
   // run state effect when `id` changes (useState + useEffect + idx)
-  $app.state(async state => {
-    state.loading = true;
-    state.user = await ky.get`./api/user/${id}`;
-    state.loading = false;
+  $app.fx(async () => {
+    $app.state(state => {
+      state.loading = true;
+      state.user = await ky.get`./api/user/${id}`;
+      state.loading = false;
+    })
   }, id);
 
   // render html as side-effect
@@ -261,7 +263,7 @@ let getRawMarkup = () => {
 <!-- mount is a hook on html domain -->
 
 
-[**`$`**]()  [**`.use`**]()  [**`.fx`**]()  [**`.state`**]()  [**`.prop`**]()  [**`.attr`**]()  [**`.html`**]()  [**`.text`**]()  [**`.class`**]()  [**`.css`**]()  [**`.on`**]()
+[**`$`**]()  [**`.use`**]()  [**`.fx`**]()  [**`.state`**]()  [**`.prop`**]()  [**`.attr`**]()  [**`.html`**]()  [**`.text`**]()  [**`.class`**]()  [**`.css`**]()  [**`.on`**]()  [**`.mount`**]()  [**`.init`**]()
 
 
 ### `$( selector | els | markup )` − selector / wrapper / creator
@@ -339,15 +341,15 @@ $els.fx(el => $(el).something)
 <p align="right">Ref: <a href='https://reactjs.org/docs/hooks-effect.html'>useEffect</a></p>
 
 
-### `.state( name | val, deps? )` − state provider
+### `.state( name | val )` − state provider
 
 Read or write state, associated with an element. Read returns state of the first element in the set. Reading state subscribes current aspect to changes. Writing state rerenders all dependent aspects.
 
 ```js
 // write state
-$target.state('x', 1, deps)
-$target.state({x: 1}, deps)
-$target.state(_ => _.x.y.z = 1, deps)
+$target.state('x', 1)
+$target.state({x: 1})
+$target.state(_ => _.x.y.z = 1)
 
 // read state
 $target.state`x`
@@ -358,14 +360,14 @@ $target.state(_ => _.x.y.z)
 <p align="right">Ref: <a href="https://reactjs.org/docs/hooks-state.html">useState</a>, <a href="https://www.npmjs.com/package/icaro">icaro</a>, <a href="https://www.npmjs.com/package/introspected">introspected</a>, <a href="https://ghub.io/idx">idx</a></p>
 
 
-### `.prop( name | val, deps? )` − properties provider
+### `.prop( name | val )` − properties provider
 
 Read or write elements properties. Read returns first element property. Write sets property to all elements in the collection. Reading prop subscribes current aspect to changes.
 
 ```js
 // write prop
 $target.prop({x: 1})
-$target.prop(_ => _.x.y.z = 1, deps) // safe path setter
+$target.prop(_ => _.x.y.z = 1) // safe path setter
 
 // read prop
 $target.prop`x`
@@ -375,7 +377,7 @@ $target.prop(_ => _.x.y.z) // safe path getter
 <p align="right">Ref: <a href="https://reactjs.org/docs/hooks-state.html">useState</a></p>
 
 
-### `.attr( name, deps? )` − attributes provider
+### `.attr( name )` − attributes provider
 
 Changes element attributes, updates all dependent elements/aspects.
 
@@ -392,14 +394,14 @@ $target.attr()
 <p align="right">Ref: <a href="https://ghub.io/attributechanged">attributechanged</a></p>
 
 
-### ``.html( markup, deps? ) `` − html side-effect
+### ``.html( markup ) `` − html side-effect
 
 Provides HTML content for elements. Internally uses [htm](https://ghub.io/htm) with [incremental-dom](https://ghub.io/incremental-dom) to render tree.
 
 ```js
 // set html
 $target.html`...markup`
-$target.html(html => $`...markup ${ $`...inner wrapped ${ html }` }`, deps)
+$target.html(html => $`...markup ${ $`...inner wrapped ${ html }` }`)
 
 /* @jsx $ */
 $target.html(<>Markup</>)
@@ -424,7 +426,7 @@ function SuperButton(el) {
 <p align="right">Ref: <a href="https://ghub.io/incremental-dom">incremental-dom</a>, <a href='https://ghub.io/htm'>htm</a></p>
 
 
-### ``.text( content, deps? ) `` − text content side-effect
+### ``.text( content ) `` − text content side-effect
 
 Provide text content for the collection.
 
@@ -438,7 +440,7 @@ $target.text()
 ```
 
 
-### ``.css( styles, deps?)`` − CSS side-effect
+### ``.css( styles)`` − CSS side-effect
 
 Provide scoped CSS styles for collection.
 
@@ -500,7 +502,7 @@ $target.on('touchstart', e => e => e => {})
 <p align="right">Ref: <a href="https://github.com/donavon/use-event-listener">use-event-listener</a></p>
 
 
-### `.mount( fn: onmount => onunmount, deps? )` - connected / disconnected lifecycle callbacks
+### `.mount( fn: onmount => onunmount )` - connected / disconnected lifecycle callbacks
 
 Triggers callback `fn` when element is connected to the DOM. Optional returned function is triggered when the element is disconnected.
 If an aspect is attached to mounted elements, the `onmount` will be triggered automatically.
@@ -513,6 +515,10 @@ $el.mount(() => {
   }
 })
 ```
+
+
+### `.init( fn: oninit => ondestroy )
+
 
 
 <!--

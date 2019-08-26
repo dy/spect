@@ -2,26 +2,58 @@ import equal from "fast-deep-equal"
 import { paramCase } from './util.js'
 import tuple from 'immutable-tuple'
 
+
 // FIXME: provide customization ways
 // export let $doc = $(document)
 
-// current running effect
-export let current = null, count = {}
+const aspectsCache = new WeakMap,
+  depsCache = new WeakMap,
+  destroyCache = new WeakMap,
+  observables = new WeakMap
 
-// deps state associated with effect callsite
-const depsCache = new WeakMap, destroyCache = new WeakMap
+let currentElement = null, count
 
-// record generic effect call
-// if deps passed, returns promise, resolving when the effect queue comes
-// if deps are skipped, always returns promise
-export function COMMIT (target, effect, destroy, deps) {
+
+// render all aspects associated with element
+export function UPDATE (el) {
+  let prevElemenet = currentElement
+  let prevCount = count
+  count = {}
+  currentElement = el
+  let fns = cache.get(el)
+  fns.forEach(fn => fn.call(el, el))
+  currentElement = prevElemenet
+  count = prevCount
+}
+
+// set effect property
+export function SET (el, effect, path, value) {
+  // render all elements depending on current observable
+  observables.get(el, effect, path).forEach(el)
+}
+
+// get effect property
+export function GET (el, effect, path) {
+  // add current rendering element as dependendent
+  observables.get(el, effect, path).add(currentElement)
+}
+
+// add aspect to the element
+export function ADD (el, fn) {
+  aspectsCache.get(el).add(fn)
+}
+
+// check if deps have changed for provided callsite
+export function DEPS(deps, destroy) {
   if (count[effect] === undefined) count[effect] = 0
   else count[effect]++
 
-  let key = tuple(current, target, effect + '-' + count[effect])
+  // FIXME: make sure that's the valid form of key, correct and fast
+  // FIXME: make sure we don't need effect subject passed here to better identify callsites
+  let key = tuple(current, effect + '-' + count[effect])
 
   // if (arguments.length === 5) {
-    // console.log(effect + '-' + count[effect], deps)
+  // console.log(effect + '-' + count[effect], deps)
   if (deps !== undefined) {
     let prev = depsCache.get(key)
 
@@ -33,34 +65,27 @@ export function COMMIT (target, effect, destroy, deps) {
 
     // boolean dep - enter by truthy value
     // else if (deps) {
-      //   if (equal(deps, prev)) return false
-      //   depsCache.set(key, deps)
-      // }
-    }
+    //   if (equal(deps, prev)) return false
+    //   depsCache.set(key, deps)
+    // }
+  }
 
-  if (destroyCache.has(key)) destroyCache.get(key).call(target)
+  if (destroyCache.has(key)) destroyCache.get(key).call()
   destroyCache.set(key, destroy)
 
   return true
 }
 
-// register fx fn invocation
-export function CALL (target, fn) {
-  let prevElement = current
-  let prevCount = count
-  count = {}
-  current = target
-  fn.call(target)
-  current = prevElement
-  count = prevCount
-}
 
-export function SET () {
 
-}
+// declare command from effect
+// meaning queue is going to be read in async tick
+// all recorded commands will get reactions
+let planned = null
+function commit (command, el, args) {
+  queue.push(command, el, effect, args)
 
-export function GET () {
-
+  if (planned) return
 }
 
 
@@ -111,8 +136,8 @@ function createClass(fn, HTMLElement) {
 
       // FIXME: that's wrong place for init
       // $(this).is(fn)
-      $(this).use(fn)
-      publish(CREATE, this, ['is'], )
+      // $(this).use(fn)
+      ADD(this, fn)
     }
 
     connectedCallback() {

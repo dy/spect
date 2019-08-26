@@ -1,37 +1,48 @@
-import { publish, SET, GET } from './src/core.js'
-import $ from './$.js'
+import { SET, GET } from './src/core.js'
 
 
 
-export default function state (path, value, deps) {
-  if (args.length <= 1) return this.state.get(...args)
+export default function state (...args) {
+  if (args.length <= 1) return get(this, ...args)
 
   if (typeof args[0] === 'object') {
-    for (let name in args[0]) {
-      this.state.set(name, args[0][name])
+    let props = args.shift()
+    for (let name in props) {
+      set(this, name, props[name], ...args)
     }
     return
   }
 
-  return this.state.set(...args)
+  return set(this, ...args)
 }
 
-export function set () {
+export function set (target, name, value, ...args) {
+  // console.log('set', target, name, value, deps)
 
+  target.forEach(el => {
+    let state = stateCache.get(el)
+    if (!state) stateCache.set(el, state = {})
+
+    // skip unchanged value
+    if (Object.is(state[name], value)) return
+
+    let prev = state[name]
+    state[name] = value
+
+    commit(SET, el, 'state', name, value)
+  })
 }
 
-export function get () {
+export function get (target, name) {
+  console.log('get', target, name)
   // FIXME: what about nested props access/writing?
 
-  // reading state must render must make sure component is not dirty before read
-  // eg. some component may have planned updating this component state
-  // clean(el)
-  plan(el, 'state')
+  let el = target[0]
 
-  // return first element state value
-  this.forEach(el => publish(GET, el, ['state', prop]))
+  commit(GET, el, 'state', name)
 
-  return state[prop]
+  if (!stateCache.has(el)) return
+  return stateCache.get(el)[name]
 }
 
 
