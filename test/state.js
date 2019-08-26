@@ -2,7 +2,7 @@ import t from 'tst'
 import $ from '../index';
 
 t('state: simple get/set', t => {
-  let $els = $`<div.a/>`.use(el => {
+  $`<div.a/>`.use(el => {
     let $el = $(el)
 
     $el.state('c', 1)
@@ -11,7 +11,7 @@ t('state: simple get/set', t => {
   })
 })
 
-t.only('state: init gate', t => {
+t.skip('state: init gate', t => {
   let log = [], x = 1
   let $a = $`<a/>`
 
@@ -29,7 +29,7 @@ t.only('state: init gate', t => {
   }
 })
 
-t.only('state: trigger rerendering', t => {
+t('state: trigger rerendering', t => {
   // let $els = $`<div.a/><div.b/><div.c/>`.use(a => {
   let $els = $`<div.a/>`.use(a => {
     let $a = $(a)

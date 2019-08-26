@@ -46,7 +46,7 @@ function callAspect (el, fn) {
   fxCount = 0
   currentElement = el
   currentAspect = fn
-  let result = fn.call(el)
+  let result = fn.call(el, el)
   currentAspect = prevAspect
   currentElement = prevElement
   return result
@@ -56,6 +56,7 @@ function callAspect (el, fn) {
 function updateObservers(el, effect, path) {
   let key = tuple(el, effect, path)
   let observers = observables.get(key)
+  if (!observers) return
   let p = Promise.resolve()
   for (let [element, aspect] of observers) {
     p.then(() => callAspect(element, aspect))
@@ -172,7 +173,7 @@ Object.assign($.fn, {
   state: function (...args) {
     // get
     if (args.length == 1) {
-      let name = args[1]
+      let name = args[0]
       let el = this[0]
 
       let key = tuple(el, 'state', name)
@@ -213,7 +214,7 @@ Object.assign($.fn, {
   attr: function (...args) {
     // get
     if (args.length == 1) {
-      let name = args[1]
+      let name = args[0]
       let el = this[0]
 
       let key = tuple(el, 'attr', name)
