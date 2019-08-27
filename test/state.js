@@ -1,7 +1,7 @@
 import t from 'tst'
 import $ from '../index';
 
-t('state: simple get/set', t => {
+t('state: direct get/set', t => {
   $`<div.a/>`.use(el => {
     let $el = $(el)
 
@@ -11,7 +11,28 @@ t('state: simple get/set', t => {
   })
 })
 
-t.skip('state: init gate', t => {
+t('state: object set', t => {
+  $`<div.a/>`.use(el => {
+    let $el = $(el)
+
+    $el.state({c: 1, d: 2})
+
+    t.is($el.state`c`, 1)
+  })
+})
+
+t('state: functional get/set', t => {
+  let $a = $`<a/>`
+
+  $a.state(s => s.count = 0)
+
+  t.is($a.state(), {count: 0})
+
+  $a.state(s => s.count++)
+  t.is($a.state`count`, 1)
+})
+
+t('state: init gate', t => {
   let log = [], x = 1
   let $a = $`<a/>`
 
@@ -29,11 +50,36 @@ t.skip('state: init gate', t => {
   }
 })
 
-t('state: trigger rerendering', t => {
-  // let $els = $`<div.a/><div.b/><div.c/>`.use(a => {
+
+t.skip('state: counter', t => {
+  let stop = 0
   let $els = $`<div.a/>`.use(a => {
     let $a = $(a)
+    $a.init(() => {
+      $a.state({ count: 0 })
+    })
+
+    console.log($a.state`count`)
+    $a.fx(s => {
+      if (stop < 6) {
+        setTimeout(() => {
+          $a.state(s => s.count++)
+          stop++
+        }, 1000)
+      }
+    }, [$a.state`count`])
+  })
+})
+
+t.todo('state: trigger rerendering', t => {
+  let stop = 0
+  let $els = $`<div.a/><div.b/><div.c/>`.use(a => {
+  // let $els = $`<div.a/>`.use(a => {
+    let $a = $(a)
     $a.state({count: 0}, [])
+    // $a.init(() => {
+    //   $a.state({count: 0})
+    // })
     // $a.fx(() => {
     //   $a.state.count = 0
     //   if ($a[0].classList.contains('a')) $a.state.count = 1
@@ -43,11 +89,17 @@ t('state: trigger rerendering', t => {
 
     // $a.html = $a.state.count
     console.log($a.state`count`)
-    // $a.state(s =>
-    //   setTimeout(() => {
-    //     $a.state(s => s.count++)
-    //   }, 1000)
-    // , $a.state`count`)
+    $a.fx(s => {
+      if (stop < 6) {
+        // console.log('fx---')
+        // console.log($a.state(s => s.count++))
+        // console.log($a.state`count`)
+        setTimeout(() => {
+          $a.state(s => s.count++)
+          stop++
+        }, 1000)
+      }
+    }, [$a.state`count`])
   })
 
   // t.is($($els[0]).state.count, 1)

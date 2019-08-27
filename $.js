@@ -1,9 +1,10 @@
 import equal from 'fast-deep-equal'
 import onload from 'fast-on-load'
-import delegated from 'delegated'
+import delegated from 'delegate-it'
 import clsx from 'clsx'
 import tuple from 'immutable-tuple'
 import htm from 'htm'
+import kebab from 'kebab-case'
 import {
   patch,
   elementOpen,
@@ -14,28 +15,28 @@ import {
   applyProp,
   applyAttr
 } from 'incremental-dom'
-import { isIterable, paramCase } from './src/util'
 
-// FIXME: don't extend Array, but provide some compatible methods instead:
-// length, add, remove, [idx], [-idx], iterator
-// these array methods may publish events (see pub/sub below)
-// But it must display as array in console
+attributes.class = applyAttr
+attributes.is = (...args) => (applyAttr(...args), applyProp(...args))
+attributes[symbols.default] = applyProp
+
+let html = htm.bind(h)
 
 
-// Spect is a wrapper over any collection of elements
-// It is shallow, ie. doesn't provide any data associated with itself
-// All the data it provides is mirrored to collection
-const cache = new WeakMap
+
+export default function create(...args) { return new $(...args) }
+
+const elCache = new WeakMap
 class $ extends Array {
   constructor (arg, ...args) {
     super()
 
-    if (cache.has(arg)) return cache.get(arg)
+    if (elCache.has(arg)) return elCache.get(arg)
 
     // $(el|frag|text|node)
     if (arg instanceof Node) {
       this.push(arg)
-      cache.set(arg, this)
+      elCache.set(arg, this)
       return this
     }
 
@@ -80,28 +81,13 @@ class $ extends Array {
   }
 }
 
-// FIXME: merge with class when browsers support decorators
-export default function create(...args) { return new $(...args) }
-
-
-// min core, all effects are here
-
-
-
-
-attributes.class = applyAttr
-attributes.is = (...args) => (applyAttr(...args), applyProp(...args))
-attributes[symbols.default] = applyProp
-
-
-let html = htm.bind(h)
-
 
 const aspectsCache = new WeakMap,
   depsCache = new WeakMap,
   destroyCache = new WeakMap,
-  observables = new Map,
-  stateCache = new WeakMap
+  observables = new WeakMap,
+  stateCache = new WeakMap,
+  attrCache = new WeakMap
 
 let fxCount,
   currentElement,
@@ -120,15 +106,18 @@ function callAspect(el, fn) {
   return result
 }
 
-
+let q = new Set, planned = null
 function updateObservers(el, effect, path) {
   let key = tuple(el, effect, path)
   let observers = observables.get(key)
   if (!observers) return
-  let p = Promise.resolve()
-  for (let [element, aspect] of observers) {
-    p.then(() => callAspect(element, aspect))
+  for (let observer of observers) {
+    q.add(observer)
   }
+  if (!planned) planned = Promise.resolve().then(() => {
+    planned = null
+    for (let [el, fn] of q) callAspect(el, fn)
+  })
 }
 
 
@@ -167,14 +156,17 @@ Object.assign($.prototype, {
       }
     }
 
-    if (destroyCache.has(key)) destroyCache.get(key).call()
+    if (destroyCache.has(key)) {
+      destroyCache.get(key).call()
+    }
     destroyCache.set(key, () => destroy.forEach(fn => fn && fn()))
-    let destroy = []
 
+    let destroy = []
 
     Promise.resolve().then(() => {
       this.forEach(el => {
-        destroy.push(fn.call(el, el))
+        let destructor = fn.call(el, el)
+        destroy.push(typeof destructor === 'function' ? destructor : noop)
       })
     })
   },
@@ -238,90 +230,43 @@ Object.assign($.prototype, {
     })
   },
 
-  state: function (...args) {
-    // get
-    if (args.length == 1) {
-      let name = args[0]
-      let el = this[0]
-
-      let key = tuple(el, 'state', name)
-      if (!observables.has(key)) observables.set(key, [currentElement, currentAspect])
-
-      if (!stateCache.has(el)) return
-      return stateCache.get(el)[name]
-    }
-
-    // set(obj)
-    if (typeof args[0] === 'object') {
-      let props = args.shift()
-      for (let name in props) {
-        this.state(name, props[name], ...args)
-      }
-      return
-    }
-
-    // set(name, value)
-    let [name, value] = args
-    this.forEach(el => {
+  state: createEffect('state', ...(() => {
+    function getState(el) {
       let state = stateCache.get(el)
       if (!state) stateCache.set(el, state = {})
+      return state
+    }
+    return [getState, (el, name) => getState(el)[name], (el, name, value) => getState(el)[name] = value]
+  })()),
 
-      if (Object.is(state[name], value)) return
+  prop: createEffect('prop',
+    el => el,
+    (el, name) => el[name],
+    (el, name, value) => el[name] = value
+  ),
 
-      let prev = state[name]
-      state[name] = value
-
-      updateObservers(el, 'state', name)
-    })
-  },
-
-  prop: function () {
-    console.error('TO BE IMPL')
-  },
-
-  attr: function (...args) {
-    // get
-    if (args.length == 1) {
-      let name = args[0]
-      let el = this[0]
-
-      let key = tuple(el, 'attr', name)
-      if (!observables.has(key)) observables.set(key, [currentElement, currentAspect])
-
+  attr: createEffect('attr',
+    el => {
+      let obj = {}
+      for (let attr of el.attributes) obj[attr.name] = attr.value
+      return obj
+    },
+    (el, name) => {
       if (!attrCache.has(el)) {
-        this.forEach(el => {
-          new MutationObserver(records => {
-            for (let i = 0, length = records.length; i < length; i++) {
-              let { target, oldValue, attributeName } = records[i];
-
-              updateObservers(target, 'attr', attributeName)
-            }
-          }).observe(el, { attributes: true, attributeOldValue: true })
+        let observer = new MutationObserver(records => {
+          for (let i = 0, length = records.length; i < length; i++) {
+            let { target, oldValue, attributeName } = records[i];
+            updateObservers(target, 'attr', attributeName)
+          }
         })
+        observer.observe(el, { attributes: true })
+        attrCache.set(el, observer)
       }
-
       return el.getAttribute(name)
-    }
-
-    // set(obj)
-    if (typeof args[0] === 'object') {
-      let props = args.shift()
-      for (let name in props) {
-        this.attr(name, props[name], ...args)
-      }
-      return
-    }
-
-    // set(name, value)
-    let [name, value] = args
-    this.forEach(el => {
-      let prev = el.getAttribute(name)
-      if (Object.is(prev, value)) return
-      el.setAttribute(name, value)
-
-      updateObservers(el, 'attr', name)
-    })
-  },
+    },
+    (el, name, value) => el.setAttribute(name, value),
+    (a, b) => b + '' === a + ''
+  ),
 
   html: function (...args) {
     // tpl string: html`<a foo=${bar}/>`
@@ -464,7 +409,7 @@ function h(target, props = {}, ...children) {
 
 let nameCache = new WeakMap
 const counters = {}
-export function getTagName(fn) {
+function getTagName(fn) {
   if (!fn.name) throw Error('Component function must have a name.')
 
   if (nameCache.has(fn)) return nameCache.get(fn)
@@ -484,7 +429,7 @@ export function getTagName(fn) {
 }
 
 
-export function getCustomElement(fn, ext) {
+function getCustomElement(fn, ext) {
   let name = getTagName(fn)
 
   let ctor = customElements.get(name)
@@ -514,3 +459,91 @@ function createClass(fn, HTMLElement) {
     }
   }
 }
+
+function createEffect (effectName, getStorage, get, set, is = Object.is) {
+  return function effect (...args) {
+    // get()
+    if (!args.length) {
+      return getStorage(this[0])
+    }
+
+    // state(s => {...})
+    if (typeof args[0] === 'function') {
+      let result
+      let fn = args[0]
+      this.forEach((el, i) => {
+        let draft
+        let state = getStorage(el)
+        try {
+          // Object.create is faster than assign
+          draft = Object.create(state)
+          if (!i) {
+            result = fn(draft)
+          } else fn(draft)
+        } catch (e) { }
+
+        Object.getOwnPropertyNames(draft).forEach(prop => {
+          if (draft[prop] !== state[prop]) setNameValue(el, prop, draft[prop])
+        })
+      })
+
+      return result
+    }
+
+    // set(obj)
+    if (typeof args[0] === 'object' && !args[0].raw) {
+      let props = args.shift()
+      for (let name in props) {
+        this[effectName](name, props[name], ...args)
+      }
+      return
+    }
+
+    // get(name)
+    if (args.length == 1) {
+      let name = args[0]
+      let el = this[0]
+      if (name.raw) name = String.raw(...args)
+
+      let key = tuple(el, effectName, name)
+      if (!observables.has(key)) observables.set(key, new Set)
+      observables.get(key).add(tuple(currentElement, currentAspect))
+
+      return get(el, name)
+    }
+
+    // set(name, value)
+    let [name, value] = args
+    this.forEach(el => setNameValue(el, name, value))
+  }
+
+  function setNameValue(el, name, value) {
+    let prev = get(el, name)
+
+    if (is(prev, value)) return
+
+    set(el, name, value)
+    updateObservers(el, effectName, name)
+  }
+}
+
+
+export const SPECT_CLASS = '👁'
+
+
+export function isIterable(val) {
+  return (val != null && typeof val[Symbol.iterator] === 'function');
+}
+
+export const raf = window.requestAnimationFrame
+
+
+export function paramCase(str) {
+  str = kebab(str)
+
+  if (str[0] === '-') return str.slice(1)
+  return str
+}
+
+
+export function noop() { }

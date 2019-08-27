@@ -2,6 +2,58 @@ import t from 'tst'
 import $ from '../index.js'
 
 
+t('attr: direct get/set', t => {
+  $`<div.a/>`.use(el => {
+    let $el = $(el)
+
+    $el.attr('c', 1)
+    t.is($el.attr`c`, '1')
+  })
+})
+
+t('attr: object set', t => {
+  $`<div.a/>`.use(el => {
+    let $el = $(el)
+
+    $el.attr({ c: 1, d: 2 })
+
+    t.is($el.attr`c`, '1')
+  })
+})
+
+t('attr: functional get/set', t => {
+  let $a = $`<a/>`
+
+  $a.attr(s => s.count = 0)
+
+  t.is($a.attr(), { count: 0 })
+
+  $a.attr(s => {
+    s.count++
+  })
+  t.is($a.attr`count`, '1')
+})
+
+t.skip('attr: counter', t => {
+  let stop = 0
+  let $els = $`<div.a/>`.use(a => {
+    let $a = $(a)
+    $a.init(() => {
+      $a.attr({ count: 0 })
+    })
+
+    console.log($a.attr`count`)
+    $a.fx(s => {
+      if (stop < 6) {
+        setTimeout(() => {
+          $a.attr(s => s.count++)
+          stop++
+        }, 1000)
+      }
+    }, [$a.attr`count`])
+  })
+})
+
 t('attr: native element attributes', async t => {
   // let $els = $`<a.a href='a'/>`
   // let $els = $`<${b} class=b href='a'/>`
