@@ -1,10 +1,10 @@
 import t from 'tst'
 import $ from '../'
 
-t.only('class: set/read', t => {
+t('class: set/read', t => {
   let $a = $`<a.a.b/>`
 
-  $a.class`a b c d`
+  $a.class({a: true, b: true, c: true, d: true})
 
   t.is($a[0].classList.value, 'a b c d')
 })

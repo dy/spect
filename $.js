@@ -146,6 +146,10 @@ Object.assign($.prototype, {
     fxCount++
     let key = tuple(currentElement, currentAspect, fxCount)
 
+    // TODO: use callsite to identify fx
+    // let [, callsite, ...trace] = stack.parse((new Error).stack)
+    // let id = callsite.lineNumber + '-' + callsite.column
+
     if (deps !== undefined) {
       let prev = depsCache.get(key)
 
@@ -218,40 +222,29 @@ Object.assign($.prototype, {
     })
   },
 
-  init: function (fn) {
-    fxCount++
-    let key = tuple(currentElement, currentAspect, fxCount)
-    if (destroyCache.has(key)) return
-    destroyCache.set(key, () => destroy.forEach(fn => fn && fn()))
-    let destroy = []
-
-    this.forEach(el => {
-      destroy.push(fn.call())
-    })
-  },
-
   state: createEffect('state', ...(() => {
     function getState(el) {
       let state = stateCache.get(el)
       if (!state) stateCache.set(el, state = {})
       return state
     }
-    return [getState, (el, name) => getState(el)[name], (el, name, value) => getState(el)[name] = value]
+    return [(...args) => args.length > 1 ? getState(args[0])[args[1]] : getState(args[0]), (el, name, value) => getState(el)[name] = value]
   })()),
 
   prop: createEffect('prop',
-    el => el,
-    (el, name) => el[name],
+    (...args) => args.length > 1 ? el[args[1]] : el,
     (el, name, value) => el[name] = value
   ),
 
-  attr: createEffect('attr',
-    el => {
-      let obj = {}
-      for (let attr of el.attributes) obj[attr.name] = attr.value
-      return obj
-    },
-    (el, name) => {
+  attr: createEffect('attr', (...args) => {
+      let [el, name] = args
+
+      if (args.length < 2) {
+        let obj = {}
+        for (let attr of el.attributes) obj[attr.name] = attr.value
+        return obj
+      }
+
       if (!attrCache.has(el)) {
         let observer = new MutationObserver(records => {
           for (let i = 0, length = records.length; i < length; i++) {
@@ -330,21 +323,20 @@ Object.assign($.prototype, {
     return this
   },
 
-  text: function () {
-    throw Error('TO BE IMPL')
-  },
+  text: createEffect('text', (el, name) => {}, (el, name, value) => {}),
 
-  class: function (...args) {
-    if (args[0].raw) args = [String.raw(...args)]
-    this.forEach(el => {
-      console.log(clsx('a', 'a', 'b'))
-      el.classList.value = clsx(...Array.from(el.classList), ...args)
-    })
-  },
+  class: createEffect('class', (...args) => {
+    if (args.length > 1) return el.classList.contains(args[1])
 
-  css: function () {
-    throw Error('TO BE IMPL')
-  }
+    let obj = {}
+    for (let cl of el.classList) obj[cl.name] = cl.value
+    return obj
+  }, (el, name, value) => {
+    if (!value) el.classList.remove(name)
+    else el.classList.add(name)
+  }),
+
+  css: createEffect('css', (el, name) => {}, (el, name, value) => {})
 })
 
 
@@ -462,11 +454,11 @@ function createClass(fn, HTMLElement) {
   }
 }
 
-function createEffect (effectName, getStorage, get, set, is = Object.is) {
+function createEffect (effectName, get, set, is = Object.is) {
   return function effect (...args) {
     // get()
     if (!args.length) {
-      return getStorage(this[0])
+      return get(this[0])
     }
 
     // state(s => {...})
@@ -475,7 +467,7 @@ function createEffect (effectName, getStorage, get, set, is = Object.is) {
       let fn = args[0]
       this.forEach((el, i) => {
         let draft
-        let state = getStorage(el)
+        let state = get(el)
         try {
           // Object.create is faster than assign
           draft = Object.create(state)

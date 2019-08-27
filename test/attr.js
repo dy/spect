@@ -26,7 +26,7 @@ t('attr: functional get/set', t => {
 
   $a.attr(s => s.count = 0)
 
-  t.is($a.attr(), { count: 0 })
+  t.is($a.attr(), { count: '0' })
 
   $a.attr(s => {
     s.count++
