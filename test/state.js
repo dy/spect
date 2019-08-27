@@ -74,18 +74,11 @@ t.skip('state: counter', t => {
 t.todo('state: trigger rerendering', t => {
   let stop = 0
   let $els = $`<div.a/><div.b/><div.c/>`.use(a => {
-  // let $els = $`<div.a/>`.use(a => {
     let $a = $(a)
-    $a.state({count: 0}, [])
-    // $a.init(() => {
-    //   $a.state({count: 0})
-    // })
-    // $a.fx(() => {
-    //   $a.state.count = 0
-    //   if ($a[0].classList.contains('a')) $a.state.count = 1
-    //   else if ($a[0].classList.contains('b')) $a.state.count = 2
-    // }, [])
 
+    $a.state({count: 0}, [])
+    if ($a[0].class.a) $a.state({ count: 1}, [])
+    else if ($a[0].class.b) $a.state({ count: 2}, [])
 
     // $a.html = $a.state.count
     console.log($a.state`count`)

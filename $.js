@@ -335,8 +335,10 @@ Object.assign($.prototype, {
   },
 
   class: function (...args) {
+    if (args[0].raw) args = [String.raw(...args)]
     this.forEach(el => {
-      el.classList.value = clsx(el.classList, ...args)
+      console.log(clsx('a', 'a', 'b'))
+      el.classList.value = clsx(...Array.from(el.classList), ...args)
     })
   },
 

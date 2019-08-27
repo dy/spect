@@ -9,4 +9,5 @@ import './prop.js'
 import './attr.js'
 import './html.js'
 import './on.js'
+import './class.js'
 
