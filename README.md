@@ -131,7 +131,7 @@ function hello (body) {
 
 ### A Stateful Aspect
 
-_Spect_ introduces `.state`, `.mount` and `.fx` effects, similar to `useState` and `useEffect` hooks. `state` effect can optionally take `deps` argument, same as `fx`.
+_Spect_ introduces `.state`, `.mount` and `.fx` effects, similar to `useState` and `useEffect` hooks. `state` effect can optionally take `deps` argument, like `fx`.
 
 ```js
 import $ from 'spect'
@@ -139,18 +139,16 @@ import $ from 'spect'
 $`#timer-example`.use(el => {
   let $el = $(el)
 
-  // init state
+  // init
   $el.state({ seconds: 0 }, [])
 
-  // start timer on mount
+  // start timer
   $el.mount(() => {
     let i = setInterval( () => $el.state(s => s.seconds++), 1000 )
 
-    // on unmount
     return () => clearInterval(i)
   })
 
-  // html side-effect
   $el.html`Seconds: ${ $el.state`seconds` }`
 
   console.log($el.state`seconds`)
@@ -163,7 +161,7 @@ $`#timer-example`.use(el => {
 
 ### An Application
 
-Events are provided by `.on` effect, decoupling callbacks from markup and enabling event delegation. They can be used along with direct `on*` attributes.
+Events are provided by `.on` effect, decoupling callbacks from markup and enabling event delegation. They can be used along with direct `on*` attributes. Also `.class` and `.css` effects provide nice ways to workaround common tasks.
 
 ```js
 import $ from 'spect'
@@ -173,10 +171,8 @@ $`#todos-example`.use(Todo)
 function Todo (el) {
   let $el = $(el)
 
-  // init state
   $el.state({ items: [], text: '' }, [])
 
-  // listen for `submit` event
   $el.on('submit', e => {
     e.preventDefault();
 
@@ -194,10 +190,8 @@ function Todo (el) {
     }))
   })
 
-  // delegate event to #new-todo element
   $el.on('change', '#new-todo', e => $el.state({ text: e.target.value });
 
-  // html effect
   $el.html`
     <h3>TODO</h3>
     <main is=${TodoList} items=${ $el.state`items` }/>
@@ -215,7 +209,7 @@ function Todo (el) {
 
 // TodoList component
 function TodoList (el) {
-  $(el).html`<ul>${ items.map(item => $`<li>${ item.text }</li>`) }</ul>`
+  $(el).html`<ul>${ el.items.map(item => $`<li>${ item.text }</li>`) }</ul>`
 }
 ```
 
@@ -257,7 +251,7 @@ export default function MarkdownEditor (el) {
     >${ $el.state`value` }</textarea>
 
     <h3>Output</h3>
-    <div.content html=${ getRawMarkup($el.prop`content`) }/>
+    <div.content html=${ getRawMarkup( $el.prop`content` ) }/>
   `
 }
 
@@ -269,6 +263,9 @@ let getRawMarkup = content => {
 
 <p align='right'><a href="">Open in sandbox</a></p>
 
+### More examples
+
+* [Details component]()
 
 ## API
 
@@ -279,7 +276,7 @@ let getRawMarkup = content => {
 <!-- mount is a hook on html domain -->
 
 
-[**`$`**]()  [**`.use`**]()  [**`.fx`**]()  [**`.state`**]()  [**`.prop`**]()  [**`.attr`**]()  [**`.html`**]()  [**`.text`**]()  [**`.class`**]()  [**`.css`**]()  [**`.on`**]()  [**`.mount`**]()
+[**`$`**]()&nbsp; &nbsp;[**`.use`**]()&nbsp; &nbsp;[**`.fx`**]()&nbsp; &nbsp;[**`.state`**]()&nbsp; &nbsp;[**`.prop`**]()&nbsp; &nbsp;[**`.attr`**]()&nbsp; &nbsp;[**`.html`**]()&nbsp; &nbsp;[**`.text`**]()&nbsp; &nbsp;[**`.class`**]()&nbsp; &nbsp;[**`.css`**]()&nbsp; &nbsp;[**`.on`**]()&nbsp; &nbsp;[**`.mount`**]()
 
 ### `$( selector | els | markup )` − selector / wrapper / creator
 
