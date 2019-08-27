@@ -269,22 +269,17 @@ let getRawMarkup = content => {
 
 ## API
 
-
-
-<!-- Each effect reflects domain it provides shortcut to. -->
-
-<!-- mount is a hook on html domain -->
-
-
 [**`$`**]()&nbsp; &nbsp;[**`.use`**]()&nbsp; &nbsp;[**`.fx`**]()&nbsp; &nbsp;[**`.state`**]()&nbsp; &nbsp;[**`.prop`**]()&nbsp; &nbsp;[**`.attr`**]()&nbsp; &nbsp;[**`.html`**]()&nbsp; &nbsp;[**`.text`**]()&nbsp; &nbsp;[**`.class`**]()&nbsp; &nbsp;[**`.css`**]()&nbsp; &nbsp;[**`.on`**]()&nbsp; &nbsp;[**`.mount`**]()
 
-### `$( selector | els | markup )` − selector / wrapper / creator
+##
+
+### `$( selector | els | markup )` − selector / h
 
 Select elements in DOM, provide domain methods for the selected set. The main purpose is shallow reference/wrapper for some nodes collection.
 If html string is passed, creates detached DOM - in that case acts like hyperscript.
 
 ```js
-// query nodes
+// select nodes
 $`#id.class > div`
 $(elements)
 $`${ element } > div`
@@ -297,27 +292,28 @@ $('div', {}, null)
 <p align="right">Ref: <a href="https://jquery.com">jquery</a></p>
 
 
-### `.use( ...fns )` − aspects connector
+### `.use( ...fns )` − assign aspects
 
-Assign aspect function(s) to selected elements. Each `fn` is called for every element in the selected set, receiving wrapped element as single argument. Aspect `fn` can be be called multiple times in a frame, if `state`, `attr` or any other data source updates. The data sources are subscribed to automatically when their values are read.
-
+Assign aspect function(s) to set of elements. Each `fn` is called for every element in the set with the element as single argument. Aspects rerender whenever `state`, `attr` or other data source updates. The data sources are subscribed to automatically if read.
 
 ```js
-let outer = $`.outer`
+let $outer = $`.outer`
 
-els.use(xy)
+$els.use(xy)
 
 function xy (el) {
+  let $el = $(el)
+
   // subscribe to attribute updates
-  let x = el.attr`x`
-  let y = outer.attr`y`
+  let x = $el.attr`x`
+  let y = $outer.attr`y`
 
   // rerender after 1s
-  setTimeout(() => el.attr(a => a.x++), 1000)
+  setTimeout(() => $el.attr( a => a.x++ ), 1000)
 }
 
 // trigger xy externally
-outer.attr('y', 1)
+$outer.attr('y', 1)
 ```
 
 Aspects can be attached via `.html` effect as well:
@@ -325,6 +321,8 @@ Aspects can be attached via `.html` effect as well:
 ```js
 $els.html`<div use=${div => {}}></div>`
 ```
+
+Note that aspects act like custom elements - once assigned, elements cannot be "downgraded".
 
 <p align="right">Ref: <a href="https://ghub.io/reuse">reuse</a></p>
 
@@ -355,16 +353,16 @@ $els.fx(el => $(el).something)
 
 ### `.state( name | val, deps? )` − state provider
 
-Read or write state, associated with an element. Read returns state of the first element in the set. Reading state subscribes current aspect to changes. Writing state rerenders all dependent aspects. Optional `deps` param may bypass changing state, unlike `fx`, `state` is changed synchronously.
+Read or write state, associated with an element. Reading returns first element state in the set. Reading subscribes current aspect to changes of that state path. Writing state rerenders all subscribed aspects. Optional `deps` param can organize bypassing, with limitations for hooks (can't be called within conditions).
 
 ```js
-// init state
-$target.state({x: 0}, [])
-
 // write state
 $target.state('x', 1)
 $target.state({x: 1})
 $target.state(_ => _.x.y.z = 1)
+
+// init state
+$target.state({x: 0}, [])
 
 // read state
 $target.state`x`
@@ -377,7 +375,7 @@ $target.state(_ => _.x.y.z)
 
 ### `.prop( name | val, deps? )` − properties provider
 
-Read or write elements properties. Read returns first element property. Write sets property to all elements in the collection. Reading prop subscribes current aspect to changes. In other terms, similar to `.state`.
+Read or write elements properties. Same as `.state`, but provides access to element properties.
 
 ```js
 // write prop
@@ -394,7 +392,7 @@ $target.prop(_ => _.x.y.z) // safe path getter
 
 ### `.attr( name | val, deps? )` − attributes provider
 
-Changes element attributes, updates all dependent elements/aspects.
+Read or write elements attributes. Same as `.state`, but provides access to attributes. Also, creates observer to trigger rerendering if external attributes change.
 
 ```js
 // write attribute
@@ -411,12 +409,11 @@ $target.attr()
 
 ### ``.html( markup ) `` − html side-effect
 
-Provides HTML content for elements. Internally uses [htm](https://ghub.io/htm) with [incremental-dom](https://ghub.io/incremental-dom) to render tree.
+Render HTML for elements. Internally uses [htm](https://ghub.io/htm) with [incremental-dom](https://ghub.io/incremental-dom).
 
 ```js
 // set html
 $target.html`...markup`
-$target.html(html => $`...markup ${ $`...inner wrapped ${ html }` }`)
 
 /* @jsx $ */
 $target.html(<>Markup</>)
@@ -443,61 +440,6 @@ function SuperButton(button) {
 
 <p align="right">Ref: <a href="https://ghub.io/incremental-dom">incremental-dom</a>, <a href='https://ghub.io/htm'>htm</a></p>
 
-
-### ``.text( content ) `` − text content side-effect
-
-Provide text content for the collection.
-
-```js
-// set text
-$target.text`...text`
-$target.text(str => i18n(nbsp(clean(str))))
-
-// get text
-$target.text()
-```
-
-
-### ``.css( styles)`` − CSS side-effect
-
-Provide scoped CSS styles for collection.
-
-```js
-// write css
-$target.css` :host { width: 100%} `
-```
-
-<!-- $target.css({ ':host': { width: 100%} }) -->
-<!-- $target.css(rules => rules[':host'].width = '100%') -->
-<!-- $target.css(':host').width -->
-<!-- $target.css.path = obj|str -->
-<!-- $target.css.path // obj -->
-<!-- $target.css`selector { ...rules }` -->
-<!-- $target.css = `selector { ...rules }` -->
-
-<p align="right">Ref: <a href="https://ghub.io/virtual-css">virtual-css</a></p>
-
-
-### `.class( ...classes )` − class list side-effect
-
-Manipilate classes for elements in collection.
-
-```js
-// write classes
-$target.class`foo bar baz`
-$target.class('foo', true && 'bar', 'baz')
-$target.class({ foo: true, bar: false, bas: isTrue() })
-$target.class(clsx => clsx.foo = false)
-
-// read classes
-$target.class`foo`
-$target.class()
-```
-
-<!-- $target.class = {foo: true, bar: false, baz: () => false} -->
-<!-- $target.class // { foo: true, bar: true } -->
-
-<p align="right">Ref: <a href="https://ghub.io/clsx">clsx</a>, <a href="https://ghub.io/classes">classes</a></p>
 
 ### `.on( evt, fn )` − events provider
 
@@ -533,6 +475,63 @@ $el.mount(() => {
   }
 })
 ```
+
+
+### ``.text( content ) `` − text content side-effect
+
+Provide text content for elements.
+
+```js
+// set text
+$target.text`...text`
+$target.text(str => i18n(nbsp(clean(str))))
+
+// get text
+$target.text()
+```
+
+
+### ``.css( styles)`` − CSS side-effect
+
+Provide scoped CSS styles for collection.
+
+```js
+// write css
+$target.css` :host { width: 100%} `
+```
+
+<!-- $target.css({ ':host': { width: 100%} }) -->
+<!-- $target.css(rules => rules[':host'].width = '100%') -->
+<!-- $target.css(':host').width -->
+<!-- $target.css.path = obj|str -->
+<!-- $target.css.path // obj -->
+<!-- $target.css`selector { ...rules }` -->
+<!-- $target.css = `selector { ...rules }` -->
+
+<p align="right">Ref: <a href="https://ghub.io/virtual-css">virtual-css</a></p>
+
+
+### `.class( ...classes )` − class list side-effect
+
+Manipulate elements classes.
+
+```js
+// write classes
+$target.class`foo bar baz`
+$target.class('foo', true && 'bar', 'baz')
+$target.class({ foo: true, bar: false, bas: isTrue() })
+$target.class(clsx => clsx.foo = false)
+
+// read classes
+$target.class`foo`
+$target.class()
+```
+
+<!-- $target.class = {foo: true, bar: false, baz: () => false} -->
+<!-- $target.class // { foo: true, bar: true } -->
+
+<p align="right">Ref: <a href="https://ghub.io/clsx">clsx</a>, <a href="https://ghub.io/classnames">classnames</a></p>
+
 
 
 <!--
@@ -604,7 +603,7 @@ and others.
 
 ##
 
-<p align="right">HK</p>
+<p align="center">HK</p>
 
 <!--
 <p align="center">Made on Earth by your humble servant.
