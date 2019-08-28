@@ -1,5 +1,4 @@
 import equal from 'fast-deep-equal'
-import onload from 'fast-on-load'
 import delegated from 'delegate-it'
 import { parse as parseStack } from 'stacktrace-parser'
 import tuple from 'immutable-tuple'
@@ -15,6 +14,7 @@ import {
   applyProp,
   applyAttr
 } from 'incremental-dom'
+import onload from 'fast-on-load'
 
 attributes.class = applyAttr
 attributes.is = (...args) => (applyAttr(...args), applyProp(...args))
@@ -40,9 +40,13 @@ let fxCount, // used as order-based effect key
   currentAspect
 
 
-export default function create(...args) { return new $(...args) }
+export default function create(...args) {
+  let doc = this || document
+  return new $(doc, ...args)
+}
+
 class $ extends Array {
-  constructor (arg, ...args) {
+  constructor (document, arg, ...args) {
     super()
 
     if (elCache.has(arg)) return elCache.get(arg)

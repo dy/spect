@@ -1,6 +1,6 @@
 import t from 'tst'
 import $ from '../index.js'
-
+import { document as liteDocument } from 'dom-lite'
 
 t('$: create from nodes', t => {
   let el = document.createElement('div')
@@ -45,8 +45,20 @@ t.skip('$: sustain dynamic nodes list as reference under the hood', t => {
   t.is($children.length, 2)
 })
 
-t.todo('$: rebinding to other document', t => {
-  let e$ = $.bind(extDoc)
+t('$: rebinding to other document', t => {
+  // FIXME: w
+  let _$ = $.bind(liteDocument)
+
+  var div = liteDocument.createElement("div")
+  div.className = "foo bar"
+
+  // var span = liteDocument.createElement("span")
+  // div.appendChild(span)
+  // span.textContent = "Hello!"
+
+  _$(div).use(el => {
+    t.is(el.tagName, 'DIV')
+  })
 })
 
 t.todo('$: ignore wrapping collections', t => {
@@ -60,3 +72,8 @@ t.todo('$: wrapped subsets are fine', t => {
 
   t.is($($a[0]), $a)
 })
+
+
+
+
+
