@@ -8,14 +8,14 @@ import route from 'spect-router';
 import ky from 'ky';
 import { t, useLocale } from 'ttag';
 
-// main app aspect - loading & rendering data data
+// main app aspect - loading & rendering data
 function main (app) {
   let [ match, {id} ] = route`/user/:id`;
   if (!match) return
 
   let $app = $(app)
 
-  // run state effect when `id` changes (useState + useEffect + idx)
+  // run state effect when `id` changes (useState + useEffect)
   $app.state(state => {
     state.loading = true;
     state.user = await ky.get`./api/user/${ id }`;
@@ -31,6 +31,8 @@ function main (app) {
 // preloader aspect - appends spinner when loading state changes
 function preloader (el) {
   let $el = $(el)
+
+  // useEffect
   $el.fx(() => {
     let orig = $el.html()
     $el.html`${ orig } <canvas.spinner />`
@@ -41,15 +43,15 @@ function preloader (el) {
 // i18n aspect - translates content when `lang` attribute changes
 function i18n (el) {
   let $el = $(el)
-  let lang = $el.attr`lang` ||  $(document.documentElement).attr`lang`
+  let lang = $el.attr('lang') ||  $(document.documentElement).attr('lang')
   $el.fx(el => {
     useLocale(lang)
     el.text(text => t(text))
   }, lang)
 }
 
-// assign aspects to #app element
-$`#app`.use(main, preloader);
+// assign aspects to #app
+$('#app').use(main, preloader);
 ```
 
 ## Concept
@@ -70,7 +72,7 @@ In a nutshell, _Spect_ is a mix of jQuery (_collections_), functional React comp
 5. Max utility, min presentation.
 
 
-Spect is build with a set of modern practices in mind (proxies, symbols, tagged strings, virtual dom, incremental dom, htm, custom elements, hooks, observers, tuples, frp). It grounds on API design research, experiments and proofs.
+Spect is build with a set of modern practices in mind (proxies, symbols, tagged strings, virtual dom, incremental dom, htm, custom elements, hooks, observers, tuples, frp). It grounds on API design research, experiments and proofs. Current API is 4th iteration.
 
 <!--
 Conceptually, app is a set of _reactions_ to changes in some _domain_.
@@ -156,9 +158,11 @@ $`#timer-example`.use(el => {
   $el.mount(() => {
     let i = setInterval( () => $el.state(s => s.seconds++), 1000 )
 
+    // disconnected
     return () => clearInterval(i)
   })
 
+  // html is side-effect, not aspect result
   $el.html`Seconds: ${ $el.state('seconds') }`
 
   console.log($el.state('seconds'))
@@ -171,12 +175,12 @@ $`#timer-example`.use(el => {
 
 ### An Application
 
-Events are provided by `.on` effect, decoupling callbacks from markup and enabling event delegation. They can be used along with direct `on*` attributes. Also `.class` and `.css` effects provide nice ways to workaround common tasks.
+Events are provided by `.on` effect, decoupling callbacks from markup and enabling event delegation. They can be used along with direct `on*` attributes.
 
 ```js
 import $ from 'spect'
 
-$`#todos-example`.use(Todo)
+$('#todos-example').use(Todo)
 
 function Todo (el) {
   let $el = $(el)
@@ -189,13 +193,13 @@ function Todo (el) {
     if (!$el.state('text.length')) return;
 
     const newItem = {
-      text: el.state('text'),
+      text: $el.state('text'),
       id: Date.now()
     };
 
     // in-place reducer
-    $el.state(({items}) => ({
-      items: [...items, newItem],
+    $el.state(state => ({
+      items: [...state.items, newItem],
       text: ''
     }))
   })
@@ -236,7 +240,7 @@ import $ from 'spect'
 import MarkdownEditor from './editor.js'
 
 // MarkdownEditor is created as web-component
-$`#markdown-example`.use(el => el.html`<${MarkdownEditor} content='Hello, **world**!'/>`)
+$('#markdown-example').use(el => el.html`<${MarkdownEditor} content='Hello, **world**!'/>`)
 ```
 
 ```js
@@ -286,74 +290,83 @@ let getRawMarkup = content => {
 ### `$( selector | els | markup )` − selector / h
 
 Select elements in DOM, provide domain methods for the selected set. The main purpose is shallow reference/wrapper for some nodes collection.
-If html string is passed, creates detached DOM. Also acts like hyperscript.
+If html string is passed, creates detached DOM. Also can acts like hyperscript, if arguments signature matches.
 
 ```js
 // select nodes
-$`#id.class > div`
+$('#id.class > div')
 $(elements)
 $`${ element } > div`
+
+// change root
+const _$ = $.bind(externalDoc)
+_$`#id`
 
 // create html
 $`<div.a/><div.b/>`
 $('div', {}, null)
+
+/* @jsx $ */
+$(<div />)
 ```
 
-<p align="right">Ref: <a href="https://jquery.com">jquery</a></p>
+<p align="right">Ref: <a href="https://jquery.com">jquery</a>, etc.</p>
 
 
 ### `.use( ...fns )` − assign aspects
 
-Assign aspect function(s) to set of elements. Each aspect `fn` is registered for every element in the set. Aspect `fn` is called immediately after assigning, with `el` as argument. By reading state(s) of other elements, aspect subscribes to changes in these states and rerenders itself if changes take place.
+Assign aspect function(s) to set of elements. Each aspect `fn` is registered for every element in the set. Aspect `fn` is invoked immediately, with `el` as argument. By reading state(s) of other elements, aspect subscribes to changes in these states and rerenders itself if changes take place.
 
 ```js
-let $outer = $`.outer`
+let $foo = $`.foo`
+let $bar = $`.bar`
 
-$`.selector`.use(el => {
+$foo.use(el => {
   let $el = $(el)
 
-  // subscribe to attribute updates
-  let x = $el.attr`x`
-  let y = $outer.attr`y`
+  // subscribe to updates
+  let x = $el.attr('x')
+  let y = $bar.attr('y')
 
   // rerender after 1s
   setTimeout(() => $el.attr( a => a.x++ ), 1000)
 })
 
-// trigger xy externally
-$outer.attr('y', 1)
+// triggers rerendering $foo
+$bar.attr('y', 1)
 ```
 
 Aspects can be attached via `.html` effect as well:
 
 ```js
-$els.html`<div use=${div => {}}></div>`
+$els.html`<div is=${foo} use=${[bar, baz]}></div>`
 ```
 
+Aspects, assigned via `is`, define custom elements, see `.html` effect for details.
 Note that aspects "upgrade" elements - once assigned, elements cannot be "downgraded", very much like custom elements.
 
 <p align="right">Ref: <a href="https://ghub.io/reuse">reuse</a></p>
 
 
-### `.fx( el => destroy? , deps? )` − generic side-effects provider
+### `.fx( el => destroy? , deps? )` − generic side-effect
 
-Microtask effect function for selected elements (queued immediately after current call stack). Unlike in `useEffect`, `deps` are passed as argument. Additionally, non-array `deps` can be passed to organize primitive FSM.
+Run effect function for selected elements (queued as microtask, called immediately after current callstack), very much like `useEffect`, with less limitations. Additionally, non-array `deps` can be passed to organize primitive FSM, triggering any time value changes to non-false, which is useful for binary states like `visible/hidden`, `disabled/enabled`, `active` etc.
 
 ```js
 // called each time
-$els.fx(() => {})
+$els.fx(() => {});
 
 // called when value changes to non-false
-$els.fx(() => (show(), hide), visible)
+$els.fx(() => { show(); return () => hide(); }, visible);
 
 // called on init only
-$els.fx(() => {}, [])
+$els.fx(() => {}, []);
 
 // destructor
-$els.fx(() => destroy, deps)
+$els.fx(() => () => {}, deps);
 
-// called for each element in the set
-$els.fx(el => $(el).something)
+// called for each element in collection
+$els.fx(el => $(el).something);
 ```
 
 <p align="right">Ref: <a href='https://reactjs.org/docs/hooks-effect.html'>useEffect</a></p>
@@ -361,24 +374,27 @@ $els.fx(el => $(el).something)
 
 ### `.state( name | val, deps? )` − state provider
 
-Read or write state, associated with an element. Reading returns first element state in the set. Reading subscribes current aspect to changes of that state path. Writing state rerenders all subscribed aspects. Optional `deps` param can organize bypassing, with limitations for hooks (can't be called within conditions).
+Read or write state associated with an element. Reading returns first element state in the set. Reading subscribes current aspect to changes of that state. Writing rerenders all subscribed aspects. Optional `deps` param can define bypassing strategy.
 
 ```js
 // write state
-$target.state('x', 1)
-$target.state({x: 1})
-$target.state(_ => _.x.y.z = 1)
+$target.state('foo', 1)
+$target.state({foo: 1})
+$target.state(s => s.foo = 1)
+$target.state(s => {...s, foo: 2})
 
 // init state
-$target.state({x: 0}, [])
+$target.state({foo: 0}, [])
 
 // read state
-$target.state`x`
-$target.state`x.y.z`
-$target.state(_ => _.x.y.z)
+$target.state('foo')
+$target.state('foo.bar.baz') // safe-path
+
+// read full state
+$target.state()
 ```
 
-<p align="right">Ref: <a href="https://reactjs.org/docs/hooks-state.html">useState</a>, <a href="https://www.npmjs.com/package/icaro">icaro</a>, <a href="https://www.npmjs.com/package/introspected">introspected</a>, <a href="https://ghub.io/idx">idx</a></p>
+<p align="right">Ref: <a href="https://reactjs.org/docs/hooks-state.html">useState</a>, <a href="https://www.npmjs.com/package/icaro">icaro</a>, <a href="https://www.npmjs.com/package/introspected">introspected</a>, <a href="https://ghub.io/dlv">dlv</a></p>
 
 
 ### `.prop( name | val, deps? )` − properties provider
@@ -387,12 +403,12 @@ Read or write elements properties. Same as `.state`, but provides access to elem
 
 ```js
 // write prop
-$target.prop({x: 1})
-$target.prop(_ => _.x.y.z = 1) // safe path setter
+$target.prop('foo', 1)
+$target.prop({foo: 1})
+$target.prop(s => s.foo = 1)
 
 // read prop
-$target.prop`x`
-$target.prop(_ => _.x.y.z) // safe path getter
+$target.prop('foo')
 ```
 
 <p align="right">Ref: <a href="https://reactjs.org/docs/hooks-state.html">useState</a></p>
@@ -400,24 +416,27 @@ $target.prop(_ => _.x.y.z) // safe path getter
 
 ### `.attr( name | val, deps? )` − attributes provider
 
-Read or write elements attributes. Same as `.state`, but provides access to attributes. Also, creates observer to trigger rerendering if external attributes change.
+Read or write attributes to elements in a set. Same as `.prop`, but works with attributes, therefore values are always strings. Reading creates observer for external attribute changes.
 
 ```js
 // write attribute
+$target.attr('foo', 'bar')
 $target.attr({ foo: 'bar'})
 $target.attr(a => a.foo = 'bar')
 
 // read attribute
-$target.attr`foo`
+$target.attr('foo')
+
+// read all attributes
 $target.attr()
 ```
 
 <p align="right">Ref: <a href="https://ghub.io/attributechanged">attributechanged</a></p>
 
 
-### ``.html( markup ) `` − html side-effect
+### ``.html`...markup` `` − html side-effect
 
-Render HTML for elements. Internally uses [htm](https://ghub.io/htm) with [incremental-dom](https://ghub.io/incremental-dom).
+Render HTML for elements in collection. Internally uses [htm](https://ghub.io/htm) with [incremental-dom](https://ghub.io/incremental-dom).
 
 ```js
 // set html
@@ -425,9 +444,6 @@ $target.html`...markup`
 
 /* @jsx $ */
 $target.html(<>Markup</>)
-
-// get html
-$target.html()
 ```
 
 #### Components
@@ -454,26 +470,47 @@ function SuperButton(button) {
 Registers event listeners for elements in collection.
 
 ```js
+// single event
+$target.on('foo', e => {})
+
 // multiple events
 $target.on('foo bar', e => {})
 
 // delegate selector
-$target.on('foo .delegate', e => {})
-
-// multiple listeners
-$target.on({ foo: e => {}, bar: e => {} })
-
-// sequence of events
-$target.on('touchstart', e => e => e => {})
+$target.on('foo', '.bar', e => {})
 ```
+
+Some events support sequences:
+
+* `dragstart`, `drag`, `dragend`
+* `touchstart`, `touchmove`, `touchend`
+* `mousedown`, `mousemove`, `mouseup`
+* `keydown`, `keyup`
+
+They can be used as:
+
+```js
+$target.on('touchstart mousedown', e => {
+  // touchstart, mousedown
+
+  return e =>  {
+    // touchmove, mousemove
+
+    return e => {
+      // touchend, mouseend
+    }
+  }
+})
+```
+
 
 <p align="right">Ref: <a href="https://github.com/donavon/use-event-listener">use-event-listener</a></p>
 
 
 ### `.mount( fn: onmount => onunmount )` - lifecycle callbacks
 
-Triggers callback `fn` when element is connected to the DOM. Optional returned function is triggered when the element is disconnected.
-If an aspect is attached to mounted elements, the `onmount` will be triggered automatically.
+Triggers callback `fn` when element is connected to the DOM. Returned function is triggered when the element is disconnected.
+If an aspect is assigned to connected elements, the `onmount` is triggered immediately.
 
 ```js
 $el.mount(() => {
@@ -519,7 +556,7 @@ $target.css` :host { width: 100%} `
 <p align="right">Ref: <a href="https://ghub.io/virtual-css">virtual-css</a></p>
 
 
-### `.class( ...classes, deps? )` − class list side-effect
+### `.class( ...classes, deps? )` − classes side-effect
 
 Manipulate elements classes.
 
@@ -540,7 +577,7 @@ $target.class()
 
 ### `._update( deps? )` − rerender aspect
 
-Utility method, rerendering all aspects, assigned to elements. Not supposed to be used in normally, because it may break normal state flow and cause unwanted side-effects.
+Utility method, rerendering all element aspects. Not for regular use, it can trigger redundant rerenders and cause unwanted side-effects.
 
 ```js
 $els = $`.selector`.use(a, b, c)
