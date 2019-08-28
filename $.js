@@ -89,7 +89,8 @@ const aspectsCache = new WeakMap,
   destroyCache = new WeakMap,
   observables = new WeakMap,
   stateCache = new WeakMap,
-  attrCache = new WeakMap
+  attrCache = new WeakMap,
+  prevCache = new WeakMap
 
 let fxCount, // used as order-based effect key
   fxId, // used as precompiled effect key
@@ -106,44 +107,6 @@ function callAspect(el, fn) {
   currentAspect = prevAspect
   currentElement = prevElement
   return result
-}
-
-function commit(deps, destroy) {
-  let key
-
-  // precompiled bundle inserts unique fxid before effect calls
-  if (fxId) {
-    key = tuple(currentElement, currentAspect, fxId)
-    fxId = null
-  }
-  else {
-    // stacktrace key is precise for
-    if (isStacktraceAvailable) {
-      let [commitsite, fxsite, callsite, ...trace] = parseStack((new Error).stack)
-      let siteurl = callsite.file + ':' + callsite.lineNumber + ':' + callsite.column
-      key = tuple(currentElement, currentAspect, siteurl)
-    }
-    // fallback to react order-based key
-    else {
-      key = tuple(currentElement, currentAspect, fxCount++)
-    }
-  }
-
-  if (deps !== undefined) {
-    let prev = depsCache.get(key)
-
-    if (Array.isArray(deps)) {
-      if (equal(deps, prev)) return false
-      depsCache.set(key, deps)
-    }
-  }
-
-  if (destroyCache.has(key)) {
-    destroyCache.get(key).call()
-  }
-  destroyCache.set(key, destroy)
-
-  return true
 }
 
 
@@ -184,7 +147,7 @@ Object.assign($.prototype, {
   },
 
   fx: function (fn, deps) {
-    if (!commit(deps, () => destroy.forEach(fn => fn && fn()))) return
+    if (!commit(fxKey(), deps, () => destroy.forEach(fn => fn && fn()))) return
 
     let destroy = []
 
@@ -203,10 +166,8 @@ Object.assign($.prototype, {
       delegate = null
     }
 
-    fxCount++
-    let key = tuple(currentElement, currentAspect, fxCount)
-    if (destroyCache.has(key)) destroyCache.get(key).call()
-    destroyCache.set(key, () => destroy.forEach(fn => fn && fn()))
+    if (!commit(fxKey(), deps, () => destroy.forEach(fn => fn && fn()))) return
+
     let destroy = []
 
     evts = evts.split(/\s+/)
@@ -226,11 +187,9 @@ Object.assign($.prototype, {
     }
   },
 
-  mount: function () {
-    fxCount++
-    let key = tuple(currentElement, currentAspect, fxCount)
-    if (destroyCache.has(key)) destroyCache.get(key).call()
-    destroyCache.set(key, () => destroy.forEach(fn => fn && fn()))
+  mount: function (handle, deps) {
+    if (!commit(fxKey(), deps, () => destroy.forEach(fn => fn && fn()))) return
+
     let destroy = []
 
     this.forEach(el => {
@@ -253,7 +212,7 @@ Object.assign($.prototype, {
   })()),
 
   prop: createEffect('prop',
-    (...args) => args.length > 1 ? el[args[1]] : el,
+    (el, ...args) => args.length ? el[args[0]] : el,
     (el, name, value) => el[name] = value
   ),
 
@@ -346,8 +305,8 @@ Object.assign($.prototype, {
 
   text: createEffect('text', (el, name) => {}, (el, name, value) => {}),
 
-  class: createEffect('class', (...args) => {
-    if (args.length > 1) return el.classList.contains(args[1])
+  class: createEffect('class', (el, ...args) => {
+    if (args.length) return el.classList.contains(args[0])
 
     let obj = {}
     for (let cl of el.classList) obj[cl.name] = cl.value
@@ -475,6 +434,52 @@ function createClass(fn, HTMLElement) {
   }
 }
 
+// register effect call, check deps, if changed - call destroy
+function commit(key, deps, destroy) {
+  if (deps !== undefined) {
+    let prev = depsCache.get(key)
+
+    if (Array.isArray(deps)) {
+      if (equal(deps, prev)) return false
+      depsCache.set(key, deps)
+    }
+  }
+
+  if (destroyCache.has(key)) {
+    let destroy = destroyCache.get(key)
+    if (destroy && destroy.call) destroy.call()
+  }
+  destroyCache.set(key, destroy)
+
+  return true
+}
+
+// calc key for fx callsite
+function fxKey () {
+  let key
+
+  // precompiled bundle inserts unique fxid before effect calls
+  if (fxId) {
+    key = tuple(currentElement, currentAspect, fxId)
+    fxId = null
+  }
+  else {
+    // stacktrace key is precise for
+    if (isStacktraceAvailable) {
+      // FIXME: exact stack is susceptible to babel-ish transforms
+      let [fxKeysite, fxsite, callsite, ...trace] = parseStack((new Error).stack)
+      let siteurl = callsite.file + ':' + callsite.lineNumber + ':' + callsite.column
+      key = tuple(currentElement, currentAspect, siteurl)
+    }
+    // fallback to react order-based key
+    else {
+      key = tuple(currentElement, currentAspect, fxCount++)
+    }
+  }
+
+  return key
+}
+
 function createEffect (effectName, get, set, is = Object.is) {
   return function effect (...args) {
     // get()
@@ -482,10 +487,17 @@ function createEffect (effectName, get, set, is = Object.is) {
       return get(this[0])
     }
 
-    // state(s => {...})
+    // state(s => {...}, deps)
     if (typeof args[0] === 'function') {
       let result
-      let fn = args[0]
+      let fn = args.shift()
+      let deps = args.shift()
+
+      let key = fxKey()
+      if (!commit(key, deps)) {
+        return prevCache.get(key)
+      }
+
       this.forEach((el, i) => {
         let draft
         let state = get(el)
@@ -502,12 +514,16 @@ function createEffect (effectName, get, set, is = Object.is) {
         })
       })
 
+      prevCache.set(key, result)
       return result
     }
 
-    // set(obj)
+    // set(obj, deps)
     if (typeof args[0] === 'object' && !args[0].raw) {
-      let props = args.shift()
+      let [props, deps] = args
+
+      if (!commit(fxKey(), deps)) return
+
       for (let name in props) {
         this[effectName](name, props[name], ...args)
       }
@@ -516,9 +532,8 @@ function createEffect (effectName, get, set, is = Object.is) {
 
     // get(name)
     if (args.length == 1) {
-      let name = args[0]
+      let name = args[0].raw ? String.raw(args.shift()) : args.shift()
       let el = this[0]
-      if (name.raw) name = String.raw(...args)
 
       let key = tuple(el, effectName, name)
       if (!observables.has(key)) observables.set(key, new Set)
@@ -528,7 +543,8 @@ function createEffect (effectName, get, set, is = Object.is) {
     }
 
     // set(name, value)
-    let [name, value] = args
+    let [name, value, deps] = args
+    if (!commit(fxKey(), deps)) return
     this.forEach(el => setNameValue(el, name, value))
   }
 

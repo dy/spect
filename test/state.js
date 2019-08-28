@@ -32,7 +32,7 @@ t('state: functional get/set', t => {
   t.is($a.state`count`, 1)
 })
 
-t.only('state: init gate', t => {
+t('state: init gate', t => {
   let log = [], x = 1
   let $a = $`<a/>`
 
@@ -47,6 +47,21 @@ t.only('state: init gate', t => {
     $a = $(el)
 
     $a.state({ x }, [])
+  }
+})
+
+t('state: functional state saves dep value', t => {
+  let $a = $`<a/>`
+
+  $a.state({x: 1})
+  $a.use(fn)
+  $a.state({x: 2})
+  $a.use(fn)
+
+  function fn (el) {
+    let $el = $(el)
+    let x = $el.state(s => s.x, [])
+    t.is(x, 1)
   }
 })
 
@@ -116,15 +131,16 @@ t('state: reading state registers any-change listener', async t => {
   let log = []
   let $a = $`<a/>`
 
-  $a.use($el => {
-    let s = $el.state
+  $a.use(el => {
+    let $el = $(el)
+    let s = $el.state()
 
     setTimeout(() => {
       log.push(s.x)
     })
   })
 
-  $a.state.x = 1
+  $a.state({x: 1})
 
   await new Promise(ok => setTimeout(() => {
     t.is(log, [1])

@@ -54,12 +54,13 @@ t.skip('attr: counter', t => {
   })
 })
 
-t('attr: native element attributes', async t => {
+t.todo('attr: native element attributes', async t => {
   // let $els = $`<a.a href='a'/>`
   // let $els = $`<${b} class=b href='a'/>`
   let $els = $`<a.a href='a'/><${b} class=b href='a'/><a.c is=${c} href='a'/>`
 
-  $els.use($a => {
+  $els.use(a => {
+    let $a = $(a)
     $a.fx(() => {
       if ($a[0].classList.contains('a')) $a.attr.count = 0
       else if ($a[0].classList.contains('b')) $a.attr.count = 1
