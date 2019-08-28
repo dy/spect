@@ -141,7 +141,7 @@ Object.assign($.prototype, {
     return this
   },
 
-  update: function () {
+  _update: function () {
     this.forEach(el => {
       let aspects = aspectsCache.get(el)
       if (!aspects) return

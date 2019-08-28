@@ -269,7 +269,7 @@ let getRawMarkup = content => {
 
 ## API
 
-[**`$`**]()&nbsp; &nbsp;[**`.use`**]()&nbsp; &nbsp;[**`.fx`**]()&nbsp; &nbsp;[**`.state`**]()&nbsp; &nbsp;[**`.prop`**]()&nbsp; &nbsp;[**`.attr`**]()&nbsp; &nbsp;[**`.html`**]()&nbsp; &nbsp;[**`.text`**]()&nbsp; &nbsp;[**`.class`**]()&nbsp; &nbsp;[**`.css`**]()&nbsp; &nbsp;[**`.on`**]()&nbsp; &nbsp;[**`.mount`**]()&nbsp; &nbsp;[**`.update`**]()
+[**`$`**]()&nbsp; &nbsp;[**`.use`**]()&nbsp; &nbsp;[**`.fx`**]()&nbsp; &nbsp;[**`.state`**]()&nbsp; &nbsp;[**`.prop`**]()&nbsp; &nbsp;[**`.attr`**]()&nbsp; &nbsp;[**`.html`**]()&nbsp; &nbsp;[**`.text`**]()&nbsp; &nbsp;[**`.class`**]()&nbsp; &nbsp;[**`.css`**]()&nbsp; &nbsp;[**`.on`**]()&nbsp; &nbsp;[**`.mount`**]()
 
 ##
 
@@ -527,14 +527,15 @@ $target.class()
 
 <p align="right">Ref: <a href="https://ghub.io/clsx">clsx</a>, <a href="https://ghub.io/classnames">classnames</a></p>
 
-### `.update( deps? )` − rerender aspect
 
-Utility method, triggering rerendering of all aspects, assigned to elements. Not supposed to be used in normal situations, because it may trigger redundant/unwanted side-effects.
+### `._update( deps? )` − rerender aspect
+
+Utility method, rerendering all aspects, assigned to elements. Not supposed to be used in normally, because it may break normal state flow and cause unwanted side-effects.
 
 ```js
 $els = $`.selector`.use(a, b, c)
 
-$els.update()
+$els._update()
 ```
 
 <!--

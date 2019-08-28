@@ -61,7 +61,7 @@ t('use: aspects must not be called multiple times, unless target state changes',
   t.is(log, ['x'])
   $a.use(fn, fn)
   t.is(log, ['x'])
-  $a.update()
+  $a._update()
   t.is(log, ['x', 'x'])
 
   function fn(el) {log.push('x')}
