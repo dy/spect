@@ -56,18 +56,21 @@ $`#app`.use(main, preloader);
 
 Spect is build with a set of modern practices in mind (proxies, symbols, tagged strings, virtual dom, incremental dom, htm, custom elements, hooks, observers, tuples, frp). It grounds on API design research, experiments and proofs.
 
-#### :ferris_wheel: Wheel formula:
+🎡
+
+#### Wheel formula:
 
 > _Spect_ = _$ Collections_ + _Reactive Aspects_ + _Side-Effects_
 
+🏛️
 
 #### Principles:
 
-> 1. Expressivity.
-> 2. No bundling.
-> 3. Hydration as part of progressive enhancement.
-> 4. Standard HTML first.
-> 5. Max utility, min presentation.
+1. Expressivity.
+2. No bundling.
+3. Hydration as part of progressive enhancement.
+4. Standard HTML first.
+5. Max utility, min presentation.
 
 <!--
 Conceptually, app is a set of _reactions_ to changes in some _domain_.
