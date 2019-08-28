@@ -269,7 +269,7 @@ let getRawMarkup = content => {
 
 ## API
 
-[**`$`**]()&nbsp; &nbsp;[**`.use`**]()&nbsp; &nbsp;[**`.fx`**]()&nbsp; &nbsp;[**`.state`**]()&nbsp; &nbsp;[**`.prop`**]()&nbsp; &nbsp;[**`.attr`**]()&nbsp; &nbsp;[**`.html`**]()&nbsp; &nbsp;[**`.text`**]()&nbsp; &nbsp;[**`.class`**]()&nbsp; &nbsp;[**`.css`**]()&nbsp; &nbsp;[**`.on`**]()&nbsp; &nbsp;[**`.mount`**]()
+[**`$`**]()&nbsp; &nbsp;[**`.use`**]()&nbsp; &nbsp;[**`.fx`**]()&nbsp; &nbsp;[**`.state`**]()&nbsp; &nbsp;[**`.prop`**]()&nbsp; &nbsp;[**`.attr`**]()&nbsp; &nbsp;[**`.html`**]()&nbsp; &nbsp;[**`.text`**]()&nbsp; &nbsp;[**`.class`**]()&nbsp; &nbsp;[**`.css`**]()&nbsp; &nbsp;[**`.on`**]()&nbsp; &nbsp;[**`.mount`**]()&nbsp; &nbsp;[**`.update`**]()
 
 ##
 
@@ -294,14 +294,12 @@ $('div', {}, null)
 
 ### `.use( ...fns )` − assign aspects
 
-Assign aspect function(s) to set of elements. Each `fn` is called for every element in the set with the element as single argument. Aspects rerender whenever any internal effect data changes. The internal effects are subscribed to automatically on read.
+Assign aspect function(s) to set of elements. Each aspect `fn` is registered for every element in the set. Aspect `fn` is called immediately after assigning, with `el` as argument. By reading state(s) of other elements, aspect subscribes to changes in these states and rerenders itself if changes take place.
 
 ```js
 let $outer = $`.outer`
 
-$els.use(xy)
-
-function xy (el) {
+$`.selector`.use(el => {
   let $el = $(el)
 
   // subscribe to attribute updates
@@ -310,7 +308,7 @@ function xy (el) {
 
   // rerender after 1s
   setTimeout(() => $el.attr( a => a.x++ ), 1000)
-}
+})
 
 // trigger xy externally
 $outer.attr('y', 1)
@@ -322,7 +320,7 @@ Aspects can be attached via `.html` effect as well:
 $els.html`<div use=${div => {}}></div>`
 ```
 
-Note that aspects act like custom elements - once assigned, elements cannot be "downgraded".
+Note that aspects "upgrade" elements - once assigned, elements cannot be "downgraded", very much like custom elements.
 
 <p align="right">Ref: <a href="https://ghub.io/reuse">reuse</a></p>
 
@@ -529,7 +527,15 @@ $target.class()
 
 <p align="right">Ref: <a href="https://ghub.io/clsx">clsx</a>, <a href="https://ghub.io/classnames">classnames</a></p>
 
+### `.update( deps? )` − rerender aspect
 
+Utility method, triggering rerendering of all aspects, assigned to elements. Not supposed to be used in normal situations, because it may trigger redundant/unwanted side-effects.
+
+```js
+$els = $`.selector`.use(a, b, c)
+
+$els.update()
+```
 
 <!--
 

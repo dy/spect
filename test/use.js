@@ -50,3 +50,19 @@ t('use: duplicates are ignored', t => {
 
   t.is(log, [1, 1])
 })
+
+t('use: aspects must not be called multiple times, unless target state changes', t => {
+  let log = []
+
+  let $a = $`<a/>`
+  $a.use(fn)
+  t.is(log, ['x'])
+  $a.use(fn)
+  t.is(log, ['x'])
+  $a.use(fn, fn)
+  t.is(log, ['x'])
+  $a.update()
+  t.is(log, ['x', 'x'])
+
+  function fn(el) {log.push('x')}
+})

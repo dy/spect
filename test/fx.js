@@ -43,12 +43,12 @@ t('fx: runs destructor', async t => {
   t.is(log, ['init 1', 'init 2', 'init 3'])
 
   log = []
-  $a.use(fn)
+  $a.update()
   await Promise.resolve()
   t.is(log, ['destroy 1', 'init 1'])
 
   log = [], id = 1
-  $a.use(fn)
+  $a.update()
   await Promise.resolve()
   t.is(log, ['destroy 1', 'destroy 3', 'init 1', 'init 3'])
 })

@@ -41,7 +41,6 @@ let fxCount, // used as order-based effect key
 
 
 export default function create(...args) { return new $(...args) }
-
 class $ extends Array {
   constructor (arg, ...args) {
     super()
@@ -127,7 +126,6 @@ function updateObservers(el, effect, path) {
 
 Object.assign($.prototype, {
   use: function (...fns) {
-    let destroy = []
     this.forEach(el => {
       let aspects = aspectsCache.get(el)
       if (!aspects) aspectsCache.set(el, aspects = [])
@@ -135,15 +133,23 @@ Object.assign($.prototype, {
       fns.forEach(fn => {
         if (aspects.indexOf(fn) < 0) {
           aspects.push(fn)
+          callAspect(el, fn)
         }
       })
     })
 
+    return this
+  },
+
+  update: function () {
     this.forEach(el => {
-      aspectsCache.get(el).forEach(fn => {
-        destroy.push(callAspect(el, fn))
-      })
+      let aspects = aspectsCache.get(el)
+      if (!aspects) return
+
+      aspects.forEach(fn => callAspect(el, fn))
     })
+
+    return this
   },
 
   fx: function (fn, deps) {
