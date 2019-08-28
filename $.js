@@ -26,9 +26,22 @@ let html = htm.bind(h)
 const isStacktraceAvailable = true
 
 
+const elCache = new WeakMap,
+  aspectsCache = new WeakMap,
+  depsCache = new WeakMap,
+  destroyCache = new WeakMap,
+  observables = new WeakMap,
+  stateCache = new WeakMap,
+  attrCache = new WeakMap
+
+let fxCount, // used as order-based effect key
+  fxId, // used as precompiled effect key
+  currentElement,
+  currentAspect
+
+
 export default function create(...args) { return new $(...args) }
 
-const elCache = new WeakMap
 class $ extends Array {
   constructor (arg, ...args) {
     super()
@@ -83,19 +96,6 @@ class $ extends Array {
   }
 }
 
-
-const aspectsCache = new WeakMap,
-  depsCache = new WeakMap,
-  destroyCache = new WeakMap,
-  observables = new WeakMap,
-  stateCache = new WeakMap,
-  attrCache = new WeakMap,
-  prevCache = new WeakMap
-
-let fxCount, // used as order-based effect key
-  fxId, // used as precompiled effect key
-  currentElement,
-  currentAspect
 
 function callAspect(el, fn) {
   let prevAspect = currentAspect,
