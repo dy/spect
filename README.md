@@ -142,16 +142,16 @@ $`#timer-example`.use(el => {
   // init
   $el.state({ seconds: 0 }, [])
 
-  // start timer
+  // start timer when connected
   $el.mount(() => {
     let i = setInterval( () => $el.state(s => s.seconds++), 1000 )
 
     return () => clearInterval(i)
   })
 
-  $el.html`Seconds: ${ $el.state`seconds` }`
+  $el.html`Seconds: ${ $el.state('seconds') }`
 
-  console.log($el.state`seconds`)
+  console.log($el.state('seconds'))
 })
 
 ```
@@ -176,10 +176,10 @@ function Todo (el) {
   $el.on('submit', e => {
     e.preventDefault();
 
-    if (!$el.state`text.length`) return;
+    if (!$el.state('text.length')) return;
 
     const newItem = {
-      text: el.state`text`,
+      text: el.state('text'),
       id: Date.now()
     };
 
@@ -194,14 +194,14 @@ function Todo (el) {
 
   $el.html`
     <h3>TODO</h3>
-    <main is=${TodoList} items=${ $el.state`items` }/>
+    <main is=${TodoList} items=${ $el.state('items') }/>
     <form>
       <label for=new-todo>
         What needs to be done?
       </label>
-      <input#new-todo value=${ $el.state`text` }/>
+      <input#new-todo value=${ $el.state('text') }/>
       <button>
-        Add #${ $el.state`items.length` + 1 }
+        Add #${ $el.state('items.length') + 1 }
       </button>
     </form>
   `
@@ -237,7 +237,7 @@ import Remarkable from 'remarkable'
 export default function MarkdownEditor (el) {
   let $el = $(el)
 
-  $el.state({ value: $el.prop`content` }, [ $el.prop`content` ])
+  $el.state({ value: $el.prop('content') }, [ $el.prop('content') ])
 
   $el.class`markdown-editor`
 
@@ -248,10 +248,10 @@ export default function MarkdownEditor (el) {
     </label>
     <textarea#markdown-content
       onchange=${e => $el.state({ value: e.target.value })}
-    >${ $el.state`value` }</textarea>
+    >${ $el.state('value') }</textarea>
 
     <h3>Output</h3>
-    <div.content html=${ getRawMarkup( $el.prop`content` ) }/>
+    <div.content html=${ getRawMarkup( $el.prop('content') ) }/>
   `
 }
 
@@ -276,7 +276,7 @@ let getRawMarkup = content => {
 ### `$( selector | els | markup )` − selector / h
 
 Select elements in DOM, provide domain methods for the selected set. The main purpose is shallow reference/wrapper for some nodes collection.
-If html string is passed, creates detached DOM - in that case acts like hyperscript.
+If html string is passed, creates detached DOM. Also acts like hyperscript.
 
 ```js
 // select nodes
@@ -294,7 +294,7 @@ $('div', {}, null)
 
 ### `.use( ...fns )` − assign aspects
 
-Assign aspect function(s) to set of elements. Each `fn` is called for every element in the set with the element as single argument. Aspects rerender whenever `state`, `attr` or other data source updates. The data sources are subscribed to automatically if read.
+Assign aspect function(s) to set of elements. Each `fn` is called for every element in the set with the element as single argument. Aspects rerender whenever any internal effect data changes. The internal effects are subscribed to automatically on read.
 
 ```js
 let $outer = $`.outer`
@@ -327,7 +327,7 @@ Note that aspects act like custom elements - once assigned, elements cannot be "
 <p align="right">Ref: <a href="https://ghub.io/reuse">reuse</a></p>
 
 
-### `.fx( deps => destroy? , deps? )` − generic side-effects provider
+### `.fx( el => destroy? , deps? )` − generic side-effects provider
 
 Microtask effect function for selected elements (queued immediately after current call stack). Unlike in `useEffect`, `deps` are passed as argument. Additionally, non-array `deps` can be passed to organize primitive FSM.
 
@@ -336,13 +336,13 @@ Microtask effect function for selected elements (queued immediately after curren
 $els.fx(() => {})
 
 // called when value changes to non-false
-$els.fx(visible => (show(), hide), visible)
+$els.fx(() => (show(), hide), visible)
 
 // called on init only
 $els.fx(() => {}, [])
 
 // destructor
-$els.fx(deps => prevDeps => destroy(), deps)
+$els.fx(() => destroy, deps)
 
 // called for each element in the set
 $els.fx(el => $(el).something)

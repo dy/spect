@@ -335,7 +335,6 @@ function commit(key, deps, destroy) {
   return true
 }
 
-// calc key for fx callsite
 function fxKey () {
   let key
 
