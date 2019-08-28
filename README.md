@@ -56,15 +56,12 @@ $`#app`.use(main, preloader);
 
 Spect is build with a set of modern practices in mind (proxies, symbols, tagged strings, virtual dom, incremental dom, htm, custom elements, hooks, observers, tuples, frp). It grounds on API design research, experiments and proofs.
 
-🎡
-
-#### Wheel formula:
+#### 🎡 Wheel formula:
 
 > _Spect_ = _$ Collections_ + _Reactive Aspects_ + _Side-Effects_
 
-🏛️
 
-#### Principles:
+#### 🏛️ Principles:
 
 1. Expressivity.
 2. No bundling.
