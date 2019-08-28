@@ -3,11 +3,11 @@ import $ from '../index.js'
 
 t('on: instant trigger must be handled', t => {
   let log = []
-  let el = $`<a.foo/>`
+  let $el = $`<a.foo/>`
 
-  el.on('a', () => log.push('a'))
-  el.emit('a')
-  t.is(log, ['a'])
+  $el.on('click', () => log.push('click'))
+  $el[0].click()
+  t.is(log, ['click'])
 
   // el.use(fn => {
   //   el.on('b', () => log.push('b'))
@@ -16,18 +16,9 @@ t('on: instant trigger must be handled', t => {
   // })
 })
 
-t('on: should be available via html', t => {
+t.todo('on: should be available via html', t => {
   let foo = []
 
   let el = $`<a.foo on=${{ foo: () => log.push('bar') }}`
 })
 
-t('on: assign / destruct listeners, basic ', t => {
-  let $els = $`<div />`
-
-  $els.use($el => {
-    $el.on('click', () => {
-
-    })
-  })
-})

@@ -159,7 +159,7 @@ Object.assign($.prototype, {
     })
   },
 
-  on: function (evts, delegate, fn) {
+  on: function (evts, delegate, fn, deps) {
     if (typeof delegate === 'function') {
       deps = fn
       fn = delegate
@@ -537,7 +537,9 @@ function createEffect (effectName, get, set, is = Object.is) {
 
       let key = tuple(el, effectName, name)
       if (!observables.has(key)) observables.set(key, new Set)
-      observables.get(key).add(tuple(currentElement, currentAspect))
+      if (currentElement) {
+        observables.get(key).add(tuple(currentElement, currentAspect))
+      }
 
       return get(el, name)
     }
