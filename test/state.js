@@ -32,7 +32,7 @@ t('state: functional get/set', t => {
   t.is($a.state`count`, 1)
 })
 
-t('state: init gate', t => {
+t.skip('state: init gate', t => {
   let log = [], x = 1
   let $a = $`<a/>`
 
@@ -46,7 +46,7 @@ t('state: init gate', t => {
   function fn (el) {
     $a = $(el)
 
-    $a.init(() => $a.state({ x }))
+    $a.state({ x }, [])
   }
 })
 

@@ -491,7 +491,7 @@ $target.text()
 ```
 
 
-### ``.css( styles)`` − CSS side-effect
+### ``.css( styles, deps? )`` − CSS side-effect
 
 Provide scoped CSS styles for collection.
 
@@ -511,7 +511,7 @@ $target.css` :host { width: 100%} `
 <p align="right">Ref: <a href="https://ghub.io/virtual-css">virtual-css</a></p>
 
 
-### `.class( ...classes )` − class list side-effect
+### `.class( ...classes, deps? )` − class list side-effect
 
 Manipulate elements classes.
 
@@ -523,12 +523,9 @@ $target.class({ foo: true, bar: false, bas: isTrue() })
 $target.class(clsx => clsx.foo = false)
 
 // read classes
-$target.class`foo`
+$target.class('foo')
 $target.class()
 ```
-
-<!-- $target.class = {foo: true, bar: false, baz: () => false} -->
-<!-- $target.class // { foo: true, bar: true } -->
 
 <p align="right">Ref: <a href="https://ghub.io/clsx">clsx</a>, <a href="https://ghub.io/classnames">classnames</a></p>
 

@@ -1,7 +1,7 @@
 import equal from 'fast-deep-equal'
 import onload from 'fast-on-load'
 import delegated from 'delegate-it'
-import clsx from 'clsx'
+import { parse as parseStack } from 'stacktrace-parser'
 import tuple from 'immutable-tuple'
 import htm from 'htm'
 import kebab from 'kebab-case'
@@ -22,6 +22,7 @@ attributes[symbols.default] = applyProp
 
 let html = htm.bind(h)
 
+const isStacktraceAvailable = true
 
 
 export default function create(...args) { return new $(...args) }
@@ -142,13 +143,24 @@ Object.assign($.prototype, {
     })
   },
 
-  fx: function (fn, deps) {
+  fx: function (fn, deps, id) {
     fxCount++
-    let key = tuple(currentElement, currentAspect, fxCount)
 
-    // TODO: use callsite to identify fx
-    // let [, callsite, ...trace] = stack.parse((new Error).stack)
-    // let id = callsite.lineNumber + '-' + callsite.column
+    let key
+    if (id === undefined) {
+      if (!isStacktraceAvailable) {
+        key = tuple(currentElement, currentAspect, fxCount)
+      }
+      else {
+        let [fxsite, callsite, ...trace] = parseStack((new Error).stack)
+        let siteurl = callsite.file + ':' + callsite.lineNumber + ':' + callsite.column
+        key = tuple(currentElement, currentAspect, siteurl)
+      }
+    }
+    // precompiled fx may generate unique id per-effect call
+    else {
+      key = tuple(currentElement, currentAspect, id)
+    }
 
     if (deps !== undefined) {
       let prev = depsCache.get(key)

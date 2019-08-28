@@ -54,7 +54,8 @@
     "incremental-dom": "^0.6.0",
     "kebab-case": "^1.0.0",
     "primitive-pool": "^1.1.0",
-    "raf": "^3.4.1"
+    "raf": "^3.4.1",
+    "stacktrace-parser": "^0.1.6"
   },
   "devDependencies": {
     "setimmediate": "^1.0.5",
