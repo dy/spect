@@ -1,22 +1,24 @@
-# Spect ![experimental](https://img.shields.io/badge/stability-experimental-red)
+# Spect ![experimental](https://img.shields.io/badge/stability-experimental-red) [![Build Status](https://travis-ci.org/dy/spect.svg?branch=master)](https://travis-ci.org/dy/spect)
 
 Spect is [_aspect_-oriented](https://en.wikipedia.org/wiki/Aspect-oriented_programming) framework for creating expressive UIs.
 
-> :ferris_wheel: _Spect_ = _$_ + _aspects_ + _effects_
-
 ```js
 import $ from 'spect';
+import route from 'spect-router';
 import ky from 'ky';
 import { t, useLocale } from 'ttag';
 
 // main app aspect - loading & rendering data data
 function main (app) {
+  let [ match, {id} ] = route`/user/:id`;
+  if (!match) return
+
   let $app = $(app)
 
   // run state effect when `id` changes (useState + useEffect + idx)
   $app.state(state => {
     state.loading = true;
-    state.user = await ky.get`./api/user/${$app.attr`id`}`;
+    state.user = await ky.get`./api/user/${ id }`;
     state.loading = false;
   }, [id]);
 
@@ -54,7 +56,12 @@ $`#app`.use(main, preloader);
 
 Spect is build with a set of modern practices in mind (proxies, symbols, tagged strings, virtual dom, incremental dom, htm, custom elements, hooks, observers, tuples, frp). It grounds on API design research, experiments and proofs.
 
-Principles:
+#### :ferris_wheel: Wheel formula:
+
+> _Spect_ = _$ Collections_ + _Reactive Aspects_ + _Side-Effects_
+
+
+#### Principles:
 
 > 1. Expressivity.
 > 2. No bundling.
@@ -86,7 +93,7 @@ Other approaches include:
 
 **A.** As _npm_ package:
 
-[![npm install spect](https://nodei.co/npm/spect.png?mini=true)](https://npmjs.org/package/spect/)
+[![npm i spect](https://nodei.co/npm/spect.png?mini=true)](https://npmjs.org/package/spect/)
 
 ```js
 import $ from 'spect'
