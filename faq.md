@@ -15,6 +15,11 @@ That concept is taken a step forward, enabling separation of [cross-cutting conc
 Aspects gracefully solve many common standard frontend tasks, such as portals, code splitting, hydration etc.
 
 
+### Why effects?
+
+Effects enable subscription of updating aspects. This way, if we read some effect in an aspect, that automatically subscribes that aspect for updates whenever that effect changes. Also effects provide unified and easier API.
+
+
 ### Portals?
 
 Portals come out of the box:

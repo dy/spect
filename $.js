@@ -208,23 +208,20 @@ Object.assign($.prototype, {
       if (!state) stateCache.set(el, state = {})
       return state
     }
-    return [(...args) => args.length > 1 ? getState(args[0])[args[1]] : getState(args[0]), (el, name, value) => getState(el)[name] = value]
+    return [getState, (el, name) => getState(el)[name], (el, name, value) => getState(el)[name] = value]
   })()),
 
   prop: createEffect('prop',
-    (el, ...args) => args.length ? el[args[0]] : el,
+    (el) => el,
+    (el, name) => el[name],
     (el, name, value) => el[name] = value
   ),
 
-  attr: createEffect('attr', (...args) => {
-      let [el, name] = args
-
-      if (args.length < 2) {
-        let obj = {}
-        for (let attr of el.attributes) obj[attr.name] = attr.value
-        return obj
-      }
-
+  attr: createEffect('attr', el => {
+    let obj = {}
+    for (let attr of el.attributes) obj[attr.name] = attr.value
+    return obj
+  }, (el, name) => {
       if (!attrCache.has(el)) {
         let observer = new MutationObserver(records => {
           for (let i = 0, length = records.length; i < length; i++) {
@@ -303,21 +300,140 @@ Object.assign($.prototype, {
     return this
   },
 
-  text: createEffect('text', (el, name) => {}, (el, name, value) => {}),
+  text: createEffect('text', el => el.textContent, (el, value) => el.textContent = value),
 
-  class: createEffect('class', (el, ...args) => {
-    if (args.length) return el.classList.contains(args[0])
-
+  class: createEffect('class', el => {
     let obj = {}
     for (let cl of el.classList) obj[cl.name] = cl.value
     return obj
-  }, (el, name, value) => {
+  }, (el, name) => el.classList.contains(name), (el, name, value) => {
     if (!value) el.classList.remove(name)
     else el.classList.add(name)
   }),
 
-  css: createEffect('css', (el, name) => {}, (el, name, value) => {})
+  css: createEffect('css', (el) => {}, (el, name) => {}, (el, name, value) => {})
 })
+
+
+// register effect call, check deps, if changed - call destroy
+function commit(key, deps, destroy) {
+  if (deps !== undefined) {
+    let prev = depsCache.get(key)
+
+    if (Array.isArray(deps)) {
+      if (equal(deps, prev)) return false
+      depsCache.set(key, deps)
+    }
+  }
+
+  if (destroyCache.has(key)) {
+    let destroy = destroyCache.get(key)
+    if (destroy && destroy.call) destroy.call()
+  }
+  destroyCache.set(key, destroy)
+
+  return true
+}
+
+// calc key for fx callsite
+function fxKey () {
+  let key
+
+  // precompiled bundle inserts unique fxid before effect calls
+  if (fxId) {
+    key = tuple(currentElement, currentAspect, fxId)
+    fxId = null
+  }
+  else {
+    // stacktrace key is precise for
+    if (isStacktraceAvailable) {
+      // FIXME: exact stack is susceptible to babel-ish transforms
+      let [fxKeysite, fxsite, callsite, ...trace] = parseStack((new Error).stack)
+      let siteurl = callsite.file + ':' + callsite.lineNumber + ':' + callsite.column
+      key = tuple(currentElement, currentAspect, siteurl)
+    }
+    // fallback to react order-based key
+    else {
+      key = tuple(currentElement, currentAspect, fxCount++)
+    }
+  }
+
+  return key
+}
+
+function createEffect (effectName, get0, get, set, is = Object.is) {
+  return function effect (...args) {
+    // get()
+    if (!args.length) {
+      return get0(this[0])
+    }
+
+    // state(s => {...}, deps)
+    if (typeof args[0] === 'function') {
+      let fn = args.shift()
+      let deps = args.shift()
+
+      if (!commit(fxKey(), deps)) return false
+
+      this.forEach(el => {
+        let draft
+        let state = get0(el)
+        try {
+          // Object.create is faster than assign
+          draft = Object.create(state)
+          let result = fn(draft)
+          if (typeof result === 'object') draft = result
+        } catch (e) { }
+
+        Object.getOwnPropertyNames(draft).forEach(prop => {
+          if (draft[prop] !== state[prop]) setNameValue(el, prop, draft[prop])
+        })
+      })
+
+      return true
+    }
+
+    // set(obj, deps)
+    if (typeof args[0] === 'object' && !args[0].raw) {
+      let [props, deps] = args
+
+      if (!commit(fxKey(), deps)) return
+
+      for (let name in props) {
+        this[effectName](name, props[name], ...args)
+      }
+      return
+    }
+
+    // get(name)
+    if (args.length == 1) {
+      let name = args[0].raw ? String.raw(args.shift()) : args.shift()
+      let el = this[0]
+
+      let key = tuple(el, effectName, name)
+      if (!observables.has(key)) observables.set(key, new Set)
+      if (currentElement) {
+        observables.get(key).add(tuple(currentElement, currentAspect))
+      }
+
+      return get(el, name)
+    }
+
+    // set(name, value)
+    let [name, value, deps] = args
+    if (!commit(fxKey(), deps)) return
+    this.forEach(el => setNameValue(el, name, value))
+  }
+
+  function setNameValue(el, name, value) {
+    let prev = get(el, name)
+
+    if (is(prev, value)) return
+
+    set(el, name, value)
+    updateObservers(el, effectName, name)
+  }
+}
 
 
 function h(target, props = {}, ...children) {
@@ -431,132 +547,6 @@ function createClass(fn, HTMLElement) {
     disconnectedCallback() {
 
     }
-  }
-}
-
-// register effect call, check deps, if changed - call destroy
-function commit(key, deps, destroy) {
-  if (deps !== undefined) {
-    let prev = depsCache.get(key)
-
-    if (Array.isArray(deps)) {
-      if (equal(deps, prev)) return false
-      depsCache.set(key, deps)
-    }
-  }
-
-  if (destroyCache.has(key)) {
-    let destroy = destroyCache.get(key)
-    if (destroy && destroy.call) destroy.call()
-  }
-  destroyCache.set(key, destroy)
-
-  return true
-}
-
-// calc key for fx callsite
-function fxKey () {
-  let key
-
-  // precompiled bundle inserts unique fxid before effect calls
-  if (fxId) {
-    key = tuple(currentElement, currentAspect, fxId)
-    fxId = null
-  }
-  else {
-    // stacktrace key is precise for
-    if (isStacktraceAvailable) {
-      // FIXME: exact stack is susceptible to babel-ish transforms
-      let [fxKeysite, fxsite, callsite, ...trace] = parseStack((new Error).stack)
-      let siteurl = callsite.file + ':' + callsite.lineNumber + ':' + callsite.column
-      key = tuple(currentElement, currentAspect, siteurl)
-    }
-    // fallback to react order-based key
-    else {
-      key = tuple(currentElement, currentAspect, fxCount++)
-    }
-  }
-
-  return key
-}
-
-function createEffect (effectName, get, set, is = Object.is) {
-  return function effect (...args) {
-    // get()
-    if (!args.length) {
-      return get(this[0])
-    }
-
-    // state(s => {...}, deps)
-    if (typeof args[0] === 'function') {
-      let result
-      let fn = args.shift()
-      let deps = args.shift()
-
-      let key = fxKey()
-      if (!commit(key, deps)) {
-        return prevCache.get(key)
-      }
-
-      this.forEach((el, i) => {
-        let draft
-        let state = get(el)
-        try {
-          // Object.create is faster than assign
-          draft = Object.create(state)
-          if (!i) {
-            result = fn(draft)
-          } else fn(draft)
-        } catch (e) { }
-
-        Object.getOwnPropertyNames(draft).forEach(prop => {
-          if (draft[prop] !== state[prop]) setNameValue(el, prop, draft[prop])
-        })
-      })
-
-      prevCache.set(key, result)
-      return result
-    }
-
-    // set(obj, deps)
-    if (typeof args[0] === 'object' && !args[0].raw) {
-      let [props, deps] = args
-
-      if (!commit(fxKey(), deps)) return
-
-      for (let name in props) {
-        this[effectName](name, props[name], ...args)
-      }
-      return
-    }
-
-    // get(name)
-    if (args.length == 1) {
-      let name = args[0].raw ? String.raw(args.shift()) : args.shift()
-      let el = this[0]
-
-      let key = tuple(el, effectName, name)
-      if (!observables.has(key)) observables.set(key, new Set)
-      if (currentElement) {
-        observables.get(key).add(tuple(currentElement, currentAspect))
-      }
-
-      return get(el, name)
-    }
-
-    // set(name, value)
-    let [name, value, deps] = args
-    if (!commit(fxKey(), deps)) return
-    this.forEach(el => setNameValue(el, name, value))
-  }
-
-  function setNameValue(el, name, value) {
-    let prev = get(el, name)
-
-    if (is(prev, value)) return
-
-    set(el, name, value)
-    updateObservers(el, effectName, name)
   }
 }
 

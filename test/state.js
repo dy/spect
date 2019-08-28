@@ -50,22 +50,6 @@ t('state: init gate', t => {
   }
 })
 
-t('state: functional state saves dep value', t => {
-  let $a = $`<a/>`
-
-  $a.state({x: 1})
-  $a.use(fn)
-  $a.state({x: 2})
-  $a.use(fn)
-
-  function fn (el) {
-    let $el = $(el)
-    let x = $el.state(s => s.x, [])
-    t.is(x, 1)
-  }
-})
-
-
 t.skip('state: counter', t => {
   let stop = 0
   let $els = $`<div.a/>`.use(a => {

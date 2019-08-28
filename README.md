@@ -2,52 +2,52 @@
 
 Spect is [_aspect_-oriented](https://en.wikipedia.org/wiki/Aspect-oriented_programming) framework for creating expressive UIs.
 
-:ferris_wheel: Formula:
-> _Spect_ = _Collections_ + _Reactive Aspects_ + _Side-Effects_
+> :ferris_wheel: _Spect_ = _$_ + _aspects_ + _effects_
 
 ```js
 import $ from 'spect';
-import page from 'page';
 import ky from 'ky';
 import { t, useLocale } from 'ttag';
 
-page(`user/:id`, ({ params: { id } }) => {
-  $`#app`.use(main, preloader);
-});
-
-// main app aspect - loading data logic
+// main app aspect - loading & rendering data data
 function main (app) {
   let $app = $(app)
 
   // run state effect when `id` changes (useState + useEffect + idx)
   $app.state(state => {
     state.loading = true;
-    state.user = await ky.get`./api/user/${id}`;
+    state.user = await ky.get`./api/user/${$app.attr`id`}`;
     state.loading = false;
   }, [id]);
 
-  // render html as side-effect
+  // html side-effect
   $app.html`<p use=${i18n}>${
-    $app.state`loading` ? `Hello, ${ $app.state`user.name` }!` : `Thanks for patience...`;
+    $app.state('loading') ? `Hello, ${ $app.state('user.name') }!` : `Thanks for patience...`;
   }</p>`;
 }
 
-// preloader aspect - append spinner when loading state changes
+// preloader aspect - appends spinner when loading state changes
 function preloader (el) {
   let $el = $(el)
   $el.fx(() => {
     let orig = $el.html()
     $el.html`${ orig } <canvas.spinner />`
     return () => $el.html`${ orig }`
-  }, $el.state`loading`);
+  }, $el.state('loading'));
 }
 
-// i18n aspect - translate content when `lang` attribute changes
+// i18n aspect - translates content when `lang` attribute changes
 function i18n (el) {
   let $el = $(el)
-  $el.fx(lang => useLocale(lang), $el.attr`lang` ||  $(document.documentElement).attr`lang`)
-  $el.text(text => t(text))
+  let lang = $el.attr`lang` ||  $(document.documentElement).attr`lang`
+  $el.fx(el => {
+    useLocale(lang)
+    el.text(text => t(text))
+  }, lang)
 }
+
+// assign aspects to #app element
+$`#app`.use(main, preloader);
 ```
 
 ## Concept
