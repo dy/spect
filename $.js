@@ -22,6 +22,7 @@ attributes[symbols.default] = applyProp
 
 let html = htm.bind(h)
 
+// used to turn stacktrace-based effects, opposed to fxCount
 const isStacktraceAvailable = true
 
 
@@ -90,14 +91,14 @@ const aspectsCache = new WeakMap,
   stateCache = new WeakMap,
   attrCache = new WeakMap
 
-let fxCount,
+let fxCount, // used as order-based effect key
+  fxId, // used as precompiled effect key
   currentElement,
   currentAspect
 
 function callAspect(el, fn) {
   let prevAspect = currentAspect,
     prevElement = currentElement
-
   fxCount = 0
   currentElement = el
   currentAspect = fn
@@ -106,6 +107,45 @@ function callAspect(el, fn) {
   currentElement = prevElement
   return result
 }
+
+function commit(deps, destroy) {
+  let key
+
+  // precompiled bundle inserts unique fxid before effect calls
+  if (fxId) {
+    key = tuple(currentElement, currentAspect, fxId)
+    fxId = null
+  }
+  else {
+    // stacktrace key is precise for
+    if (isStacktraceAvailable) {
+      let [commitsite, fxsite, callsite, ...trace] = parseStack((new Error).stack)
+      let siteurl = callsite.file + ':' + callsite.lineNumber + ':' + callsite.column
+      key = tuple(currentElement, currentAspect, siteurl)
+    }
+    // fallback to react order-based key
+    else {
+      key = tuple(currentElement, currentAspect, fxCount++)
+    }
+  }
+
+  if (deps !== undefined) {
+    let prev = depsCache.get(key)
+
+    if (Array.isArray(deps)) {
+      if (equal(deps, prev)) return false
+      depsCache.set(key, deps)
+    }
+  }
+
+  if (destroyCache.has(key)) {
+    destroyCache.get(key).call()
+  }
+  destroyCache.set(key, destroy)
+
+  return true
+}
+
 
 let q = new Set, planned = null
 function updateObservers(el, effect, path) {
@@ -143,39 +183,8 @@ Object.assign($.prototype, {
     })
   },
 
-  fx: function (fn, deps, id) {
-    fxCount++
-
-    let key
-    if (id === undefined) {
-      if (!isStacktraceAvailable) {
-        key = tuple(currentElement, currentAspect, fxCount)
-      }
-      else {
-        let [fxsite, callsite, ...trace] = parseStack((new Error).stack)
-        let siteurl = callsite.file + ':' + callsite.lineNumber + ':' + callsite.column
-        key = tuple(currentElement, currentAspect, siteurl)
-      }
-    }
-    // precompiled fx may generate unique id per-effect call
-    else {
-      key = tuple(currentElement, currentAspect, id)
-    }
-
-    if (deps !== undefined) {
-      let prev = depsCache.get(key)
-
-      // array dep - enter by change
-      if (Array.isArray(deps)) {
-        if (equal(deps, prev)) return this
-        depsCache.set(key, deps)
-      }
-    }
-
-    if (destroyCache.has(key)) {
-      destroyCache.get(key).call()
-    }
-    destroyCache.set(key, () => destroy.forEach(fn => fn && fn()))
+  fx: function (fn, deps) {
+    if (!commit(deps, () => destroy.forEach(fn => fn && fn()))) return
 
     let destroy = []
 

@@ -32,7 +32,7 @@ t('state: functional get/set', t => {
   t.is($a.state`count`, 1)
 })
 
-t.skip('state: init gate', t => {
+t.only('state: init gate', t => {
   let log = [], x = 1
   let $a = $`<a/>`
 
