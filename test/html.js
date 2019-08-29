@@ -19,15 +19,13 @@ t('html: readme attributes', t => {
   t.is($div[0].firstChild.foo, 'bar')
 })
 
-t.todo('html: simple component', t => {
-  $(document.createElement('div')).html`<${C}/>`
+t('html: component static props', t => {
+  $`<div/>`.html`<${C}#x.y.z/>`
 
-  function C ($el) {
-    console.log(1, $el)
-
-    setTimeout(() => {
-      console.log(2)
-    }, 100);
+  function C (el) {
+    t.is(el.id, 'x')
+    t.ok(el.classList.contains('y'))
+    t.ok(el.classList.contains('z'))
   }
 })
 
@@ -38,4 +36,12 @@ t.todo('html: must ignore multiple wrapping calls', t => {
   // but if we have only wrapping aspect and no enforcing-html aspects
   // that can cause recursive thrashing
   //
+})
+
+
+t.todo('html: fake gl layers', t => {
+  html`<canvas is=${GlCanvas}>
+    <${GlLayer}>${gl => { }}<//>
+    <${GlLayer}>${gl => { }}<//>
+  </canvas>`
 })

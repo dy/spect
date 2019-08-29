@@ -119,18 +119,23 @@ function callAspect(el, fn) {
 }
 
 
-let q = new Set, planned = null
+let q = new Set, planned = Promise.resolve()
+
+function queue(el, fn) {
+  if (!q.size) planned.then(() => {
+    for (let [el, fn] of q) callAspect(el, fn)
+    q.clear()
+  })
+  q.add(tuple(el, fn))
+}
+
 function updateObservers(el, effect, path) {
   let key = tuple(el, effect, path)
   let observers = observables.get(key)
   if (!observers) return
-  for (let observer of observers) {
-    q.add(observer)
+  for (let [el, fn] of observers) {
+    queue(el, fn)
   }
-  if (!planned) planned = Promise.resolve().then(() => {
-    planned = null
-    for (let [el, fn] of q) callAspect(el, fn)
-  })
 }
 
 
@@ -463,16 +468,11 @@ function h(target, props = {}, ...children) {
 
   // direct element
   else if (typeof target === 'string') {
-    let [beforeId, afterId = ''] = target.split('#')
-    let beforeClx = beforeId.split('.')
-    tag = beforeClx.shift()
-    let afterClx = afterId.split('.')
-    id = afterClx.shift()
-    classes = [...beforeClx, ...afterClx]
+    let parts = parseTagComponents(target)
+    tag = parts[0]
+    id = parts[1]
+    classes = parts[2]
   }
-
-  if (id) staticProps.push('id', id)
-  if (classes.length) staticProps.push('class', classes.join(' '))
 
   // figure out effects: array props, anonymous aspects or child functions
   for (let prop in props) {
@@ -480,8 +480,8 @@ function h(target, props = {}, ...children) {
     // <div use=${use}>
     if (prop === 'use') use = Array.isArray(val) ? val : [val]
 
+    // <div is=${fn}>
     if (prop === 'is') {
-      // <div is=${fn}>
       if (typeof val === 'function') {
         is = getTagName(val)
         constructor = getCustomElement(val, tag)
@@ -491,8 +491,18 @@ function h(target, props = {}, ...children) {
       // we don't touch that, user knows what he's doing
     }
 
+    // <${Component}#x.y.z/> htm props hack
+    else if (val === true && prop[0] === '#' || prop[0] === '.') {
+      let parts = parseTagComponents(prop)
+      if (!id && parts[1]) id = parts[1]
+      classes.push(...parts[2])
+    }
+
     else propsArr.push(prop, val)
   }
+
+  if (id) staticProps.push('id', id)
+  if (classes.length) staticProps.push('class', classes.join(' '))
 
   let key = id || (props && (props.key || props.id))
 
@@ -509,7 +519,17 @@ function h(target, props = {}, ...children) {
   }
 }
 
-
+// a#b.c.d => ['a', 'b', ['c', 'd']]
+function parseTagComponents (str) {
+  let tag, id, classes
+  let [beforeId, afterId = ''] = str.split('#')
+  let beforeClx = beforeId.split('.')
+  tag = beforeClx.shift()
+  let afterClx = afterId.split('.')
+  id = afterClx.shift()
+  classes = [...beforeClx, ...afterClx]
+  return [tag, id, classes]
+}
 
 
 let nameCache = new WeakMap
@@ -552,7 +572,7 @@ function createClass(fn, HTMLElement) {
   return class HTMLSpectComponent extends HTMLElement {
     constructor() {
       super()
-      callAspect(this, fn)
+      queue(this, fn)
     }
 
     connectedCallback() {
