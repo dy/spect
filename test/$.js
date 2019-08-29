@@ -15,7 +15,6 @@ t('$: create from nodes', t => {
   let $difNodes = $([el, document.createElement('div')])
   t.is($difNodes.length, 2)
   t.is($difNodes[0], el)
-
 })
 
 t('$: create new', t => {
@@ -29,7 +28,15 @@ t('$: create new', t => {
   t.equal($tpl.length, 2)
 })
 
-t.skip('$: sustain dynamic nodes list as reference under the hood', t => {
+t('$: subselect nodes', t => {
+  let $foo = $`<foo><bar/></foo>`
+
+  let $bar = $(`bar`, $foo)
+
+  t.is($bar[0], $foo[0].firstChild)
+})
+
+t.skip('$: live nodes list as reference under the hood', t => {
   // FIXME: that's insustainable for now: we have to extend Spect class from Proxy-ed prototype,
   // providing numeric access to underneath store, like NodeList etc.
   // The proxy prototype looks
@@ -84,5 +91,26 @@ t('$: fragments', t => {
   // t.ok(foo2 instanceof Node)
 })
 
+t('$: empty selectors', t => {
+  let $x = $()
+  t.is($x.length, 0)
 
+  let $y = $('xyz')
+  t.is($y.length, 0)
 
+  let $z = $(null)
+  t.is($z.length, 0)
+
+  t.notEqual($x, $y)
+  t.notEqual($x, $z)
+})
+
+t('$: selecting forms', t => {
+  let $f = $`<form><input name="a"/><input name="b"/></form>`
+
+  let $form = $($f)
+
+  t.is($f, $form)
+  t.is($form[0].childNodes.length, 2)
+  t.is($form[0], $f[0])
+})

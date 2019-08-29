@@ -2,7 +2,7 @@
   "name": "spect",
   "version": "4.0.0",
   "description": "Aspect-oriented DOM framework",
-  "main": "src/index.js",
+  "main": "./src/index.js",
   "@pika/pack": {
     "pipeline": [
       [

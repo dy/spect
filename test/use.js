@@ -166,11 +166,3 @@ t.todo('use: new custom element', t => {
   })
 })
 
-t('use: null target', t => {
-  t.throws(() => {
-    $(null)
-  })
-  t.throws(() => {
-    $()
-  })
-})

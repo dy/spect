@@ -81,15 +81,14 @@ class $ extends Array {
         return create(result[0].childNodes)
       }
 
-      arg = document.querySelector(arg)
+      let within = args[0] ? (args[0] instanceof $ ? args[0][0] : args[0] ) : document
+
+      arg = within.querySelector(arg)
+
+      if (!arg) return this
     }
 
-    // selector can query new els set, so we update the list
-    if (typeof arg === 'string') {
-      arg = document.querySelectorAll(arg)
-    }
-
-    if (isIterable(arg)) {
+    if (!(arg instanceof Node) && isIterable(arg)) {
       let set = new Set()
 
       for (let i = 0; i < arg.length; i++) {
@@ -99,13 +98,12 @@ class $ extends Array {
           this.push(el)
         }
       }
-      if (this.length === 1) elCache.set(this[0], this)
     }
-    else {
+    else if (arg) {
       this[0] = arg
-      elCache.set(this[0], this)
     }
 
+    if (this.length === 1 && this[0] instanceof Node) elCache.set(this[0], this)
   }
 }
 
