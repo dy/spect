@@ -1,7 +1,8 @@
 import t from 'tst'
-import $, { mount } from '../src/index.js'
+import $ from '..'
 
-t('mount: multiple mount callbacks', async t => {
+
+t.todo('mount: multiple mount callbacks', async t => {
   let log = []
 
   let x = document.createElement('div')
@@ -22,18 +23,18 @@ t('mount: multiple mount callbacks', async t => {
 
   document.documentElement.appendChild(x)
 
-  await (() => {})
+  await (() => { })
 
   t.deepEqual(log, ['mount A', 'mount B'], 'multiple mounts')
 
   document.documentElement.removeChild(x)
 
-  await (() => {})
+  await (() => { })
 
   t.deepEqual(log, ['mount A', 'mount B', 'unmount A', 'unmount B'], 'multiple unmounts')
 })
 
-t('mount: unsynced aspects should not affect mount of each other', async t => {
+t.todo('mount: unsynced aspects should not affect mount of each other', async t => {
   let log = []
 
   let el = document.createElement('div')
@@ -52,11 +53,11 @@ t('mount: unsynced aspects should not affect mount of each other', async t => {
     })
   })
 
-  await (_=>_)
+  await (_ => _)
   t.deepEqual(log, [])
 
   document.body.appendChild(el)
-  await (_=>_)
+  await (_ => _)
   t.deepEqual(log, ['+a', '+b'])
 })
 
@@ -64,6 +65,6 @@ t.skip('mount: instant remove/insert shouldn\'t trigger callback', async t => {
   // TODO
 })
 
-t('mount: async callback')
+t.todo('mount: async callback')
 
-t('mount: generator callback')
+t.todo('mount: generator callback')
