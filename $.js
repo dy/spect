@@ -41,7 +41,7 @@ let fxCount, // used as order-based effect key
 
 
 export default function create(...args) {
-  let doc = this || document
+  let doc = this && this.createElement ? this : document
   return new $(doc, ...args)
 }
 
@@ -57,6 +57,9 @@ class $ extends Array {
       elCache.set(arg, this)
       return this
     }
+
+    // $($)
+    if (arg instanceof $) return arg
 
     // $`...tpl`
     if (arg && arg.raw) {
@@ -92,10 +95,13 @@ class $ extends Array {
           this.push(el)
         }
       }
+      if (this.length === 1) elCache.set(this[0], this)
     }
     else {
       this[0] = arg
+      elCache.set(this[0], this)
     }
+
   }
 }
 
