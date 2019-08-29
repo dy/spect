@@ -3,55 +3,57 @@
 Spect is [_aspect_-oriented](https://en.wikipedia.org/wiki/Aspect-oriented_programming) framework for creating expressive UIs.
 
 ```js
-import $ from 'spect';
-import route from 'spect-router';
-import ky from 'ky';
-import { t, useLocale } from 'ttag';
+import $ from 'spect'
+import route from 'spect-router'
+import ky from 'ky'
+import { t, useLocale } from 'ttag'
 
 // main app aspect - loading & rendering data
 function main (app) {
-  let [ match, {id} ] = route`/user/:id`;
+  let [ match, {id} ] = route`/user/:id`
   if (!match) return
 
   let $app = $(app)
 
   // run state effect when `id` changes (useState + useEffect)
-  $app.state(state => {
-    state.loading = true;
-    state.user = await ky.get`./api/user/${ id }`;
-    state.loading = false;
-  }, [id]);
+  $app.fx(() => {
+    $app.attr('loading', true)
+    $app.state.user = await ky.get`./api/user/${ id }`
+    $app.attr('loading', false)
+  }, [id])
 
   // html side-effect
   $app.html`<p use=${i18n}>${
-    $app.state('loading') ? `Hello, ${ $app.state('user.name') }!` : `Thanks for patience...`;
-  }</p>`;
+    $app.attr('loading') ? `Hello, ${ $app.state('user.name') }!` : `Thanks for patience...`
+  }</p>`
 }
 
 // preloader aspect - appends spinner when loading state changes
 function preloader (el) {
   let $el = $(el)
 
-  // useEffect
+  // toggle
   $el.fx(() => {
-    let orig = $el.html()
-    $el.html`${ orig } <canvas.spinner />`
+    let orig = $el.childNodes
+    $el.html`${orig} <canvas.spinner />`
+
     return () => $el.html`${ orig }`
-  }, $el.state('loading'));
+  }, $el.attr('loading'))
 }
 
 // i18n aspect - translates content when `lang` attribute changes
 function i18n (el) {
   let $el = $(el)
-  let lang = $el.attr('lang') ||  $(document.documentElement).attr('lang')
+  let lang = $el.attr('lang') || $(document.documentElement).attr('lang')
   $el.fx(el => {
     useLocale(lang)
     el.text(text => t(text))
   }, lang)
 }
 
-// assign aspects to #app
-$('#app').use(main, preloader);
+// assign aspects
+$('#app').use(main)
+$('.preloadable').use(preloader)
 ```
 
 ## Concept
@@ -350,7 +352,7 @@ Note that aspects "upgrade" elements - once assigned, elements cannot be "downgr
 
 ### `.fx( el => destroy? , deps? )` − generic side-effect
 
-Run effect function for selected elements (queued as microtask, called immediately after current callstack), very much like `useEffect`, with less limitations. Additionally, non-array `deps` can be passed to organize primitive FSM, triggering any time value changes to non-false, which is useful for binary states like `visible/hidden`, `disabled/enabled`, `active` etc.
+Run effect function for selected elements (queued as microtask, called immediately after current callstack). Very much like `useEffect`, with less limitations. Non-array `deps` can be used to organize toggle / fsm that triggers when value changes to non-false, that is useful for binary states like `visible/hidden`, `disabled/enabled`, `active` etc.
 
 ```js
 // called each time
@@ -374,7 +376,7 @@ $els.fx(el => $(el).something);
 
 ### `.state( name | val, deps? )` − state provider
 
-Read or write state associated with an element. Reading returns first element state in the set. Reading subscribes current aspect to changes of that state. Writing rerenders all subscribed aspects. Optional `deps` param can define bypassing strategy.
+Read or write state associated with an element. Reading returns first element state in the set. Reading subscribes current aspect to changes of that state. Writing rerenders all subscribed aspects. Optional `deps` param can define bypassing strategy, see `.fx`.
 
 ```js
 // write state
