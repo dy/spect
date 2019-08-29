@@ -4,6 +4,8 @@ import { parse as parseStack } from 'stacktrace-parser'
 import tuple from 'immutable-tuple'
 import htm from 'htm'
 import kebab from 'kebab-case'
+import scopeCss from 'scope-css'
+import insertCss from 'insert-styles'
 import {
   patch,
   elementOpen,
@@ -32,13 +34,15 @@ const elCache = new WeakMap,
   destroyCache = new WeakMap,
   observables = new WeakMap,
   stateCache = new WeakMap,
-  attrCache = new WeakMap
+  attrCache = new WeakMap,
+  cssClassCache = new WeakMap
 
 let fxCount, // used as order-based effect key
   fxId, // used as precompiled effect key
   currentElement,
   currentAspect
 
+const SPECT_CLASS = '👁'
 
 export default function create(...args) {
   let doc = this && this.createElement ? this : document
@@ -229,20 +233,31 @@ Object.assign($.prototype, {
       if (!state) stateCache.set(el, state = {})
       return state
     }
-    return [getState, (el, name) => getState(el)[name], (el, name, value) => getState(el)[name] = value]
+    return [
+      function (...args) { return getState(this[0])[String.raw(...args)] },
+      getState,
+      (el, name) => getState(el)[name],
+      (el, name, value) => getState(el)[name] = value
+    ]
   })()),
 
   prop: createEffect('prop',
+    function (...args) { return this[0][String.raw(...args)] },
     (el) => el,
     (el, name) => el[name],
     (el, name, value) => el[name] = value
   ),
 
-  attr: createEffect('attr', el => {
-    let obj = {}
-    for (let attr of el.attributes) obj[attr.name] = attr.value
-    return obj
-  }, (el, name) => {
+  attr: createEffect('attr',
+    function (...args) {
+      return this[0].getAttribute(String.raw(...args))
+    },
+    el => {
+      let obj = {}
+      for (let attr of el.attributes) obj[attr.name] = attr.value
+      return obj
+    },
+    (el, name) => {
       if (!attrCache.has(el)) {
         let observer = new MutationObserver(records => {
           for (let i = 0, length = records.length; i < length; i++) {
@@ -322,9 +337,15 @@ Object.assign($.prototype, {
     return this
   },
 
-  text: createEffect('text', el => el.textContent, (el, value) => el.textContent = value),
+  text: createEffect('text', function (...args) {
+    let str = String.raw(...args)
+    this.forEach(el => el.textContent = str)
+  }, el => el.textContent, (el, value) => el.textContent = value),
 
-  class: createEffect('class', el => {
+  class: createEffect('class', function (...args) {
+      let str = String.raw(...args)
+      this.forEach(el => el.className = str)
+    }, el => {
     let obj = {}
     for (let cl of el.classList) obj[cl.name] = cl.value
     return obj
@@ -333,7 +354,28 @@ Object.assign($.prototype, {
     else el.classList.add(name)
   }),
 
-  css: createEffect('css', (el) => {}, (el, name) => {}, (el, name, value) => {})
+  css: createEffect('css', function (statics, ...parts) {
+    let str = String.raw(statics, ...parts)
+
+    let className = cssClassCache.get(this)
+
+    if (!className) {
+      className = `${SPECT_CLASS}-${uid()}`
+      cssClassCache.set(this, className)
+      this.forEach(el=> el.classList.add(className))
+    }
+
+    str = scopeCss(str, '.' + className)
+    insertCss(str, {id: className})
+
+    return this
+  }, (el) => {
+
+  }, (el, name) => {
+
+  }, (el, name, value) => {
+
+  })
 })
 
 
@@ -381,14 +423,19 @@ function fxKey () {
   return key
 }
 
-function createEffect (effectName, get0, get, set, is = Object.is) {
+function createEffect (effectName, tpl, get0, get, set, is = Object.is) {
   return function effect (...args) {
     // get()
     if (!args.length) {
       return get0(this[0])
     }
 
-    // state(s => {...}, deps)
+    // effect`...`
+    if (args[0].raw) {
+      return tpl.call(this, ...args)
+    }
+
+    // effect(s => {...}, deps)
     if (typeof args[0] === 'function') {
       let fn = args.shift()
       let deps = args.shift()
@@ -410,11 +457,11 @@ function createEffect (effectName, get0, get, set, is = Object.is) {
         })
       })
 
-      return true
+      return this
     }
 
     // set(obj, deps)
-    if (typeof args[0] === 'object' && !args[0].raw) {
+    if (typeof args[0] === 'object') {
       let [props, deps] = args
 
       if (!commit(fxKey(), deps)) return
@@ -422,13 +469,13 @@ function createEffect (effectName, get0, get, set, is = Object.is) {
       for (let name in props) {
         this[effectName](name, props[name], ...args)
       }
-      return
+      return this
     }
 
     // get(name)
     if (args.length == 1) {
-      let name = args[0].raw ? String.raw(args.shift()) : args.shift()
-      let el = this[0]
+      let [name] = args
+      let [el] = this
 
       let key = tuple(el, effectName, name)
       if (!observables.has(key)) observables.set(key, new Set)
@@ -443,6 +490,8 @@ function createEffect (effectName, get0, get, set, is = Object.is) {
     let [name, value, deps] = args
     if (!commit(fxKey(), deps)) return
     this.forEach(el => setNameValue(el, name, value))
+
+    return this
   }
 
   function setNameValue(el, name, value) {
@@ -598,19 +647,20 @@ function createClass(fn, HTMLElement) {
 }
 
 
-export function isIterable(val) {
+function isIterable(val) {
   return (val != null && typeof val[Symbol.iterator] === 'function');
 }
 
-export const raf = window.requestAnimationFrame
+const raf = window.requestAnimationFrame
 
 
-export function paramCase(str) {
+function paramCase(str) {
   str = kebab(str)
 
   if (str[0] === '-') return str.slice(1)
   return str
 }
 
+function noop() { }
 
-export function noop() { }
+function uid() { return Math.random().toString(36).slice(2,8) }
