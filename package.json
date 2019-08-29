@@ -2,26 +2,23 @@
   "name": "spect",
   "version": "4.0.0",
   "description": "Aspect-oriented DOM framework",
-  "source": "src/$.js",
-  "main": "src/$.js",
-  "module": "dist/index.mjs",
-  "types": "dist/index.d.ts",
-  "umd:main": "dist/index.umd.js",
-  "unpkg": "dist/index.unpkg.js",
-  "esnext": "dist/index.src.js",
+  "main": "src/index.js",
   "@pika/pack": {
     "pipeline": [
       [
         "@pika/plugin-standard-pkg"
       ],
       [
-        "@pika/plugin-build-node"
+        "@pika/plugin-build-umd"
       ],
       [
         "@pika/plugin-build-web"
       ],
       [
-        "@pika/plugin-build-types"
+        "@pika/plugin-bundle-web"
+      ],
+      [
+        "pika-plugin-unpkg-field"
       ]
     ]
   },
@@ -79,7 +76,9 @@
     "@pika/pack": "^0.5.0",
     "@pika/plugin-build-node": "^0.6.0",
     "@pika/plugin-build-types": "^0.6.0",
+    "@pika/plugin-build-umd": "^0.6.0",
     "@pika/plugin-build-web": "^0.6.0",
+    "@pika/plugin-bundle-web": "^0.6.0",
     "@pika/plugin-standard-pkg": "^0.6.0",
     "asap": "^2.0.6",
     "browser-env": "^3.2.6",
@@ -87,6 +86,7 @@
     "esm": "^3.2.25",
     "microbundle": "^0.11.0",
     "parcel-bundler": "^1.12.3",
+    "pika-plugin-unpkg-field": "^1.1.0",
     "setimmediate": "^1.0.5",
     "tst": "^3.4.1"
   }
