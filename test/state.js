@@ -1,5 +1,5 @@
 import t from 'tst'
-import $ from '../index';
+import $ from '..';
 
 t('state: direct get/set', t => {
   $`<div.a/>`.use(el => {

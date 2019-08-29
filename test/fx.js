@@ -1,5 +1,5 @@
 import t from 'tst'
-import $ from '../index.js'
+import $ from '..'
 import 'setimmediate'
 
 t('fx: global effect is triggered after current callstack', async t => {

@@ -1,5 +1,5 @@
 import t from 'tst'
-import $ from '../index.js'
+import $ from '..'
 
 t('$: create from nodes', t => {
   let el = document.createElement('div')
@@ -67,11 +67,22 @@ t('$: ignore wrapping collections', t => {
 t('$: wrapped subsets are fine', t => {
   let $a = $`<a/>`
 
-  console.log('---')
   t.equal($($a[0]), $a)
 })
 
+t('$: fragments', t => {
+  let [foo, bar, baz] = $`<>foo <bar/> baz</>`
+  // t.equal(el.innerHTML, 'foo <bar></bar> baz')
+  t.ok(foo instanceof Node)
 
+  let [foo1, bar1, baz1] = $`foo <bar/> baz`
+  // t.equal(el.innerHTML, 'foo <bar></bar> baz')
+  t.ok(foo1 instanceof Node)
+
+  // let [foo2, bar2, baz2] = $(['foo ', $`<bar/>`, ' baz'])
+  // t.equal(el.innerHTML, 'foo <bar></bar> baz')
+  // t.ok(foo2 instanceof Node)
+})
 
 
 

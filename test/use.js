@@ -1,5 +1,5 @@
 import t from 'tst'
-import $ from '../index.js'
+import $ from '..'
 
 t('use: aspects, assigned through parent wrapper', t => {
   // some wrappers over same elements can be created in different ways

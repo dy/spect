@@ -1,5 +1,5 @@
 import t from 'tst'
-import $ from '../index.js'
+import $ from '..'
 
 
 t('attr: direct get/set', t => {

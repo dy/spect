@@ -1,13 +1,32 @@
 {
   "name": "spect",
-  "version": "3.0.0",
+  "version": "4.0.0",
   "description": "Aspect-oriented DOM framework",
-  "source": "./src/index.js",
-  "main": "dist/spect.js",
-  "module": "dist/spect.mjs",
-  "unpkg": "dist/spect.umd.js",
+  "source": "src/$.js",
+  "main": "src/$.js",
+  "module": "dist/index.mjs",
+  "types": "dist/index.d.ts",
+  "umd:main": "dist/index.umd.js",
+  "unpkg": "dist/index.unpkg.js",
+  "esnext": "dist/index.src.js",
+  "@pika/pack": {
+    "pipeline": [
+      [
+        "@pika/plugin-standard-pkg"
+      ],
+      [
+        "@pika/plugin-build-node"
+      ],
+      [
+        "@pika/plugin-build-web"
+      ],
+      [
+        "@pika/plugin-build-types"
+      ]
+    ]
+  },
   "scripts": {
-    "build": "microbundle",
+    "build": "pika build",
     "start": "parcel serve test/index.html",
     "test": "node -r esm -r ./test/register.js test/index.js"
   },
@@ -46,7 +65,6 @@
   "dependencies": {
     "clsx": "^1.0.4",
     "delegate-it": "^1.1.0",
-    "delegated": "^1.1.0",
     "fast-deep-equal": "^2.0.1",
     "fast-on-load": "^1.0.1",
     "htm": "^2.2.1",
@@ -58,6 +76,11 @@
     "stacktrace-parser": "^0.1.6"
   },
   "devDependencies": {
+    "@pika/pack": "^0.5.0",
+    "@pika/plugin-build-node": "^0.6.0",
+    "@pika/plugin-build-types": "^0.6.0",
+    "@pika/plugin-build-web": "^0.6.0",
+    "@pika/plugin-standard-pkg": "^0.6.0",
     "asap": "^2.0.6",
     "browser-env": "^3.2.6",
     "dom-lite": "^0.5.1",
@@ -65,6 +88,6 @@
     "microbundle": "^0.11.0",
     "parcel-bundler": "^1.12.3",
     "setimmediate": "^1.0.5",
-    "tst": "^3.4.0"
+    "tst": "^3.4.1"
   }
 }

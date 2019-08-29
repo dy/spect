@@ -1,5 +1,5 @@
 import t from 'tst'
-import $ from '../index'
+import $ from '..'
 
 t.todo('case: readme intro', t => {
   let el = document.createElement('div')

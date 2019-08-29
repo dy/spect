@@ -1,5 +1,5 @@
 import t from 'tst'
-import $ from '../index'
+import $ from '..'
 
 // `is` is valid html prop, therefore we don't expose an effect
 // besides, we can't upgrade an element

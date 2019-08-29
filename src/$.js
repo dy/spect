@@ -23,8 +23,8 @@ attributes[symbols.default] = applyProp
 let html = htm.bind(h)
 
 // used to turn stacktrace-based effects, opposed to fxCount
-const isStacktraceAvailable = true
-
+const isStacktraceAvailable = !!(new Error).stack
+const isCustomElementsAvailable = typeof customElements !== 'undefined'
 
 const elCache = new WeakMap,
   aspectsCache = new WeakMap,
@@ -287,27 +287,28 @@ Object.assign($.prototype, {
       if (arg.length) return [...arg].forEach(arg => render(arg))
 
       // objects create elements
-      let { tag, key, props, staticProps, children, use, is, effects = [] } = arg
+      let { tag, key, props, staticProps, children, use, create, effects = [] } = arg
 
       // fragment (direct vdom)
       if (!tag) return children.forEach(render)
 
       let el
 
-      // <ul is="custom-el" />
-      if (is) {
-        function create() { return document.createElement(tag, { is }) }
-        el = elementOpen(create, key, staticProps, ...props)
-        children.forEach(render)
-        elementClose(create)
-      }
+      el = elementOpen(create, key, staticProps, ...props)
+      children.forEach(render)
+      elementClose(create)
 
-      // if (!children) el = elementVoid(tag, key, staticProps, ...props)
-      else {
-        el = elementOpen(tag, key, staticProps, ...props)
-        children.forEach(render)
-        elementClose(tag)
-      }
+      // <ul is="custom-el" />
+      // if (is) {
+      //   function create() { return document.createElement(tag, { is }) }
+      // }
+
+      // // if (!children) el = elementVoid(tag, key, staticProps, ...props)
+      // else {
+      //   el = elementOpen(tag, key, staticProps, ...props)
+      //   children.forEach(render)
+      //   elementClose(tag)
+      // }
 
       // plan aspects init
       if (use) (new $(el)).use(...use)
@@ -355,7 +356,6 @@ function commit(key, deps, destroy) {
 
   return true
 }
-
 function fxKey () {
   let key
 
@@ -459,11 +459,22 @@ function createEffect (effectName, get0, get, set, is = Object.is) {
 function h(target, props = {}, ...children) {
   let use, propsArr = []
   let staticProps = []
-  let is, tag, classes = [], id, constructor
+  let tag, classes = [], id, create
 
   if (typeof target === 'function') {
     tag = getTagName(target)
-    constructor = getCustomElement(target)
+
+    if (isCustomElementsAvailable) {
+      if (!customElements.get(tag)) customElements.define(tag, createClass(target, HTMLElement))
+    }
+    else {
+      let fn = target
+      create = function () {
+        let el = document.createElement(tag)
+        queue(el, fn)
+        return el
+      }
+    }
   }
 
   // direct element
@@ -483,9 +494,24 @@ function h(target, props = {}, ...children) {
     // <div is=${fn}>
     if (prop === 'is') {
       if (typeof val === 'function') {
-        is = getTagName(val)
-        constructor = getCustomElement(val, tag)
+        let is = getTagName(val)
         staticProps.push('is', is)
+
+        if (isCustomElementsAvailable) {
+          if (!customElements.get(is)) {
+            let Component = createClass(fn, Object.getPrototypeOf(document.createElement(is)).constructor)
+            customElements.define(name, Component, { extends: is })
+            create = function () { return document.createElement(tag, { is }) }
+          }
+        }
+        else {
+          let fn = val
+          create = function () {
+            let el = document.createElement(tag)
+            queue(el, fn)
+            return el
+          }
+        }
       }
       // <div is=name>
       // we don't touch that, user knows what he's doing
@@ -504,6 +530,8 @@ function h(target, props = {}, ...children) {
   if (id) staticProps.push('id', id)
   if (classes.length) staticProps.push('class', classes.join(' '))
 
+  if (!create) create = tag
+
   let key = id || (props && (props.key || props.id))
 
   // FIXME: use more static props, like type
@@ -511,8 +539,7 @@ function h(target, props = {}, ...children) {
     tag,
     key,
     use,
-    is,
-    constructor,
+    create,
     props: propsArr,
     staticProps,
     children
@@ -553,21 +580,6 @@ function getTagName(fn) {
   return name
 }
 
-
-function getCustomElement(fn, ext) {
-  let name = getTagName(fn)
-
-  let ctor = customElements.get(name)
-  if (ctor) return ctor
-
-  let proto = ext ? Object.getPrototypeOf(document.createElement(ext)).constructor : HTMLElement
-  let Component = createClass(fn, proto)
-
-  customElements.define(name, Component, ext ? { extends: ext } : undefined)
-
-  return Component
-}
-
 function createClass(fn, HTMLElement) {
   return class HTMLSpectComponent extends HTMLElement {
     constructor() {
@@ -584,9 +596,6 @@ function createClass(fn, HTMLElement) {
     }
   }
 }
-
-
-export const SPECT_CLASS = '👁'
 
 
 export function isIterable(val) {

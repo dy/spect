@@ -1,5 +1,5 @@
 import t from 'tst'
-import $ from '../'
+import $ from '..'
 
 t('class: set/read', t => {
   let $a = $`<a.a.b/>`
