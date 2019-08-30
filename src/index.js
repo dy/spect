@@ -170,16 +170,22 @@ Object.assign($.prototype, {
   },
 
   fx: function (fn, deps) {
-    if (!commit(fxKey(), deps, () => destroy.forEach(fn => fn && fn()))) return
+    if (!commit(fxKey('fx'), deps, () => {
+      destroy.forEach(fn => fn && fn())
+    })) {
+      return this
+    }
 
     let destroy = []
 
-    Promise.resolve().then(() => {
+    planned.then(() => {
       this.forEach(el => {
         let destructor = fn.call(el, el)
         destroy.push(typeof destructor === 'function' ? destructor : noop)
       })
     })
+
+    return this
   },
 
   on: function (evts, delegate, fn, deps) {
@@ -189,7 +195,7 @@ Object.assign($.prototype, {
       delegate = null
     }
 
-    if (!commit(fxKey(), deps, () => destroy.forEach(fn => fn && fn()))) return
+    if (!commit(fxKey('on'), deps, () => destroy.forEach(fn => fn && fn()))) return this
 
     let destroy = []
 
@@ -211,7 +217,7 @@ Object.assign($.prototype, {
   },
 
   mount: function (handle, deps) {
-    if (!commit(fxKey(), deps, () => destroy.forEach(fn => fn && fn()))) return
+    if (!commit(fxKey('mount'), deps, () => destroy.forEach(fn => fn && fn()))) return
 
     let destroy = []
 
@@ -346,17 +352,21 @@ Object.assign($.prototype, {
     this.forEach(el => el.textContent = str)
   }, el => el.textContent, (el, value) => el.textContent = value),
 
-  class: createEffect('class', function (...args) {
+  class: createEffect('class',
+    function (...args) {
       let str = String.raw(...args)
       this.forEach(el => el.className = str)
-    }, el => {
-    let obj = {}
-    for (let cl of el.classList) obj[cl.name] = cl.value
-    return obj
-  }, (el, name) => el.classList.contains(name), (el, name, value) => {
-    if (!value) el.classList.remove(name)
-    else el.classList.add(name)
-  }),
+    },
+    el => {
+      let obj = {}
+      for (let cl of el.classList) obj[cl.name] = cl.value
+      return obj
+    },
+    (el, name) => el.classList.contains(name),
+    (el, name, value) => {
+      if (!value) el.classList.remove(name)
+      else el.classList.add(name)
+    }),
 
   css: createEffect('css', function (statics, ...parts) {
     let str = String.raw(statics, ...parts)
@@ -382,32 +392,48 @@ Object.assign($.prototype, {
   })
 })
 
-
 // register effect call, check deps, if changed - call destroy
 function commit(key, deps, destroy) {
-  if (deps !== undefined) {
-    let prev = depsCache.get(key)
-
-    if (Array.isArray(deps)) {
-      if (equal(deps, prev)) return false
-      depsCache.set(key, deps)
+  if (deps == null) {
+    if (destroyCache.has(key)) {
+      let prevDestroy = destroyCache.get(key)
+      if (prevDestroy && prevDestroy.call) prevDestroy.call()
     }
+    destroyCache.set(key, destroy)
+
+    return true
   }
+
+  let prevDeps = depsCache.get(key)
+  if (deps === prevDeps) return false
+  if (Array.isArray(deps)) {
+    if (equal(deps, prevDeps)) return false
+  }
+  depsCache.set(key, deps)
+
+  // enter false state - ignore effect
+  if (prevDeps === undefined && deps === false) return false
 
   if (destroyCache.has(key)) {
-    let destroy = destroyCache.get(key)
-    if (destroy && destroy.call) destroy.call()
+    let prevDestroy = destroyCache.get(key)
+    if (prevDestroy && prevDestroy.call) prevDestroy()
   }
-  destroyCache.set(key, destroy)
 
+  // toggle/fsm case
+  if (deps === false) {
+    destroyCache.set(key, null)
+    return false
+  }
+
+  destroyCache.set(key, destroy)
   return true
 }
-function fxKey () {
+function fxKey (fxName) {
   let key
 
   // precompiled bundle inserts unique fxid before effect calls
   if (fxId) {
-    key = tuple(currentElement, currentAspect, fxId)
+    key = tuple(currentElement, currentAspect, fxName, fxId)
     fxId = null
   }
   else {
@@ -415,12 +441,12 @@ function fxKey () {
     if (isStacktraceAvailable) {
       // FIXME: exact stack is susceptible to babel-ish transforms
       let [fxKeysite, fxsite, callsite, ...trace] = parseStack((new Error).stack)
-      let siteurl = callsite.file + ':' + callsite.lineNumber + ':' + callsite.column
-      key = tuple(currentElement, currentAspect, siteurl)
+      let callsiteurl = callsite.file + ':' + callsite.lineNumber + ':' + callsite.column
+      key = tuple(currentElement, currentAspect, fxName, callsiteurl)
     }
     // fallback to react order-based key
     else {
-      key = tuple(currentElement, currentAspect, fxCount++)
+      key = tuple(currentElement, currentAspect, fxName, fxCount++)
     }
   }
 
@@ -444,7 +470,7 @@ function createEffect (effectName, tpl, get0, get, set, is = Object.is) {
       let fn = args.shift()
       let deps = args.shift()
 
-      if (!commit(fxKey(), deps)) return false
+      if (!commit(fxKey(effectName), deps)) return false
 
       this.forEach(el => {
         let draft
@@ -466,9 +492,10 @@ function createEffect (effectName, tpl, get0, get, set, is = Object.is) {
 
     // set(obj, deps)
     if (typeof args[0] === 'object') {
-      let [props, deps] = args
+      let props = args.shift()
+      let deps = args.shift()
 
-      if (!commit(fxKey(), deps)) return
+      if (!commit(fxKey(effectName), deps)) return
 
       for (let name in props) {
         this[effectName](name, props[name], ...args)
@@ -492,7 +519,7 @@ function createEffect (effectName, tpl, get0, get, set, is = Object.is) {
 
     // set(name, value)
     let [name, value, deps] = args
-    if (!commit(fxKey(), deps)) return
+    if (!commit(fxKey(effectName), deps)) return
     this.forEach(el => setNameValue(el, name, value))
 
     return this
