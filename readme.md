@@ -629,6 +629,7 @@ Version | Changes
 3.0.0 | References proxy-based API design.
 2.0.0 | Global direct effects API design.
 1.0.0 | HTM compiler remake with support for anonymous attributes, html-comments and unclosed tags.
+0.0.0 | [jsxify](https://github.com/scrapjs/jsxify) JSX R&D
 
 
 ## Acknowledgement
