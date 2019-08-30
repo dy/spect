@@ -312,6 +312,10 @@ Object.assign($.prototype, {
         refs[++count] = frag
         return { ref: count }
       }
+      if (arg instanceof DocumentFragment) {
+        refs[++count] = arg
+        return { ref: count }
+      }
       if (arg instanceof Node) {
         arg.remove()
         refs[++count] = arg

@@ -449,12 +449,11 @@ Render HTML for elements in collection. Internally uses [htm](https://ghub.io/ht
 ```js
 // set html
 $target.html`foo <bar><baz/></> qux`
+$target.html`foo ${ document.querySelector('.bar') } baz`
+$target.html(document.querySelector('.bar'))
 
 /* @jsx $ */
 $target.html(<>Markup</>)
-
-// insert external HTML
-$target.html`foo ${ document.querySelector('.bar') } baz`
 
 // components
 $target.html`<button is=${SuperButton}></button>`
@@ -464,9 +463,12 @@ function SuperButton(button) {
 }
 
 // aspects
-$target.html`<foo use=${foo => {}}/>`
-$target.html`<foo use=${[foo => {}, foo => {}]}/>`
-$target.html`<foo>${ foo => {}}</>`
+$target.html`<foo use=${bar}/>`
+$target.html`<foo use=${[bar, foo => {}]}/>`
+$target.html`<foo>${ bar }</>`
+function bar () {
+  // ...
+}
 ```
 
 <p align="right">Ref: <a href="https://ghub.io/incremental-dom">incremental-dom</a>, <a href='https://ghub.io/htm'>htm</a></p>

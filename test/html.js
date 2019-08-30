@@ -76,6 +76,16 @@ t('html: insert single Node', t => {
   t.equal($el[0].innerHTML, `<x><a></a></x>`)
 })
 
+t('html: insert node directly', t => {
+  let $el = $(document.createElement('div'))
+  let a = document.createElement('a')
+  let frag = document.createDocumentFragment()
+  frag.appendChild(a)
+  $el.html(frag)
+  t.equal($el[0].innerHTML, `<a></a>`)
+})
+
+
 t('html: insert function', async t => {
   let $el = $`<div/>`
   $el.html`<a>${ el => {
