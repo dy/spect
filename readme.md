@@ -8,9 +8,9 @@ import route from 'spect-router'
 import ky from 'ky'
 import { t, useLocale } from 'ttag'
 
-// main app aspect - loading & rendering data
+// main app aspect - load & render data
 function main (app) {
-  let [ match, {id} ] = route`/user/:id`
+  let [ match, {id} ] = route('/user/:id')
   if (!match) return
 
   let $app = $(app)
@@ -28,16 +28,14 @@ function main (app) {
   }</p>`
 }
 
-// preloader aspect - appends spinner when loading state changes
+// preloader aspect - append/remove spinner if loading state changes
 function preloader (el) {
   let $el = $(el)
 
   // toggle
   $el.fx(() => {
-    let orig = $el.childNodes
-    $el.html`${orig} <canvas.spinner />`
-
-    return () => $el.html`${ orig }`
+    $el.html(children => [...children, $`<progress.progress-circle />`])
+    return () => $el.html(children => children.slice(0, -1))
   }, $el.attr('loading'))
 }
 
@@ -74,7 +72,7 @@ In a nutshell, _Spect_ is a mix of jQuery (_collections_), functional React comp
 5. Max utility, min presentation.
 
 
-Spect is build with a set of modern practices in mind (proxies, symbols, tagged strings, virtual dom, incremental dom, htm, custom elements, hooks, observers, tuples, frp). It grounds on API design research, experiments and proofs. Current API is 4th iteration.
+<!-- Spect is build with a set of modern practices in mind (proxies, symbols, tagged strings, virtual dom, incremental dom, htm, custom elements, hooks, observers, tuples, frp). It grounds on API design research, experiments and proofs. Current API is 4th iteration. -->
 
 <!--
 Conceptually, app is a set of _reactions_ to changes in some _domain_.
@@ -286,7 +284,7 @@ let getRawMarkup = content => {
 
 ## API
 
-[**`$`**]()&nbsp; &nbsp;[**`.use`**]()&nbsp; &nbsp;[**`.fx`**]()&nbsp; &nbsp;[**`.state`**]()&nbsp; &nbsp;[**`.prop`**]()&nbsp; &nbsp;[**`.attr`**]()&nbsp; &nbsp;[**`.html`**]()&nbsp; &nbsp;[**`.text`**]()&nbsp; &nbsp;[**`.class`**]()&nbsp; &nbsp;[**`.css`**]()&nbsp; &nbsp;[**`.on`**]()&nbsp; &nbsp;[**`.mount`**]()
+[**`$`**]()&nbsp;&nbsp; [**`.use`**]()&nbsp;&nbsp; [**`.fx`**]()&nbsp;&nbsp; [**`.state`**]()&nbsp;&nbsp; [**`.prop`**]()&nbsp;&nbsp; [**`.attr`**]()&nbsp;&nbsp; [**`.html`**]()&nbsp;&nbsp; [**`.text`**]()&nbsp;&nbsp; [**`.class`**]()&nbsp;&nbsp; [**`.css`**]()&nbsp;&nbsp; [**`.on`**]()&nbsp;&nbsp; [**`.mount`**]()
 
 ##
 
@@ -384,17 +382,21 @@ Read or write state associated with an element. Reading returns first element st
 // write state
 $els.state('foo', 1)
 $els.state({foo: 1})
-$els.state(s => s.foo = 1) // called for all elements in the set
+
+// mutate (called for each element)
+$els.state(s => s.foo = 1)
+
+// reduce (called for each element)
 $els.state(s => {...s, foo: 2})
 
-// init state
+// init
 $els.state({foo: 0}, [])
 
-// read state
+// read first element state
 $els.state('foo')
 $els.state('foo.bar.baz') // safe-path
 
-// read full state
+// read full
 $els.state()
 ```
 
@@ -407,12 +409,23 @@ Read or write elements properties. Same as `.state`, but provides access to elem
 
 ```js
 // write prop
-$target.prop('foo', 1)
-$target.prop({foo: 1})
-$target.prop(s => s.foo = 1)
+$els.prop('foo', 1)
+$els.prop({foo: 1})
 
-// read prop
-$target.prop('foo')
+// mutate
+$els.prop(p => p.foo = 1)
+
+// reduce
+$els.prop(p => {...p, foo: 1})
+
+// init
+$els.prop({foo: 1}, [])
+
+// read first element prop
+$els.prop('foo')
+
+// read all
+$els.prop()
 ```
 
 <p align="right">Ref: <a href="https://reactjs.org/docs/hooks-state.html">useState</a></p>
@@ -424,19 +437,24 @@ Read or write attributes to elements in a set. Same as `.prop`, but works with a
 
 ```js
 // write attribute
-$target.attr('foo', 'bar')
-$target.attr({ foo: 'bar'})
-$target.attr(a => a.foo = 'bar')
+$els.attr('foo', 'bar')
+$els.attr({ foo: 'bar'})
 
-// read attribute
-$target.attr('foo')
+// mutate
+$els.attr(a => a.foo = 'bar')
 
-// read all attributes
-$target.attr()
+// reduce
+$els.attr(a => {...a, foo: 'bar'})
+
+// read first element attribute
+$els.attr('foo')
+
+// read all
+$els.attr()
 
 // set/unset attribute
-$target.attr('foo', true)
-$target.attr('foo', false)
+$els.attr('foo', true)
+$els.attr('foo', false) // same as null or undefined
 ```
 
 <p align="right">Ref: <a href="https://ghub.io/attributechanged">attributechanged</a></p>
@@ -448,24 +466,33 @@ Render HTML for elements in collection. Internally uses [htm](https://ghub.io/ht
 
 ```js
 // set html
-$target.html`foo <bar><baz/></> qux`
-$target.html`foo ${ document.querySelector('.bar') } baz`
-$target.html(document.querySelector('.bar'))
+$els.html`foo <bar><baz/></> qux`
+$els.html`foo ${ document.querySelector('.bar') } ${ $baz }`
+$els.html(document.querySelector('.bar'))
+
+// append/prepend/insert/reduce
+$els.html(children => [prepend, ...children, append])
+
+// wrap
+$els.html(children => $`<div.wrapper>${ children }</div>`)
+
+// unwrap
+$els.html(children => children[0])
 
 /* @jsx $ */
-$target.html(<>Markup</>)
+$els.html(<>Markup</>)
 
 // components
-$target.html`<button is=${SuperButton}></button>`
-$target.html`<${SuperButton}/>`
+$els.html`<button is=${SuperButton}></button>`
+$els.html`<${SuperButton}/>`
 function SuperButton(button) {
   // ...
 }
 
-// aspects
-$target.html`<foo use=${bar}/>`
-$target.html`<foo use=${[bar, foo => {}]}/>`
-$target.html`<foo>${ bar }</>`
+// assign aspects
+$els.html`<foo use=${bar}/>`
+$els.html`<foo use=${[bar, foo => {}]}/>`
+$els.html`<foo>${ bar }</>`
 function bar () {
   // ...
 }
@@ -487,31 +514,20 @@ $target.on('foo bar', e => {})
 
 // delegate selector
 $target.on('foo', '.bar', e => {})
-```
 
-Some events support sequences:
+// sequences
+$target.on('touchstart > touchmove > touchend', e => {
+  // touchstart
 
-* `dragstart`, `drag`, `dragend`
-* `touchstart`, `touchmove`, `touchend`
-* `mousedown`, `mousemove`, `mouseup`
-* `keydown`, `keyup`
-
-They can be used as:
-
-```js
-$target.on('touchstart mousedown', e => {
-  // touchstart, mousedown
-
-  return e =>  {
-    // touchmove, mousemove
+  return e =>
+    // touchmove
 
     return e => {
-      // touchend, mouseend
+      // touchend
     }
   }
 })
 ```
-
 
 <p align="right">Ref: <a href="https://github.com/donavon/use-event-listener">use-event-listener</a></p>
 

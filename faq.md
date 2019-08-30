@@ -1,7 +1,7 @@
 
 ## FAQ
 
-### Why aspects?
+### What's the purpose of aspects?
 
 Aspects are already a conceptual part of HTML:
 
@@ -14,10 +14,16 @@ That concept is taken a step forward, enabling separation of [cross-cutting conc
 
 Aspects gracefully solve many common standard frontend tasks, such as portals, code splitting, hydration etc.
 
+The main purpose of aspect is providing a reaction to some changes. For that purpose, mechanism of subscriptions/updates is implicitly geared up, via reading/writing collections with effects.
 
-### Why effects?
 
-Effects enable subscription of updating aspects. This way, if we read some effect in an aspect, that automatically subscribes that aspect for updates whenever that effect changes. Also effects provide unified and easier API.
+### What's the purpose of effects?
+
+Effects enable subscription of aspects to updates. If some effect is read, that automatically subscribes active aspect to updates of that effect. This way, effects act in remote way like `useState`.
+
+Effects also take optional `deps` as the last argument, which makes them act similar to `useEffect`, defining filtering strategy. But unlike `useEffect`, deps can be non-array value for simple toggles. Also `deps` have less limitations due to different strategy of detecting callsite.
+
+Also effects provide unified and handy API for common domains, such as `attr`, `dataset`, `dom`, `css`, `events` etc - possible domains areas are limitless. That is akin to jQuery methods.
 
 
 ### Portals?

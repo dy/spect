@@ -280,7 +280,7 @@ Object.assign($.prototype, {
     },
     (el, name, value) => {
       if (value === true && !el.hasAttribute(name)) el.toggleAttribute(name)
-      else if (value === false && el.hasAttribute(name)) el.removeAttribute(name)
+      else if ((value === false || value == null) && el.hasAttribute(name)) el.removeAttribute(name)
       else el.setAttribute(name, value)
     },
     (a, b) => b + '' === a + ''
