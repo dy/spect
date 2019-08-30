@@ -266,9 +266,15 @@ Object.assign($.prototype, {
         observer.observe(el, { attributes: true })
         attrCache.set(el, observer)
       }
+      if (!el.hasAttribute(name)) return false
+      if (el.getAttribute(name) === '') return true
       return el.getAttribute(name)
     },
-    (el, name, value) => el.setAttribute(name, value),
+    (el, name, value) => {
+      if (value === true && !el.hasAttribute(name)) el.toggleAttribute(name)
+      else if (value === false && el.hasAttribute(name)) el.removeAttribute(name)
+      else el.setAttribute(name, value)
+    },
     (a, b) => b + '' === a + ''
   ),
 

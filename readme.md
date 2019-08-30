@@ -364,7 +364,7 @@ $els.fx(() => { show(); return () => hide(); }, visible);
 // called on init only
 $els.fx(() => {}, []);
 
-// destructor
+// destructor is called any time deps change
 $els.fx(() => () => {}, deps);
 
 // called for each element in collection
@@ -418,7 +418,7 @@ $target.prop('foo')
 
 ### `.attr( name | val, deps? )` − attributes provider
 
-Read or write attributes to elements in a set. Same as `.prop`, but works with attributes, therefore values are always strings. Reading creates observer for external attribute changes.
+Read or write attributes to elements in a set. Same as `.prop`, but works with attributes, therefore values are always strings. Reading creates observer for external attribute changes. For boolean values, it sets/unsets attribute, rather than stringifies value.
 
 ```js
 // write attribute
@@ -431,6 +431,10 @@ $target.attr('foo')
 
 // read all attributes
 $target.attr()
+
+// set/unset attribute
+$target.attr('foo', true)
+$target.attr('foo', false)
 ```
 
 <p align="right">Ref: <a href="https://ghub.io/attributechanged">attributechanged</a></p>

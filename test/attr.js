@@ -34,6 +34,21 @@ t('attr: functional get/set', t => {
   t.is($a.attr`count`, '1')
 })
 
+t('attr: boolean', t => {
+  let $a = $`<a/>`
+
+  t.is($a.attr('foo'), false)
+
+  $a.attr('foo', true)
+  t.is($a[0].hasAttribute('foo'), true)
+  t.is($a[0].getAttribute('foo'), '')
+  t.is($a.attr('foo'), true)
+
+  $a.attr('foo', false)
+  t.is($a.attr('foo'), false)
+  t.is($a[0].hasAttribute('foo'), false)
+})
+
 t.skip('attr: counter', t => {
   let stop = 0
   let $els = $`<div.a/>`.use(a => {
