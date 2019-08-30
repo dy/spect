@@ -10,8 +10,7 @@ t('html: readme default', t => {
   t.is($div[0].firstChild.foo, 'bar')
 })
 
-
-t('html: readme attributes', t => {
+t('html: attributes', t => {
   let $div = $(document.createElement('div'))
 
   $div.html`<a href='/' foo=bar>baz</a>`
@@ -39,37 +38,54 @@ t.todo('html: fake gl layers', t => {
   </canvas>`
 })
 
+t('html: insert nodes list', t => {
+  let el = document.createElement('div')
+  el.innerHTML = '|bar <baz></baz>|'
 
-t.todo('html: readme reducer', t => {
-  let target = document.createElement('div')
-  target.innerHTML = '|bar <baz></baz>|'
+  let $el = $(el)
+  let orig = [...el.childNodes]
 
-  $(target, el => {
-    html`<div.prepended /> foo ${el.childNodes} qux <div.appended />`
-    t.equal(el.innerHTML, `<div class="prepended"></div> foo |bar <baz></baz>| qux <div class="appended"></div>`)
+  $el.html`<div.prepended /> foo ${ el.childNodes } qux <div.appended />`
+  t.equal(el.innerHTML, `<div class="prepended"></div> foo |bar <baz></baz>| qux <div class="appended"></div>`)
 
-    html`foo ${el.childNodes} qux`
-    t.equal(el.innerHTML, `foo |bar <baz></baz>| qux`)
+  $el.html`foo ${ orig } qux`
+  t.equal(el.innerHTML, `foo |bar <baz></baz>| qux`)
 
-    html`<div.prepended /> foo ${el.childNodes} qux <div.appended />`
-    t.equal(el.innerHTML, `<div class="prepended"></div> foo |bar <baz></baz>| qux <div class="appended"></div>`)
-  })
+  $el.html`<div.prepended /> foo ${ orig } qux <div.appended />`
+  t.equal(el.innerHTML, `<div class="prepended"></div> foo |bar <baz></baz>| qux <div class="appended"></div>`)
+})
 
-  // // prepend icons to buttons
+t('html: pass wrappers themselves', t => {
+  // prepend icons to buttons
   let b = document.body.appendChild(document.createElement('button'))
-  b.innerHTML = 'Click'
+  b.innerHTML = 'Click <span>-</span>'
   b.setAttribute('icon', 'phone_in_talk')
-  $('button[icon]', ({ attributes: { icon: { value: icon } }, childNodes }) => html`<i class="material-icons">${icon}</i> ${childNodes}`)
+  let $b = $('button[icon]')
+  let $content = $($b[0].childNodes)
 
-  t.equal(b.innerHTML, '<i class="material-icons">phone_in_talk</i> Click')
+  $b.html`<i class="material-icons">${ $b.attr('icon') }</i> ${ $content }`
+
+  t.equal(b.innerHTML, '<i class="material-icons">phone_in_talk</i> Click <span>-</span>')
   document.body.removeChild(b)
+})
 
-  // single node
-  $(document.createElement('div'), el => {
-    let a = document.createElement('a')
-    html`<x>${a}</x>`
-    t.equal(el.innerHTML, `<x><a></a></x>`)
-  })
+t('html: insert single Node', t => {
+  let $el = $(document.createElement('div'))
+  let a = document.createElement('a')
+  $el.html`<x>${ a }</x>`
+  t.equal($el[0].innerHTML, `<x><a></a></x>`)
+})
+
+t('html: insert function', async t => {
+  let $el = $`<div/>`
+  $el.html`<a>${ el => {
+    t.is(el.tagName, 'A')
+    $(el).html`<span/>`
+  }}</a>`
+
+  await Promise.resolve().then()
+
+  t.equal($el[0].innerHTML, `<a><span></span></a>`)
 })
 
 t.todo('html: h- reducer', t => {
@@ -205,8 +221,8 @@ t.todo('html: two wrapping aspects', async t => {
 
 t.skip('html: <host> tag')
 
-t.todo('html: function components', t => {
-  let c = html`<${C} x y=1 z=${2} />`
+t.skip('html: function components', t => {
+  let c = $`<${C} x y=1 z=${2} />`
 
   function C(el) {
     t.deepEqual({ x: el.x, y: el.y, z: el.z }, { x: true, y: '1', z: 2 })

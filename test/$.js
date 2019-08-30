@@ -101,8 +101,13 @@ t('$: empty selectors', t => {
   let $z = $(null)
   t.is($z.length, 0)
 
+  // NOTE: this one creates content
+  // let $w = $`div`
+  // t.is($w.length, 0)
+
   t.notEqual($x, $y)
   t.notEqual($x, $z)
+  // t.notEqual($x, $w)
 })
 
 t('$: selecting forms', t => {

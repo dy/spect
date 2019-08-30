@@ -281,7 +281,8 @@ let getRawMarkup = content => {
 
 ### More examples
 
-* [Details component]()
+* [Popup-info component from MDN](https://developer.mozilla.org/en-US/docs/Web/API/CustomElementRegistry/define#Autonomous_custom_element):
+
 
 ## API
 
@@ -298,14 +299,15 @@ If html string is passed, creates detached DOM. Also can acts like hyperscript, 
 // select nodes
 $('#id.class > div')
 $(elements)
-$`${ element } > div`
+$('> div', container)
 
 // change root
 const _$ = $.bind(externalDoc)
 _$`#id`
 
 // create html
-$`<div.a/><div.b/>`
+$('<div.foo/>')
+$`foo <bar.baz/>`
 $('div', {}, null)
 
 /* @jsx $ */
@@ -446,27 +448,26 @@ Render HTML for elements in collection. Internally uses [htm](https://ghub.io/ht
 
 ```js
 // set html
-$target.html`...markup`
+$target.html`foo <bar><baz/></> qux`
 
 /* @jsx $ */
 $target.html(<>Markup</>)
-```
 
-#### Components
+// insert external HTML
+$target.html`foo ${ document.querySelector('.bar') } baz`
 
-`html` effect provides ways to turn tags into custom elements, controlled by aspects.
-For that purpose, `is` attribute can be used:
-
-```js
-$els.html`<button is=${SuperButton}></button>`
-$els.html`<${SuperButton} />`
-
+// components
+$target.html`<button is=${SuperButton}></button>`
+$target.html`<${SuperButton}/>`
 function SuperButton(button) {
   // ...
 }
-```
 
-* [Popup-info example from MDN](https://developer.mozilla.org/en-US/docs/Web/API/CustomElementRegistry/define#Autonomous_custom_element):
+// aspects
+$target.html`<foo use=${foo => {}}/>`
+$target.html`<foo use=${[foo => {}, foo => {}]}/>`
+$target.html`<foo>${ foo => {}}</>`
+```
 
 <p align="right">Ref: <a href="https://ghub.io/incremental-dom">incremental-dom</a>, <a href='https://ghub.io/htm'>htm</a></p>
 

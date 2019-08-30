@@ -63,7 +63,7 @@
     "clsx": "^1.0.4",
     "delegate-it": "^1.1.0",
     "fast-deep-equal": "^2.0.1",
-    "fast-on-load": "^1.0.1",
+    "fast-on-load": "^1.2.0",
     "htm": "^2.2.1",
     "immutable-tuple": "^0.4.10",
     "incremental-dom": "^0.6.0",

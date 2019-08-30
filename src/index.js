@@ -14,7 +14,8 @@ import {
   attributes,
   symbols,
   applyProp,
-  applyAttr
+  applyAttr,
+  elementVoid
 } from 'incremental-dom'
 import onload from 'fast-on-load'
 
@@ -70,6 +71,7 @@ class $ extends Array {
       return create((create(document.createDocumentFragment())).html(arg, ...args)[0].childNodes)
     }
 
+    // $('.selector')
     if (typeof arg === 'string') {
       arg = arg.trim()
 
@@ -299,7 +301,36 @@ Object.assign($.prototype, {
 
     if (!Array.isArray(vdom)) vdom = [vdom]
 
-    this.forEach(el => patch(el, render, vdom))
+    // stub native nodes
+    let count = 0, refs = {}
+    vdom = vdom.map(function map(arg) {
+      if (Array.isArray(arg)) return arg.map(map)
+
+      if (arg instanceof NodeList || arg instanceof HTMLCollection) {
+        let frag = document.createDocumentFragment()
+        while (arg.length) frag.appendChild(arg[0])
+        refs[++count] = frag
+        return { ref: count }
+      }
+      if (arg instanceof Node) {
+        arg.remove()
+        refs[++count] = arg
+        return { ref: count }
+      }
+
+      if (arg.children) arg.children = map(arg.children)
+
+      return arg
+    })
+
+    this.forEach(el => {
+      patch(el, render, vdom)
+
+      // reinsert native nodes
+      for (let id in refs) {
+        el.querySelector('#' + SPECT_CLASS + '-ref-' + id).replaceWith(refs[id])
+      }
+    })
 
     function render(arg) {
       if (!arg) return
@@ -311,6 +342,9 @@ Object.assign($.prototype, {
       // FIXME: .length can be wrong check
       if (arg.length) return [...arg].forEach(arg => render(arg))
 
+      // stub refs to native els
+      if (arg.ref) return elementVoid('span', null, ['id', SPECT_CLASS + '-ref-' + arg.ref])
+
       // objects create elements
       let { tag, key, props, staticProps, children, use, create, effects = [] } = arg
 
@@ -318,25 +352,15 @@ Object.assign($.prototype, {
       if (!tag) return children.forEach(render)
 
       let el
-
-      el = elementOpen(create, key, staticProps, ...props)
-      children.forEach(render)
-      elementClose(create)
-
-      // <ul is="custom-el" />
-      // if (is) {
-      //   function create() { return document.createElement(tag, { is }) }
-      // }
-
-      // // if (!children) el = elementVoid(tag, key, staticProps, ...props)
-      // else {
-      //   el = elementOpen(tag, key, staticProps, ...props)
-      //   children.forEach(render)
-      //   elementClose(tag)
-      // }
+      if (!children || !children.length) el = elementVoid(create, key, staticProps, ...props)
+      else {
+        el = elementOpen(create, key, staticProps, ...props)
+        children.forEach(render)
+        elementClose(create)
+      }
 
       // plan aspects init
-      if (use) (new $(el)).use(...use)
+      if (use) use.forEach(fn => queue(el, fn))
 
       // run provided effects
       for (let effect in effects) {
@@ -535,9 +559,8 @@ function createEffect (effectName, tpl, get0, get, set, is = Object.is) {
   }
 }
 
-
 function h(target, props = {}, ...children) {
-  let use, propsArr = []
+  let use = [], propsArr = []
   let staticProps = []
   let tag, classes = [], id, create
 
@@ -556,8 +579,6 @@ function h(target, props = {}, ...children) {
       }
     }
   }
-
-  // direct element
   else if (typeof target === 'string') {
     let parts = parseTagComponents(target)
     tag = parts[0]
@@ -565,11 +586,19 @@ function h(target, props = {}, ...children) {
     classes = parts[2]
   }
 
-  // figure out effects: array props, anonymous aspects or child functions
+  // make functional children as aspects
+  children = children.filter(child => {
+    if (typeof child === 'function') {
+      use.push(child)
+      return false
+    }
+    return true
+  })
+
   for (let prop in props) {
     let val = props[prop]
     // <div use=${use}>
-    if (prop === 'use') use = Array.isArray(val) ? val : [val]
+    if (prop === 'use') Array.isArray(val) ? use.push(...val) : use.push(val)
 
     // <div is=${fn}>
     if (prop === 'is') {
@@ -614,7 +643,7 @@ function h(target, props = {}, ...children) {
 
   let key = id || (props && (props.key || props.id))
 
-  // FIXME: use more static props, like type
+  // FIXME: use more static props, like `type`
   return {
     tag,
     key,
@@ -637,7 +666,6 @@ function parseTagComponents (str) {
   classes = [...beforeClx, ...afterClx]
   return [tag, id, classes]
 }
-
 
 let nameCache = new WeakMap
 const counters = {}
