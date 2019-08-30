@@ -382,20 +382,20 @@ Read or write state associated with an element. Reading returns first element st
 
 ```js
 // write state
-$target.state('foo', 1)
-$target.state({foo: 1})
-$target.state(s => s.foo = 1)
-$target.state(s => {...s, foo: 2})
+$els.state('foo', 1)
+$els.state({foo: 1})
+$els.state(s => s.foo = 1) // called for all elements in the set
+$els.state(s => {...s, foo: 2})
 
 // init state
-$target.state({foo: 0}, [])
+$els.state({foo: 0}, [])
 
 // read state
-$target.state('foo')
-$target.state('foo.bar.baz') // safe-path
+$els.state('foo')
+$els.state('foo.bar.baz') // safe-path
 
 // read full state
-$target.state()
+$els.state()
 ```
 
 <p align="right">Ref: <a href="https://reactjs.org/docs/hooks-state.html">useState</a>, <a href="https://www.npmjs.com/package/icaro">icaro</a>, <a href="https://www.npmjs.com/package/introspected">introspected</a>, <a href="https://ghub.io/dlv">dlv</a></p>

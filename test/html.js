@@ -85,6 +85,16 @@ t('html: insert node directly', t => {
   t.equal($el[0].innerHTML, `<a></a>`)
 })
 
+t('html: insert self/array of nodes', t => {
+  let $el = $(document.createElement('div'))
+  let a1 = document.createElement('a')
+  let a2 = document.createElement('a')
+  a1.id = 'x'
+  a2.id = 'y'
+  let $a = $([a1, a2])
+  $el.html($a)
+  t.equal($el[0].innerHTML, `<a id="x"></a><a id="y"></a>`)
+})
 
 t('html: insert function', async t => {
   let $el = $`<div/>`

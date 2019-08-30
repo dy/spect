@@ -50,6 +50,23 @@ t('state: init gate', t => {
   }
 })
 
+t('state: reducer must be called for each element in a set', t => {
+  let $a = $([
+    document.createElement('a'),
+    document.createElement('a')
+  ])
+
+  $($a[0]).state({x: 1})
+  $($a[1]).state({x: 2})
+
+  let log = []
+  $a.state(s => {
+    log.push(s.x)
+  })
+
+  t.is(log, [1, 2])
+})
+
 t.skip('state: counter', t => {
   let stop = 0
   let $els = $`<div.a/>`.use(a => {
