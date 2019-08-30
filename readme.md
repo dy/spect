@@ -626,8 +626,8 @@ Community
 Version | Changes
 ---|---
 4.0.0 | Functional effects API design.
-3.0.0 | References proxy-based API design.
-2.0.0 | Global direct effects API design.
+3.0.0 | References + proxy-based API design.
+2.0.0 | Global effects API design.
 1.0.0 | HTM compiler remake with support for anonymous attributes, html-comments and unclosed tags.
 0.0.0 | [jsxify](https://github.com/scrapjs/jsxify) JSX R&D
 
@@ -635,22 +635,22 @@ Version | Changes
 ## Acknowledgement
 
 
-_Spect_ would not be possible without brilliant ideas from many libraries, hence the acknowledge to authors of
+_Spect_ would not be possible without brilliant ideas from many libraries, hence the acknowledge to authors of:
 
-_jquery_
-_react_
-_atomico_
-_hui_
-_htm_
-_fast-on-load_
-_tachyons_
-_tailwindcss_
-_ui-box_
-_evergreen-ui_
-_material-ui_
-_reuse_
-_selector-observer_
-_material-design-lite_
+_jquery_,
+_react_,
+_atomico_,
+_hui_,
+_htm_,
+_fast-on-load_,
+_tachyons_,
+_tailwindcss_,
+_ui-box_,
+_evergreen-ui_,
+_material-ui_,
+_reuse_,
+_selector-observer_,
+_material-design-lite_,
 _funkia/turbine_
 
 and others.
