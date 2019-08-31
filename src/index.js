@@ -6,6 +6,7 @@ import htm from 'htm'
 import kebab from 'kebab-case'
 import scopeCss from 'scope-css'
 import insertCss from 'insert-styles'
+import isObject from 'is-plain-object'
 import {
   patch,
   elementOpen,
@@ -75,7 +76,10 @@ class $ extends Array {
     if (typeof arg === 'string') {
       arg = arg.trim()
 
-      // html case $`<></> html content`
+      // hyperscript: $(tagName, props, ...children?)
+      if ((args.length && args[0] == null) || isObject(args[0])) return h(arg, ...args)
+
+      // create html: $('<></> html content')
       if (/</.test(arg)) {
         let statics = [arg]
         statics.raw = [arg]
@@ -83,6 +87,7 @@ class $ extends Array {
         return create(result[0].childNodes)
       }
 
+      // selector
       let within = args[0] ? (args[0] instanceof $ ? args[0][0] : args[0] ) : document
 
       arg = within.querySelector(arg)
@@ -218,18 +223,23 @@ Object.assign($.prototype, {
     }
   },
 
-  mount: function (handle, deps) {
+  mount: function (fn, deps=true) {
     if (!commit(fxKey('mount'), deps, () => destroy.forEach(fn => fn && fn()))) return
 
     let destroy = []
 
     this.forEach(el => {
-      let unload
-      let handle = [() => unload = fn(), () => unload && unload()]
+      let unload, connected = false
+      let handle = [() => (unload = fn(), connected = true), () => unload && unload()]
 
       onload(el, ...handle)
 
-      destroy.push(() => onload.destroy(el, ...handle))
+      // FIXME: workaround https://github.com/hyperdivision/fast-on-load/issues/3
+      if (!connected && isConnected(el)) {
+        handle[0]()
+      }
+
+      destroy.push(() => onload.delete(el, ...handle))
     })
   },
 
@@ -297,6 +307,13 @@ Object.assign($.prototype, {
 
       // direct JSX: html(<a foo={bar}/>)
       else vdom = args[0]
+    }
+
+    if (!vdom) {
+      this.forEach(el => {
+        while (el.firstChild) el.removeChild(el.firstChild)
+      })
+      return this
     }
 
     if (!Array.isArray(vdom)) vdom = [vdom]
@@ -733,3 +750,7 @@ function paramCase(str) {
 function noop() { }
 
 function uid() { return Math.random().toString(36).slice(2,8) }
+
+const isConnected = 'isConnected' in window.Node.prototype
+  ? node => node.isConnected
+  : node => document.documentElement.contains(node)

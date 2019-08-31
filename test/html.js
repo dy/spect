@@ -96,7 +96,7 @@ t('html: insert self/array of nodes', t => {
   t.equal($el[0].innerHTML, `<a id="x"></a><a id="y"></a>`)
 })
 
-t('html: insert function', async t => {
+t('html: child function as modifier', async t => {
   let $el = $`<div/>`
   $el.html`<a>${ el => {
     t.is(el.tagName, 'A')
@@ -108,74 +108,84 @@ t('html: insert function', async t => {
   t.equal($el[0].innerHTML, `<a><span></span></a>`)
 })
 
-t.todo('html: h- reducer', t => {
-  let target = document.createElement('div')
-  target.innerHTML = '|bar <baz></baz>|'
-
-  $(target, el => {
-    html([h('div.prepended'), ' foo ', el.childNodes, ' qux ', h('div.appended')])
-    t.equal(el.innerHTML, `<div class="prepended"></div> foo |bar <baz></baz>| qux <div class="appended"></div>`)
-
-    html`foo ${el.childNodes} qux`
-    t.equal(el.innerHTML, `foo |bar <baz></baz>| qux`)
-
-    html`<div.prepended /> foo ${el.childNodes} qux <div.appended />`
-    t.equal(el.innerHTML, `<div class="prepended"></div> foo |bar <baz></baz>| qux <div class="appended"></div>`)
-  })
-
-  // prepend icons to buttons
-  let b = document.body.appendChild(document.createElement('button'))
-  b.innerHTML = 'Click'
-  b.setAttribute('icon', 'phone_in_talk')
-  $('button[icon]', ({ attributes: { icon: { value: icon } }, childNodes }) => html`<i class="material-icons">${icon}</i> ${childNodes}`)
-
-  t.equal(b.innerHTML, '<i class="material-icons">phone_in_talk</i> Click')
-  document.body.removeChild(b)
-
-  // TODO: single node inside
-  $(document.createElement('div'), el => {
-    let a = document.createElement('a')
-    html`<x>${a}</x>`
-    t.equal(el.innerHTML, `<x><a></a></x>`)
-  })
-})
-
-t.todo('html: html inside of html', t => {
-  $(document.createElement('div'), el => {
-    html`<foo>${html`<bar>${html`<baz></baz>`}</bar>qux`}</foo>`
-
-    t.equal(el.innerHTML, '<foo><bar><baz></baz></bar>qux</foo>')
-  })
-})
-
-t.todo('html: re-rendering inner nodes shouldn\'t trigger mount callback')
-
-t.todo('html: h plain node', t => {
+t('html: child function as reducer', async t => {
+  let log = []
   let target = document.createElement('div')
 
-  $(target, el => {
-    let x = html(
-      h('x', { foo: 'bar' },
-        'Text content', ' ',
-      )
+  $(target).use(el => {
+    $(el).html`<a foo=bar>${a}</a>`
+    t.is(log, ['a'])
+  })
+
+  function a(el) {
+    log.push('a')
+    t.equal(el.tagName, 'A')
+    t.equal(el.foo, 'bar')
+    return 'xyz'
+  }
+
+  await Promise.resolve().then()
+
+  t.is(target.innerHTML, `<a>xyz</a>`)
+})
+
+t('html: $ inside of html', t => {
+  let $el = $(document.createElement('div'))
+
+  $el.html`<foo>${$`<bar>${$`<baz></baz>`}</bar>qux`}</foo>`
+
+  t.equal($el[0].innerHTML, '<foo><bar><baz></baz></bar>qux</foo>')
+})
+
+t('html: re-rendering inner nodes shouldn\'t trigger mount callback', async t => {
+  let log = []
+  let $a = $`<div.a><div.b use=${fn}/></>`
+  document.body.appendChild($a[0])
+
+  function fn (el) {
+    log.push(0)
+    $(el).mount(() => {
+      log.push(1)
+      return () => log.push(2)
+    })
+  }
+
+  await Promise.resolve().then()
+  t.is(log, [0, 1])
+
+  $a.html`<div.b use=${fn}/>`
+  await Promise.resolve().then()
+  t.is(log, [0, 1, 0])
+
+  $a.html`<div.b use=${fn}/>`
+  await Promise.resolve().then()
+  t.is(log, [0, 1, 0, 0])
+
+  $a.html``
+  await Promise.resolve().then()
+  t.is(log, [0, 1, 0, 0, 2])
+})
+
+t('html: h plain node', t => {
+  let target = document.createElement('div')
+
+  $(target).html(
+    $('x', { foo: 'bar' },
+      'Text content', ' ',
     )
+  )
 
-    t.equal(x.tagName, 'X')
-  })
-
-  t.equal(target.textContent, 'Text content ')
+  t.equal(target.innerHTML, '<x>Text content </x>')
 })
 
-t.todo('html: text content', t => {
-  $(document.createElement('div'), el => {
-    let foo = html`foo`
-    t.equal(el.innerHTML, 'foo')
-    t.ok(foo instanceof Node)
+t('html: text content', t => {
+  let $el = $(document.createElement('div'))
 
-    let bar = html('bar')
-    t.equal(el.innerHTML, 'bar')
-    t.ok(bar instanceof Node)
-  })
+  $el.html`foo`
+  t.equal($el[0].innerHTML, 'foo')
+
+  $el.html('bar')
+  t.equal($el[0].innerHTML, 'bar')
 })
 
 t.todo('html: direct array', t => {
@@ -252,27 +262,6 @@ t('html: direct components case', async t => {
 
   await Promise.resolve().then()
   t.equal($c[0].innerHTML, '<div></div>')
-})
-
-t('html: child function', async t => {
-  let log = []
-  let target = document.createElement('div')
-
-  $(target).use(el => {
-    $(el).html`<a foo=bar>${a}</a>`
-    t.is(log, ['a'])
-  })
-
-  function a(el) {
-    log.push('a')
-    t.equal(el.tagName, 'A')
-    t.equal(el.foo, 'bar')
-    return 'xyz'
-  }
-
-  await Promise.resolve().then()
-
-  t.is(target.innerHTML, `<a>xyz</a>`)
 })
 
 t.todo('html: connecting aspect as array spread', t => {
