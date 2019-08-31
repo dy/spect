@@ -312,7 +312,7 @@ Object.assign($.prototype, {
         refs[++count] = frag
         return { ref: count }
       }
-      if (arg instanceof DocumentFragment) {
+      if (arg instanceof DocumentFragment || typeof arg === 'function') {
         refs[++count] = arg
         return { ref: count }
       }
@@ -330,9 +330,24 @@ Object.assign($.prototype, {
     this.forEach(el => {
       patch(el, render, vdom)
 
-      // reinsert native nodes
+      // reinsert refs
       for (let id in refs) {
-        el.querySelector('#' + SPECT_CLASS + '-ref-' + id).replaceWith(refs[id])
+        let refNode = el.querySelector('#' + SPECT_CLASS + '-ref-' + id)
+        if (typeof refs[id] === 'function') {
+          let parentNode = refNode.parentNode
+          let range = document.createRange()
+          range.selectNode(refNode)
+          range.collapse(true)
+          refNode.remove()
+          let result = refs[id](parentNode)
+          if (result != null) {
+            range.insertNode(result instanceof Node ? result : document.createTextNode(result))
+          }
+          range.detach()
+        }
+        else {
+          refNode.replaceWith(refs[id])
+        }
       }
     })
 
@@ -589,15 +604,6 @@ function h(target, props = {}, ...children) {
     id = parts[1]
     classes = parts[2]
   }
-
-  // make functional children as aspects
-  children = children.filter(child => {
-    if (typeof child === 'function') {
-      use.push(child)
-      return false
-    }
-    return true
-  })
 
   for (let prop in props) {
     let val = props[prop]

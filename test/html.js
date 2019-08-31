@@ -55,7 +55,7 @@ t('html: insert nodes list', t => {
   t.equal(el.innerHTML, `<div class="prepended"></div> foo |bar <baz></baz>| qux <div class="appended"></div>`)
 })
 
-t('html: pass wrappers themselves', t => {
+t('html: handle collections', t => {
   // prepend icons to buttons
   let b = document.body.appendChild(document.createElement('button'))
   b.innerHTML = 'Click <span>-</span>'
@@ -241,36 +241,38 @@ t.todo('html: two wrapping aspects', async t => {
 
 t.skip('html: <host> tag')
 
-t.skip('html: function components', t => {
-  let c = $`<${C} x y=1 z=${2} />`
+t('html: direct components case', async t => {
+  let $c = $`<${C} x y=1 z=${2} />`
 
   function C(el) {
-    t.deepEqual({ x: el.x, y: el.y, z: el.z }, { x: true, y: '1', z: 2 })
+    t.is({ x: el.x, y: el.y, z: el.z }, { x: true, y: '1', z: 2 })
 
-    html`<${el}><div></div></>`
+    $(el).html`<div></div>`
   }
 
-  t.equal(c.outerHTML, '<div></div>')
+  await Promise.resolve().then()
+  t.equal($c[0].innerHTML, '<div></div>')
 })
 
-t.todo('html: connecting aspect as child function', t => {
+t('html: child function', async t => {
   let log = []
   let target = document.createElement('div')
 
   $(target).use(el => {
     $(el).html`<a foo=bar>${a}</a>`
-    t.deepEqual(log, ['a'])
+    t.is(log, ['a'])
   })
 
   function a(el) {
     log.push('a')
     t.equal(el.tagName, 'A')
     t.equal(el.foo, 'bar')
+    return 'xyz'
   }
-})
 
-t.todo('html: connecting aspect as anonymous attribute', t => {
+  await Promise.resolve().then()
 
+  t.is(target.innerHTML, `<a>xyz</a>`)
 })
 
 t.todo('html: connecting aspect as array spread', t => {

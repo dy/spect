@@ -462,22 +462,20 @@ $els.attr('foo', false) // same as null or undefined
 
 ### ``.html`...markup` `` − html side-effect
 
-Render HTML for elements in collection. Internally uses [htm](https://ghub.io/htm) with [incremental-dom](https://ghub.io/incremental-dom).
+Patch HTML for elements in collection. Internally uses [htm](https://ghub.io/htm) and [incremental-dom](https://ghub.io/incremental-dom) for efficient rendering.
 
 ```js
 // set html
 $els.html`foo <bar><baz/></> qux`
 $els.html`foo ${ document.querySelector('.bar') } ${ $baz }`
-$els.html(document.querySelector('.bar'))
+$els.html`<div.foo>${ foo => 'content' }</div>`
+$els.html(document.querySelector('.bar'), deps)
+$els.html([foo, bar, baz], deps)
 
-// append/prepend/insert/reduce
+// append/prepend/insert/wrap/unwrap/reduce
 $els.html(children => [prepend, ...children, append])
-
-// wrap
-$els.html(children => $`<div.wrapper>${ children }</div>`)
-
-// unwrap
-$els.html(children => children[0])
+$els.html(children => $`<div.foo>${ children }</div>`)
+$els.html(children => children[0], deps)
 
 /* @jsx $ */
 $els.html(<>Markup</>)
@@ -491,11 +489,7 @@ function SuperButton(button) {
 
 // assign aspects
 $els.html`<foo use=${bar}/>`
-$els.html`<foo use=${[bar, foo => {}]}/>`
-$els.html`<foo>${ bar }</>`
-function bar () {
-  // ...
-}
+$els.html`<foo use=${[bar, baz]}/>`
 ```
 
 <p align="right">Ref: <a href="https://ghub.io/incremental-dom">incremental-dom</a>, <a href='https://ghub.io/htm'>htm</a></p>
