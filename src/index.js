@@ -350,20 +350,18 @@ Object.assign($.prototype, {
       // reinsert refs
       for (let id in refs) {
         let refNode = el.querySelector('#' + SPECT_CLASS + '-ref-' + id)
+        let parent = refNode.parentNode
+        let next = refNode.nextSibling
         if (typeof refs[id] === 'function') {
-          let parentNode = refNode.parentNode
-          let range = document.createRange()
-          range.selectNode(refNode)
-          range.collapse(true)
-          refNode.remove()
-          let result = refs[id](parentNode)
+          parent.removeChild(refNode)
+          let result = refs[id](parent)
           if (result != null) {
-            range.insertNode(result instanceof Node ? result : document.createTextNode(result))
+            let newNode = result instanceof Node ? result : document.createTextNode(result)
+            next ? parent.insertBefore(result, newNode, next) : parent.appendChild(newNode)
           }
-          range.detach()
         }
         else {
-          refNode.replaceWith(refs[id])
+          parent.replaceChild(refs[id], refNode)
         }
       }
     })

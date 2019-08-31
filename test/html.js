@@ -264,7 +264,7 @@ t('html: direct components case', async t => {
   t.equal($c[0].innerHTML, '<div></div>')
 })
 
-t.todo('html: connecting aspect as array spread', t => {
+t.skip('html: connecting aspect as array spread', t => {
   let log = []
   let target = document.createElement('div')
 
