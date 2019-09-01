@@ -148,7 +148,7 @@ _Spect_ introduces `.state`, `.mount` and `.fx` effects, similar to `useState` a
 ```js
 import $ from 'spect'
 
-$`#timer-example`.use(el => {
+$('#timer-example').use(el => {
   let $el = $(el)
 
   // init
@@ -299,10 +299,6 @@ $('#id.class > div')
 $(elements)
 $('> div', container)
 
-// change root
-const _$ = $.bind(externalDoc)
-_$`#id`
-
 // create html
 $('<div.foo/>')
 $`foo <bar.baz/>`
@@ -320,8 +316,8 @@ $(<div />)
 Assign aspect function(s) to set of elements. Each aspect `fn` is registered for every element in the set. Aspect `fn` is invoked immediately, with `el` as argument. By reading state(s) of other elements, aspect subscribes to changes in these states and rerenders itself if changes take place.
 
 ```js
-let $foo = $`.foo`
-let $bar = $`.bar`
+let $foo = $('.foo')
+let $bar = $('.bar')
 
 $foo.use(el => {
   let $el = $(el)
@@ -598,7 +594,7 @@ $target.class()
 Utility method, rerendering all element aspects. Not for regular use, it can trigger redundant rerenders and cause unwanted side-effects.
 
 ```js
-$els = $`.selector`.use(a, b, c)
+$els = $('.selector').use(a, b, c)
 
 $els.update()
 ```
