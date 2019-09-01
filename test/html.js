@@ -202,6 +202,18 @@ t('html: reducers', t => {
   t.is($el[0].outerHTML, '<div><foo></foo><bar></bar><baz></baz></div>')
 })
 
+t.todo('html: deps', t => {
+  let $el = $`<div.foo/>`
+})
+
+t('html: other element directly', t => {
+  let $el = $`<div/>`
+  let $a = $`<a/>`
+  $el.html($a[0])
+
+  t.is($el[0].outerHTML, `<div><a></a></div>`)
+})
+
 t.todo('html: direct array', t => {
   $(document.createElement('div'), el => {
     $(el, el => {
@@ -213,29 +225,6 @@ t.todo('html: direct array', t => {
       t.ok(baz instanceof Node)
       t.ok(qux instanceof Element)
     })
-  })
-})
-
-t.todo('html: h fragment', t => {
-  $(document.createElement('div'), el => {
-    let x = html`<>A<>B<>C<d/></></></>`
-    t.equal(el.innerHTML, 'ABC<d></d>')
-  })
-})
-
-t.todo('html: DOM attrs/props', t => {
-  let el = document.createElement('x')
-  $(el, el => {
-    html`<${el} x y=1><a z=${() => { }}>b</a></>`
-    t.equal(el.outerHTML, '<x><a>b</a></x>')
-  })
-})
-
-t.todo('html: multiple root nodes', t => {
-  let el = document.createElement('div')
-  $(el, el => {
-    html`<a>a</><a>b</><foo><bar></bar></foo>`
-    t.equal(el.innerHTML, '<a>a</a><a>b</a><foo><bar></bar></foo>')
   })
 })
 
