@@ -472,10 +472,10 @@ $els.html`<div.foo>${ foo => 'content' }</div>`
 $els.html(document.querySelector('.bar'), deps)
 $els.html([foo, bar, baz], deps)
 
-// append/prepend/insert/wrap/unwrap/reduce
+// append/prepend, reduce, wrap/unwrap
 $els.html(children => [prepend, ...children, append])
 $els.html(children => $`<div.foo>${ children }</div>`)
-$els.html(children => children[0], deps)
+$els.html(([foo]) => foo.childNodes, deps)
 
 /* @jsx $ */
 $els.html(<>Markup</>)
@@ -594,14 +594,14 @@ $target.class()
 <p align="right">Ref: <a href="https://ghub.io/clsx">clsx</a>, <a href="https://ghub.io/classnames">classnames</a></p>
 
 
-### `._update( deps? )` − rerender aspect
+### `.update( deps? )` − rerender aspect
 
 Utility method, rerendering all element aspects. Not for regular use, it can trigger redundant rerenders and cause unwanted side-effects.
 
 ```js
 $els = $`.selector`.use(a, b, c)
 
-$els._update()
+$els.update()
 ```
 
 <!--

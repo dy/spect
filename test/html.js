@@ -188,6 +188,20 @@ t('html: text content', t => {
   t.equal($el[0].innerHTML, 'bar')
 })
 
+t('html: reducers', t => {
+  let $el = $`<div><bar/></>`
+
+  // append/prepend, reduce, wrap/unwrap
+  $el.html(children => [$`<foo/>`, ...children, document.createElement('baz')])
+  t.is($el[0].outerHTML, '<div><foo></foo><bar></bar><baz></baz></div>')
+
+  $el.html(children => $`<div.foo>${ children }</div>`)
+  t.is($el[0].outerHTML, '<div><div class="foo"><foo></foo><bar></bar><baz></baz></div></div>')
+
+  $el.html(([foo]) => foo.childNodes)
+  t.is($el[0].outerHTML, '<div><foo></foo><bar></bar><baz></baz></div>')
+})
+
 t.todo('html: direct array', t => {
   $(document.createElement('div'), el => {
     $(el, el => {

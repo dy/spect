@@ -165,7 +165,7 @@ Object.assign($.prototype, {
     return this
   },
 
-  _update: function () {
+  update: function () {
     this.forEach(el => {
       let aspects = aspectsCache.get(el)
       if (!aspects) return
@@ -208,7 +208,6 @@ Object.assign($.prototype, {
 
     evts = evts.split(/\s+/)
 
-
     if (delegate) {
       evts.forEach(evt => this.forEach(el => {
         const delegation = delegated(el, delegate, evt, fn)
@@ -221,6 +220,23 @@ Object.assign($.prototype, {
         destroy.push(() => el.removeEventListener(evt, fn))
       }))
     }
+  },
+
+  emit: function (evt, o, deps) {
+    if (!commit(fxKey('emit'), deps)) return this
+
+    if (evt instanceof Event) {
+      this.forEach(el => el.dispatchEvent(evt))
+    }
+    else if (typeof evt === 'string') {
+      evt = evt.split(/\s+/)
+      evt.forEach(evt => this.forEach(el => el.dispatchEvent(new CustomEvent(evt))))
+    }
+    else if (typeof evt === 'object') {
+      this.forEach(el => el.dispatchEvent(new CustomEvent(evt.name, e)))
+    }
+
+    return this
   },
 
   mount: function (fn, deps=true) {
@@ -302,8 +318,15 @@ Object.assign($.prototype, {
     if (args[0].raw) vdom = html(...args)
 
     else {
-      // fn: html(h => h(...))
-      if (typeof args[0] === 'function') vdom = args[0](h)
+      // fn: html(children => [...children])
+      if (typeof args[0] === 'function') {
+        this.forEach(el => {
+          let input = [...el.childNodes]
+          let output = args[0](input)
+          create(el).html(output)
+        })
+        return this
+      }
 
       // direct JSX: html(<a foo={bar}/>)
       else vdom = args[0]

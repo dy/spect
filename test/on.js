@@ -16,9 +16,31 @@ t('on: instant trigger must be handled', t => {
   // })
 })
 
-t.todo('on: should be available via html', t => {
-  let foo = []
+t.skip('on: should be available via html', t => {
+  let log = []
 
   let el = $`<a.foo on=${{ foo: () => log.push('bar') }}`
 })
 
+t.skip('on: sequences unbind themselves', t => {
+  let log = []
+
+  let $el = $`<a.foo/>`
+
+  $el.on('mousedown', e => {
+    log.push(1)
+    $(e.currentTarget).on('mouseup', e => (log.push(2), () => log.push(4)))
+  })
+
+  $el.emit(new MouseEvent('mouseup'))
+  t.is(log, [])
+
+  $el.emit(new MouseEvent('mousedown'))
+  t.is(log, [1])
+
+  $el.emit(new MouseEvent('mouseup'))
+  t.is(log, [1, 2])
+
+  $el.emit(new MouseEvent('mousedown'))
+  t.is(log, [1, 2, 1])
+})
