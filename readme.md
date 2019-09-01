@@ -468,7 +468,6 @@ Patch HTML for elements in collection. Internally uses [htm](https://ghub.io/htm
 // set html
 $els.html`foo <bar><baz/></> qux`
 $els.html`foo ${ document.querySelector('.bar') } ${ $baz }`
-$els.html`<div.foo>${ foo => 'content' }</div>`
 $els.html(document.querySelector('.bar'), deps)
 $els.html([foo, bar, baz], deps)
 

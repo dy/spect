@@ -16,7 +16,9 @@ import {
   symbols,
   applyProp,
   applyAttr,
-  elementVoid
+  elementVoid,
+  currentPointer,
+  skipNode
 } from 'incremental-dom'
 import onload from 'fast-on-load'
 
@@ -403,13 +405,18 @@ Object.assign($.prototype, {
       if (arg.ref) return elementVoid('span', null, ['id', SPECT_CLASS + '-ref-' + arg.ref])
 
       // objects create elements
-      let { tag, key, props, staticProps, children, use, create, effects = [] } = arg
+      let { tag, key, props, staticProps, children, use, create, effects = [], is } = arg
 
       // fragment (direct vdom)
       if (!tag) return children.forEach(render)
 
-      let el
-      if (!children || !children.length) el = elementVoid(create, key, staticProps, ...props)
+      let el, current = currentPointer()
+
+      // do not over-create extended instantiated components
+      // if (is && current && current.is && current.is === is) create = tag//skipNode()
+      if (!children || !children.length) {
+        el = elementVoid(create, key, staticProps, ...props)
+      }
       else {
         el = elementOpen(create, key, staticProps, ...props)
         children.forEach(render)
@@ -616,10 +623,11 @@ function createEffect (effectName, tpl, get0, get, set, is = Object.is) {
   }
 }
 
+const componentCache = {}
 function h(target, props = {}, ...children) {
   let use = [], propsArr = []
   let staticProps = []
-  let tag, classes = [], id, create
+  let tag, classes = [], id, create, is
 
   if (typeof target === 'function') {
     tag = getTagName(target)
@@ -629,7 +637,8 @@ function h(target, props = {}, ...children) {
     }
     else {
       let fn = target
-      create = function () {
+      if (componentCache[tag]) create = componentCache[tag]
+      else componentCache[tag] = create = function () {
         let el = document.createElement(tag)
         queue(el, fn)
         return el
@@ -651,19 +660,23 @@ function h(target, props = {}, ...children) {
     // <div is=${fn}>
     if (prop === 'is') {
       if (typeof val === 'function') {
-        let is = getTagName(val)
+        let fn = val
+        is = getTagName(fn)
         staticProps.push('is', is)
 
         if (isCustomElementsAvailable) {
           if (!customElements.get(is)) {
-            let Component = createClass(fn, Object.getPrototypeOf(document.createElement(is)).constructor)
-            customElements.define(name, Component, { extends: is })
-            create = function () { return document.createElement(tag, { is }) }
+            let Component = createClass(fn, Object.getPrototypeOf(document.createElement(tag)).constructor)
+            customElements.define(is, Component, { extends: tag })
+            create = componentCache[is] = function () { return document.createElement(tag, { is }) }
+          }
+          else {
+            create = componentCache[is]
           }
         }
         else {
-          let fn = val
-          create = function () {
+          if (componentCache[is]) create = componentCache[is]
+          else create = componentCache[is] = function () {
             let el = document.createElement(tag)
             queue(el, fn)
             return el
@@ -685,7 +698,7 @@ function h(target, props = {}, ...children) {
   }
 
   if (id) staticProps.push('id', id)
-  if (classes.length) staticProps.push('class', classes.join(' '))
+  if (classes.length) propsArr.push('class', classes.join(' '))
 
   if (!create) create = tag
 
@@ -699,7 +712,8 @@ function h(target, props = {}, ...children) {
     create,
     props: propsArr,
     staticProps,
-    children
+    children,
+    is
   }
 }
 
@@ -718,11 +732,11 @@ function parseTagComponents (str) {
 let nameCache = new WeakMap
 const counters = {}
 function getTagName(fn) {
-  if (!fn.name) throw Error('Component function must have a name.')
-
   if (nameCache.has(fn)) return nameCache.get(fn)
 
-  let name = paramCase(fn.name)
+  // do not allow anonymous functions in aspects
+  if (!fn.name && currentElement) throw Error('Component function should have a name')
+  let name = fn.name ? paramCase(fn.name) : 'spect'
 
   // add num suffix to single-word names
   let parts = name.split('-')

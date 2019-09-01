@@ -30,6 +30,59 @@ t('html: component static props', async t => {
   t.is(log, ['C-0', 'x', 'y z'])
 })
 
+t('html: direct component rerendering should not destroy state', async t => {
+  let $el = $`<div><${fn}/></div>`
+  let $c = $($el[0].firstChild)
+  $c.state({ x: 1 })
+
+  await Promise.resolve().then()
+  t.is($c.state('x'), 1)
+
+  $el.html`<${fn}.foo/>`
+
+  let $c1 = $($el[0].firstChild)
+  t.is($c1.state('x'), 1)
+  t.is($c1, $c)
+  t.is($c1.class('foo'), true)
+
+  function fn (el) {}
+})
+
+t('html: rerendered component state should persist', async t => {
+  let $el = $`<div><span.foo/></div>`
+  let $c = $($el[0].firstChild)
+  $c.state({ x: 1 })
+
+  await Promise.resolve().then()
+  t.is($c.state('x'), 1)
+
+  $el.html`<span.foo.bar/>`
+
+  let $c1 = $($el[0].firstChild)
+  t.is($c1.state('x'), 1)
+  t.is($c1, $c)
+  t.is($c1.class('foo'), true)
+})
+
+t('html: extended component rerendering should not destroy state', async t => {
+  let $el = $`<div><div is=${fn}/></div>`
+  let $c = $($el[0].firstChild)
+  $c.state({ x: 1 })
+
+  await Promise.resolve().then()
+  t.is($c.state('x'), 1)
+
+  $el.html`<div.foo is=${fn}/>`
+
+  let $c1 = $($el[0].firstChild)
+  t.is($c1.state('x'), 1)
+  t.is($c1, $c)
+  t.is($c1.class('foo'), true)
+
+  function fn(el) { }
+})
+
+t.todo('html: rerendering extended component should not register anonymous function')
 
 t.todo('html: fake gl layers', t => {
   html`<canvas is=${GlCanvas}>
