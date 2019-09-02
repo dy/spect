@@ -298,7 +298,7 @@ let getRawMarkup = content => {
 
 ## API
 
-[**`$`**]()&nbsp;&nbsp; [**`.use`**]()&nbsp;&nbsp; [**`.fx`**]()&nbsp;&nbsp; [**`.state`**]()&nbsp;&nbsp; [**`.prop`**]()&nbsp;&nbsp; [**`.attr`**]()&nbsp;&nbsp; [**`.html`**]()&nbsp;&nbsp; [**`.text`**]()&nbsp;&nbsp; [**`.class`**]()&nbsp;&nbsp; [**`.css`**]()&nbsp;&nbsp; [**`.on`**]()&nbsp;&nbsp; [**`.mount`**]()
+[**`$`**](#-selector--els--markup---selector--h)&nbsp;&nbsp; [**`.use`**](#use-fns---assign-aspects)&nbsp;&nbsp; [**`.fx`**](#fx-el--destroy--deps---generic-side-effect)&nbsp;&nbsp; [**`.state`**](#state-name--val-deps---state-provider)&nbsp;&nbsp; [**`.prop`**](#prop-name--val-deps---properties-provider)&nbsp;&nbsp; [**`.attr`**](#attr-name--val-deps---attributes-provider)&nbsp;&nbsp; [**`.html`**](#htmlmarkup---html-side-effect)&nbsp;&nbsp; [**`.text`**](#text-content----text-content-side-effect)&nbsp;&nbsp; [**`.class`**](#class-classes-deps---classes-side-effect)&nbsp;&nbsp; [**`.css`**](#css-styles-deps---css-side-effect)&nbsp;&nbsp; [**`.on`**](#on-evt-fn---events-provider)&nbsp;&nbsp; [**`.mount`**](#mount-fn-onmount--onunmount----lifecycle-callbacks)
 
 ##
 
