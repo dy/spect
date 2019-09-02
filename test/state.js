@@ -87,6 +87,18 @@ t.skip('state: counter', t => {
   })
 })
 
+t('state: get/set path', t => {
+  let $a = $`<a/>`
+
+  t.is($a.state('x.y.z'), undefined)
+
+  $a.state('x.y.z', 1)
+  t.is($a.state(), {x: { y: {z: 1}}})
+  t.is($a.state('x.y.z'), 1)
+  $a.state('x\\.y\\.z', 2)
+  t.is($a.state('x\\.y\\.z'), 2)
+})
+
 t.todo('state: trigger rerendering', t => {
   let stop = 0
   let $els = $`<div.a/><div.b/><div.c/>`.use(a => {

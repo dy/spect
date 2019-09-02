@@ -389,20 +389,19 @@ Read or write state associated with an element. Reading returns first element st
 ```js
 // write state
 $els.state('foo', 1)
-$els.state({foo: 1})
+$els.state({ foo: 1 })
+$els.state('foo.bar.baz', 1) // safe-path set
 
-// mutate (called for each element)
+// mutate/reduce
 $els.state(s => s.foo = 1)
-
-// reduce (called for each element)
-$els.state(s => {...s, foo: 2})
+$els.state(s => {...s, foo: 1})
 
 // init
-$els.state({foo: 0}, [])
+$els.state({foo: 1'}, [])
 
-// read first element state
+// read (first element)
 $els.state('foo')
-$els.state('foo.bar.baz') // safe-path
+$els.state('foo.bar.baz') // safe-path get
 
 // read full
 $els.state()

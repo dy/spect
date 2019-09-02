@@ -7,6 +7,8 @@ import kebab from 'kebab-case'
 import scopeCss from 'scope-css'
 import insertCss from 'insert-styles'
 import isObject from 'is-plain-obj'
+import pget from 'dlv'
+import pset from 'dset'
 import {
   patch,
   elementOpen,
@@ -268,10 +270,10 @@ Object.assign($.prototype, {
       return state
     }
     return [
-      function (...args) { return getState(this[0])[String.raw(...args)] },
+      function (...args) { return pget(getState(this[0]), String.raw(...args)) },
       getState,
-      (el, name) => getState(el)[name],
-      (el, name, value) => getState(el)[name] = value
+      (el, name) => pget(getState(el), name),
+      (el, name, value) => pset(getState(el), name, value)
     ]
   })()),
 
