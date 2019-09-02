@@ -1,7 +1,7 @@
 # Spect ![experimental](https://img.shields.io/badge/stability-experimental-red) [![Build Status](https://travis-ci.org/spectjs/spect.svg?branch=master)](https://travis-ci.org/spectjs/spect)
 
 Spect is [_aspect_-oriented](https://en.wikipedia.org/wiki/Aspect-oriented_programming) framework for creating expressive UIs.
-
+<!--
 ```js
 import $ from 'spect'
 import ky from 'ky'
@@ -10,7 +10,7 @@ import { t, useLocale } from 'ttag'
 // main app aspect - load & render data
 function main (app) {
   let $app = $(app)
-  
+
   // init state
   $app.state({ id: 1 }, [])
 
@@ -52,7 +52,7 @@ function i18n (el) {
 $('#app').use(main)
 $('.preloadable').use(preloader)
 ```
-
+-->
 ## Concept
 
 In a nutshell, _Spect_ is a mix of jQuery (_collections_), functional React components (_aspects_) and hooks (_side-effects_).
