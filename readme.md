@@ -150,7 +150,7 @@ function helloMessage(el) {
 $('#hello-example').use(helloMessage).prop('name', 'Taylor')
 ```
 
-<p align='right'><a href="">Open in sandbox</a></p>
+<p align='right'><a href="https://codesandbox.io/embed/purple-smoke-xz22f?fontsize=14">Open in sandbox</a></p>
 
 
 ### A Stateful Aspect
