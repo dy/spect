@@ -394,7 +394,7 @@ Object.assign($.prototype, {
     })
 
     function render(arg) {
-      if (!arg) return
+      if (arg == null) return
 
       // numbers/strings serialized as text
       if (typeof arg === 'number') return text(arg)

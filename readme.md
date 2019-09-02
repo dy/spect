@@ -135,7 +135,7 @@ import $ from 'https://unpkg.com/spect@latest?module'
 
 ### A Simple Aspect
 
-This example assigns `hello` aspect to `#hello-example` element and renders single `div` with welcoming.
+This example assigns `helloMessage` aspect to `#hello-example` element and renders single `div` with welcoming.
 
 ```js
 import $ from 'spect'
@@ -150,7 +150,7 @@ function helloMessage(el) {
 $('#hello-example').use(helloMessage).prop('name', 'Taylor')
 ```
 
-<p align='right'><a href="https://codesandbox.io/embed/purple-smoke-xz22f?fontsize=14">Open in sandbox</a></p>
+<p align='right'><a href="https://codesandbox.io/s/a-simple-aspect-xz22f?fontsize=14">Open in sandbox</a></p>
 
 
 ### A Stateful Aspect
@@ -182,7 +182,7 @@ $('#timer-example').use(el => {
 
 ```
 
-<p align='right'><a href="">Open in sandbox</a></p>
+<p align='right'><a href="https://codesandbox.io/s/a-stateful-aspect-9pbji?fontsize=14">Open in sandbox</a></p>
 
 
 ### An Application

@@ -353,5 +353,7 @@ t.skip('html: duplicate id warning', t => {
 })
 
 t('html: null-like insertions', t => {
-  $`<a/>`.html`foo ${ null } ${ undefined }`
+  let $a = $`<a/>`.html`foo ${ null } ${ undefined } ${0}`
+
+  t.is($a[0].innerHTML, 'foo   0')
 })
