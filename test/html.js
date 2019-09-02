@@ -351,3 +351,7 @@ t.skip('html: duplicate id warning', t => {
     $(el, el => html`<div id="a"></div><...>`)
   })
 })
+
+t('html: null-like insertions', t => {
+  $`<a/>`.html`foo ${ null } ${ undefined }`
+})

@@ -346,6 +346,8 @@ Object.assign($.prototype, {
     // stub native nodes
     let count = 0, refs = {}
     vdom = vdom.map(function map(arg) {
+      if (arg == null) return
+
       if (Array.isArray(arg)) return arg.map(map)
 
       if (arg instanceof NodeList || arg instanceof HTMLCollection) {
