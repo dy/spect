@@ -95,8 +95,6 @@ t('state: get/set path', t => {
   $a.state('x.y.z', 1)
   t.is($a.state(), {x: { y: {z: 1}}})
   t.is($a.state('x.y.z'), 1)
-  $a.state('x\\.y\\.z', 2)
-  t.is($a.state('x\\.y\\.z'), 2)
 })
 
 t.todo('state: trigger rerendering', t => {

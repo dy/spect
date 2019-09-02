@@ -72,6 +72,7 @@
     "clsx": "^1.0.4",
     "delegate-it": "^1.1.0",
     "dlv": "^1.1.3",
+    "dotprop": "^1.2.0",
     "dset": "^2.0.1",
     "fast-deep-equal": "^2.0.1",
     "fast-on-load": "^1.2.0",

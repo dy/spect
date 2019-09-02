@@ -47,7 +47,7 @@ t('readme: A stateful aspect', t => {
   document.body.removeChild(el)
 })
 
-t.only('readme: An application', t => {
+t('readme: An application', t => {
   let el = document.body.appendChild(document.createElement('div'))
   el.id = 'todos-example'
 
@@ -79,14 +79,15 @@ t.only('readme: An application', t => {
 
     $el.html`
     <h3>TODO</h3>
-    <main is=${TodoList} items=${$el.state('items')}/>
+    <main is=${TodoList} items=${ $el.state('items') }/>
     <form>
       <label for=new-todo>
         What needs to be done?
       </label>
-      <input#new-todo value=${ $el.state('text')}/>
+      <br/>
+      <input#new-todo value=${ $el.state('text') }/>
       <button>
-        Add #${ $el.state('items.length') + 1}
+        Add #${ $el.state('items.length') + 1 }
       </button>
     </form>
   `
@@ -94,6 +95,6 @@ t.only('readme: An application', t => {
 
   // TodoList component
   function TodoList(el) {
-    $(el).html`<ul>${el.items.map(item => $`<li>${item.text}</li>`)}</ul>`
+    $(el).html`<ul>${ el.items.map(item => $`<li>${ item.text }</li>`) }</ul>`
   }
 })

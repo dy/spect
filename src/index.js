@@ -409,15 +409,12 @@ Object.assign($.prototype, {
       if (arg.ref) return elementVoid('span', null, ['id', SPECT_CLASS + '-ref-' + arg.ref])
 
       // objects create elements
-      let { tag, key, props, staticProps, children, use, create, effects = [], is } = arg
+      let { tag, key, props, staticProps, children, use, create, effects = [], fn } = arg
 
       // fragment (direct vdom)
-      if (!tag) return children.forEach(render)
+      if (!tag) return children && children.forEach(render)
 
-      let el, current = currentPointer()
-
-      // do not over-create extended instantiated components
-      // if (is && current && current.is && current.is === is) create = tag//skipNode()
+      let el
       if (!children || !children.length) {
         el = elementVoid(create, key, staticProps, ...props)
       }
@@ -426,11 +423,13 @@ Object.assign($.prototype, {
         children.forEach(render)
         elementClose(create)
       }
+      // schedule update for components
+      if (fn) queue(el, fn)
 
       // plan aspects init
       if (use) use.forEach(fn => queue(el, fn))
 
-      // run provided effects
+      // run inline effects
       for (let effect in effects) {
         $(el)[effect](effects[effect])
       }
@@ -631,16 +630,16 @@ const componentCache = {}
 function h(target, props = {}, ...children) {
   let use = [], propsArr = []
   let staticProps = []
-  let tag, classes = [], id, create, is
+  let tag, classes = [], id, create, is, fn
 
   if (typeof target === 'function') {
-    tag = getTagName(target)
+    fn = target
+    tag = getTagName(fn)
 
     if (isCustomElementsAvailable) {
-      if (!customElements.get(tag)) customElements.define(tag, createClass(target, HTMLElement))
+      if (!customElements.get(tag)) customElements.define(tag, createClass(fn, HTMLElement))
     }
     else {
-      let fn = target
       if (componentCache[tag]) create = componentCache[tag]
       else componentCache[tag] = create = function () {
         let el = document.createElement(tag)
@@ -664,7 +663,7 @@ function h(target, props = {}, ...children) {
     // <div is=${fn}>
     if (prop === 'is') {
       if (typeof val === 'function') {
-        let fn = val
+        fn = val
         is = getTagName(fn)
         staticProps.push('is', is)
 
@@ -717,7 +716,8 @@ function h(target, props = {}, ...children) {
     props: propsArr,
     staticProps,
     children,
-    is
+    is,
+    fn
   }
 }
 
@@ -754,6 +754,7 @@ function getTagName(fn) {
   return name
 }
 
+// TODO: make use of connected/disconnected callbacks
 function createClass(fn, HTMLElement) {
   return class HTMLSpectComponent extends HTMLElement {
     constructor() {
@@ -762,11 +763,9 @@ function createClass(fn, HTMLElement) {
     }
 
     connectedCallback() {
-
     }
 
     disconnectedCallback() {
-
     }
   }
 }

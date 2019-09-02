@@ -194,9 +194,10 @@ import $ from 'spect'
 
 $('#todos-example').use(Todo)
 
-function Todo (el) {
+function Todo(el) {
   let $el = $(el)
 
+  // init
   $el.state({ items: [], text: '' }, [])
 
   $el.on('submit', e => {
@@ -216,25 +217,26 @@ function Todo (el) {
     }))
   })
 
-  $el.on('change', '#new-todo', e => $el.state({ text: e.target.value });
+  $el.on('change', '#new-todo', e => $el.state({ text: e.target.value }));
 
   $el.html`
-    <h3>TODO</h3>
-    <main is=${TodoList} items=${ $el.state('items') }/>
-    <form>
-      <label for=new-todo>
-        What needs to be done?
-      </label>
-      <input#new-todo value=${ $el.state('text') }/>
-      <button>
-        Add #${ $el.state('items.length') + 1 }
-      </button>
-    </form>
-  `
+  <h3>TODO</h3>
+  <main is=${TodoList} items=${ $el.state('items') }/>
+  <form>
+    <label for=new-todo>
+      What needs to be done?
+    </label>
+    <br/>
+    <input#new-todo value=${ $el.state('text') }/>
+    <button>
+      Add #${ $el.state('items.length') + 1 }
+    </button>
+  </form>
+`
 }
 
 // TodoList component
-function TodoList (el) {
+function TodoList(el) {
   $(el).html`<ul>${ el.items.map(item => $`<li>${ item.text }</li>`) }</ul>`
 }
 ```
