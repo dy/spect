@@ -51,50 +51,93 @@ t('readme: An application', t => {
   let el = document.body.appendChild(document.createElement('div'))
   el.id = 'todos-example'
 
-  $('#todos-example').use(Todo)
+
+  $("#todos-example").use(Todo);
 
   function Todo(el) {
-    let $el = $(el)
+    let $el = $(el);
 
-    $el.state({ items: [], text: '' }, [])
+    $el.state({ items: [], text: "" }, []);
 
-    $el.on('submit', e => {
+    $el.on("submit", e => {
       e.preventDefault();
 
-      if (!$el.state('text.length')) return;
+      if (!$el.state("text.length")) return;
 
       const newItem = {
-        text: $el.state('text'),
+        text: $el.state("text"),
         id: Date.now()
       };
 
       // in-place reducer
       $el.state(state => ({
         items: [...state.items, newItem],
-        text: ''
-      }))
-    })
+        text: ""
+      }));
+    });
 
-    $el.on('change', '#new-todo', e => $el.state({ text: e.target.value }));
+    $el.on("change", "#new-todo", e => $el.state({ text: e.target.value }));
 
     $el.html`
-    <h3>TODO</h3>
-    <main is=${TodoList} items=${ $el.state('items') }/>
-    <form>
-      <label for=new-todo>
-        What needs to be done?
-      </label>
-      <br/>
-      <input#new-todo value=${ $el.state('text') }/>
-      <button>
-        Add #${ $el.state('items.length') + 1 }
-      </button>
-    </form>
-  `
+      <h3>TODO</h3>
+      <main is=${TodoList} items=${$el.state("items")}/>
+      <form>
+        <label for=new-todo>
+          What needs to be done?
+        </label>
+        <br/>
+        <input#new-todo value=${$el.state("text")}/>
+        <button>
+          Add #${$el.state("items.length") + 1}
+        </button>
+      </form>
+    `;
   }
 
   // TodoList component
   function TodoList(el) {
-    $(el).html`<ul>${ el.items.map(item => $`<li>${ item.text }</li>`) }</ul>`
+    $(el).html`<ul>${el.items.map(item => $`<li>${item.text}</li>`)}</ul>`;
   }
+
+  document.body.removeChild(el)
+})
+
+t('readme: A component with external plugin', async t => {
+  const {Remarkable} = await import('remarkable')
+
+  let el = document.body.appendChild(document.createElement('div'))
+  el.id = 'markdown-example'
+
+  // MarkdownEditor is created as web-component
+  $('#markdown-example').use(el => $(el).html`<${MarkdownEditor} content='Hello, **world**!'/>`)
+
+  function MarkdownEditor(el) {
+    let $el = $(el)
+
+    $el.state({ value: $el.prop('content') }, [$el.prop('content')])
+
+    $el.class`markdown-editor`
+
+    $el.html`
+      <h3>Input</h3>
+      <label for="markdown-content">
+        Enter some markdown
+      </label>
+      <textarea#markdown-content
+        onchange=${e => $el.state({ value: e.target.value })}
+      >${ $el.state('value') }</textarea>
+
+      <h3>Output</h3>
+      <div.content html=${ getRawMarkup($el.state('value')) }/>
+    `
+  }
+
+  let getRawMarkup = content => {
+    const md = new Remarkable();
+    return md.render(content);
+  }
+
+  await Promise.resolve().then()
+
+  t.is($('.content', el)[0].innerHTML, `<p>Hello, <strong>world</strong>!</p>`)
 })

@@ -50,7 +50,7 @@ let fxCount, // used as order-based effect key
 
 const SPECT_CLASS = '👁'
 
-export default function create(...args) {
+export default function createAspect(...args) {
   let doc = this && this.createElement ? this : document
   return new $(doc, ...args)
 }
@@ -73,7 +73,7 @@ class $ extends Array {
 
     // $`...tpl`
     if (arg && arg.raw) {
-      return create((create(document.createDocumentFragment())).html(arg, ...args)[0].childNodes)
+      return createAspect((createAspect(document.createDocumentFragment())).html(arg, ...args)[0].childNodes)
     }
 
     // $('.selector')
@@ -87,8 +87,8 @@ class $ extends Array {
       if (/</.test(arg)) {
         let statics = [arg]
         statics.raw = [arg]
-        let result = (create(document.createDocumentFragment())).html(statics, ...args)
-        return create(result[0].childNodes)
+        let result = (createAspect(document.createDocumentFragment())).html(statics, ...args)
+        return createAspect(result[0].childNodes)
       }
 
       // selector
@@ -224,6 +224,8 @@ Object.assign($.prototype, {
         destroy.push(() => el.removeEventListener(evt, fn))
       }))
     }
+
+    return this
   },
 
   emit: function (evt, o, deps) {
@@ -261,6 +263,8 @@ Object.assign($.prototype, {
 
       destroy.push(() => onload.delete(el, ...handle))
     })
+
+    return this
   },
 
   state: createEffect('state', ...(() => {
@@ -321,13 +325,16 @@ Object.assign($.prototype, {
     let vdom
     if (args[0].raw) vdom = html(...args)
 
+    // html('<a foo/>')
+    // else if (typeof args[0] === 'string') vdom = html(args)
+
     else {
       // fn: html(children => [...children])
       if (typeof args[0] === 'function') {
         this.forEach(el => {
           let input = [...el.childNodes]
           let output = args[0](input)
-          create(el).html(output)
+          createAspect(el).html(output)
         })
         return this
       }
@@ -430,8 +437,11 @@ Object.assign($.prototype, {
       if (use) use.forEach(fn => queue(el, fn))
 
       // run inline effects
-      for (let effect in effects) {
-        $(el)[effect](effects[effect])
+      for (let i = 0; i < effects.length; i+=2) {
+        let effect = effects[i], val = effects[i+1]
+        let arg = [val]
+        arg.raw = arg
+        createAspect(el)[effect](arg)
       }
     }
 
@@ -447,6 +457,7 @@ Object.assign($.prototype, {
     function (...args) {
       let str = String.raw(...args)
       this.forEach(el => el.className = str)
+      return this
     },
     el => {
       let obj = {}
@@ -457,6 +468,7 @@ Object.assign($.prototype, {
     (el, name, value) => {
       if (!value) el.classList.remove(name)
       else el.classList.add(name)
+      return this
     }),
 
   css: createEffect('css', function (statics, ...parts) {
@@ -630,7 +642,7 @@ const componentCache = {}
 function h(target, props = {}, ...children) {
   let use = [], propsArr = []
   let staticProps = []
-  let tag, classes = [], id, create, is, fn
+  let tag, classes = [], id, create, is, fn, effects = []
 
   if (typeof target === 'function') {
     fn = target
@@ -661,7 +673,7 @@ function h(target, props = {}, ...children) {
     if (prop === 'use') Array.isArray(val) ? use.push(...val) : use.push(val)
 
     // <div is=${fn}>
-    if (prop === 'is') {
+    else if (prop === 'is') {
       if (typeof val === 'function') {
         fn = val
         is = getTagName(fn)
@@ -697,6 +709,11 @@ function h(target, props = {}, ...children) {
       classes.push(...parts[2])
     }
 
+    // <div effect=${value}/>
+    else if ($.prototype.hasOwnProperty(prop)) {
+      effects.push(prop, val)
+    }
+
     else propsArr.push(prop, val)
   }
 
@@ -717,7 +734,8 @@ function h(target, props = {}, ...children) {
     staticProps,
     children,
     is,
-    fn
+    fn,
+    effects
   }
 }
 

@@ -341,8 +341,6 @@ t.skip('html: connecting aspect as array spread', t => {
 
 t('html: class components')
 
-t('html: extended web-components')
-
 t.skip('html: duplicate id warning', t => {
   let el = document.createElement('div')
   el.innerHTML = '<div id="a"></div>'
@@ -377,4 +375,12 @@ t('html: parent props must rerender nested components', async t => {
   await Promise.resolve()
 
   t.is($x[0].firstChild.innerHTML, `value: 1`)
+})
+
+t('html: html effect', async t => {
+  let $el = $`<a html=${'<span>foo</span>'}/>`
+
+  await Promise.resolve().then()
+
+  t.is($el[0].innerHTML, `<span>foo</span>`)
 })

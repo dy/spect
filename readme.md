@@ -150,7 +150,7 @@ function helloMessage(el) {
 $('#hello-example').use(helloMessage).prop('name', 'Taylor')
 ```
 
-<p align='right'><a href="https://codesandbox.io/s/a-simple-aspect-xz22f?fontsize=14">Open in sandbox</a></p>
+<p align='right'><a href="https://codesandbox.io/s/a-simple-aspect-xz22f">Open in sandbox</a></p>
 
 
 ### A Stateful Aspect
@@ -182,7 +182,7 @@ $('#timer-example').use(el => {
 
 ```
 
-<p align='right'><a href="https://codesandbox.io/s/a-stateful-aspect-9pbji?fontsize=14">Open in sandbox</a></p>
+<p align='right'><a href="https://codesandbox.io/s/a-stateful-aspect-9pbji">Open in sandbox</a></p>
 
 
 ### An Application
@@ -241,10 +241,10 @@ function TodoList(el) {
 }
 ```
 
-<p align='right'><a href="">Open in sandbox</a></p>
+<p align='right'><a href="https://codesandbox.io/s/an-application-uiv4v">Open in sandbox</a></p>
 
 
-### A Component
+### A Component Using External Plugins
 
 _Spect_ is able to create components via native web-components mechanism, as seen in previous example. Let's see how that can be used in composition.
 
@@ -254,7 +254,7 @@ import $ from 'spect'
 import MarkdownEditor from './editor.js'
 
 // MarkdownEditor is created as web-component
-$('#markdown-example').use(el => el.html`<${MarkdownEditor} content='Hello, **world**!'/>`)
+$('#markdown-example').use(el => $(el).html`<${MarkdownEditor} content='Hello, **world**!'/>`)
 ```
 
 ```js
@@ -279,7 +279,7 @@ export default function MarkdownEditor (el) {
     >${ $el.state('value') }</textarea>
 
     <h3>Output</h3>
-    <div.content html=${ getRawMarkup( $el.prop('content') ) }/>
+    <div.content html=${ getRawMarkup( $el.state('value') ) }/>
   `
 }
 
@@ -289,7 +289,7 @@ let getRawMarkup = content => {
 }
 ```
 
-<p align='right'><a href="">Open in sandbox</a></p>
+<p align='right'><a href="https://codesandbox.io/s/a-component-tnwdm">Open in sandbox</a></p>
 
 ### More examples
 
