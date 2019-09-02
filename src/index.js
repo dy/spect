@@ -6,7 +6,7 @@ import htm from 'htm'
 import kebab from 'kebab-case'
 import scopeCss from 'scope-css'
 import insertCss from 'insert-styles'
-import isObject from 'is-plain-object'
+import isObject from 'is-plain-obj'
 import {
   patch,
   elementOpen,
@@ -382,7 +382,7 @@ Object.assign($.prototype, {
           let result = refs[id](parent)
           if (result != null) {
             let newNode = result instanceof Node ? result : document.createTextNode(result)
-            next ? parent.insertBefore(result, newNode, next) : parent.appendChild(newNode)
+            next ? parent.insertBefore(newNode, next) : parent.appendChild(newNode)
           }
         }
         else {

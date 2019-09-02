@@ -116,6 +116,17 @@ import $ from 'https://unpkg.com/spect@latest?module'
 </script>
 ```
 
+**C.** As standalone bundle:
+
+```html
+<script src="https://unpkg.com/spect/dist-umd/index.bundled.js"></script>
+
+<script>
+  let $ = window.spect
+
+  // ...UI code
+</script>
+```
 
 ## Getting started
 
@@ -124,18 +135,19 @@ import $ from 'https://unpkg.com/spect@latest?module'
 
 ### A Simple Aspect
 
-This example assigns `hello` aspect to `body` and renders single `div` with welcoming.
+This example assigns `hello` aspect to `#hello-example` element and renders single `div` with welcoming.
 
 ```js
 import $ from 'spect'
 
-$(document.body).use(hello)
-
-function hello (body) {
-  $(body).html`<div#hello-example.hello name="Taylor">
-    Hello, ${ div => div.name }!
+function helloMessage(el) {
+  let $el = $(el)
+  $el.html`<div.message>
+    Hello, ${ $el.prop('name') }!
   </div>`
 }
+
+$('#hello-example').use(helloMessage).prop('name', 'Taylor')
 ```
 
 <p align='right'><a href="">Open in sandbox</a></p>

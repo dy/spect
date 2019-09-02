@@ -9,7 +9,16 @@
         "@pika/plugin-standard-pkg"
       ],
       [
-        "@pika/plugin-build-umd"
+        "@pika/plugin-build-umd",
+        {
+          "name": "spect"
+        }
+      ],
+      [
+        "pika-plugin-bundle-umd",
+        {
+          "name": "spect"
+        }
       ],
       [
         "@pika/plugin-build-web"
@@ -68,7 +77,9 @@
     "immutable-tuple": "^0.4.10",
     "incremental-dom": "^0.6.0",
     "insert-styles": "^1.2.1",
+    "is-plain-obj": "^2.0.0",
     "kebab-case": "^1.0.0",
+    "pika-plugin-bundle-umd": "^0.1.1",
     "primitive-pool": "^1.1.0",
     "raf": "^3.4.1",
     "scope-css": "^1.2.1",
