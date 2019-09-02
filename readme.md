@@ -290,10 +290,11 @@ let getRawMarkup = content => {
 
 <p align='right'><a href="https://codesandbox.io/s/a-component-tnwdm">Open in sandbox</a></p>
 
+<!--
 ### More examples
 
 * [Popup-info component from MDN](https://developer.mozilla.org/en-US/docs/Web/API/CustomElementRegistry/define#Autonomous_custom_element):
-
+-->
 
 ## API
 
