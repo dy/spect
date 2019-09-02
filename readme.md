@@ -4,21 +4,20 @@ Spect is [_aspect_-oriented](https://en.wikipedia.org/wiki/Aspect-oriented_progr
 
 ```js
 import $ from 'spect'
-import route from 'spect-router'
 import ky from 'ky'
 import { t, useLocale } from 'ttag'
 
 // main app aspect - load & render data
 function main (app) {
-  let [ match, {id} ] = route('/user/:id')
-  if (!match) return
-
   let $app = $(app)
+  
+  // init state
+  $app.state({ id: 1 }, [])
 
   // run state effect when `id` changes (useState + useEffect)
   $app.fx(() => {
     $app.attr('loading', true)
-    $app.state.user = await ky.get`./api/user/${ id }`
+    $app.state.user = await ky.get`./api/user/${ $app.state('id') }`
     $app.attr('loading', false)
   }, [id])
 
@@ -291,10 +290,11 @@ let getRawMarkup = content => {
 
 <p align='right'><a href="https://codesandbox.io/s/a-component-tnwdm">Open in sandbox</a></p>
 
+<!--
 ### More examples
 
 * [Popup-info component from MDN](https://developer.mozilla.org/en-US/docs/Web/API/CustomElementRegistry/define#Autonomous_custom_element):
-
+-->
 
 ## API
 
