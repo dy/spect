@@ -53,21 +53,18 @@ $('#app').use(main)
 $('.preloadable').use(preloader)
 ```
 -->
-## Concept
-
-In a nutshell, _Spect_ is a mix of jQuery (_collections_), functional React components (_aspects_) and hooks (_side-effects_).
-
-#### 🎡 Wheel formula:
+## 🎡 Concept
 
 > _Spect_ = _Collections_ + _Reactive Aspects_ + _Side-Effects_
 
+_Spect_ is like a mix of jQuery (_collections_), functional React components (_aspects_) and hooks (_side-effects_).
 
 #### 🏛️ Principles:
 
 1. Expressivity.
 2. No bundling.
-3. Hydration as part of progressive enhancement.
-4. Standard HTML first.
+3. HTML first.
+3. Organic hydration.
 5. Max utility, min presentation.
 
 
@@ -134,19 +131,23 @@ import $ from 'https://unpkg.com/spect@latest?module'
 
 ### A Simple Aspect
 
-This example assigns `helloMessage` aspect to `#hello-example` element and renders single `div` with welcoming.
+This example assigns `hello` aspect to `#hello-example` element and renders single `div` with welcoming.
 
-```js
+```html
+<div id="hello-example" name="Cyril"></div>
+
+<script type="module">
 import $ from 'spect'
 
-function helloMessage(el) {
+function hello(el) {
   let $el = $(el)
   $el.html`<div.message>
-    Hello, ${ $el.prop('name') }!
+    Hello, ${ $el.attr('name') }!
   </div>`
 }
 
-$('#hello-example').use(helloMessage).prop('name', 'Taylor')
+$('#hello-example').use(hello)
+</script>
 ```
 
 <p align='right'><a href="https://codesandbox.io/s/a-simple-aspect-xz22f">Open in sandbox</a></p>
