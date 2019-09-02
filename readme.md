@@ -53,13 +53,13 @@ $('#app').use(main)
 $('.preloadable').use(preloader)
 ```
 -->
-## 🎡 Concept
+#### 🎡 Concept
 
 > _Spect_ = _Collections_ + _Reactive Aspects_ + _Side-Effects_
 
-_Spect_ is like a mix of jQuery (_collections_), functional React components (_aspects_) and hooks (_side-effects_).
+_Spect_ is mixture of jQuery (_collections_), functional react components (_aspects_) and hooks (_side-effects_).
 
-#### 🏛️ Principles:
+#### 🏛️ Principles
 
 1. Expressivity.
 2. No bundling.
@@ -116,7 +116,6 @@ import $ from 'https://unpkg.com/spect@latest?module'
 
 ```html
 <script src="https://unpkg.com/spect/dist-umd/index.bundled.js"></script>
-
 <script>
   let $ = window.spect
 
@@ -155,7 +154,7 @@ $('#hello-example').use(hello)
 
 ### A Stateful Aspect
 
-_Spect_ introduces `.state`, `.mount` and `.fx` effects, similar to `useState` and `useEffect` hooks. `state` effect can optionally take `deps` argument, like `fx`.
+_Spect_ introduces `.state`, `.mount`, `.fx` and other effects, similar to `useState` and `useEffect` hooks and jQuery utils. Effects may accept `deps` argument for conditional triggering.
 
 ```js
 import $ from 'spect'
