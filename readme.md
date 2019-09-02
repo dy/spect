@@ -316,7 +316,7 @@ $('> div', container)
 // create html
 $('<div.foo/>')
 $`foo <bar.baz/>`
-$('div', {}, null)
+$('div', { ...props }, [ ...children ])
 
 /* @jsx $ */
 $(<div />)
