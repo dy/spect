@@ -260,7 +260,7 @@ $('#markdown-example').use(el => $(el).html`<${MarkdownEditor} content='Hello, *
 ```js
 // editor.js
 import $ from 'spect'
-import Remarkable from 'remarkable'
+import { Remarkable } from 'remarkable'
 
 export default function MarkdownEditor (el) {
   let $el = $(el)
