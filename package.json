@@ -1,6 +1,6 @@
 {
   "name": "spect",
-  "version": "4.0.3",
+  "version": "4.0.4",
   "description": "Aspect-oriented DOM framework",
   "main": "./src/index.js",
   "@pika/pack": {
