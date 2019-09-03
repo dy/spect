@@ -5,10 +5,9 @@ t('readme: A simple aspect', async t => {
   let el = document.body.appendChild(document.createElement('div'))
   el.id = 'hello-example'
 
-  function helloMessage(el) {
-    let $el = $(el)
-    $el.html`<div.message>
-    Hello, ${ $el.prop('name') }!
+  function helloMessage({ html, prop }) {
+    html`<div.message>
+    Hello, ${ prop('name') }!
   </div>`
   }
 
@@ -25,9 +24,7 @@ t('readme: A stateful aspect', t => {
   let el = document.body.appendChild(document.createElement('div'))
   el.id = 'timer-example'
 
-  $('#timer-example').use(el => {
-    let $el = $(el)
-
+  $('#timer-example').use($el => {
     // init
     $el.state({ seconds: 0 }, [])
 
@@ -39,6 +36,7 @@ t('readme: A stateful aspect', t => {
       return () => clearInterval(i)
     })
 
+    console.log($el)
     // html is side-effect, not aspect result
     $el.html`Seconds: ${ $el.state('seconds') }`
   })
@@ -47,16 +45,14 @@ t('readme: A stateful aspect', t => {
   document.body.removeChild(el)
 })
 
-t('readme: An application', t => {
+t.only('readme: An application', t => {
   let el = document.body.appendChild(document.createElement('div'))
   el.id = 'todos-example'
 
 
   $("#todos-example").use(Todo);
 
-  function Todo(el) {
-    let $el = $(el);
-
+  function Todo($el) {
     $el.state({ items: [], text: "" }, []);
 
     $el.on("submit", e => {
@@ -95,8 +91,8 @@ t('readme: An application', t => {
   }
 
   // TodoList component
-  function TodoList(el) {
-    $(el).html`<ul>${el.items.map(item => $`<li>${item.text}</li>`)}</ul>`;
+  function TodoList({ html, items }) {
+    html`<ul>${prop('items').map(item => $`<li>${item.text}</li>`)}</ul>`;
   }
 
   document.body.removeChild(el)

@@ -8,7 +8,7 @@ import ky from 'ky'
 import { t, useLocale } from 'ttag'
 
 // main app aspect - load & render data
-function main ({ state, fx, attr }) {
+function main ({ state, fx, attr, html }) {
   // init state
   state({ id: 1 }, [])
 

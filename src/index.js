@@ -35,6 +35,7 @@ const isStacktraceAvailable = !!(new Error).stack
 const isCustomElementsAvailable = typeof customElements !== 'undefined'
 
 const elCache = new WeakMap,
+  boundElCache = new WeakMap,
   aspectsCache = new WeakMap,
   depsCache = new WeakMap,
   destroyCache = new WeakMap,
@@ -55,11 +56,15 @@ export default function createAspect(...args) {
   return new $(doc, ...args)
 }
 
+// effects holder
 class $ extends Array {
   constructor (document, arg, ...args) {
     super()
 
     if (elCache.has(arg)) return elCache.get(arg)
+
+    // $($)
+    if (arg instanceof $) return arg
 
     // $(el|frag|text|node)
     if (arg instanceof Node) {
@@ -67,9 +72,6 @@ class $ extends Array {
       elCache.set(arg, this)
       return this
     }
-
-    // $($)
-    if (arg instanceof $) return arg
 
     // $`...tpl`
     if (arg && arg.raw) {
@@ -118,14 +120,19 @@ class $ extends Array {
   }
 }
 
-
 function callAspect(el, fn) {
   let prevAspect = currentAspect,
     prevElement = currentElement
   fxCount = 0
   currentElement = el
   currentAspect = fn
-  let result = fn.call(el, el)
+
+  // bind effects to current element
+  let $el
+  if (!boundElCache.has(el)) boundElCache.set(el, $el = bindEffects(el))
+  else $el = boundElCache.get(el)
+
+  let result = fn.call(el, $el)
   currentAspect = prevAspect
   currentElement = prevElement
   return result
@@ -151,8 +158,15 @@ function updateObservers(el, effect, path) {
   }
 }
 
+function bindEffects(el) {
+  let $el = createAspect(el)
+  for (let effect in effects) {
+    $el[effect] = effects[effect].bind($el)
+  }
+  return $el
+}
 
-Object.assign($.prototype, {
+const effects = {
   use: function (...fns) {
     this.forEach(el => {
       let aspects = aspectsCache.get(el)
@@ -245,7 +259,7 @@ Object.assign($.prototype, {
     return this
   },
 
-  mount: function (fn, deps=true) {
+  mount: function (fn, deps = true) {
     if (!commit(fxKey('mount'), deps, () => destroy.forEach(fn => fn && fn()))) return
 
     let destroy = []
@@ -437,8 +451,8 @@ Object.assign($.prototype, {
       if (use) use.forEach(fn => queue(el, fn))
 
       // run inline effects
-      for (let i = 0; i < effects.length; i+=2) {
-        let effect = effects[i], val = effects[i+1]
+      for (let i = 0; i < effects.length; i += 2) {
+        let effect = effects[i], val = effects[i + 1]
         let arg = [val]
         arg.raw = arg
         createAspect(el)[effect](arg)
@@ -479,11 +493,11 @@ Object.assign($.prototype, {
     if (!className) {
       className = `${SPECT_CLASS}-${uid()}`
       cssClassCache.set(this, className)
-      this.forEach(el=> el.classList.add(className))
+      this.forEach(el => el.classList.add(className))
     }
 
     str = scopeCss(str, '.' + className)
-    insertCss(str, {id: className})
+    insertCss(str, { id: className })
 
     return this
   }, (el) => {
@@ -493,7 +507,10 @@ Object.assign($.prototype, {
   }, (el, name, value) => {
 
   })
-})
+}
+
+Object.assign($.prototype, effects)
+
 
 // register effect call, check deps, if changed - call destroy
 function commit(key, deps, destroy) {
