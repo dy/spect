@@ -8,6 +8,7 @@ import insertCss from 'insert-styles'
 import pget from 'dlv'
 import pset from 'dset'
 import kebab from 'kebab-case'
+import nidx from 'negative-index'
 import isObject from 'is-plain-obj'
 import {
   patch,
@@ -180,6 +181,12 @@ class $ extends Array {
     }
     this.length = 0
     this.push(...set)
+  }
+
+  item(id) {
+    // similar to .item(n)
+    if (typeof id === 'number') return this[nidx(id, this.length)]
+    if (typeof id === 'string') return this.find(el => el.id === id) || this.find(el => el.name === id)
   }
 
   // default map calls Array(n)
