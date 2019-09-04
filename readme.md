@@ -253,10 +253,10 @@ $('#markdown-example').use(({ html }) => html`<${MarkdownEditor} content='Hello,
 import $ from 'spect'
 import { Remarkable } from 'remarkable'
 
-export default function MarkdownEditor ({ prop, state, clsx }) {
+export default function MarkdownEditor ({ prop, state, class: cls }) {
   state({ value: prop('content') }, [ prop('content') ])
 
-  cslx`markdown-editor`
+  cls`markdown-editor`
 
   html`
     <h3>Input</h3>
@@ -306,6 +306,9 @@ $('> div', container)
 // create html
 $('<div.foo/>')
 $`foo <bar.baz/>`
+
+// await for planned effects
+await $`<a/>`.use(MaterialButton)
 ```
 
 <p align="right">Ref: <a href="https://jquery.com">jquery</a>, etc.</p>
@@ -567,20 +570,20 @@ $target.css` :host { width: 100%} `
 <p align="right">Ref: <a href="https://ghub.io/virtual-css">virtual-css</a></p>
 
 
-### `.clsx( ...classes, deps? )` − classes side-effect
+### `.class( ...classes, deps? )` − classes side-effect
 
 Manipulate elements classes.
 
 ```js
 // write classes
-$target.clsx`foo bar baz`
-$target.clsx('foo', true && 'bar', 'baz')
-$target.clsx({ foo: true, bar: false, bas: isTrue() })
-$target.clsx(clsx => clsx.foo = false)
+$target.class`foo bar baz`
+$target.class('foo', true && 'bar', 'baz')
+$target.class({ foo: true, bar: false, bas: isTrue() })
+$target.class(clsx => clsx.foo = false)
 
 // read classes
-$target.clsx('foo')
-$target.clsx()
+$target.class('foo')
+$target.class()
 ```
 
 <p align="right">Ref: <a href="https://ghub.io/clsx">clsx</a>, <a href="https://ghub.io/classnames">classnames</a></p>
@@ -630,6 +633,7 @@ Community
 
 Version | Changes
 ---|---
+5.0.0 | Wrapper as aspect argument, along with props for react-compatible API. Effect queues.
 4.0.0 | Functional effects API design.
 3.0.0 | References + proxy-based API design.
 2.0.0 | Global effects API design.
