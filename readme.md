@@ -1,50 +1,45 @@
 # Spect ![experimental](https://img.shields.io/badge/stability-experimental-red) [![Build Status](https://travis-ci.org/spectjs/spect.svg?branch=master)](https://travis-ci.org/spectjs/spect)
 
 Spect is [_aspect_-oriented](https://en.wikipedia.org/wiki/Aspect-oriented_programming) framework for creating expressive UIs.
-<!--
+
 ```js
 import $ from 'spect'
 import ky from 'ky'
 import { t, useLocale } from 'ttag'
 
 // main app aspect - load & render data
-function main (app) {
-  let $app = $(app)
-
+function main ({ state, fx, attr, html }) {
   // init state
-  $app.state({ id: 1 }, [])
+  state({ id: 1 }, [])
 
   // run state effect when `id` changes (useState + useEffect)
-  $app.fx(() => {
-    $app.attr('loading', true)
-    $app.state.user = await ky.get`./api/user/${ $app.state('id') }`
-    $app.attr('loading', false)
+  fx(() => {
+    attr('loading', true)
+    state({ user: await ky.get`./api/user/${ state('id') }` })
+    attr('loading', false)
   }, [id])
 
   // html side-effect
-  $app.html`<p use=${i18n}>${
-    $app.attr('loading') ? `Hello, ${ $app.state('user.name') }!` : `Thanks for patience...`
+  html`<p use=${i18n}>${
+    attr('loading') ? `Hello, ${ state('user.name') }!` : `Thanks for patience...`
   }</p>`
 }
 
 // preloader aspect - append/remove spinner if loading state changes
-function preloader (el) {
-  let $el = $(el)
-
+function preloader ({ fx, html, attr }) {
   // toggle
-  $el.fx(() => {
-    $el.html(children => [...children, $`<progress.progress-circle />`])
-    return () => $el.html(children => children.slice(0, -1))
-  }, $el.attr('loading'))
+  fx(() => {
+    html(children => [...children, $`<progress.progress-circle />`])
+    return () => html(children => children.slice(0, -1))
+  }, attr('loading'))
 }
 
 // i18n aspect - translates content when `lang` attribute changes
-function i18n (el) {
-  let $el = $(el)
-  let lang = $el.attr('lang') || $(document.documentElement).attr('lang')
-  $el.fx(el => {
+function i18n ({ attr, fx, text }) {
+  let lang = attr('lang') || $(document.documentElement).attr('lang')
+  fx(() => {
     useLocale(lang)
-    el.text(text => t(text))
+    text(text => t(text))
   }, lang)
 }
 
@@ -52,7 +47,7 @@ function i18n (el) {
 $('#app').use(main)
 $('.preloadable').use(preloader)
 ```
--->
+
 #### 🎡 Concept
 
 > _Spect_ = _Collections_ + _Reactive Aspects_ + _Side-Effects_
@@ -138,10 +133,9 @@ This example assigns `hello` aspect to `#hello-example` element and renders sing
 <script type="module">
 import $ from 'spect'
 
-function hello(el) {
-  let $el = $(el)
-  $el.html`<div.message>
-    Hello, ${ $el.attr('name') }!
+function hello({ html, attr }) {
+  html`<div.message>
+    Hello, ${ attr('name') }!
   </div>`
 }
 
@@ -159,24 +153,22 @@ _Spect_ introduces `.state`, `.mount`, `.fx` and other effects, similar to `useS
 ```js
 import $ from 'spect'
 
-$('#timer-example').use(el => {
-  let $el = $(el)
-
+$('#timer-example').use(({ state, mount, html, state }) => {
   // init
-  $el.state({ seconds: 0 }, [])
+  state({ seconds: 0 }, [])
 
   // start timer when connected
-  $el.mount(() => {
-    let i = setInterval( () => $el.state(s => s.seconds++), 1000 )
+  mount(() => {
+    let i = setInterval( () => state(s => s.seconds++), 1000 )
 
     // disconnected
     return () => clearInterval(i)
   })
 
   // html is side-effect, not aspect result
-  $el.html`Seconds: ${ $el.state('seconds') }`
+  html`Seconds: ${ state('seconds') }`
 
-  console.log($el.state('seconds'))
+  console.log( state('seconds') )
 })
 
 ```
@@ -193,50 +185,48 @@ import $ from 'spect'
 
 $('#todos-example').use(Todo)
 
-function Todo(el) {
-  let $el = $(el)
-
+function Todo({ state, on, html }) {
   // init
-  $el.state({ items: [], text: '' }, [])
+  state({ items: [], text: '' }, [])
 
-  $el.on('submit', e => {
+  on('submit', e => {
     e.preventDefault();
 
-    if (!$el.state('text.length')) return;
+    if (!state('text.length')) return;
 
     const newItem = {
-      text: $el.state('text'),
+      text: state('text'),
       id: Date.now()
     };
 
     // in-place reducer
-    $el.state(state => ({
+    state(state => ({
       items: [...state.items, newItem],
       text: ''
     }))
   })
 
-  $el.on('change', '#new-todo', e => $el.state({ text: e.target.value }));
+  on('change', '#new-todo', e => state({ text: e.target.value }));
 
-  $el.html`
+  html`
   <h3>TODO</h3>
-  <main is=${TodoList} items=${ $el.state('items') }/>
+  <main is=${TodoList} items=${ state('items') }/>
   <form>
     <label for=new-todo>
       What needs to be done?
     </label>
     <br/>
-    <input#new-todo value=${ $el.state('text') }/>
+    <input#new-todo value=${ state('text') }/>
     <button>
-      Add #${ $el.state('items.length') + 1 }
+      Add #${ state('items.length') + 1 }
     </button>
   </form>
 `
 }
 
 // TodoList component
-function TodoList(el) {
-  $(el).html`<ul>${ el.items.map(item => $`<li>${ item.text }</li>`) }</ul>`
+function TodoList({ html, items }) {
+  html`<ul>${ items.map(item => html`<li>${ item.text }</li>`) }</ul>`
 }
 ```
 
@@ -253,7 +243,7 @@ import $ from 'spect'
 import MarkdownEditor from './editor.js'
 
 // MarkdownEditor is created as web-component
-$('#markdown-example').use(el => $(el).html`<${MarkdownEditor} content='Hello, **world**!'/>`)
+$('#markdown-example').use(({ html }) => html`<${MarkdownEditor} content='Hello, **world**!'/>`)
 ```
 
 ```js
@@ -261,24 +251,22 @@ $('#markdown-example').use(el => $(el).html`<${MarkdownEditor} content='Hello, *
 import $ from 'spect'
 import { Remarkable } from 'remarkable'
 
-export default function MarkdownEditor (el) {
-  let $el = $(el)
+export default function MarkdownEditor ({ prop, state, clsx }) {
+  state({ value: prop('content') }, [ prop('content') ])
 
-  $el.state({ value: $el.prop('content') }, [ $el.prop('content') ])
+  cslx`markdown-editor`
 
-  $el.class`markdown-editor`
-
-  $el.html`
+  html`
     <h3>Input</h3>
     <label for="markdown-content">
       Enter some markdown
     </label>
     <textarea#markdown-content
-      onchange=${e => $el.state({ value: e.target.value })}
-    >${ $el.state('value') }</textarea>
+      onchange=${e => state({ value: e.target.value })}
+    >${ state('value') }</textarea>
 
     <h3>Output</h3>
-    <div.content html=${ getRawMarkup( $el.state('value') ) }/>
+    <div.content html=${ getRawMarkup( state('value') ) }/>
   `
 }
 
@@ -298,7 +286,7 @@ let getRawMarkup = content => {
 
 ## API
 
-[**`$`**](#-selector--els--markup---selector--h)&nbsp;&nbsp; [**`.use`**](#use-fns---assign-aspects)&nbsp;&nbsp; [**`.fx`**](#fx-el--destroy--deps---generic-side-effect)&nbsp;&nbsp; [**`.state`**](#state-name--val-deps---state-provider)&nbsp;&nbsp; [**`.prop`**](#prop-name--val-deps---properties-provider)&nbsp;&nbsp; [**`.attr`**](#attr-name--val-deps---attributes-provider)&nbsp;&nbsp; [**`.html`**](#htmlmarkup---html-side-effect)&nbsp;&nbsp; [**`.text`**](#text-content----text-content-side-effect)&nbsp;&nbsp; [**`.class`**](#class-classes-deps---classes-side-effect)&nbsp;&nbsp; [**`.css`**](#css-styles-deps---css-side-effect)&nbsp;&nbsp; [**`.on`**](#on-evt-fn---events-provider)&nbsp;&nbsp; [**`.mount`**](#mount-fn-onmount--onunmount----lifecycle-callbacks)
+[**`$`**](#-selector--els--markup---selector--h)&nbsp;&nbsp; [**`.use`**](#use-fns---assign-aspects)&nbsp;&nbsp; [**`.fx`**](#fx-el--destroy--deps---generic-side-effect)&nbsp;&nbsp; [**`.state`**](#state-name--val-deps---state-provider)&nbsp;&nbsp; [**`.prop`**](#prop-name--val-deps---properties-provider)&nbsp;&nbsp; [**`.attr`**](#attr-name--val-deps---attributes-provider)&nbsp;&nbsp; [**`.html`**](#htmlmarkup---html-side-effect)&nbsp;&nbsp; [**`.text`**](#text-content----text-content-side-effect)&nbsp;&nbsp; [**`.clsx`**](#class-classes-deps---classes-side-effect)&nbsp;&nbsp; [**`.css`**](#css-styles-deps---css-side-effect)&nbsp;&nbsp; [**`.on`**](#on-evt-fn---events-provider)&nbsp;&nbsp; [**`.mount`**](#mount-fn-onmount--onunmount----lifecycle-callbacks)
 
 ##
 
@@ -316,10 +304,6 @@ $('> div', container)
 // create html
 $('<div.foo/>')
 $`foo <bar.baz/>`
-$('div', { ...props }, [ ...children ])
-
-/* @jsx $ */
-$(<div />)
 ```
 
 <p align="right">Ref: <a href="https://jquery.com">jquery</a>, etc.</p>
@@ -333,9 +317,7 @@ Assign aspect function(s) to set of elements. Each aspect `fn` is registered for
 let $foo = $('.foo')
 let $bar = $('.bar')
 
-$foo.use(el => {
-  let $el = $(el)
-
+$foo.use($el => {
   // subscribe to updates
   let x = $el.attr('x')
   let y = $bar.attr('y')
@@ -378,7 +360,7 @@ $els.fx(() => {}, []);
 $els.fx(() => () => {}, deps);
 
 // called for each element in collection
-$els.fx(el => $(el).something);
+$els.fx($el => $el.someEffect);
 ```
 
 <p align="right">Ref: <a href='https://reactjs.org/docs/hooks-effect.html'>useEffect</a></p>
@@ -399,7 +381,7 @@ $els.state(s => s.foo = 1)
 $els.state(s => {...s, foo: 1})
 
 // init
-$els.state({foo: 1'}, [])
+$els.state({foo: 1}, [])
 
 // read (first element)
 $els.state('foo')
@@ -477,21 +459,21 @@ Patch HTML for elements in collection. Internally uses [htm](https://ghub.io/htm
 // set html
 $els.html`foo <bar><baz/></> qux`
 $els.html`foo ${ document.querySelector('.bar') } ${ $baz }`
+$els.html`<div>${ $div => {} }</div>`
 $els.html(document.querySelector('.bar'), deps)
 $els.html([foo, bar, baz], deps)
 
 // append/prepend, reduce, wrap/unwrap
 $els.html(children => [prepend, ...children, append])
 $els.html(children => $`<div.foo>${ children }</div>`)
-$els.html(([foo]) => foo.childNodes, deps)
 
-/* @jsx $ */
+/* @jsx $.h */
 $els.html(<>Markup</>)
 
 // components
 $els.html`<button is=${SuperButton}></button>`
 $els.html`<${SuperButton}/>`
-function SuperButton(button) {
+function SuperButton($btn) {
   // ...
 }
 
@@ -583,20 +565,20 @@ $target.css` :host { width: 100%} `
 <p align="right">Ref: <a href="https://ghub.io/virtual-css">virtual-css</a></p>
 
 
-### `.class( ...classes, deps? )` − classes side-effect
+### `.clsx( ...classes, deps? )` − classes side-effect
 
 Manipulate elements classes.
 
 ```js
 // write classes
-$target.class`foo bar baz`
-$target.class('foo', true && 'bar', 'baz')
-$target.class({ foo: true, bar: false, bas: isTrue() })
-$target.class(clsx => clsx.foo = false)
+$target.clsx`foo bar baz`
+$target.clsx('foo', true && 'bar', 'baz')
+$target.clsx({ foo: true, bar: false, bas: isTrue() })
+$target.clsx(clsx => clsx.foo = false)
 
 // read classes
-$target.class('foo')
-$target.class()
+$target.clsx('foo')
+$target.clsx()
 ```
 
 <p align="right">Ref: <a href="https://ghub.io/clsx">clsx</a>, <a href="https://ghub.io/classnames">classnames</a></p>

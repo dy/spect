@@ -5,11 +5,10 @@ t('readme: A simple aspect', async t => {
   let el = document.body.appendChild(document.createElement('div'))
   el.id = 'hello-example'
 
-  function helloMessage(el) {
-    let $el = $(el)
-    $el.html`<div.message>
-    Hello, ${ $el.prop('name') }!
-  </div>`
+  function helloMessage({ html, prop }) {
+    html`<div.message>
+      Hello, ${ prop('name') }!
+    </div>`
   }
 
   $('#hello-example').use(helloMessage).prop('name', 'Taylor')
@@ -25,9 +24,7 @@ t('readme: A stateful aspect', t => {
   let el = document.body.appendChild(document.createElement('div'))
   el.id = 'timer-example'
 
-  $('#timer-example').use(el => {
-    let $el = $(el)
-
+  $('#timer-example').use($el => {
     // init
     $el.state({ seconds: 0 }, [])
 
@@ -44,19 +41,17 @@ t('readme: A stateful aspect', t => {
   })
 
   t.is($('#timer-example')[0].innerHTML, 'Seconds: 0')
-  document.body.removeChild(el)
+  // document.body.removeChild(el)
 })
 
-t('readme: An application', t => {
+t.only('readme: An application', t => {
   let el = document.body.appendChild(document.createElement('div'))
   el.id = 'todos-example'
 
-
   $("#todos-example").use(Todo);
 
-  function Todo(el) {
-    let $el = $(el);
 
+  function Todo($el) {
     $el.state({ items: [], text: "" }, []);
 
     $el.on("submit", e => {
@@ -95,11 +90,11 @@ t('readme: An application', t => {
   }
 
   // TodoList component
-  function TodoList(el) {
-    $(el).html`<ul>${el.items.map(item => $`<li>${item.text}</li>`)}</ul>`;
+  function TodoList({ html, items }) {
+    html`<ul>${ items.map(item => html`<li>${item.text}</li>`) }</ul>`;
   }
 
-  document.body.removeChild(el)
+  // document.body.removeChild(el)
 })
 
 t('readme: A component with external plugin', async t => {
@@ -109,11 +104,9 @@ t('readme: A component with external plugin', async t => {
   el.id = 'markdown-example'
 
   // MarkdownEditor is created as web-component
-  $('#markdown-example').use(el => $(el).html`<${MarkdownEditor} content='Hello, **world**!'/>`)
+  $('#markdown-example').use($el => $el.html`<${MarkdownEditor} content='Hello, **world**!'/>`)
 
-  function MarkdownEditor(el) {
-    let $el = $(el)
-
+  function MarkdownEditor($el) {
     $el.state({ value: $el.prop('content') }, [$el.prop('content')])
 
     $el.class`markdown-editor`
@@ -137,7 +130,9 @@ t('readme: A component with external plugin', async t => {
     return md.render(content);
   }
 
-  await Promise.resolve().then()
+  await Promise.resolve().then().then()
 
   t.is($('.content', el)[0].innerHTML, `<p>Hello, <strong>world</strong>!</p>`)
+
+  document.body.removeChild(el)
 })
