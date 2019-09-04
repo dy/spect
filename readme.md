@@ -294,8 +294,8 @@ let getRawMarkup = content => {
 
 ### `$( selector | els | markup )` − selector / h
 
-Select elements in DOM, provide domain methods for the selected set. The main purpose is shallow reference/wrapper for some nodes collection.
-If html string is passed, creates detached DOM. Also can acts like hyperscript, if arguments signature matches.
+Select elements in DOM, provide domain methods for the selected set. The main purpose is shallow reference/wrapper for nodes collection.
+If called as teplate string, creates detached DOM. Also acts as hyperscript, if arguments signature matches.
 
 ```js
 // select nodes
@@ -306,9 +306,6 @@ $('> div', container)
 // create html
 $('<div.foo/>')
 $`foo <bar.baz/>`
-
-// await for planned effects
-await $`<a/>`.use(MaterialButton)
 ```
 
 <p align="right">Ref: <a href="https://jquery.com">jquery</a>, etc.</p>
@@ -316,7 +313,7 @@ await $`<a/>`.use(MaterialButton)
 
 ### `.use( ...fns )` − assign aspects
 
-Assign aspect function(s) to set of elements. Each aspect `fn` is registered for every element in the set. Aspect `fn` is invoked immediately, with `el` as argument. By reading state(s) of other elements, aspect subscribes to changes in these states and rerenders itself if changes take place.
+Assign aspect function(s) to set of elements. Each aspect `fn` is registered for every element in the set. Aspect `fn` is invoked immediately, with wrapped `el` as argument, that can be considered also as a set of effects. By reading state(s) of other elements, aspect subscribes to changes in these states and rerenders itself if changes take place.
 
 ```js
 let $foo = $('.foo')
@@ -341,7 +338,7 @@ Aspects can be attached via `.html` effect as well:
 $els.html`<div is=${foo} use=${[bar, baz]}></div>`
 ```
 
-Aspects, assigned via `is`, define custom elements, see `.html` effect for details.
+Aspects, assigned via `is`, define custom elements, see `.html` for details.
 Note that aspects "upgrade" elements - once assigned, elements cannot be "downgraded", very much like custom elements.
 
 <p align="right">Ref: <a href="https://ghub.io/reuse">reuse</a></p>
@@ -349,7 +346,7 @@ Note that aspects "upgrade" elements - once assigned, elements cannot be "downgr
 
 ### `.fx( el => destroy? , deps? )` − generic side-effect
 
-Run effect function for selected elements (queued as microtask, called immediately after current callstack). Very much like `useEffect`, with less limitations. Non-array `deps` can be used to organize toggle / fsm that triggers when value changes to non-false, that is useful for binary states like `visible/hidden`, `disabled/enabled`, `active` etc.
+Run effect function for selected elements (queued as microtask, called immediately after current callstack). Very much like `useEffect`, with less limitations. Non-array `deps` can be used to organize toggle / fsm that triggers when value changes to non-false, that is useful for binary states like `visible/hidden`, `disabled/enabled`, `active` etc. Effect function is run for every element in collection.
 
 ```js
 // called each time
@@ -363,9 +360,6 @@ $els.fx(() => {}, []);
 
 // destructor is called any time deps change
 $els.fx(() => () => {}, deps);
-
-// called for each element in collection
-$els.fx($el => $el.someEffect);
 ```
 
 <p align="right">Ref: <a href='https://reactjs.org/docs/hooks-effect.html'>useEffect</a></p>
@@ -597,6 +591,18 @@ Utility method, rerendering all element aspects. Not for regular use, it can tri
 $els = $('.selector').use(a, b, c)
 
 $els.update()
+```
+
+
+### `.then()` - effect queue
+
+Effects are stacked up by default, for example, `html` is not rendered instantly, but put into microtask queue. This way, collections are thenable.
+
+```js
+await $`<a/>`
+  .attr('href', '/')
+  .html('Home')
+  .use(MaterialButton)
 ```
 
 <!--

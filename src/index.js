@@ -245,7 +245,7 @@ const effects = {
 
     this.queue(() => {
       this.forEach(el => {
-        let destructor = fn.call(el, el)
+        let destructor = fn.call(el)
         destroy.push(typeof destructor === 'function' ? destructor : noop)
       })
     })
