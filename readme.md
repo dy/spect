@@ -2,6 +2,7 @@
 
 Spect is [_aspect_-oriented](https://en.wikipedia.org/wiki/Aspect-oriented_programming) framework for creating expressive UIs.
 
+<!--
 ```js
 import $ from 'spect'
 import ky from 'ky'
@@ -47,6 +48,7 @@ function i18n ({ attr, fx, text }) {
 $('#app').use(main)
 $('.preloadable').use(preloader)
 ```
+-->
 
 #### 🎡 Concept
 
