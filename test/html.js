@@ -22,7 +22,7 @@ t('html: component static props', async t => {
   let log = []
   let $el = $`<div/>`.html`<${C}#x.y.z/>`
 
-  function C (el) {
+  function C ([el]) {
     log.push(el.tagName, el.id, el.className)
   }
 
@@ -310,10 +310,10 @@ t.skip('html: <host> tag')
 t('html: direct components case', async t => {
   let $c = $`<${C} x y=1 z=${2} />`
 
-  function C(el) {
-    t.is({ x: el.x, y: el.y, z: el.z }, { x: true, y: '1', z: 2 })
+  function C($el) {
+    t.is({ x: $el.x, y: $el.y, z: $el.z }, { x: true, y: '1', z: 2 })
 
-    $(el).html`<div></div>`
+    $el.html`<div></div>`
   }
 
   await Promise.resolve().then()
@@ -366,13 +366,13 @@ t('html: parent props must rerender nested components', async t => {
     $(this).html`value: ${ value }`
   }
 
-  await Promise.resolve()
+  await Promise.resolve().then()
 
   t.is($x[0].firstChild.innerHTML, `value: 0`)
 
   $x.prop('x', 1)
 
-  await Promise.resolve()
+  await Promise.resolve().then()
 
   t.is($x[0].firstChild.innerHTML, `value: 1`)
 })

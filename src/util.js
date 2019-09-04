@@ -1,25 +1,34 @@
-import kebab from 'kebab-case'
-import isPlainObj from 'is-plain-obj'
+// dataset effect
+export function data () {
 
-export function isIterable(val) {
-  return (val != null && typeof val[Symbol.iterator] === 'function');
 }
 
-export const raf = window.requestAnimationFrame
 
-export function paramCase(str) {
-  str = kebab(str)
+// async call effect
+export function async () {
 
-  if (str[0] === '-') return str.slice(1)
-  return str
 }
 
-export function noop() { }
 
-export function uid() { return Math.random().toString(36).slice(2, 8) }
+// route effect
+export function route () {
 
-export const isConnected = 'isConnected' in window.Node.prototype
-  ? node => node.isConnected
-  : node => document.documentElement.contains(node)
+}
 
-export const isObject = isPlainObj
+
+// raf effect
+export function raf () {
+
+}
+
+
+// debounce effect
+export function debounce () {
+
+}
+
+
+// timeout effect
+export function timeout () {
+
+}

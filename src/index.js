@@ -7,6 +7,8 @@ import scopeCss from 'scope-css'
 import insertCss from 'insert-styles'
 import pget from 'dlv'
 import pset from 'dset'
+import kebab from 'kebab-case'
+import isObject from 'is-plain-obj'
 import {
   patch,
   elementOpen,
@@ -21,7 +23,6 @@ import {
   skipNode
 } from 'incremental-dom'
 import onload from 'fast-on-load'
-import { uid, isIterable, isObject, isConnected, paramCase } from './util.js'
 
 attributes.class = applyAttr
 attributes.is = (...args) => (applyAttr(...args), applyProp(...args))
@@ -82,6 +83,7 @@ export default function spect(...args) {
   return new $(...args)
 }
 
+
 // Why Array
 // - Promise: args don't match
 // + Array: redundant array methods, but looks good in debugger; also internal set can be Weak
@@ -93,29 +95,9 @@ class $ extends Array {
   constructor(arg, ...args) {
     super()
 
-    // FIXME: should cache have invalidation?
-    if ($cache.has(arg)) return $cache.get(arg)
-    if (arg instanceof $) return arg
-
-    // set of elements per collection
-    setCache.set(this, new WeakSet)
-
-    // queues per collection
-    qCache.set(this, new Set)
-
-    // promise per collection (microtask)
-    pCache.set(this, Promise.resolve())
-
-    // $(el|frag|text|node)
-    if (arg instanceof Node) {
-      this.add(arg)
-      $cache.set(arg, this)
-      return this
-    }
-
     // $`...tpl`
     if (arg && arg.raw) {
-      return spect((spect(document.createDocumentFragment())).html(arg, ...args)[0].childNodes)
+      return spect(unwrapElement(spect(document.createDocumentFragment()).html(arg, ...args)))
     }
 
     // $('.selector')
@@ -132,15 +114,39 @@ class $ extends Array {
         let statics = [arg]
         statics.raw = [arg]
         let result = (spect(document.createDocumentFragment())).html(statics, ...args)
-        return spect(result[0].childNodes)
+        return spect(unwrapElement(result[0].childNodes))
       }
 
       // selector
-      let within = args[0] ? (args[0] instanceof $ ? args[0][0] : args[0]) : document
+      let within = args[0] ? unwrapElement(args[0]) : document
 
       arg = within.querySelector(arg)
 
       if (!arg) return this
+    }
+
+    // FIXME: should cache have invalidation?
+    if (arg instanceof $) return arg
+    if ($cache.has(arg)) return $cache.get(arg)
+
+    // wrapped snapshots
+    let uarg = unwrapElement(arg)
+    if ($cache.has(uarg)) return $cache.get(uarg)
+
+    // set of elements per collection
+    setCache.set(this, new WeakSet)
+
+    // planned effects
+    qCache.set(this, new Set)
+
+    // promise per collection (microtask)
+    pCache.set(this, Promise.resolve())
+
+    // $(el|frag|text|node)
+    if (uarg instanceof Node) {
+      $cache.set(uarg, this)
+      this.add(uarg)
+      return this
     }
 
     if (!(arg instanceof Node) && isIterable(arg)) {
@@ -150,7 +156,9 @@ class $ extends Array {
       this.add(arg)
     }
 
-    if (this.size === 1 && this[0] instanceof Node) $cache.set(this[0], this)
+    if (this.length === 1) {
+      $cache.set(this[0], this)
+    }
 
     return this
   }
@@ -176,6 +184,7 @@ class $ extends Array {
 
   // default map calls Array(n)
   map(fn) {
+    // FIXME: may lose props, not sure that's good
     return spect([...this].map(fn))
   }
 
@@ -402,7 +411,10 @@ const effects = {
     vdom = vdom.map(function map(arg) {
       if (arg == null) return
 
-      if (Array.isArray(arg)) return arg.map(map)
+      if (Array.isArray(arg)) {
+        if (!arg.length) return
+        return arg.map(map)
+      }
 
       if (arg instanceof NodeList || arg instanceof HTMLCollection) {
         let frag = document.createDocumentFragment()
@@ -844,4 +856,40 @@ function createClass(fn, HTMLElement) {
     disconnectedCallback() {
     }
   }
+}
+
+
+
+export function isIterable(val) {
+  return (val != null && typeof val[Symbol.iterator] === 'function');
+}
+
+export const raf = window.requestAnimationFrame
+
+export function paramCase(str) {
+  str = kebab(str)
+
+  if (str[0] === '-') return str.slice(1)
+  return str
+}
+
+export function noop() { }
+
+export function uid() { return Math.random().toString(36).slice(2, 8) }
+
+export const isConnected = 'isConnected' in window.Node.prototype
+  ? node => node.isConnected
+  : node => document.documentElement.contains(node)
+
+// turn any element collection-like with single node into direct element
+function unwrapElement(el) {
+  if (!el) return el
+  if (el instanceof Element) return el
+  if (el.childNodes) return unwrapElement(el.childNodes)
+
+  // nodelist, htmlcollection, array etc.
+  if (el.length === 1) {
+    return unwrapElement(el[0])
+  }
+  return el
 }

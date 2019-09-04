@@ -51,7 +51,7 @@ t.skip('$: live nodes list as reference under the hood', t => {
   t.is($children.length, 2)
 })
 
-t('$: rebinding to other document', async t => {
+t.skip('$: rebinding to other document', async t => {
   let { document } = await import('dom-lite')
 
   // FIXME: w
@@ -120,13 +120,26 @@ t('$: selecting forms', t => {
   t.is($form[0], $f[0])
 })
 
-t.todo('$: array map should work fine', t => {
-
+t.skip('$: array map should work fine', t => {
+  let $a = $`<a/>`
+  let $b = $a.map(x => x.html`<span/>`)
+  t.is($a, $b)
 })
 
-t.todo('$: negative, positive indices')
-t.todo('$: Set methods')
-t.todo('$: Dict by selecor')
-t.todo('$: call subfilters elements')
-t.todo('$: effects are bound')
-t.todo('$: promise postpones properly')
+t.skip('$: negative, positive indices')
+t.skip('$: Set methods')
+t.skip('$: call subfilters elements')
+
+t('$: promise postpones properly / effects are bound', async t => {
+  let $a = $`<a use=${({ html }) => html`<span.x/>`}/>`
+
+  await $a
+
+  t.is($a[0].innerHTML, '<span class="x"></span>')
+})
+
+t('$: create document fragment is ok', t => {
+  let $d = $(document.createDocumentFragment())
+
+  t.is($d.length, 1)
+})

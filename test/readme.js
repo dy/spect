@@ -41,10 +41,10 @@ t('readme: A stateful aspect', t => {
   })
 
   t.is($('#timer-example')[0].innerHTML, 'Seconds: 0')
-  // document.body.removeChild(el)
+  document.body.removeChild(el)
 })
 
-t.only('readme: An application', t => {
+t('readme: An application', t => {
   let el = document.body.appendChild(document.createElement('div'))
   el.id = 'todos-example'
 
@@ -91,10 +91,10 @@ t.only('readme: An application', t => {
 
   // TodoList component
   function TodoList({ html, items }) {
-    html`<ul>${ items.map(item => html`<li>${item.text}</li>`) }</ul>`;
+    html`<ul>${ items.map(item => $`<li>${item.text}</li>`) }</ul>`;
   }
 
-  // document.body.removeChild(el)
+  document.body.removeChild(el)
 })
 
 t('readme: A component with external plugin', async t => {

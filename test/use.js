@@ -15,7 +15,7 @@ t('use: aspects, assigned through parent wrapper', t => {
   let $a5 = $(frag.querySelector('*'))
 
   let log = []
-  $a3.use(el => {
+  $a3.use(([el]) => {
     t.is(el, a)
     log.push('a3')
   })
@@ -69,7 +69,7 @@ t('use: aspects must not be called multiple times, unless target state changes',
 
 t('use: same aspect different targets', t => {
   let log = []
-  function fx(el) {
+  function fx([el]) {
     log.push(el.tagName)
     // return () => log.push('destroy ' + el.tagName)
   }
