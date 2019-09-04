@@ -3,10 +3,8 @@ import delegated from 'delegate-it'
 import { parse as parseStack } from 'stacktrace-parser'
 import tuple from 'immutable-tuple'
 import htm from 'htm'
-import kebab from 'kebab-case'
 import scopeCss from 'scope-css'
 import insertCss from 'insert-styles'
-import isObject from 'is-plain-obj'
 import pget from 'dlv'
 import pset from 'dset'
 import {
@@ -23,6 +21,7 @@ import {
   skipNode
 } from 'incremental-dom'
 import onload from 'fast-on-load'
+import { uid, isIterable, isObject, isConnected, paramCase } from './util.js'
 
 attributes.class = applyAttr
 attributes.is = (...args) => (applyAttr(...args), applyProp(...args))
@@ -30,19 +29,23 @@ attributes[symbols.default] = applyProp
 
 let html = htm.bind(h)
 
+
 // used to turn stacktrace-based effects, opposed to fxCount
 const isStacktraceAvailable = !!(new Error).stack
 const isCustomElementsAvailable = typeof customElements !== 'undefined'
 
-const elCache = new WeakMap,
-  boundElCache = new WeakMap,
+const $cache = new WeakMap,
+  setCache = new WeakMap,
+  qCache = new WeakMap,
+  pCache = new WeakMap,
   aspectsCache = new WeakMap,
   depsCache = new WeakMap,
   destroyCache = new WeakMap,
   observables = new WeakMap,
   stateCache = new WeakMap,
-  attrCache = new WeakMap,
+  attrObserverCache = new WeakMap,
   cssClassCache = new WeakMap
+
 
 let fxCount, // used as order-based effect key
   fxId, // used as precompiled effect key
@@ -51,34 +54,73 @@ let fxCount, // used as order-based effect key
 
 const SPECT_CLASS = '👁'
 
-export default function createAspect(...args) {
-  let doc = this && this.createElement ? this : document
-  return new $(doc, ...args)
+function updateObservers(el, effect, path) {
+  let key = tuple(el, effect, path)
+  let observers = observables.get(key)
+  if (!observers) return
+  for (let [el, fn] of observers) {
+    spect(el).queue(fn)
+  }
 }
 
-// effects holder
+function callAspect (el, fn) {
+  let prevAspect = currentAspect,
+    prevElement = currentElement
+
+  fxCount = 0
+  currentElement = el
+  currentAspect = fn
+
+  let result = fn.call(el, spect(el))
+  currentAspect = prevAspect
+  currentElement = prevElement
+  return result
+}
+
+
+export default function spect(...args) {
+  return new $(...args)
+}
+
+// Why Array
+// - Promise: args don't match
+// + Array: redundant array methods, but looks good in debugger; also internal set can be Weak
+// - WeakSet: we have to be able to iterate over items
+// - HTMLCollection: no way to add real elements, collection can only be polyfilled
+// - Set: add, remove, has, clear + iterator, but looks bad in debugger
+// Caching is disabled since we may need assign props
 class $ extends Array {
-  constructor (document, arg, ...args) {
+  constructor(arg, ...args) {
     super()
 
-    if (elCache.has(arg)) return elCache.get(arg)
-
-    // $($)
+    // FIXME: should cache have invalidation?
+    if ($cache.has(arg)) return $cache.get(arg)
     if (arg instanceof $) return arg
+
+    // set of elements per collection
+    setCache.set(this, new WeakSet)
+
+    // queues per collection
+    qCache.set(this, new Set)
+
+    // promise per collection (microtask)
+    pCache.set(this, Promise.resolve())
 
     // $(el|frag|text|node)
     if (arg instanceof Node) {
-      this.push(arg)
-      elCache.set(arg, this)
+      this.add(arg)
+      $cache.set(arg, this)
       return this
     }
 
     // $`...tpl`
     if (arg && arg.raw) {
-      return createAspect((createAspect(document.createDocumentFragment())).html(arg, ...args)[0].childNodes)
+      return spect((spect(document.createDocumentFragment())).html(arg, ...args)[0].childNodes)
     }
 
     // $('.selector')
+    // FIXME live collection would require whether re-querying each fx call
+    // or selector observer - probably too expensive
     if (typeof arg === 'string') {
       arg = arg.trim()
 
@@ -89,12 +131,12 @@ class $ extends Array {
       if (/</.test(arg)) {
         let statics = [arg]
         statics.raw = [arg]
-        let result = (createAspect(document.createDocumentFragment())).html(statics, ...args)
-        return createAspect(result[0].childNodes)
+        let result = (spect(document.createDocumentFragment())).html(statics, ...args)
+        return spect(result[0].childNodes)
       }
 
       // selector
-      let within = args[0] ? (args[0] instanceof $ ? args[0][0] : args[0] ) : document
+      let within = args[0] ? (args[0] instanceof $ ? args[0][0] : args[0]) : document
 
       arg = within.querySelector(arg)
 
@@ -102,70 +144,59 @@ class $ extends Array {
     }
 
     if (!(arg instanceof Node) && isIterable(arg)) {
-      let set = new Set()
-
-      for (let i = 0; i < arg.length; i++) {
-        let el = arg[i]
-        if (!set.has(el)) {
-          set.add(el)
-          this.push(el)
-        }
-      }
+      this.add(...arg)
     }
     else if (arg) {
-      this[0] = arg
+      this.add(arg)
     }
 
-    if (this.length === 1 && this[0] instanceof Node) elCache.set(this[0], this)
+    if (this.size === 1 && this[0] instanceof Node) $cache.set(this[0], this)
+
+    return this
+  }
+
+  add(...args) {
+    let set = setCache.get(this)
+    for (let item of args) {
+      if (set.has(item)) continue
+      set.add(item)
+      super.push(item)
+    }
+  }
+
+  remove(...args) {
+    let set = setCache.get(this)
+    for (let item of args) {
+      if (!set.has(item)) continue
+      set.remove(item)
+    }
+    this.length = 0
+    this.push(...set)
+  }
+
+  // default map calls Array(n)
+  map(fn) {
+    return spect([...this].map(fn))
+  }
+
+  then(fn) {
+    return pCache.get(this).then(fn)
+  }
+
+  // plan aspect to run
+  queue(fn) {
+    let q = qCache.get(this), p = pCache.get(this)
+    if (!q.size) p.then(() => {
+      for (let fn of q) this.forEach(el => callAspect(el, fn))
+      q.clear()
+    })
+    q.add(fn)
+    return this
   }
 }
 
-function callAspect(el, fn) {
-  let prevAspect = currentAspect,
-    prevElement = currentElement
-  fxCount = 0
-  currentElement = el
-  currentAspect = fn
 
-  // bind effects to current element
-  let $el
-  if (!boundElCache.has(el)) boundElCache.set(el, $el = bindEffects(el))
-  else $el = boundElCache.get(el)
-
-  let result = fn.call(el, $el)
-  currentAspect = prevAspect
-  currentElement = prevElement
-  return result
-}
-
-
-let q = new Set, planned = Promise.resolve()
-
-function queue(el, fn) {
-  if (!q.size) planned.then(() => {
-    for (let [el, fn] of q) callAspect(el, fn)
-    q.clear()
-  })
-  q.add(tuple(el, fn))
-}
-
-function updateObservers(el, effect, path) {
-  let key = tuple(el, effect, path)
-  let observers = observables.get(key)
-  if (!observers) return
-  for (let [el, fn] of observers) {
-    queue(el, fn)
-  }
-}
-
-function bindEffects(el) {
-  let $el = createAspect(el)
-  for (let effect in effects) {
-    $el[effect] = effects[effect].bind($el)
-  }
-  return $el
-}
-
+// effects are exposed on collections, read-only
 const effects = {
   use: function (...fns) {
     this.forEach(el => {
@@ -203,7 +234,7 @@ const effects = {
 
     let destroy = []
 
-    planned.then(() => {
+    this.queue(() => {
       this.forEach(el => {
         let destructor = fn.call(el, el)
         destroy.push(typeof destructor === 'function' ? destructor : noop)
@@ -312,7 +343,7 @@ const effects = {
       return obj
     },
     (el, name) => {
-      if (!attrCache.has(el)) {
+      if (!attrObserverCache.has(el)) {
         let observer = new MutationObserver(records => {
           for (let i = 0, length = records.length; i < length; i++) {
             let { target, oldValue, attributeName } = records[i];
@@ -320,7 +351,7 @@ const effects = {
           }
         })
         observer.observe(el, { attributes: true })
-        attrCache.set(el, observer)
+        attrObserverCache.set(el, observer)
       }
       if (!el.hasAttribute(name)) return false
       if (el.getAttribute(name) === '') return true
@@ -348,7 +379,7 @@ const effects = {
         this.forEach(el => {
           let input = [...el.childNodes]
           let output = args[0](input)
-          createAspect(el).html(output)
+          spect(el).html(output)
         })
         return this
       }
@@ -430,7 +461,7 @@ const effects = {
       if (arg.ref) return elementVoid('span', null, ['id', SPECT_CLASS + '-ref-' + arg.ref])
 
       // objects create elements
-      let { tag, key, props, staticProps, children, use, create, effects = [], fn } = arg
+      let { tag, key, props, staticProps, children, use, create, fx, fn } = arg
 
       // fragment (direct vdom)
       if (!tag) return children && children.forEach(render)
@@ -444,18 +475,30 @@ const effects = {
         children.forEach(render)
         elementClose(create)
       }
-      // schedule update for components
-      if (fn) queue(el, fn)
 
-      // plan aspects init
-      if (use) use.forEach(fn => queue(el, fn))
+      const $el = (fn || use || fx.length) ? spect(el) : null
+
+      // pass props down to aspects/init
+      if ($el) {
+        for (let i = 0; i < props.length; i+= 2) {
+          let name = props[i]
+          if ($.prototype.hasOwnProperty(name)) continue
+          $el[name] = props[i+1]
+        }
+      }
+
+      // init component
+      if (fn) $el.queue(fn)
+
+      // run aspects
+      if (use) use.forEach(fn => $el.queue(fn))
 
       // run inline effects
-      for (let i = 0; i < effects.length; i += 2) {
-        let effect = effects[i], val = effects[i + 1]
+      for (let i = 0; i < fx.length; i += 2) {
+        let effect = fx[i], val = fx[i + 1]
         let arg = [val]
         arg.raw = arg
-        createAspect(el)[effect](arg)
+        $el[effect](arg)
       }
     }
 
@@ -509,7 +552,20 @@ const effects = {
   })
 }
 
-Object.assign($.prototype, effects)
+for (let name in effects) {
+  let fn = effects[name]
+  registerEffect(name, fn)
+}
+export function registerEffect(name, fn) {
+  Object.defineProperty($.prototype, name, {
+    get() {
+      return fn.bind(this)
+    },
+    set() {
+      throw Error('Effect `' + name + '` cannot be redefined.')
+    }
+  })
+}
 
 
 // register effect call, check deps, if changed - call destroy
@@ -655,11 +711,11 @@ function createEffect (effectName, tpl, get0, get, set, is = Object.is) {
   }
 }
 
-const componentCache = {}
+const customElementsCache = {}
 function h(target, props = {}, ...children) {
-  let use = [], propsArr = []
+  let use = [], propsList = []
   let staticProps = []
-  let tag, classes = [], id, create, is, fn, effects = []
+  let tag, classes = [], id, create, is, fn, fx = []
 
   if (typeof target === 'function') {
     fn = target
@@ -667,14 +723,6 @@ function h(target, props = {}, ...children) {
 
     if (isCustomElementsAvailable) {
       if (!customElements.get(tag)) customElements.define(tag, createClass(fn, HTMLElement))
-    }
-    else {
-      if (componentCache[tag]) create = componentCache[tag]
-      else componentCache[tag] = create = function () {
-        let el = document.createElement(tag)
-        queue(el, fn)
-        return el
-      }
     }
   }
   else if (typeof target === 'string') {
@@ -700,18 +748,10 @@ function h(target, props = {}, ...children) {
           if (!customElements.get(is)) {
             let Component = createClass(fn, Object.getPrototypeOf(document.createElement(tag)).constructor)
             customElements.define(is, Component, { extends: tag })
-            create = componentCache[is] = function () { return document.createElement(tag, { is }) }
+            create = customElementsCache[is] = function () { return document.createElement(tag, { is }) }
           }
           else {
-            create = componentCache[is]
-          }
-        }
-        else {
-          if (componentCache[is]) create = componentCache[is]
-          else create = componentCache[is] = function () {
-            let el = document.createElement(tag)
-            queue(el, fn)
-            return el
+            create = customElementsCache[is]
           }
         }
       }
@@ -727,15 +767,17 @@ function h(target, props = {}, ...children) {
     }
 
     // <div effect=${value}/>
-    else if ($.prototype.hasOwnProperty(prop)) {
-      effects.push(prop, val)
+    else if (effects[prop]) {
+      fx.push(prop, val)
     }
 
-    else propsArr.push(prop, val)
+    else {
+      propsList.push(prop, val)
+    }
   }
 
   if (id) staticProps.push('id', id)
-  if (classes.length) propsArr.push('class', classes.join(' '))
+  if (classes.length) propsList.push('class', classes.join(' '))
 
   if (!create) create = tag
 
@@ -747,12 +789,12 @@ function h(target, props = {}, ...children) {
     key,
     use,
     create,
-    props: propsArr,
+    props: propsList,
     staticProps,
     children,
     is,
     fn,
-    effects
+    fx
   }
 }
 
@@ -794,7 +836,6 @@ function createClass(fn, HTMLElement) {
   return class HTMLSpectComponent extends HTMLElement {
     constructor() {
       super()
-      queue(this, fn)
     }
 
     connectedCallback() {
@@ -804,26 +845,3 @@ function createClass(fn, HTMLElement) {
     }
   }
 }
-
-
-function isIterable(val) {
-  return (val != null && typeof val[Symbol.iterator] === 'function');
-}
-
-const raf = window.requestAnimationFrame
-
-
-function paramCase(str) {
-  str = kebab(str)
-
-  if (str[0] === '-') return str.slice(1)
-  return str
-}
-
-function noop() { }
-
-function uid() { return Math.random().toString(36).slice(2,8) }
-
-const isConnected = 'isConnected' in window.Node.prototype
-  ? node => node.isConnected
-  : node => document.documentElement.contains(node)

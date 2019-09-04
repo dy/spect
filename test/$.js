@@ -119,3 +119,14 @@ t('$: selecting forms', t => {
   t.is($form[0].childNodes.length, 2)
   t.is($form[0], $f[0])
 })
+
+t.todo('$: array map should work fine', t => {
+
+})
+
+t.todo('$: negative, positive indices')
+t.todo('$: Set methods')
+t.todo('$: Dict by selecor')
+t.todo('$: call subfilters elements')
+t.todo('$: effects are bound')
+t.todo('$: promise postpones properly')

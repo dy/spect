@@ -384,3 +384,5 @@ t('html: html effect', async t => {
 
   t.is($el[0].innerHTML, `<span>foo</span>`)
 })
+
+t.todo('html: it microtasks dom diffing, not applies instantly')

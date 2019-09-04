@@ -226,7 +226,7 @@ function Todo({ state, on, html }) {
 
 // TodoList component
 function TodoList({ html, items }) {
-  html`<ul>${ items.map(item => $`<li>${ item.text }</li>`) }</ul>`
+  html`<ul>${ items.map(item => html`<li>${ item.text }</li>`) }</ul>`
 }
 ```
 

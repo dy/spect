@@ -7,8 +7,8 @@ t('readme: A simple aspect', async t => {
 
   function helloMessage({ html, prop }) {
     html`<div.message>
-    Hello, ${ prop('name') }!
-  </div>`
+      Hello, ${ prop('name') }!
+    </div>`
   }
 
   $('#hello-example').use(helloMessage).prop('name', 'Taylor')
@@ -36,21 +36,20 @@ t('readme: A stateful aspect', t => {
       return () => clearInterval(i)
     })
 
-    console.log($el)
     // html is side-effect, not aspect result
     $el.html`Seconds: ${ $el.state('seconds') }`
   })
 
   t.is($('#timer-example')[0].innerHTML, 'Seconds: 0')
-  document.body.removeChild(el)
+  // document.body.removeChild(el)
 })
 
 t.only('readme: An application', t => {
   let el = document.body.appendChild(document.createElement('div'))
   el.id = 'todos-example'
 
-
   $("#todos-example").use(Todo);
+
 
   function Todo($el) {
     $el.state({ items: [], text: "" }, []);
@@ -92,10 +91,10 @@ t.only('readme: An application', t => {
 
   // TodoList component
   function TodoList({ html, items }) {
-    html`<ul>${prop('items').map(item => $`<li>${item.text}</li>`)}</ul>`;
+    html`<ul>${ items.map(item => html`<li>${item.text}</li>`) }</ul>`;
   }
 
-  document.body.removeChild(el)
+  // document.body.removeChild(el)
 })
 
 t('readme: A component with external plugin', async t => {
@@ -105,11 +104,9 @@ t('readme: A component with external plugin', async t => {
   el.id = 'markdown-example'
 
   // MarkdownEditor is created as web-component
-  $('#markdown-example').use(el => $(el).html`<${MarkdownEditor} content='Hello, **world**!'/>`)
+  $('#markdown-example').use($el => $el.html`<${MarkdownEditor} content='Hello, **world**!'/>`)
 
-  function MarkdownEditor(el) {
-    let $el = $(el)
-
+  function MarkdownEditor($el) {
     $el.state({ value: $el.prop('content') }, [$el.prop('content')])
 
     $el.class`markdown-editor`
@@ -133,7 +130,9 @@ t('readme: A component with external plugin', async t => {
     return md.render(content);
   }
 
-  await Promise.resolve().then()
+  await Promise.resolve().then().then()
 
   t.is($('.content', el)[0].innerHTML, `<p>Hello, <strong>world</strong>!</p>`)
+
+  document.body.removeChild(el)
 })
