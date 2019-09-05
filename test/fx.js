@@ -58,7 +58,6 @@ t('fx: toggle deps', async t => {
   let $a = $`<a/>`
 
   $a.use(() => {
-    t.is(arguments.length, 0)
     $a.fx(() => {
       log.push('on')
       return () => log.push('off')
