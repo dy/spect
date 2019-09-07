@@ -1,7 +1,7 @@
 import t from 'tst'
-import $ from '..'
+import $ from '../src'
 
-t('$: create from nodes', t => {
+t.only('$: create from nodes', t => {
   let el = document.createElement('div')
 
   let $node = $(el)
