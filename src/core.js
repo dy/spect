@@ -1,6 +1,5 @@
 import equal from 'fast-deep-equal'
 import { parse as parseStack } from 'stacktrace-parser'
-import tuple from 'immutable-tuple'
 
 
 // used to turn stacktrace-based effects, opposed to fxCount
@@ -10,12 +9,10 @@ const spectCache = new WeakMap,
   qCache = new WeakMap,
   pCache = new WeakMap,
   aspectCache = new WeakMap,
-  depsCache = new WeakMap,
-  destroyCache = new WeakMap,
+  boundCache = new WeakMap,
   subscriptionCache = new WeakMap
 
-let fxCount, fxId
-let current
+let fxCount, current = null
 
 // effect-able holder / target wrapper
 export default function spect(...args) {
@@ -24,8 +21,6 @@ export default function spect(...args) {
 
 class Spect {
   constructor(arg, ...args) {
-    super()
-
     // FIXME: should cache have invalidation?
     if (arg instanceof Spect) return arg
     if (spectCache.has(arg)) return spectCache.get(arg)
@@ -56,23 +51,42 @@ class Spect {
     return this
   }
 
+  use(...fns) {
+    let aspects = aspectCache.get(this)
+    if (!aspects) aspectCache.set(this, aspects = new Map)
+
+    fns.forEach(fn => {
+      if (!aspects.has(fn)) {
+        let boundFn = fn.bind(this)
+        boundFn.target = this
+        boundFn.deps = {}
+        boundFn.destroy = {}
+        aspects.set(fn, boundFn)
+        aspects.set(boundFn, boundFn)
+        this.queue(() => this.run(boundFn))
+      }
+    })
+
+    return this
+  }
+
   // run aspect, switch global context
-  call(aspect) {
+  run(aspect) {
     let prev = current
     fxCount = 0
-    current = tuple(this, aspect)
+    current = aspect
     aspect.call(this, this)
     current = prev
     return this
   }
 
-  // subscribe target to updates of the indicated path
-  subscribe (name, target, aspect) {
+  // subscribe target aspect to updates of the indicated path
+  subscribe (name, aspect) {
     if (!subscriptionCache.has(this)) subscriptionCache.set(this, {})
     let subscriptions = subscriptionCache.get(this)
 
-    if (!subscriptions[name]) subscriptions[name] = new Set(tuple(target, aspect))
-    else subscriptions[name].add(tuple(target, aspect))
+    if (!subscriptions[name]) subscriptions[name] = new Set()
+    subscriptions[name].add(aspect)
   }
 
   // update effect observers
@@ -83,40 +97,29 @@ class Spect {
     if (!subscriptions[name]) return
 
     let subscribers = subscriptions[name]
-    for (let [target, aspect] of subscribers) {
-      target.update(aspect)
+    for (let aspect of subscribers) {
+      aspect.target.update(aspect)
     }
 
     return this
   }
 }
 
-// register aspect
-registerEffect('use', function (...fns) {
-  let aspects = aspectCache.get(this)
-  if (!aspects) aspectCache.set(this, aspects = [])
-
-  fns.forEach(fn => {
-    if (aspects.indexOf(fn) < 0) {
-      aspects.push(fn)
-      this.queue(() => this.call(fn))
-    }
-  })
-
-  return this
-})
-
 // rerender all aspects
-registerEffect('update', function (aspect) {
+registerEffect('update', test => function update (aspect, deps) {
+  if (!test(deps)) return this
+
   let aspects = aspectCache.get(this)
   if (!aspects) return
 
   if (aspect) {
-    if(aspects.indexOf(aspect) >=0 ) this.call(aspect)
+    if(aspects.has(aspect)) this.queue(() => this.run(aspects.get(aspect)))
     return this
   }
 
-  aspects.forEach(aspect => this.queue(() => this.call(aspect)))
+  for (let [aspect, boundAspect] of aspects) {
+    this.queue(() => this.run(boundAspect))
+  }
 
   return this
 })
@@ -128,14 +131,16 @@ registerEffect('update', function (aspect) {
 // - [ideally] registering static plugin
 export function registerEffect(name, descriptor) {
   const targetCache = new WeakMap
-  if (typeof descriptor === 'function') descriptor = descriptor()
 
-  let fn = createEffect(name, descriptor)
+  let fn = typeof descriptor === 'function' ? descriptor(testDeps) : createEffect(name, descriptor)
 
   Object.defineProperty(Spect.prototype, name, {
     get() {
       let boundFn = targetCache.get(this)
-      if (!boundFn) targetCache.set(this, boundFn = fn.bind(this))
+      if (!boundFn) {
+        targetCache.set(this, boundFn = fn.bind(this))
+        boundFn.target = this
+      }
       return boundFn
     },
     set() {
@@ -173,7 +178,7 @@ function createEffect(effectName, descriptor) {
       if (typeof args[0] === 'function') {
         if (deps) {
           let [, deps] = args
-          if (!testDeps(effectName, deps)) return this
+          if (!testDeps(deps)) return this
         }
 
         // custom reducer function
@@ -187,7 +192,10 @@ function createEffect(effectName, descriptor) {
           let state = getValues(this)
           let result
           try {
-            result = fn(state)
+            result = fn(new Proxy(state, { set: (target, prop, value) => {
+              if (target[prop] !== value) this.publish(effectName + '.' + prop)
+              return Reflect.set(target, prop, value)
+            }}))
           } catch (e) { }
 
           if (result !== state && typeof result === typeof state) {
@@ -218,7 +226,7 @@ function createEffect(effectName, descriptor) {
 
         if (deps) {
           let [, deps] = args
-          if (!testDeps(effectName, deps)) return this
+          if (!testDeps(deps)) return this
         }
 
         setValues(this, props)
@@ -232,7 +240,7 @@ function createEffect(effectName, descriptor) {
     if (setValue) {
       if (args.length >= 2) {
         let [name, value, deps] = args
-        if (!testDeps(effectName, deps)) return this
+        if (!testDeps(deps)) return this
 
         let prev = getValue(this, name)
         if (is(prev, value)) return this
@@ -245,67 +253,48 @@ function createEffect(effectName, descriptor) {
   }
 }
 
+
 // check if deps changed, call destroy
-function testDeps(name, deps, destroy) {
-  let key = fxKey(name)
+function testDeps(deps, destroy) {
+  if (!current) return true
+
+  let key
+  if (isStacktraceAvailable) {
+    let [testDepssite, effectsite, callsite, ...trace] = parseStack((new Error).stack)
+    let callsiteurl = callsite.file + ':' + callsite.lineNumber + ':' + callsite.column
+    key = callsiteurl
+  }
+  // fallback to react order-based key
+  else {
+    key = fxCount++
+  }
 
   if (deps == null) {
-    if (destroyCache.has(key)) {
-      let prevDestroy = destroyCache.get(key)
-      if (prevDestroy && prevDestroy.call) prevDestroy.call()
-    }
-    destroyCache.set(key, destroy)
-
+    let prevDestroy = current.destroy[key]
+    if (prevDestroy && prevDestroy.call) prevDestroy.call()
+    current.destroy[key] = destroy
     return true
   }
 
-  let prevDeps = depsCache.get(key)
+  let prevDeps = current.deps[key]
   if (deps === prevDeps) return false
   if (Array.isArray(deps)) {
     if (equal(deps, prevDeps)) return false
   }
-  depsCache.set(key, deps)
+  current.deps[key] = deps
 
   // enter false state - ignore effect
   if (prevDeps === undefined && deps === false) return false
 
-  if (destroyCache.has(key)) {
-    let prevDestroy = destroyCache.get(key)
-    if (prevDestroy && prevDestroy.call) prevDestroy()
-  }
+  let prevDestroy = current.destroy[key]
+  if (prevDestroy && prevDestroy.call) prevDestroy()
 
   // toggle/fsm case
   if (deps === false) {
-    destroyCache.set(key, null)
+    current.destroy[key] = null
     return false
   }
 
-  destroyCache.set(key, destroy)
+  current.destroy[key] = destroy
   return true
-}
-
-// get current effect call identifier, considering callstack
-function fxKey(fxName) {
-  let key
-
-  // precompiled bundle inserts unique fxid before effect calls
-  if (fxId) {
-    key = tuple(current, fxName, fxId)
-    fxId = null
-  }
-  else {
-    // stacktrace key is precise for
-    if (isStacktraceAvailable) {
-      // FIXME: exact stack is susceptible to babel-ish transforms
-      let [fxKeysite, testDepssite, fxsite, callsite, ...trace] = parseStack((new Error).stack)
-      let callsiteurl = callsite.file + ':' + callsite.lineNumber + ':' + callsite.column
-      key = tuple(current, fxName, callsiteurl)
-    }
-    // fallback to react order-based key
-    else {
-      key = tuple(current, fxName, fxCount++)
-    }
-  }
-
-  return key
 }
