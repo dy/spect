@@ -1,7 +1,7 @@
 import t from 'tst'
-import spect from '..'
+import spect, { current } from '..'
 
-t.only('counter', t => {
+t.skip('counter', t => {
   let $n = spect({
     x: 1, [Symbol.toStringTag]() {
       return 'Validator';
@@ -18,7 +18,7 @@ t.only('counter', t => {
   })
 })
 
-t('$: empty / primitive selectors', t => {
+t('core: empty / primitive selectors', t => {
   let $x = spect()
   let $x1 = spect()
   t.is($x !== $x1, true)
@@ -78,7 +78,7 @@ t('use: aspects must not be called multiple times, unless target state changes',
   t.is(log, ['x'])
   await $a.use(fn, fn)
   t.is(log, ['x'])
-  await $a.update()
+  await $a.run()
   t.is(log, ['x', 'x'])
 
   function fn(el) { log.push('x') }
@@ -102,49 +102,43 @@ t.skip('use: same aspect different targets', t => {
   t.deepEqual(log, ['A', 'SPAN'])
 })
 
-t('use: Same target different aspects', t => {
+t('use: Same target different aspects', async t => {
   let log = []
 
-  let a = document.createElement('a')
-  document.body.appendChild(a)
+  let a = {}
 
   let afx, bfx
-  $('a').use(afx = () => (log.push('a'), () => log.push('de a')))
+  await spect(a).use(afx = () => (log.push('a'), () => log.push('de a')))
   t.deepEqual(log, ['a'])
-  $('a').use(bfx = () => (log.push('b'), () => log.push('de b')))
+  await spect(a).use(bfx = () => (log.push('b'), () => log.push('de b')))
   t.deepEqual(log, ['a', 'b'])
-
-  document.body.removeChild(a)
 })
 
-t('use: same aspect same target', t => {
+t('use: same aspect same target', async t => {
   let log = []
-  let a = document.createElement('a')
-  document.body.appendChild(a)
+  let a = {}
 
   let fx = () => (log.push('a'), () => log.push('z'))
-  $(a).use(fx)
+  await spect(a).use(fx)
   t.deepEqual(log, ['a'])
-  $(a).use(fx)
+  await spect(a).use(fx)
   t.deepEqual(log, ['a'])
-  $('a').use(fx)
+  await spect(a).use(fx)
   t.deepEqual(log, ['a'])
-
-  document.body.removeChild(a)
 })
 
-t('use: subaspects init themselves independent of parent aspects', t => {
+t('use: subaspects init themselves independent of parent aspects', async t => {
   let log = []
 
-  let a = document.body.appendChild(document.createElement('a'))
-  let b = a.appendChild(document.createElement('b'))
-  let c = b.appendChild(document.createElement('c'))
+  let a = {b:{c:{}}}
+  let b = a.b
+  let c = b.c
 
-  $('a').use(el => {
+  await spect(a).use(el => {
     log.push('a')
-    $('b').use(el => {
+    spect(b).use(el => {
       log.push('b')
-      $('c').use(el => {
+      spect(c).use(el => {
         log.push('c')
         // return () => log.push('-c')
       })
@@ -158,46 +152,44 @@ t('use: subaspects init themselves independent of parent aspects', t => {
   // $.destroy(a)
 
   // t.deepEqual(log, ['a', 'b', 'c', '-c', '-b', '-a'])
-
-  document.body.removeChild(a)
 })
 
 t.todo('use: generators aspects')
 
-t.todo('use: async aspects')
+t('use: async aspects', t => {
+  let a = spect({})
 
+  a.use(async function a() {
+    t.is(a, current.fn)
+    await Promise.resolve().then()
+    t.is(a, current.fn)
+  })
 
-t.todo('use: promise (suspense)', t => {
-  $('div', import('url'))
 })
 
-t.todo('use: hyperscript case', t => {
-  $('div', () => {
+t.skip('use: promise', async t => {
+  let to = new Promise(ok => setTimeout(ok, 100))
 
-  })
-})
+  to.then()
 
-t.todo('use: new custom element', t => {
-  $('custom-element', () => {
-
-  })
+  spect({}).use(to)
 })
 
 
 t('fx: global effect is triggered after current callstack', async t => {
   let log = []
-  $(document.createElement('a')).fx(() => log.push('a'))
+  spect({}).fx(() => log.push('a'))
 
   t.is(log, [])
 
-  await Promise.resolve()
+  await 0
 
   t.is(log, ['a'])
 })
 
 t('fx: runs destructor', async t => {
   let log = []
-  let $a = $(document.createElement('a'))
+  let $a = spect({})
 
   let id = 0
   let fn = () => {
@@ -221,23 +213,23 @@ t('fx: runs destructor', async t => {
   }
 
   $a.use(fn)
-  await Promise.resolve()
+  await Promise.resolve().then()
   t.is(log, ['init 1', 'init 2', 'init 3'])
 
   log = []
-  $a.update()
-  await Promise.resolve()
+  $a.run()
+  await Promise.resolve().then()
   t.is(log, ['destroy 1', 'init 1'])
 
   log = [], id = 1
-  $a.update()
-  await Promise.resolve()
+  $a.run()
+  await Promise.resolve().then()
   t.is(log, ['destroy 1', 'destroy 3', 'init 1', 'init 3'])
 })
 
 t('fx: toggle deps', async t => {
   let log = []
-  let $a = $`<a/>`
+  let $a = spect()
 
   $a.use(() => {
     $a.fx(() => {
@@ -282,202 +274,93 @@ t('fx: toggle deps', async t => {
   t.is(log, ['on', 'off', 'on', 'off'])
 })
 
-t.todo('fx: readme case', t => {
-  $(document.createElement('div'), el => {
-    fx(async () => {
-      html`Loading...`
-
-      t.equal(el.innerHTML, 'Loading...')
-      console.log(currentState)
-
-      html`Loaded ${await (() => 123)}`
-      console.log(currentState)
-
-      t.equal(el.innerHTML, 'Loaded 123')
-    }, [])
-  })
-})
-
-t.todo('fx: sync fx', t => {
-  let log = []
-  let target = document.createElement('div')
-  let count = 0
-
-  const aspect = el => {
-    log.push('before')
-
-    // unchanged dep
-    fx(() => {
-      log.push('foo')
-      html`<foo/>`
-      t.equal(el.innerHTML, '<foo></foo>', 'html aftereffect')
-
-      return () => log.push('un-foo')
-    }, [])
-
-    // direct dep
-    fx(() => {
-      html`<bar/>`
-      t.equal(el.innerHTML, '<bar></bar>')
-      log.push('bar')
-
-      return () => log.push('un-bar')
-    }, count)
-
-    // no deps
-    fx(() => {
-      html`<baz/>`
-      t.equal(el.innerHTML, '<baz></baz>')
-      log.push('baz')
-
-      return () => log.push('un-baz')
-    })
-
-    log.push('after')
-  }
-
-  $(target, aspect)
-  t.deepEqual(log, ['before', 'after', 'foo', 'bar', 'baz'], 'correct sequence of calls')
-
-  // console.log('---update')
-  count++
-  log = []
-  $.update(target, aspect)
-  t.deepEqual(log, ['before', 'after', 'un-bar', 'un-baz', 'bar', 'baz'], 'correct repeated call')
-
-  // console.log('---destroy')
-  log = []
-  $.destroy(target, aspect)
-  t.deepEqual(log, ['un-foo', 'un-bar', 'un-baz'], 'correct destroyal')
-
-})
-
-t.todo('fx: async fx', t => {
+t('fx: async fx', async t => {
   let log = []
 
-  $(document.createElement('div'), el => {
-    fx(async () => {
+  let el = spect()
+  await el.use(el => {
+    el.fx(async () => {
       await null
       log.push('foo')
-      html`<foo/>`
-      t.equal(el.innerHTML, '<foo></foo>', 'html aftereffect')
-
       return () => {
-        log.push('un-foo')
+        log.push('unfoo')
       }
-    }, [])
-
-    // fx(async () => {
-    //   t.equal(el.innerHTML, '<foo></foo>')
-    //   html`<bar/>`
-    //   t.equal(el.innerHTML, '<bar></bar>')
-    // }, [])
+    })
   })
 
-  // t.deepEqual(log, ['before', 'between', 'after', 'foo', 'bar'], 'correct sequence of calls')
+  t.is(log, ['foo'])
+
+  await el.run()
+  t.is(log, ['foo', 'unfoo', 'foo'])
 })
 
-t('fx: generator fx')
+t.todo('fx: generator fx')
 
-t('fx: promise')
+t.todo('fx: promise')
 
-t('fx: dep cases')
+t.todo('fx: varying number of effects')
 
-t('fx: no-deps call')
-
-t('fx: varying number of effects')
-
-t('fx: removes all effects on aspect removal')
-
+t.todo('fx: remove all effects on aspect removal')
 
 t('state: direct get/set', t => {
-  $`<div.a/>`.use(el => {
-    let $el = $(el)
+  spect().use(el => {
+    el.state('c', 1)
 
-    $el.state('c', 1)
-
-    t.is($el.state`c`, 1)
+    t.is(el.state('c'), 1)
   })
 })
 
 t('state: object set', t => {
-  $`<div.a/>`.use(el => {
-    let $el = $(el)
+  spect().use(el => {
+    el.state({ c: 1, d: 2 })
 
-    $el.state({ c: 1, d: 2 })
-
-    t.is($el.state`c`, 1)
+    t.is(el.state('c'), 1)
   })
 })
 
 t('state: functional get/set', t => {
-  let $a = $`<a/>`
+  let a = spect()
 
-  $a.state(s => s.count = 0)
+  a.state(s => s.count = 0)
 
-  t.is($a.state(), { count: 0 })
+  t.is(a.state(), { count: 0 })
 
-  $a.state(s => s.count++)
-  t.is($a.state`count`, 1)
+  a.state(s => s.count++)
+  t.is(a.state`count`, 1)
 })
 
-t('state: init gate', t => {
+t('state: init gate', async t => {
   let log = [], x = 1
-  let $a = $`<a/>`
+  let $a = spect()
 
-  $a.use(fn)
+  await $a.use(fn)
+
   t.is($a.state`x`, 1)
 
   x++
-  $a.use(fn)
+  $a.run()
   t.is($a.state`x`, 1)
 
-  function fn(el) {
-    $a = $(el)
-
+  function fn($a) {
     $a.state({ x }, [])
   }
 })
 
-t('state: reducer must be called for each element in a set', t => {
-  let $a = $([
-    document.createElement('a'),
-    document.createElement('a')
-  ])
+t('state: reducer', t => {
+  let $a = spect({})
 
-  $($a[0]).state({ x: 1 })
-  $($a[1]).state({ x: 2 })
+  $a.state({ x: 1 })
 
   let log = []
   $a.state(s => {
     log.push(s.x)
   })
 
-  t.is(log, [1, 2])
+  t.is(log, [1])
 })
 
-t.skip('state: counter', t => {
-  let stop = 0
-  let $els = $`<div.a/>`.use(a => {
-    let $a = $(a)
-    $a.init(() => {
-      $a.state({ count: 0 })
-    })
-
-    console.log($a.state`count`)
-    $a.fx(s => {
-      if (stop < 6) {
-        setTimeout(() => {
-          $a.state(s => s.count++)
-          stop++
-        }, 1000)
-      }
-    }, [$a.state`count`])
-  })
-})
-
-t('state: get/set path', t => {
-  let $a = $`<a/>`
+t.todo('state: get/set path', t => {
+  let $a = spect()
 
   t.is($a.state('x.y.z'), undefined)
 
@@ -486,73 +369,58 @@ t('state: get/set path', t => {
   t.is($a.state('x.y.z'), 1)
 })
 
-t.todo('state: trigger rerendering', t => {
-  let stop = 0
-  let $els = $`<div.a/><div.b/><div.c/>`.use(a => {
-    let $a = $(a)
-
-    $a.state({ count: 0 }, [])
-    if ($a[0].class.a) $a.state({ count: 1 }, [])
-    else if ($a[0].class.b) $a.state({ count: 2 }, [])
-
-    // $a.html = $a.state.count
-    console.log($a.state`count`)
-    $a.fx(s => {
-      if (stop < 6) {
-        // console.log('fx---')
-        // console.log($a.state(s => s.count++))
-        // console.log($a.state`count`)
-        setTimeout(() => {
-          $a.state(s => s.count++)
-          stop++
-        }, 1000)
-      }
-    }, [$a.state`count`])
-  })
-
-  // t.is($($els[0]).state.count, 1)
-  // t.is($($els[1]).state.count, 2)
-  // t.is($($els[2]).state.count, 0)
-})
-
-t.todo('state: functional setter/getter', t => {
-  $a.fx($a => {
-    let { count = 0 } = $a.state()
-
-    $a.text = count
-
-    setTimeout(() => {
-      $a.state({ count: count++ })
-    })
-  })
-})
-
 t('state: reading state registers any-change listener', async t => {
   let log = []
-  let $a = $`<a/>`
+  let $a = spect()
 
-  $a.use(el => {
-    let $el = $(el)
+  await $a.use($el => {
     let s = $el.state()
 
-    setTimeout(() => {
-      log.push(s.x)
-    })
+    log.push(s.x)
   })
+  t.is(log, [undefined])
 
-  $a.state({ x: 1 })
+  await $a.state({ x: 1 })
 
-  await new Promise(ok => setTimeout(() => {
-    t.is(log, [1])
-    ok()
-  }))
+  t.is(log, [undefined, 1])
 })
 
-t.todo('state: reading state from async stack doesnt register listener', t => {
-  $a.fx($el => setTimeout(() => {
-    $el.html`${$el.state.x}`
-  }))
-  $a.state.x = 1
+t('state: recursion on both reading/setting state', async t => {
+  let log = []
+  await spect().use($el => {
+    log.push($el.state('x'))
+    $el.state({ x: 1 })
+  })
+
+  t.is(log, [undefined, 1])
+})
+
+t('state: same-effect different paths dont trigger update', async t => {
+  let log = []
+  await spect().use($el => {
+    log.push($el.state('x'))
+    $el.state('x')
+    $el.state({y: 1})
+  })
+  t.is(log, [undefined])
+})
+
+t.todo('awaiting doesn\'t cause recursion', t => {
+
+})
+
+t.only('state: reading state from async stack doesnt register listener', async t => {
+  let log = []
+  let $a = await spect()/*.use($el => {
+    log.push(1)
+    // setTimeout(() => {
+    //   $el.state('x')
+    // })
+  })
+  $a.state('x', 1)
+*/
+  console.log($a)
+  t.is(log, [1])
 })
 
 t.todo('state: reading external component state from asynchronous tick', t => {
