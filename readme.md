@@ -1,6 +1,6 @@
 # Spect ![unstable](https://img.shields.io/badge/stability-unstable-yellow) [![Build Status](https://travis-ci.org/spectjs/spect.svg?branch=master)](https://travis-ci.org/spectjs/spect)
 
-Spect is [aspect-oriented](https://en.wikipedia.org/wiki/Aspect-oriented_programming) tool. It enables reactive aspects with side-effects for any target.
+Spect is [aspect-oriented](https://en.wikipedia.org/wiki/Aspect-oriented_programming) library. It turns any target into aspectable, allowing assigning addition pieces of behavior (advices), without modifying the target itself. Advices are reactive and may have multiple side-effects.
 
 > _Spect_ = _Reactive Aspects_ + _Side-Effects_
 
@@ -11,13 +11,18 @@ Spect is [aspect-oriented](https://en.wikipedia.org/wiki/Aspect-oriented_program
 import spect from 'spect'
 import { html, attr, css } from 'spect-dom'
 
+// registed side-effects
 spect.use(html, attr, css)
 
-spect(document.querySelector('#hello'))
-  .use(({ html, attr }) => {
-    html`<h1.hello-title>Hello, ${ attr('name') }!</h1>`
-    css`.hello { font-size: 1.08rem }`
-  })
+// create aspectable target
+let $hello = spect(document.querySelector('#hello'))
+
+// assign aspect with `html`, `attr` and `css` effects
+// `attr` effect subscribes aspect to changes of the attribute
+$hello.use(({ html, attr, css }) => {
+  html`<h1.hello-title>Hello, ${ attr('name') }!</h1>`
+  css`.hello { font-size: 1.08rem }`
+})
 ```
 
 ## API
@@ -26,27 +31,34 @@ spect(document.querySelector('#hello'))
 
 ### `spect.use( ...effects )`
 
-Register effects.
+Register effects available for aspects.
 
 ```js
 import spect from 'spect'
 import { css, html } from 'spect-dom'
 
 spect.use(css, html)
+
+let $target = spect(document.querySelector('#my-element'))
+
+$target.html
+$target.css
 ```
 
-### `target = spect( object )` − create aspectable target
+### `spect( target )` − create aspectable
 
-Make any target aspectable.
+Create aspectable target wrapper via Proxy.
 
 ```js
-spect(() => {})
-let target = spect([a, b, c])
+let $target = spect({ foo: 'bar' })
+
+$target.foo // 'bar'
+$target.use // function
 ```
 
-### `target.use( ...fns )` − assign aspects
+### `.use( ...fns )` − assign aspects
 
-Assign aspect function(s) to target. Each aspect `fn` is called as microtask. By reading state of other targets, aspect subscribes to changes in these states and rerenders itself if changes take place.
+Assign aspect to target. Each aspect `fn` is invoked as microtask. By reading/writing effects, aspect subscribes/publishes changes, causing update.
 
 ```js
 let $foo = spect(foo)
@@ -58,30 +70,30 @@ $foo.use($foo => {
   let y = $bar.prop('y')
 
   // update after 1s
-  setTimeout(() => $foo.state( a => a.x++ ), 1000)
+  setTimeout(() => $foo.state( state => state.x++ ), 1000)
 })
 
-// reruns $foo
+// updates $foo
 $bar.prop('y', 1)
 ```
 
-### `target.update( fn?, deps? )` − rerender aspect
+### `.run( fn? )` − run aspect
 
-Rerender all assigned aspects or a single aspect.
+Run all assigned aspects or a single aspect.
 
 ```js
 let $foo = spect(foo).use(fooble, barable, bazzable)
 
-$foo.update()
+$foo.run()
 ```
 
 ### `target.fx( () => destroy? , deps? )` − generic side-effect
 
-Run effect function, queued as microtask. Very much like `useEffect` with less limitations. Non-array `deps` can be used to organize toggle / fsm that triggers when value changes to non-false, that is useful for binary states like `visible/hidden`, `disabled/enabled`, `active` etc.
+Run effect function, queued as microtask. Very much like `useEffect` with less limitations. Non-array `deps` can be used to organize toggle / fsm that triggers when value changes to non-false, which is useful for binary states like `visible/hidden`, `disabled/enabled` etc.
 
 ```js
 // called each time
-target.fx(() => {});
+$foo.fx(() => {});
 
 // called when value changes to non-false
 target.fx(() => { show(); return () => hide(); }, visible);

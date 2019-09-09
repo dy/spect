@@ -5,124 +5,119 @@ import { parse as parseStack } from 'stacktrace-parser'
 // used to turn stacktrace-based effects, opposed to fxCount
 const isStacktraceAvailable = !!(new Error).stack
 
-const spectCache = new WeakMap,
-  qCache = new WeakMap,
-  pCache = new WeakMap,
-  aspectCache = new WeakMap,
-  boundCache = new WeakMap,
-  subscriptionCache = new WeakMap
+const sQueue = Symbol('queue')
+const sPromise = Symbol('promise')
+const sUse = Symbol('use')
+const sSubscription = Symbol('subscription')
+const sBound = Symbol('bound')
+const sProxy = Symbol('proxy')
+
+const cache = new WeakMap
 
 let fxCount, current = null
 
 // effect-able holder / target wrapper
-export default function spect(...args) {
-  return new Spect(...args)
+export default function Spect(arg) {
+  if (arg instanceof Spect) return arg
+  if (cache.has(arg)) return cache.get(arg)
+
+  if (!(this instanceof Spect)) return new Spect(arg)
+
+  let spect = this
+
+  this[sQueue] = new Set
+  this[sPromise] = Promise.resolve()
+  this[sUse] = new Map
+  this[sSubscription] = {}
+  this[sBound] = new WeakMap
+  this[sProxy] = new Proxy(arg, {
+    get(target, name) {
+      if (spect[name]) return spect[name]
+      return target[name]
+    },
+    getPrototypeOf(target) {
+      return Spect.prototype
+    }
+  })
+
+  cache.set(arg, this[sProxy])
+  return this[sProxy]
 }
 
-class Spect {
-  constructor(arg, ...args) {
-    // FIXME: should cache have invalidation?
-    if (arg instanceof Spect) return arg
-    if (spectCache.has(arg)) return spectCache.get(arg)
-
-    // planned aspects/effects to rerender
-    qCache.set(this, new Set)
-
-    // promise per collection (microtask)
-    pCache.set(this, Promise.resolve())
-
-    spectCache.set(arg, this)
-
-    return this
-  }
-
+Spect.prototype = {
   then(fn) {
-    return pCache.get(this).then(fn)
-  }
+    return this[sPromise].then(fn)
+  },
 
   // plan fn to run with target context
   queue(fn) {
-    let q = qCache.get(this), p = pCache.get(this)
+    let q = this[sQueue], p = this[sPromise], px = this[sProxy]
     if (!q.size) p.then(() => {
-      for (let fn of q) fn.call(this, this)
+      for (let fn of q) fn.call(px, px)
       q.clear()
     })
     q.add(fn)
-    return this
-  }
+    return px
+  },
 
   use(...fns) {
-    let aspects = aspectCache.get(this)
-    if (!aspects) aspectCache.set(this, aspects = new Map)
+    let use = this[sUse]
 
     fns.forEach(fn => {
-      if (!aspects.has(fn)) {
+      if (!use.has(fn)) {
         let boundFn = fn.bind(this)
+        boundFn.fn = fn
         boundFn.target = this
         boundFn.deps = {}
         boundFn.destroy = {}
-        aspects.set(fn, boundFn)
-        aspects.set(boundFn, boundFn)
+        use.set(fn, boundFn)
         this.queue(() => this.run(boundFn))
       }
     })
 
-    return this
-  }
+    return this[sProxy]
+  },
 
-  // run aspect, switch global context
-  run(aspect) {
-    let prev = current
-    fxCount = 0
-    current = aspect
-    aspect.call(this, this)
-    current = prev
-    return this
-  }
+  run(fn) {
+    let px = this[sProxy]
+
+    if (!fn) {
+      for (let [, fn] of this[sUse]) this.run(fn)
+      return px
+    }
+
+    if (!fn.fn) {
+      if(!this[sUse].has(fn)) throw Error('Unknown aspect `' + fn.name + '`')
+      fn = this[sUse].get(fn)
+    }
+
+    this.queue(() => {
+      let prev = current
+      fxCount = 0
+      current = fn
+      fn(px)
+      current = prev
+    })
+
+    return px
+  },
 
   // subscribe target aspect to updates of the indicated path
   subscribe (name, aspect) {
-    if (!subscriptionCache.has(this)) subscriptionCache.set(this, {})
-    let subscriptions = subscriptionCache.get(this)
-
+    let subscriptions = this[sSubscription]
     if (!subscriptions[name]) subscriptions[name] = new Set()
     subscriptions[name].add(aspect)
-  }
+  },
 
   // update effect observers
   publish (name) {
-    if (!subscriptionCache.has(this)) return
-
-    let subscriptions = subscriptionCache.get(this)
+    let subscriptions = this[sSubscription]
     if (!subscriptions[name]) return
-
     let subscribers = subscriptions[name]
-    for (let aspect of subscribers) {
-      aspect.target.update(aspect)
-    }
-
+    for (let aspect of subscribers) aspect.target.run(aspect)
     return this
   }
 }
-
-// rerender all aspects
-registerEffect('update', test => function update (aspect, deps) {
-  if (!test(deps)) return this
-
-  let aspects = aspectCache.get(this)
-  if (!aspects) return
-
-  if (aspect) {
-    if(aspects.has(aspect)) this.queue(() => this.run(aspects.get(aspect)))
-    return this
-  }
-
-  for (let [aspect, boundAspect] of aspects) {
-    this.queue(() => this.run(boundAspect))
-  }
-
-  return this
-})
 
 // registering effect gives:
 // - bound target
@@ -243,7 +238,7 @@ function createEffect(effectName, descriptor) {
         if (!testDeps(deps)) return this
 
         let prev = getValue(this, name)
-        if (is(prev, value)) return this
+        if (equal(prev, value)) return this
         setValue(this, name, value)
         this.publish(effectName + '.' + name)
       }
