@@ -13,6 +13,7 @@ const sRun = Symbol('run')
 const sPublish = Symbol('publish')
 const sSubscribe = Symbol('subscribe')
 const sTarget = Symbol('target')
+const sDeps = Symbol('deps')
 
 const cache = new WeakMap
 
@@ -106,18 +107,67 @@ Spect.prototype = {
     let subscribers = subscriptions[name]
     for (let aspect of subscribers) aspect.target[sRun](aspect)
     return this[sProxy]
+  },
+
+  // check if deps changed, call destroy
+  [sDeps](deps, destroy) {
+    if (!current) return true
+
+    let key
+    if (isStacktraceAvailable) {
+      let [testDepssite, effectsite, callsite, ...trace] = parseStack((new Error).stack)
+      let callsiteurl = callsite.file + ':' + callsite.lineNumber + ':' + callsite.column
+      key = callsiteurl
+    }
+    // fallback to react order-based key
+    else {
+      key = fxCount++
+    }
+
+    if (deps == null) {
+      let prevDestroy = current.destroy[key]
+      if (prevDestroy && prevDestroy.call) prevDestroy()
+      current.destroy[key] = destroy
+      return true
+    }
+
+    let prevDeps = current.deps[key]
+    if (deps === prevDeps) return false
+    if (!isPrimitive(deps)) {
+      if (equal(deps, prevDeps)) return false
+    }
+    current.deps[key] = deps
+
+    // enter false state - ignore effect
+    if (prevDeps === undefined && deps === false) return false
+
+    let prevDestroy = current.destroy[key]
+    if (prevDestroy && prevDestroy.call) prevDestroy()
+
+    // toggle/fsm case
+    if (deps === false) {
+      current.destroy[key] = null
+      return false
+    }
+
+    current.destroy[key] = destroy
+    return true
   }
 }
 
 Object.defineProperty(Spect.prototype, 'then', {
   get() {
-    let stack = parseStack((new Error).stack)
-    // FIXME: naive criteria: if stacktrace is less than 3, that is async recursion, bail out
-    if (stack.length <= 3) return null
+    // let [protogetsite, proxygetsite, anonsite, queuesite, ...stack] = parseStack((new Error).stack)
+
+    // FIXME: heuristic criteria to enable returning thenable from await
+    // if (!stack.length) {
+    //   return null
+    // }
+    // if (/anonymous/.test(anonsite.methodName)) return null
+
     return (fn) => {
-      this[sPromise].then(() => {
-        fn(this[sProxy])
-      })
+      // this[sPromise].then(() => fn(this[sProxy]))
+      this[sPromise].then(() => fn())
       return this[sProxy]
     }
   }
@@ -181,7 +231,7 @@ function createEffect(effectName, descriptor) {
       if (typeof args[0] === 'function') {
         if (deps) {
           let [, deps] = args
-          if (!Spect.deps(deps)) return px
+          if (!this[sDeps](deps)) return px
         }
 
         // custom reducer function
@@ -232,7 +282,7 @@ function createEffect(effectName, descriptor) {
 
         if (deps) {
           let [, deps] = args
-          if (!Spect.deps(deps)) return px
+          if (!this[sDeps](deps)) return px
         }
 
         let prev = getValues(this[sTarget])
@@ -251,7 +301,7 @@ function createEffect(effectName, descriptor) {
     if (setValue) {
       if (args.length >= 2) {
         let [name, value, deps] = args
-        if (!Spect.deps(deps)) return px
+        if (!this[sDeps](deps)) return px
 
         let prev = getValue(this[sTarget], name)
         if (equal(prev, value)) return px
@@ -262,51 +312,6 @@ function createEffect(effectName, descriptor) {
 
     return px
   }
-}
-
-// check if deps changed, call destroy
-Spect.deps = (deps, destroy) => {
-  if (!current) return true
-
-  let key
-  if (isStacktraceAvailable) {
-    let [testDepssite, effectsite, callsite, ...trace] = parseStack((new Error).stack)
-    let callsiteurl = callsite.file + ':' + callsite.lineNumber + ':' + callsite.column
-    key = callsiteurl
-  }
-  // fallback to react order-based key
-  else {
-    key = fxCount++
-  }
-
-  if (deps == null) {
-    let prevDestroy = current.destroy[key]
-    if (prevDestroy && prevDestroy.call) prevDestroy.call()
-    current.destroy[key] = destroy
-    return true
-  }
-
-  let prevDeps = current.deps[key]
-  if (deps === prevDeps) return false
-  if (!isPrimitive(deps)) {
-    if (equal(deps, prevDeps)) return false
-  }
-  current.deps[key] = deps
-
-  // enter false state - ignore effect
-  if (prevDeps === undefined && deps === false) return false
-
-  let prevDestroy = current.destroy[key]
-  if (prevDestroy && prevDestroy.call) prevDestroy()
-
-  // toggle/fsm case
-  if (deps === false) {
-    current.destroy[key] = null
-    return false
-  }
-
-  current.destroy[key] = destroy
-  return true
 }
 
 
@@ -336,16 +341,22 @@ Spect.registerEffect(
   },
 
   function run(fn, deps) {
-    if (!Spect.deps(deps)) return this[sProxy]
+    if (!this[sDeps](deps)) return this[sProxy]
     this[sRun](fn)
     return this[sProxy]
   },
 
   function fx(fn, deps) {
-    if (!Spect.deps(deps, () => destroy.forEach(fn => fn && fn.call && fn()))) return this[sProxy]
+    if (!this[sDeps](deps, () => {
+      destroy.forEach(fn => fn && (fn.call && fn()) || (fn.then && fn.then(res => res())))
+    })) {
+      return this[sProxy]
+    }
 
     let destroy = []
-    this[sPromise].then(async () => destroy.push(await fn.call(this[sProxy])))
+    this[sPromise].then(async () => {
+      destroy.push(fn.call(this[sProxy]))
+    })
 
     return this[sProxy]
   },

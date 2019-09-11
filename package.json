@@ -34,7 +34,7 @@
   "scripts": {
     "build": "pika build",
     "start": "parcel serve test/index.html",
-    "test": "node -r esm -r ./test/register.js test/index.js"
+    "test": "node -r esm test/index.js"
   },
   "repository": {
     "type": "git",

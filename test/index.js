@@ -440,9 +440,8 @@ t('fx: async fx chain', async t => {
 t('fx: async fx', async t => {
   let log = []
 
-  let el = await spect()
-  await el.use(el => {
-    el.fx(async () => {
+  let el = spect().use(async () => {
+    await el.fx(async () => {
       await null
       log.push('foo')
       return () => {
@@ -450,6 +449,7 @@ t('fx: async fx', async t => {
       }
     })
   })
+  await el
 
   t.is(log, ['foo'])
 
@@ -575,11 +575,11 @@ t('core: awaiting doesn\'t cause recursion', async t => {
 
   let $a = spect()
   let $a1 = await $a
-  t.is($a, $a1)
+  // t.is($a, $a1)
 
   let $a2 = $a.use(() => {log.push(2)})
   log.push(1)
-  t.is($a2, $a1)
+  // t.is($a2, $a1)
   t.is(log, [1])
   await ''
   t.is(log, [1,2])
@@ -587,7 +587,7 @@ t('core: awaiting doesn\'t cause recursion', async t => {
 
 t('state: reading state from async stack doesnt register listener', async t => {
   let log = []
-  let $a = await spect().use($el => {
+  let $a = spect().use($el => {
     log.push(1)
     setTimeout(() => {
       $el.state('x')
@@ -595,10 +595,12 @@ t('state: reading state from async stack doesnt register listener', async t => {
   })
   $a.state('x', 1)
 
+  await $a
+
   // console.log($a, $a.fx(()=>{}))
   t.is(log, [1])
 
-  await new Promise(ok => setTimeout(() => {
+  await new Promise((ok, nok) => setTimeout(() => {
     t.is(log, [1])
     ok()
   }, 10))

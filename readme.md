@@ -26,7 +26,7 @@ foo.use(foo => {
 
 ## API
 
-[**`spect`**](#-selector--els--markup---selector--h)&nbsp;&nbsp; [**`.use`**](#use-fns---assign-aspects)&nbsp;&nbsp; [**`.fx`**](#fx-el--destroy--deps---generic-side-effect)&nbsp;&nbsp; [**`.state`**](#state-name--val-deps---state-provider)&nbsp;&nbsp; [**`.prop`**](#prop-name--val-deps---properties-provider)&nbsp;&nbsp;
+[**`spect`**]()&nbsp;&nbsp; [**`.use`**]()&nbsp;&nbsp; [**`.run`**]()&nbsp;&nbsp; [**`.fx`**]()&nbsp;&nbsp; [**`.state`**]()&nbsp;&nbsp; [**`.prop`**]()&nbsp;&nbsp; [**`spect.fn`**]()&nbsp;&nbsp;
 
 
 ### `spect( target? )` − create aspectable
