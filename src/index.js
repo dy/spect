@@ -12,6 +12,7 @@ const sProxy = Symbol('proxy')
 const sRun = Symbol('run')
 const sPublish = Symbol('publish')
 const sSubscribe = Symbol('subscribe')
+const sAwait = Symbol('await')
 
 const cache = new WeakMap
 
@@ -48,9 +49,9 @@ export default function Spect(arg) {
 
 Spect.prototype = {
   [sRun](fn) {
-    if (this.error) return
-
     let px = this[sProxy]
+
+    if (this.error) return px
 
     if (!fn) {
       for (let [, fn] of this[sUse]) this[sRun](fn)
@@ -62,7 +63,7 @@ Spect.prototype = {
       fn = this[sUse].get(fn)
     }
 
-    this.then(async () => {
+    this[sPromise].then(async () => {
       let prev = current
       fxCount = 0
       current = fn
@@ -73,7 +74,7 @@ Spect.prototype = {
 
     if (!recurseCount) {
       recurseCount = 1
-      this.then(() => {
+      this[sPromise].then(() => {
         recurseCount = 0
         return px
       })
@@ -109,12 +110,12 @@ Spect.prototype = {
 
 Object.defineProperty(Spect.prototype, 'then', {
   get() {
-    if (this.blocked) return null
+    let stack = parseStack((new Error).stack)
+    // FIXME: naive criteria: if stacktrace is less than 3, that is async recursion, bail out
+    if (stack.length <= 3) return null
     return (fn) => {
       this[sPromise].then(() => {
-        this.blocked = true
         fn(this[sProxy])
-        return this[sProxy]
       })
       return this[sProxy]
     }
@@ -341,10 +342,9 @@ Spect.registerEffect(
     if (!Spect.deps(deps, () => destroy.forEach(fn => fn && fn.call && fn()))) return this
 
     let destroy = []
+    this[sPromise].then(async () => destroy.push(await fn.call(this[sProxy])))
 
-    this.then(async () => destroy.push(await fn.call(this[sProxy])))
-
-    return this
+    return this[sProxy]
   },
 
   {

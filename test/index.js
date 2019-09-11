@@ -1,5 +1,7 @@
 import t from 'tst'
 import spect, { current } from '..'
+import {parse as parseStack} from 'stacktrace-parser'
+
 
 t.skip('counter', t => {
   let $n = spect({
@@ -274,10 +276,18 @@ t('fx: toggle deps', async t => {
   t.is(log, ['on', 'off', 'on', 'off'])
 })
 
+t('fx: async fx chain', async t => {
+  let log = []
+  let a = spect().fx(() => log.push(1)).fx(() => log.push(2))
+  t.is(log, [])
+  await a.fx(() => log.push(3))
+  t.is(log, [1, 2, 3])
+})
+
 t('fx: async fx', async t => {
   let log = []
 
-  let el = spect()
+  let el = await spect()
   await el.use(el => {
     el.fx(async () => {
       await null
@@ -291,6 +301,7 @@ t('fx: async fx', async t => {
   t.is(log, ['foo'])
 
   await el.run()
+
   t.is(log, ['foo', 'unfoo', 'foo'])
 })
 
@@ -405,22 +416,38 @@ t('state: same-effect different paths dont trigger update', async t => {
   t.is(log, [undefined])
 })
 
-t.todo('awaiting doesn\'t cause recursion', t => {
+t('awaiting doesn\'t cause recursion', async t => {
+  let log = []
 
+  let $a = spect()
+  let $a1 = await $a
+  t.is($a, $a1)
+
+  let $a2 = $a.use(() => {log.push(2)})
+  log.push(1)
+  t.is($a2, $a1)
+  t.is(log, [1])
+  await ''
+  t.is(log, [1,2])
 })
 
-t.only('state: reading state from async stack doesnt register listener', async t => {
+t('state: reading state from async stack doesnt register listener', async t => {
   let log = []
-  let $a = await spect()/*.use($el => {
+  let $a = await spect().use($el => {
     log.push(1)
-    // setTimeout(() => {
-    //   $el.state('x')
-    // })
+    setTimeout(() => {
+      $el.state('x')
+    })
   })
   $a.state('x', 1)
-*/
-  console.log($a)
+
+  // console.log($a, $a.fx(()=>{}))
   t.is(log, [1])
+
+  await new Promise(ok => setTimeout(() => {
+    t.is(log, [1])
+    ok()
+  }, 10))
 })
 
 t.todo('state: reading external component state from asynchronous tick', t => {
