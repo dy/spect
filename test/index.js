@@ -400,6 +400,7 @@ t('state: recursion on both reading/setting state', async t => {
   let log = []
   await spect().use($el => {
     log.push($el.state('x'))
+    // alert($el.state('x'))
     $el.state({ x: 1 })
   })
 
@@ -416,7 +417,7 @@ t('state: same-effect different paths dont trigger update', async t => {
   t.is(log, [undefined])
 })
 
-t('awaiting doesn\'t cause recursion', async t => {
+t('core: awaiting doesn\'t cause recursion', async t => {
   let log = []
 
   let $a = spect()
@@ -450,46 +451,39 @@ t('state: reading state from async stack doesnt register listener', async t => {
   }, 10))
 })
 
-t.todo('state: reading external component state from asynchronous tick', t => {
-  $a.fx($a => {
-    // NOTE: reading state is limited to the same scope as fx
-    // reading from another scope doesn't register listener
-    // FIXME: should we ever register external state listeners?
-    // we can trigger direct element rerendering, and trigger external updates via fx desp
-    // that will get us rid of that problem, that isn't going to be very smart
-    setTimeout(() => {
-      $b.state.x
-    })
+t('state: deps cases', async t => {
+  let el = spect({})
+
+  let x, y, z, w
+
+  x=y=z=w=1
+  await el.use(() => {
+    el.state('x', x, [])
+
+    el.state('y', y)
+
+    el.state('z', z, [el.state('x')])
+
+    el.state('w', w, !!(el.state('y') - 1))
   })
 
-  $b.state.x = 1
+  t.is(el.state('x'), 1)
+  t.is(el.state('y'), 1)
+  t.is(el.state('z'), 1)
+  t.is(el.state('w'), undefined)
+
+  x=y=z=w=2
+  await el.run()
+
+  t.is(el.state('x'), 1)
+  t.is(el.state('y'), 2)
+  t.is(el.state('z'), 1)
+  t.is(el.state('w'), 2)
 })
 
-
-t.todo('state: multiple selectors state', t => {
-  let $ab = $([a, b])
-  let $a = $($ab[0])
-
-  $ab.state.x = 1
-  $a.state.x = 2
-
-  // state is bound per-element
-  // but setting state broadcasts it to all elements in the selector
-
-  $ab.state.x //jquery returns $a.state.x
-})
-
-t.todo('state: safe access to props')
-
-t.todo('state: deps cases')
-
-t.todo('state: nested props access')
-
-
-
-t.todo('state: destructuring', async t => {
+t('state: destructuring', async t => {
   let log = []
-  $(document.createElement('div'), el => {
+  await spect().use(({state}) => {
     // init/get state
     let { foo = 1, bar } = state()
 
@@ -504,9 +498,9 @@ t.todo('state: destructuring', async t => {
   t.deepEqual(log, ['get foo,bar', 1, undefined, 'set foo,bar', 'get foo,bar', 'a', 'b', 'set foo,bar'])
 })
 
-t.todo('state: direct state', t => {
+t('state: direct get/set', async t => {
   let log = []
-  $(document.createElement('div'), el => {
+  await spect().use(({state}) => {
     let s = state()
 
     log.push('get foo,bar', s.foo, s.bar)
@@ -516,98 +510,60 @@ t.todo('state: direct state', t => {
     log.push('set foo,bar')
   })
 
-  t.deepEqual(log, ['get foo,bar', undefined, undefined, 'set foo,bar', 'get foo,bar', 'a', 'b', 'set foo,bar'])
+  t.deepEqual(log, ['get foo,bar', undefined, undefined, 'set foo,bar'])
 })
 
-t.todo('state: not shared between aspects', t => {
-  let log = [], el = document.createElement('div')
+t('state: shared between aspects', async t => {
+  let log = []
+  let el = spect()
 
-  $(el, el => {
+  el.use(({state}) => {
     log.push('a')
     state({ foo: 'bar' })
   })
 
-  $(el, el => {
+  await el.use(({state}) => {
     let { foo } = state()
     log.push('b', foo)
   })
 
-  t.deepEqual(log, ['a', 'a', 'b', undefined])
-})
-
-t.todo('state: render from another tick from another scope', t => {
-  let log = [],
-    el = document.createElement('div'),
-    el2 = document.createElement('div')
-
-
-  function aspect(el) {
-    log.push(state().x)
-
-    $(el2, el2 => { });
-
-    (
-      () => {
-        $(el2, el2 => { });
-        setTimeout(() => {
-          $(el2, el2 => { });
-
-          (() => state({ x: 1 }))()
-        })
-      }
-    )()
-  }
-
-  $(el, aspect)
-
-  t.deepEqual(log, [undefined])
-
-  setTimeout(() => {
-    t.deepEqual(log, [undefined, 1])
-  }, 10)
+  t.deepEqual(log, ['a', 'b', 'bar'])
 })
 
 t('prop: direct get/set', t => {
-  $`<div.a/>`.use(el => {
-    let $el = $(el)
-
-    $el.prop('c', 1)
-    t.is($el.prop`c`, 1)
+  spect().use(el => {
+    el.prop('c', 1)
+    t.is(el.c, 1)
   })
 })
 
 t('prop: object set', t => {
-  $`<div.a/>`.use(el => {
-    let $el = $(el)
+  spect().use(el => {
+    el.prop({ c: 1, d: 2 })
 
-    $el.prop({ c: 1, d: 2 })
-
-    t.is($el.prop`c`, 1)
+    t.is(el.prop`c`, 1)
   })
 })
 
 t('prop: functional get/set', t => {
-  let $a = $`<a/>`
+  let $a = spect()
 
   $a.prop(s => s.count = 0)
 
-  t.is($a.prop(), $a[0])
+  t.is($a.prop(), $a)
 
   $a.prop(s => {
     s.count++
   })
-  t.is($a.prop`count`, 1)
+  t.is($a.count, 1)
 })
 
 t.skip('prop: counter', t => {
   let stop = 0
-  let $els = $`<div.a/>`.use(a => {
-    let $a = $(a)
-    $a.init(() => {
-      $a.prop({ count: 0 })
-    })
+  spect().use($a => {
+    $a.prop({ count: 0 }, [])
 
-    console.log($a.prop`count`)
+    console.log($a.prop('count'))
     $a.fx(s => {
       if (stop < 6) {
         setTimeout(() => {

@@ -12,7 +12,7 @@ const sProxy = Symbol('proxy')
 const sRun = Symbol('run')
 const sPublish = Symbol('publish')
 const sSubscribe = Symbol('subscribe')
-const sAwait = Symbol('await')
+const sTarget = Symbol('target')
 
 const cache = new WeakMap
 
@@ -31,6 +31,7 @@ export default function Spect(arg) {
   if (arg == null) arg = {}
   if (isPrimitive(arg)) arg = new (Object.getPrototypeOf(arg).constructor)(arg)
 
+  this[sTarget] = arg
   let spect = this
   this[sPromise] = Promise.resolve()
   this[sUse] = new Map
@@ -158,18 +159,20 @@ function createEffect(effectName, descriptor) {
   } = descriptor
 
   return function effect(...args) {
+    let px = this[sProxy]
+
     // effect()
     if (getValues) {
       if (!args.length) {
         this[sSubscribe](effectName)
-        return getValues(this)
+        return getValues(this[sTarget])
       }
     }
 
     // effect`...`
     if (template) {
       if (args[0].raw) {
-        return template(this, ...args)
+        return template(this[sTarget], ...args)
       }
     }
 
@@ -178,7 +181,7 @@ function createEffect(effectName, descriptor) {
       if (typeof args[0] === 'function') {
         if (deps) {
           let [, deps] = args
-          if (!Spect.deps(deps)) return this
+          if (!Spect.deps(deps)) return px
         }
 
         // custom reducer function
@@ -189,7 +192,7 @@ function createEffect(effectName, descriptor) {
         // default object-based reducer
         else {
           let [fn] = args
-          let state = getValues(this)
+          let state = getValues(this[sTarget])
           let result
           try {
             result = fn(new Proxy(state, {
@@ -201,13 +204,13 @@ function createEffect(effectName, descriptor) {
           } catch (e) { }
 
           if (result !== state && typeof result === typeof state) {
-            setValues(this, result)
+            setValues(this[sTarget], result)
             this[sPublish](effectName)
             for (let name in result) this[sPublish](effectName + '.' + name)
           }
         }
 
-        return this
+        return px
       }
     }
 
@@ -218,7 +221,7 @@ function createEffect(effectName, descriptor) {
 
         this[sSubscribe](effectName + '.' + name)
 
-        return getValue(this, name)
+        return getValue(this[sTarget], name)
       }
     }
 
@@ -229,18 +232,18 @@ function createEffect(effectName, descriptor) {
 
         if (deps) {
           let [, deps] = args
-          if (!Spect.deps(deps)) return this
+          if (!Spect.deps(deps)) return px
         }
 
-        let prev = getValues(this)
+        let prev = getValues(this[sTarget])
 
         if (!equal(prev, props)) {
-          setValues(this, props)
+          setValues(this[sTarget], props)
           this[sPublish](effectName)
           for (let name in props) this[sPublish](effectName + '.' + name)
         }
 
-        return this
+        return px
       }
     }
 
@@ -248,16 +251,16 @@ function createEffect(effectName, descriptor) {
     if (setValue) {
       if (args.length >= 2) {
         let [name, value, deps] = args
-        if (!Spect.deps(deps)) return this
+        if (!Spect.deps(deps)) return px
 
-        let prev = getValue(this, name)
-        if (equal(prev, value)) return this
-        setValue(this, name, value)
+        let prev = getValue(this[sTarget], name)
+        if (equal(prev, value)) return px
+        setValue(this[sTarget], name, value)
         this[sPublish](effectName + '.' + name)
       }
     }
 
-    return this
+    return px
   }
 }
 
