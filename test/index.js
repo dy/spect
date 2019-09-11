@@ -1,16 +1,15 @@
 import t from 'tst'
 import spect, { current } from '..'
-import {parse as parseStack} from 'stacktrace-parser'
-
 
 t.skip('counter', t => {
   let $n = spect({
     x: 1, [Symbol.toStringTag]() {
       return 'Validator';
-    }})
+    }
+  })
 
-  $n.use(({state}) => {
-    state({count: 0}, [])
+  $n.use(({ state }) => {
+    state({ count: 0 }, [])
 
     console.log(state('count'))
 
@@ -18,6 +17,160 @@ t.skip('counter', t => {
       state(s => ++s.count)
     }, 1000)
   })
+})
+
+t('readme: spect(target)', async t => {
+  let log = []
+  let target = spect({ foo: 'bar' })
+
+  // properties are transparent
+  t.is(target.foo, 'bar')
+
+  // registered effects shade properies
+  target.use(() => {
+    log.push(0)
+  })
+
+  // effects are awaitable
+  let x = await spect({}).fx(() => { log.push(1) }, [])
+
+  t.is(log, [0, 1])
+})
+
+t('readme: use', async t => {
+  let log = []
+
+  let foo = spect({})
+  let bar = spect({y: 0})
+
+  foo.state('x', 0)
+
+  await foo.use(foo => {
+    // subscribe to updates
+    let x = foo.state('x')
+    let y = bar.prop('y')
+
+    log.push(x, y)
+
+    setTimeout(() => foo.state(state => state.x++), 1)
+  })
+
+  t.is(log, [0, 0])
+
+  await new Promise((ok) => {
+    setTimeout(() => {
+      ok()
+    }, 2)
+  })
+
+  t.is(log, [0, 0, 1, 0])
+
+  // update foo
+  bar.prop('y', 1)
+
+  t.is(log, [0, 0, 1, 0])
+  await ''
+
+  t.is(log, [0, 0, 1, 0, 1, 1])
+})
+
+t('readme: run', async t => {
+  let log = []
+
+  let foo = spect({})
+
+  function a () { log.push('a') }
+  foo.use(a, () => log.push('b'))
+
+  t.is(log, [])
+
+  await foo
+
+  t.is(log, ['a', 'b'])
+
+  // update only a
+  await foo.run(a)
+
+  t.is(log, ['a', 'b', 'a'])
+
+  // update all
+  await foo.run()
+
+  t.is(log, ['a', 'b', 'a', 'a', 'b'])
+})
+
+t('readme: fx', async t => {
+  let log = []
+
+  let foo = spect()
+
+  await foo.use(() => {
+    // called each time
+    foo.fx(() => log.push(1));
+
+    // called on init only
+    foo.fx(() => log.push(2), []);
+
+    // destructor is called any time deps change
+    foo.fx(() => (log.push(3), () => log.push(4)), [log[3]]);
+
+    // called when value changes to non-false
+    foo.fx(() => { log.push(5); return () => log.push(6); }, log.length === 0);
+  })
+
+  t.is(log, [1, 2, 3, 5])
+
+  await foo.run()
+
+  t.is(log, [1, 2, 3, 5, 4, 6, 1, 3])
+})
+
+t('readme: state', async t => {
+  let foo = spect()
+
+  await foo.use(() => {
+    // write state
+    foo.state('a', 1)
+    foo.state({ b: 2 })
+
+    // mutate/reduce
+    foo.state(s => s.c = 3)
+    foo.state(s => ({...s, d: 4}))
+
+    // init
+    foo.state({ e: 5 }, [])
+  })
+
+  t.is(foo.state('a'), 1)
+  t.is(foo.state('b'), 2)
+  t.is(foo.state('c'), 3)
+  t.is(foo.state('d'), 4)
+  t.is(foo.state('e'), 5)
+  t.is(foo.state(), {a: 1, b: 2, c: 3, d: 4, e: 5})
+})
+
+t('readme: prop', async t => {
+  let foo = spect()
+
+  await foo.use(() => {
+    // write prop
+    foo.prop('a', 1)
+    foo.prop({ b: 2 })
+
+    // mutate/reduce
+    foo.prop(s => s.c = 3)
+    foo.prop(s => ({ ...s, d: 4 }))
+
+    // init
+    foo.prop({ e: 5 }, [])
+  })
+
+  t.is(foo.prop('a'), 1)
+  t.is(foo.prop('b'), 2)
+  t.is(foo.prop('c'), 3)
+  t.is(foo.prop('d'), 4)
+  t.is(foo.prop('e'), 5)
+  t.is(foo.prop(), { a: 1, b: 2, c: 3, d: 4, e: 5 })
 })
 
 t('core: empty / primitive selectors', t => {

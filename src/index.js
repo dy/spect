@@ -125,7 +125,7 @@ Object.defineProperty(Spect.prototype, 'then', {
 
 Spect.registerEffect = function (...fxs) {
   fxs.forEach(descriptor => {
-    const targetCache = new WeakMap
+    const cache = new WeakMap
 
     const name = descriptor.name
 
@@ -135,10 +135,10 @@ Spect.registerEffect = function (...fxs) {
 
     Object.defineProperty(Spect.prototype, name, {
       get() {
-        let boundFn = targetCache.get(this)
+        let boundFn = cache.get(this[sProxy])
         if (!boundFn) {
-          targetCache.set(this, boundFn = fn.bind(this))
-          boundFn.target = this
+          cache.set(this[sProxy], boundFn = fn.bind(this[sProxy]))
+          boundFn.target = this[sProxy]
         }
         return boundFn
       },
@@ -322,9 +322,9 @@ Spect.registerEffect(
 
     fns.forEach(fn => {
       if (!use.has(fn)) {
-        let boundFn = fn.bind(this)
+        let boundFn = fn.bind(this[sProxy])
         boundFn.fn = fn
-        boundFn.target = this
+        boundFn.target = this[sProxy]
         boundFn.deps = {}
         boundFn.destroy = {}
         use.set(fn, boundFn)
@@ -336,13 +336,13 @@ Spect.registerEffect(
   },
 
   function run(fn, deps) {
-    if (!Spect.deps(deps)) return this
+    if (!Spect.deps(deps)) return this[sProxy]
     this[sRun](fn)
     return this[sProxy]
   },
 
   function fx(fn, deps) {
-    if (!Spect.deps(deps, () => destroy.forEach(fn => fn && fn.call && fn()))) return this
+    if (!Spect.deps(deps, () => destroy.forEach(fn => fn && fn.call && fn()))) return this[sProxy]
 
     let destroy = []
     this[sPromise].then(async () => destroy.push(await fn.call(this[sProxy])))

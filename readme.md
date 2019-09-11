@@ -1,14 +1,18 @@
 # Spect ![unstable](https://img.shields.io/badge/stability-unstable-yellow) [![Build Status](https://travis-ci.org/spectjs/spect.svg?branch=master)](https://travis-ci.org/spectjs/spect)
 
-Spect is [aspects](https://en.wikipedia.org/wiki/Aspect-oriented_programming) provider for objects.
+Spect is [aspects](https://en.wikipedia.org/wiki/Aspect-oriented_programming) provider for javascript objects.
 
 > _Spect_ = _Reactive Aspects_ + _Side-Effects_
+
+[![npm i spect](https://nodei.co/npm/spect.png?mini=true)](https://npmjs.org/package/spect/)
 
 ```js
 import spect from 'spect'
 
+let foo = {}
+
 // create aspectable
-let foo = spect()
+foo = spect(foo)
 
 // add timer aspect
 foo.use(foo => {
@@ -20,33 +24,14 @@ foo.use(foo => {
 ```
 
 
-[![npm i spect](https://nodei.co/npm/spect.png?mini=true)](https://npmjs.org/package/spect/)
-
-
 ## API
 
 [**`spect`**](#-selector--els--markup---selector--h)&nbsp;&nbsp; [**`.use`**](#use-fns---assign-aspects)&nbsp;&nbsp; [**`.fx`**](#fx-el--destroy--deps---generic-side-effect)&nbsp;&nbsp; [**`.state`**](#state-name--val-deps---state-provider)&nbsp;&nbsp; [**`.prop`**](#prop-name--val-deps---properties-provider)&nbsp;&nbsp;
 
-### `spect.registerEffect( ...effects )`
 
-Register effects available for wrapped targets. By default _spect_ comes with _prop_, _fx_ and _state_ effects.
+### `spect( target? )` − create aspectable
 
-```js
-import spect from 'spect'
-import { css, html, attr } from 'spect-dom'
-
-spect.registerEffect(css, html, attr)
-
-let target = spect(document.querySelector('#my-element'))
-
-target.attr('foo', 'bar')
-target.html`...markup`
-target.css`...styles`
-```
-
-### `spect( target )` − create aspectable
-
-Create aspectable target wrapper. The wrapper provides transparent access to target props, extended with registered effects.
+Turn target into aspectable. The wrapper provides transparent access to target props, extended with registered effects via Proxy.
 
 ```js
 let target = spect({ foo: 'bar' })
@@ -57,13 +42,13 @@ target.foo // 'bar'
 // registered effects shade properies
 target.use // function
 
-// effects are awaitable
-await spect(element).fx(() => { /* ... */ }, [])
+// targets are thenable
+await target.use(() => { /* ..aspect */ })
 ```
 
 ### `.use( ...fns? )` − assign aspects
 
-Assign aspect to target. Each aspect `fn` is invoked as microtask. By reading/writing effects, aspect subscribes/publishes changes, causing update.
+Assign aspect(s) to target. Each aspect `fn` is invoked as microtask. By reading/writing effects, aspect subscribes/publishes changes, causing update.
 
 ```js
 let foo = spect(foo)
@@ -84,7 +69,7 @@ bar.prop('y', 1)
 
 ### `.run( fn?, deps? )` - run aspect
 
-Rerenders aspect. If `fn` isn't provided, rerenders all aspects.
+(re-)Run assigned aspects. If `fn` isn't provided, rerenders all aspects. `deps` control the conditions when the aspect must be rerun, they take same signature as `useEffect` hook.
 
 ```js
 let foo = spect({})
@@ -99,9 +84,9 @@ await foo.run()
 ```
 
 
-### `.fx( () => destroy? , deps? )` − generic side-effect
+### `.fx( () => (() => {})? , bool | deps? )` − generic side-effect
 
-Run effect function, queued as microtask, conditioned by `deps`. Very much like `useEffect` with less limitations. Non-array `deps` can be used to organize toggle / fsm that triggers when value changes to non-false, which is useful for binary states like `visible/hidden`, `disabled/enabled` etc.
+Run effect function as microtask, conditioned by `deps`. Very much like [`useEffect`](https://reactjs.org/docs/hooks-effect.html) with less limitations. Boolean `deps` can be used to organize toggle / FSM that triggers when value changes to non-false, which is useful for binary states like `visible/hidden`, `disabled/enabled` etc.
 
 ```js
 // called each time
@@ -117,8 +102,6 @@ foo.fx(() => () => {}, [...deps]);
 foo.fx(() => { show(); return () => hide(); }, visible);
 ```
 
-<p align="right">Ref: <a href='https://reactjs.org/docs/hooks-effect.html'>useEffect</a></p>
-
 
 ### `.state( name | val, deps? )` − get/set state
 
@@ -128,20 +111,16 @@ Read or write state associated with target. Reading subscribes current aspect to
 // write state
 $foo.state('foo', 1)
 $foo.state({ foo: 1 })
-$foo.state('foo.bar.baz', 1) // safe-path set
 
 // mutate/reduce
 $foo.state(s => s.foo = 1)
-$foo.state(s => {...s, foo: 1})
+$foo.state(s => ({...s, foo: 1}))
 
 // init
 $foo.state({foo: 1}, [])
 
-// read (first element)
+// read
 $foo.state('foo')
-$foo.state('foo.bar.baz') // safe-path get
-
-// read full
 $foo.state()
 ```
 
@@ -154,29 +133,41 @@ Read or write target properties. Same as `.state`, but provides access to elemen
 $foo.prop('foo', 1)
 $foo.prop({foo: 1})
 
-// mutate
+// mutate/reduce
 $foo.prop(p => p.foo = 1)
-
-// reduce
-$foo.prop(p => {...p, foo: 1})
+$foo.prop(p => ({...p, foo: 1}))
 
 // init
 $foo.prop({foo: 1}, [])
 
-// read first element prop
+// read
 $foo.prop('foo')
-
-// read all
 $foo.prop()
 ```
 
+### `spect.fn( ...effects )`
+
+Register effects available for targets. By default _spect_ comes with _prop_, _fx_ and _state_ effects.
+
+```js
+import spect from 'spect'
+import { css, html, attr } from 'spect-dom'
+
+spect.registerEffect(css, html, attr)
+
+let target = spect(document.querySelector('#my-element'))
+
+target.attr('foo', 'bar')
+target.html`...markup`
+target.css`...styles`
+```
 
 
 ## Changelog
 
 Version | Changes
 ---|---
-6.0.0 | Separate spect-core, spect-dom. DOM-less core. Pluggable effects.
+6.0.0 | DOM-less core. Pluggable effects.
 5.0.0 | Wrapper as aspect argument, along with props for react-compatible API. Effect queues.
 4.0.0 | Functional effects API design.
 3.0.0 | References + proxy-based API design.
