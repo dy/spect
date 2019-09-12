@@ -576,15 +576,20 @@ t('core: awaiting doesn\'t cause recursion', async t => {
   let log = []
 
   let $a = spect()
-  let $a1 = await $a
-  // t.is($a, $a1)
+  await $a
 
   let $a2 = $a.use(() => {log.push(2)})
   log.push(1)
-  // t.is($a2, $a1)
+  t.is($a2, $a)
   t.is(log, [1])
   await ''
   t.is(log, [1,2])
+})
+
+t.skip('core: await returns promise', async t => {
+  let x = await spect()
+  console.log(x.then)
+  t.is(!!x.then, true)
 })
 
 t('state: reading state from async stack doesnt register listener', async t => {

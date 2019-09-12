@@ -163,13 +163,22 @@ class Spect {
 
 Object.defineProperty(Spect.prototype, 'then', {
   get() {
-    // let [protogetsite, proxygetsite, anonsite, queuesite, ...stack] = parseStack((new Error).stack)
+    /*
 
+    let [protogetsite, proxygetsite, anonsite, queuesite, ...stack] = parseStack((new Error).stack)
     // FIXME: heuristic criteria to enable returning thenable from await
-    // if (!stack.length) {
-    //   return null
-    // }
-    // if (/anonymous/.test(anonsite.methodName)) return null
+    if (!queuesite) return null
+
+    if (
+      // /anonymous function/.test(anonsite.methodName) &&
+      // /Tick/.test(queuesite.methodName) &&
+      /^internal/.test(queuesite.file) &&
+      // /anonymous/.test(stack[stack.length - 1].methodName)
+    ) {
+      // console.log(parseStack((new Error).stack))
+      return null
+    }
+    */
 
     return (fn) => {
       // this[symbols.promise].then(() => fn(this[symbols.proxy]))
