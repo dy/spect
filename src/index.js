@@ -4,16 +4,18 @@ import { parse as parseStack } from 'stacktrace-parser'
 
 const isStacktraceAvailable = !!(new Error).stack
 
-const sPromise = Symbol('promise')
-const sUse = Symbol('use')
-const sSubscription = Symbol('subscription')
-const sBound = Symbol('bound')
-const sProxy = Symbol('proxy')
-const sRun = Symbol('run')
-const sPublish = Symbol('publish')
-const sSubscribe = Symbol('subscribe')
-const sTarget = Symbol('target')
-const sDeps = Symbol('deps')
+// available for effects
+export const symbols = {
+  promise: Symbol('promise'),
+  aspects: Symbol('use'),
+  subscription: Symbol('subscription'),
+  proxy: Symbol('proxy'),
+  run: Symbol('run'),
+  publish: Symbol('publish'),
+  subscribe: Symbol('subscribe'),
+  target: Symbol('target'),
+  deps: Symbol('deps')
+}
 
 const cache = new WeakMap
 
@@ -22,50 +24,52 @@ export let current = null
 
 const MAX_DEPTH = 50
 
-// effect-able holder / target wrapper
-export default function Spect(arg) {
-  if (cache.has(arg)) return cache.get(arg)
-
-  if (!(this instanceof Spect)) return new Spect(arg)
-
-  if (arg && arg[sUse]) return arg
-  if (arg == null) arg = {}
-  if (isPrimitive(arg)) arg = new (Object.getPrototypeOf(arg).constructor)(arg)
-
-  this[sTarget] = arg
-  let spect = this
-  this[sPromise] = Promise.resolve()
-  this[sUse] = new Map
-  this[sSubscription] = {}
-  this[sBound] = new WeakMap
-  this[sProxy] = new Proxy(arg, {
-    get(target, name) {
-      if (spect[name]) return spect[name]
-      return target[name]
-    }
-  })
-
-  cache.set(arg, this[sProxy])
-  return this[sProxy]
+export default function spect (arg) {
+  return new Spect(arg)
 }
 
-Spect.prototype = {
-  [sRun](fn) {
-    let px = this[sProxy]
+// effect-able holder / target wrapper
+export class Spect {
+  constructor (arg) {
+    if (cache.has(arg)) return cache.get(arg)
+
+    if (arg && arg[symbols.aspects]) return arg
+    if (arg == null) arg = {}
+    if (isPrimitive(arg)) arg = new (Object.getPrototypeOf(arg).constructor)(arg)
+
+    this[symbols.target] = arg
+    this[symbols.promise] = Promise.resolve()
+    this[symbols.aspects] = new Map
+    this[symbols.subscription] = {}
+
+    let self = this
+    this[symbols.proxy] = new Proxy(arg, {
+      get(target, name) {
+        if (self[name]) return self[name]
+        return target[name]
+      }
+    })
+
+    cache.set(arg, this[symbols.proxy])
+    return this[symbols.proxy]
+  }
+
+  [symbols.run](fn) {
+    let px = this[symbols.proxy]
 
     if (this.error) return px
 
     if (!fn) {
-      for (let [, fn] of this[sUse]) this[sRun](fn)
+      for (let [, fn] of this[symbols.aspects]) this[symbols.run](fn)
       return px
     }
 
     if (!fn.fn) {
-      if (!this[sUse].has(fn)) throw Error('Unknown aspect `' + fn.name + '`')
-      fn = this[sUse].get(fn)
+      if (!this[symbols.aspects].has(fn)) throw Error('Unknown aspect `' + fn.name + '`')
+      fn = this[symbols.aspects].get(fn)
     }
 
-    this[sPromise].then(async () => {
+    this[symbols.promise].then(async () => {
       let prev = current
       fxCount = 0
       current = fn
@@ -76,7 +80,7 @@ Spect.prototype = {
 
     if (!recurseCount) {
       recurseCount = 1
-      this[sPromise].then(() => {
+      this[symbols.promise].then(() => {
         recurseCount = 0
         return px
       })
@@ -89,28 +93,28 @@ Spect.prototype = {
     }
 
     return px
-  },
+  }
 
   // subscribe target aspect to updates of the indicated path
-  [sSubscribe](name, aspect = current) {
-    if (!aspect) return this[sProxy]
-    let subscriptions = this[sSubscription]
+  [symbols.subscribe](name, aspect = current) {
+    if (!aspect) return this[symbols.proxy]
+    let subscriptions = this[symbols.subscription]
     if (!subscriptions[name]) subscriptions[name] = new Set()
     subscriptions[name].add(aspect)
-    return this[sProxy]
-  },
+    return this[symbols.proxy]
+  }
 
   // update effect observers
-  [sPublish](name) {
-    let subscriptions = this[sSubscription]
+  [symbols.publish](name) {
+    let subscriptions = this[symbols.subscription]
     if (!subscriptions[name]) return
     let subscribers = subscriptions[name]
-    for (let aspect of subscribers) aspect.target[sRun](aspect)
-    return this[sProxy]
-  },
+    for (let aspect of subscribers) aspect.target[symbols.run](aspect)
+    return this[symbols.proxy]
+  }
 
   // check if deps changed, call destroy
-  [sDeps](deps, destroy) {
+  [symbols.deps](deps, destroy) {
     if (!current) return true
 
     let key
@@ -166,14 +170,14 @@ Object.defineProperty(Spect.prototype, 'then', {
     // if (/anonymous/.test(anonsite.methodName)) return null
 
     return (fn) => {
-      // this[sPromise].then(() => fn(this[sProxy]))
-      this[sPromise].then(() => fn())
-      return this[sProxy]
+      // this[symbols.promise].then(() => fn(this[symbols.proxy]))
+      this[symbols.promise].then(() => fn())
+      return this[symbols.proxy]
     }
   }
 })
 
-Spect.registerEffect = function (...fxs) {
+Spect.effect = function (...fxs) {
   fxs.forEach(descriptor => {
     const cache = new WeakMap
 
@@ -185,10 +189,10 @@ Spect.registerEffect = function (...fxs) {
 
     Object.defineProperty(Spect.prototype, name, {
       get() {
-        let boundFn = cache.get(this[sProxy])
+        let boundFn = cache.get(this[symbols.proxy])
         if (!boundFn) {
-          cache.set(this[sProxy], boundFn = fn.bind(this[sProxy]))
-          boundFn.target = this[sProxy]
+          cache.set(this[symbols.proxy], boundFn = fn.bind(this[symbols.proxy]))
+          boundFn.target = this[symbols.proxy]
         }
         return boundFn
       },
@@ -209,20 +213,20 @@ function createEffect(effectName, descriptor) {
   } = descriptor
 
   return function effect(...args) {
-    let px = this[sProxy]
+    let px = this[symbols.proxy]
 
     // effect()
     if (getValues) {
       if (!args.length) {
-        this[sSubscribe](effectName)
-        return getValues(this[sTarget])
+        this[symbols.subscribe](effectName)
+        return getValues(this[symbols.target])
       }
     }
 
     // effect`...`
     if (template) {
       if (args[0].raw) {
-        return template(this[sTarget], ...args)
+        return template(this[symbols.target], ...args)
       }
     }
 
@@ -231,7 +235,7 @@ function createEffect(effectName, descriptor) {
       if (typeof args[0] === 'function') {
         if (deps) {
           let [, deps] = args
-          if (!this[sDeps](deps)) return px
+          if (!this[symbols.deps](deps)) return px
         }
 
         // custom reducer function
@@ -242,21 +246,21 @@ function createEffect(effectName, descriptor) {
         // default object-based reducer
         else {
           let [fn] = args
-          let state = getValues(this[sTarget])
+          let state = getValues(this[symbols.target])
           let result
           try {
             result = fn(new Proxy(state, {
               set: (target, prop, value) => {
-                if (target[prop] !== value) this[sPublish](effectName + '.' + prop)
+                if (target[prop] !== value) this[symbols.publish](effectName + '.' + prop)
                 return Reflect.set(target, prop, value)
               }
             }))
           } catch (e) { }
 
           if (result !== state && typeof result === typeof state) {
-            setValues(this[sTarget], result)
-            this[sPublish](effectName)
-            for (let name in result) this[sPublish](effectName + '.' + name)
+            setValues(this[symbols.target], result)
+            this[symbols.publish](effectName)
+            for (let name in result) this[symbols.publish](effectName + '.' + name)
           }
         }
 
@@ -269,9 +273,9 @@ function createEffect(effectName, descriptor) {
       if (args.length == 1 && (typeof args[0] === 'string')) {
         let [name] = args
 
-        this[sSubscribe](effectName + '.' + name)
+        this[symbols.subscribe](effectName + '.' + name)
 
-        return getValue(this[sTarget], name)
+        return getValue(this[symbols.target], name)
       }
     }
 
@@ -282,15 +286,15 @@ function createEffect(effectName, descriptor) {
 
         if (deps) {
           let [, deps] = args
-          if (!this[sDeps](deps)) return px
+          if (!this[symbols.deps](deps)) return px
         }
 
-        let prev = getValues(this[sTarget])
+        let prev = getValues(this[symbols.target])
 
         if (!equal(prev, props)) {
-          setValues(this[sTarget], props)
-          this[sPublish](effectName)
-          for (let name in props) this[sPublish](effectName + '.' + name)
+          setValues(this[symbols.target], props)
+          this[symbols.publish](effectName)
+          for (let name in props) this[symbols.publish](effectName + '.' + name)
         }
 
         return px
@@ -301,12 +305,12 @@ function createEffect(effectName, descriptor) {
     if (setValue) {
       if (args.length >= 2) {
         let [name, value, deps] = args
-        if (!this[sDeps](deps)) return px
+        if (!this[symbols.deps](deps)) return px
 
-        let prev = getValue(this[sTarget], name)
+        let prev = getValue(this[symbols.target], name)
         if (equal(prev, value)) return px
-        setValue(this[sTarget], name, value)
-        this[sPublish](effectName + '.' + name)
+        setValue(this[symbols.target], name, value)
+        this[symbols.publish](effectName + '.' + name)
       }
     }
 
@@ -321,44 +325,44 @@ function getValues(el) {
   if (!state) stateCache.set(el, state = {})
   return state
 }
-Spect.registerEffect(
+Spect.effect(
   function use(...fns) {
-    let use = this[sUse]
+    let use = this[symbols.aspects]
 
     fns.forEach(fn => {
       if (!use.has(fn)) {
-        let boundFn = fn.bind(this[sProxy])
+        let boundFn = fn.bind(this[symbols.proxy])
         boundFn.fn = fn
-        boundFn.target = this[sProxy]
+        boundFn.target = this[symbols.proxy]
         boundFn.deps = {}
         boundFn.destroy = {}
         use.set(fn, boundFn)
-        this[sRun](fn)
+        this[symbols.run](fn)
       }
     })
 
-    return this[sProxy]
+    return this
   },
 
   function run(fn, deps) {
-    if (!this[sDeps](deps)) return this[sProxy]
-    this[sRun](fn)
-    return this[sProxy]
+    if (!this[symbols.deps](deps)) return this[symbols.proxy]
+    this[symbols.run](fn)
+    return this
   },
 
   function fx(fn, deps) {
-    if (!this[sDeps](deps, () => {
+    if (!this[symbols.deps](deps, () => {
       destroy.forEach(fn => fn && (fn.call && fn()) || (fn.then && fn.then(res => res())))
     })) {
-      return this[sProxy]
+      return this[symbols.proxy]
     }
 
     let destroy = []
-    this[sPromise].then(async () => {
-      destroy.push(fn.call(this[sProxy]))
+    this[symbols.promise].then(async () => {
+      destroy.push(fn.call(this[symbols.proxy]))
     })
 
-    return this[sProxy]
+    return this
   },
 
   {

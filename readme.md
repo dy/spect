@@ -145,21 +145,50 @@ $foo.prop('foo')
 $foo.prop()
 ```
 
-### `spect.fn( ...effects )`
+## Effects API
 
-Register effects available for targets. By default _spect_ comes with _prop_, _fx_ and _state_ effects.
+To extend spect with effects, it provides `.effect` method and `symbols` to access internals.
+
+### `spect.effect( ...effects )`
+
+Register effect(s) available for targets. By default _spect_ comes with _prop_, _fx_ and _state_ effects.
 
 ```js
 import spect from 'spect'
 import { css, html, attr } from 'spect-dom'
 
-spect.registerEffect(css, html, attr)
+spect.effect(css, html, attr)
 
 let target = spect(document.querySelector('#my-element'))
 
 target.attr('foo', 'bar')
 target.html`...markup`
 target.css`...styles`
+```
+
+### `symbols.*`
+
+Access `spect` internals.
+
+```js
+import spect, { symbols } from 'spect'
+
+spect.effect(function myEffect (arg, deps) {
+  // `this` is `spect` instance
+  // `this[symbols.target]` - initial target object
+
+  // `this[symbols.deps](deps, destructor)` - is dependencies gate
+  if (!this[symbols.deps](deps, () => { /* destructor */})) return this
+
+  // `this[symbols.publish](path)` - publishes update of some name / path string
+  // `this[symbols.subscribe](path, aspect?)` - subscribes current aspect to paths
+  // `this[symbols.subscription]` - subscriptions dict
+  // `this[symbols.run](aspect)` - runs aspect as microtask
+  // `this[symbols.promise]` - internal queue
+  // `this[symbols.aspects]` - internal map of assigned aspects
+
+  return this
+})
 ```
 
 
