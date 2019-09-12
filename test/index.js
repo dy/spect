@@ -1,5 +1,6 @@
 import t from 'tst'
-import spect, { current, state, prop, fx } from '..'
+import spect, { state, prop, fx } from '..'
+import { current } from '../src/core'
 
 spect.effect(state, prop, fx)
 

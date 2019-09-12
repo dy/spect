@@ -181,13 +181,18 @@ To extend spect with effects, it provides `.effect` method and `symbols` to acce
 
 ### `spect.effect( ...effects )`
 
-Register effect(s) available for targets. By default _spect_ comes with _prop_, _fx_ and _state_ effects.
+Register effect(s) available for targets.
 
 ```js
-import spect from 'spect'
-import { css, html, attr } from 'spect-dom'
+import spect, { state, prop, fx } from 'spect'
+import * as domfx from 'spect-dom'
 
-spect.effect(css, html, attr)
+spect.effect(state, prop, ...domfx)
+
+// effects can be customized
+fx.deps = false
+fx.debounce = cb => raf(cb)
+spect.effect(fx)
 
 let target = spect(document.querySelector('#my-element'))
 
