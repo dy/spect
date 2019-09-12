@@ -201,9 +201,10 @@ target.html`...markup`
 target.css`...styles`
 ```
 
-### `symbols.*`
+<!--
+#### Internals
 
-Access instance internals.
+Internal methods are available for effects as
 
 ```js
 import spect, { symbols } from 'spect'
@@ -212,19 +213,20 @@ spect.effect(function myEffect (arg, deps) {
   // `this` is `spect` instance
   // `this[symbols.target]` - initial target object
 
-  // `this[symbols.deps](deps, destructor)` - is dependencies gate
-  if (!this[symbols.deps](deps, () => { /* destructor */})) return this
+  // `this._deps(deps, destructor)` - is dependencies gate
+  if (!this._deps(deps, () => { /* destructor */})) return this
 
-  // `this[symbols.publish](path)` - publishes update of some name / path string
-  // `this[symbols.subscribe](path, aspect?)` - subscribes current aspect to paths
+  // `this._pub(path)` - publishes update of some name / path string
+  // `this._sub(path, aspect?)` - subscribes current aspect to paths
   // `this[symbols.subscription]` - subscriptions dict
-  // `this[symbols.run](aspect)` - runs aspect as microtask
+  // `this._run(aspect)` - runs aspect as microtask
   // `this[symbols.promise]` - internal queue
   // `this[symbols.aspects]` - internal map of assigned aspects
 
   return this
 })
 ```
+-->
 
 
 ## Changelog

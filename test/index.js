@@ -1,21 +1,18 @@
 import t from 'tst'
-import spect, { state, prop, fx } from '..'
+import spect, * as fxs from '..'
 import { current } from '../src/core'
 
-spect.effect(state, prop, fx)
+spect.effect(...Object.values(fxs))
 
 t.skip('counter', t => {
   let $n = spect({
-    x: 1, [Symbol.toStringTag]() {
-      return 'Validator';
-    }
+    x: 1
   })
 
   $n.use(({ state }) => {
     state({ count: 0 }, [])
 
     console.log(state('count'))
-
     setTimeout(() => {
       state(s => ++s.count)
     }, 1000)

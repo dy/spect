@@ -10,11 +10,7 @@ export const symbols = {
   aspects: Symbol('use'),
   subscription: Symbol('subscription'),
   proxy: Symbol('proxy'),
-  run: Symbol('run'),
-  publish: Symbol('publish'),
-  subscribe: Symbol('subscribe'),
   target: Symbol('target'),
-  deps: Symbol('deps')
 }
 
 const cache = new WeakMap
@@ -54,13 +50,13 @@ class Spect {
     return this[symbols.proxy]
   }
 
-  [symbols.run](fn) {
+  _run(fn) {
     let px = this[symbols.proxy]
 
     if (this.error) return px
 
     if (!fn) {
-      for (let [, fn] of this[symbols.aspects]) this[symbols.run](fn)
+      for (let [, fn] of this[symbols.aspects]) this._run(fn)
       return px
     }
 
@@ -96,7 +92,7 @@ class Spect {
   }
 
   // subscribe target aspect to updates of the indicated path
-  [symbols.subscribe](name, aspect = current) {
+  _sub(name, aspect = current) {
     if (!aspect) return this[symbols.proxy]
     let subscriptions = this[symbols.subscription]
     if (!subscriptions[name]) subscriptions[name] = new Set()
@@ -105,16 +101,16 @@ class Spect {
   }
 
   // update effect observers
-  [symbols.publish](name) {
+  _pub(name) {
     let subscriptions = this[symbols.subscription]
     if (!subscriptions[name]) return
     let subscribers = subscriptions[name]
-    for (let aspect of subscribers) aspect.target[symbols.run](aspect)
+    for (let aspect of subscribers) aspect.target._run(aspect)
     return this[symbols.proxy]
   }
 
   // check if deps changed, call destroy
-  [symbols.deps](deps, destroy) {
+  _deps(deps, destroy) {
     if (!current) return true
 
     let key
@@ -232,7 +228,7 @@ function createEffect(effectName, descriptor) {
     // effect()
     if (getValues) {
       if (!args.length) {
-        this[symbols.subscribe](effectName)
+        this._sub(effectName)
         return getValues(this[symbols.target])
       }
     }
@@ -249,7 +245,7 @@ function createEffect(effectName, descriptor) {
       if (typeof args[0] === 'function') {
         if (deps) {
           let [, deps] = args
-          if (!this[symbols.deps](deps)) return px
+          if (!this._deps(deps)) return px
         }
 
         // custom reducer function
@@ -265,7 +261,7 @@ function createEffect(effectName, descriptor) {
           try {
             result = fn(new Proxy(state, {
               set: (target, prop, value) => {
-                if (target[prop] !== value) this[symbols.publish](effectName + '.' + prop)
+                if (target[prop] !== value) this._pub(effectName + '.' + prop)
                 return Reflect.set(target, prop, value)
               }
             }))
@@ -273,8 +269,8 @@ function createEffect(effectName, descriptor) {
 
           if (result !== state && typeof result === typeof state) {
             setValues(this[symbols.target], result)
-            this[symbols.publish](effectName)
-            for (let name in result) this[symbols.publish](effectName + '.' + name)
+            this._pub(effectName)
+            for (let name in result) this._pub(effectName + '.' + name)
           }
         }
 
@@ -287,7 +283,7 @@ function createEffect(effectName, descriptor) {
       if (args.length == 1 && (typeof args[0] === 'string')) {
         let [name] = args
 
-        this[symbols.subscribe](effectName + '.' + name)
+        this._sub(effectName + '.' + name)
 
         return getValue(this[symbols.target], name)
       }
@@ -300,15 +296,15 @@ function createEffect(effectName, descriptor) {
 
         if (deps) {
           let [, deps] = args
-          if (!this[symbols.deps](deps)) return px
+          if (!this._deps(deps)) return px
         }
 
         let prev = getValues(this[symbols.target])
 
         if (!equal(prev, props)) {
           setValues(this[symbols.target], props)
-          this[symbols.publish](effectName)
-          for (let name in props) this[symbols.publish](effectName + '.' + name)
+          this._pub(effectName)
+          for (let name in props) this._pub(effectName + '.' + name)
         }
 
         return px
@@ -319,12 +315,12 @@ function createEffect(effectName, descriptor) {
     if (setValue) {
       if (args.length >= 2) {
         let [name, value, deps] = args
-        if (!this[symbols.deps](deps)) return px
+        if (!this._deps(deps)) return px
 
         let prev = getValue(this[symbols.target], name)
         if (equal(prev, value)) return px
         setValue(this[symbols.target], name, value)
-        this[symbols.publish](effectName + '.' + name)
+        this._pub(effectName + '.' + name)
       }
     }
 
@@ -345,7 +341,7 @@ effect(
         boundFn.deps = {}
         boundFn.destroy = {}
         use.set(fn, boundFn)
-        this[symbols.run](fn)
+        this._run(fn)
       }
     })
 
@@ -353,8 +349,8 @@ effect(
   },
 
   function run(fn, deps) {
-    if (!this[symbols.deps](deps)) return this[symbols.proxy]
-    this[symbols.run](fn)
+    if (!this._deps(deps)) return this[symbols.proxy]
+    this._run(fn)
     return this
   }
 )
