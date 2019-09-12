@@ -9,7 +9,7 @@ Enable [aspects](https://en.wikipedia.org/wiki/Aspect-oriented_programming) for 
 import spect, { state } from 'spect'
 
 // register effects to use
-spect.fn.state = state
+spect.fn(state)
 
 // make target aspectful
 let foo = {}
@@ -99,7 +99,7 @@ await foo.run()
 [**`spect.fn`**]()&nbsp;&nbsp; [**`.fx`**](https://github.com/spectjs/spect/tree/nodom#fx-------bool--deps---generic-side-effect)&nbsp;&nbsp; [**`.state`**](https://github.com/spectjs/spect/tree/nodom#state-name--val-deps---getset-state)&nbsp;&nbsp; [**`.prop`**](https://github.com/spectjs/spect/tree/nodom#prop-name--val-deps---getset-properties)&nbsp;&nbsp;
 
 
-### `spect.fn.<fx> = effect`
+### `spect.fn( ...fns )`
 
 Register effect(s) available for targets.
 
@@ -108,9 +108,7 @@ import spect, { state, prop, fx } from 'spect'
 import * as domfx from 'spect-dom'
 
 // register effects
-spect.fn.state = state
-spect.fn.prop = prop
-Object.assign(spect.fn, domfx)
+spect.fn(state, prop, domfx)
 
 let target = spect(document.querySelector('#my-element'))
 
@@ -127,7 +125,7 @@ Run effect function as microtask, conditioned by `deps`. Very much like [`useEff
 ```js
 import spect, { fx } from 'spect'
 
-spect.fn.fx = fx
+spect.fn(fx)
 
 
 let foo = spect()
@@ -153,7 +151,7 @@ Read or write state associated with target. Reading subscribes current aspect to
 ```js
 import spect, { state } from 'spect'
 
-spect.fn.state = state
+spect.fn(state)
 
 
 // write state
@@ -180,7 +178,7 @@ Read or write target properties. Same as `.state`, but provides access to elemen
 ```js
 import spect, { prop } from 'spect'
 
-spect.fn.prop = prop
+spect.fn(prop)
 
 
 // write prop
