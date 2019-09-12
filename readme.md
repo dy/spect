@@ -7,7 +7,11 @@ Spect is [aspects](https://en.wikipedia.org/wiki/Aspect-oriented_programming) pr
 [![npm i spect](https://nodei.co/npm/spect.png?mini=true)](https://npmjs.org/package/spect/)
 
 ```js
-import spect from 'spect'
+import spect, { state, fx, prop } from 'spect'
+
+// use effects
+spect.effect(state, fx, prop)
+
 
 let foo = {}
 
@@ -31,9 +35,11 @@ foo.use(foo => {
 
 ### `spect( target? )` − create aspectable
 
-Turn target into aspectable. The wrapper provides transparent access to target props, extended with registered effects via Proxy.
+Turn target into aspectable. The wrapper provides transparent access to target props, extended with registered effects via Proxy. `use` and `run` effects are provided by default, other effects must be registered via `spect.effect(...fxs)`.
 
 ```js
+import spect from 'spect'
+
 let target = spect({ foo: 'bar' })
 
 // properties are transparent
@@ -51,8 +57,12 @@ await target.use(() => { /* ..aspect */ })
 Assign aspect(s) to target. Each aspect `fn` is invoked as microtask. By reading/writing effects, aspect subscribes/publishes changes, causing update.
 
 ```js
-let foo = spect(foo)
-let bar = spect(bar)
+import spect, { prop, state } from 'spect'
+
+spect.effect(prop, state)
+
+let foo = spect({})
+let bar = spect({})
 
 foo.use(foo => {
   // subscribe to updates
@@ -72,6 +82,8 @@ bar.prop('y', 1)
 (re-)Run assigned aspects. If `fn` isn't provided, rerenders all aspects. `deps` control the conditions when the aspect must be rerun, they take same signature as `useEffect` hook.
 
 ```js
+import spect from 'spect'
+
 let foo = spect({})
 
 foo.use(a, b)
@@ -86,9 +98,16 @@ await foo.run()
 
 ### `.fx( () => (() => {})? , bool | deps? )` − generic side-effect
 
-Run effect function as microtask, conditioned by `deps`. Very much like [`useEffect`](https://reactjs.org/docs/hooks-effect.html) with less limitations. Boolean `deps` can be used to organize toggle / FSM that triggers when value changes to non-false, which is useful for binary states like `visible/hidden`, `disabled/enabled` etc.
+Run effect function as microtask, conditioned by `deps`. Very much like [`useEffect`](https://reactjs.org/docs/hooks-effect.html) with less limitations, eg. it can be nested into condition. Boolean `deps` can be used to organize toggle / FSM that triggers when value changes to non-false, which is useful for binary states like `visible/hidden`, `disabled/enabled` etc.
 
 ```js
+import spect, { fx } from 'spect'
+
+// `fx` effect must be registered
+spect.effect(fx)
+
+let foo = spect()
+
 // called each time
 foo.fx(() => {});
 
@@ -108,6 +127,12 @@ foo.fx(() => { show(); return () => hide(); }, visible);
 Read or write state associated with target. Reading subscribes current aspect to changes of that state. Writing rerenders all subscribed aspects. Optional `deps` param can define trigger condition, see `.fx`.
 
 ```js
+import spect, { state } from 'spect'
+
+// `state` effect must be registered
+spect.effect(state)
+
+
 // write state
 $foo.state('foo', 1)
 $foo.state({ foo: 1 })
@@ -124,11 +149,18 @@ $foo.state('foo')
 $foo.state()
 ```
 
+
 ### `.prop( name | val, deps? )` − get/set properties
 
 Read or write target properties. Same as `.state`, but provides access to element properties.
 
 ```js
+import spect, { prop } from 'spect'
+
+// `prop` effect must be registered
+spect.effect(prop)
+
+
 // write prop
 $foo.prop('foo', 1)
 $foo.prop({foo: 1})
@@ -144,6 +176,7 @@ $foo.prop({foo: 1}, [])
 $foo.prop('foo')
 $foo.prop()
 ```
+
 
 ## Effects API
 

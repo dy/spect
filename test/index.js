@@ -1,5 +1,7 @@
 import t from 'tst'
-import spect, { current } from '..'
+import spect, { current, state, prop, fx } from '..'
+
+spect.effect(state, prop, fx)
 
 t.skip('counter', t => {
   let $n = spect({

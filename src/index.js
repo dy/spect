@@ -28,8 +28,10 @@ export default function spect (arg) {
   return new Spect(arg)
 }
 
+spect.effect = registerEffect
+
 // effect-able holder / target wrapper
-export class Spect {
+class Spect {
   constructor (arg) {
     if (cache.has(arg)) return cache.get(arg)
 
@@ -177,13 +179,13 @@ Object.defineProperty(Spect.prototype, 'then', {
   }
 })
 
-Spect.effect = function (...fxs) {
+function registerEffect (...fxs) {
   fxs.forEach(descriptor => {
-    const cache = new WeakMap
-
     const name = descriptor.name
 
-    if (!name) throw Error('Effect must have `name` property')
+    if (!name) return
+
+    const cache = new WeakMap
 
     const fn = typeof descriptor === 'function' ? descriptor : createEffect(name, descriptor)
 
@@ -318,14 +320,8 @@ function createEffect(effectName, descriptor) {
   }
 }
 
-
-const stateCache = new WeakMap
-function getValues(el) {
-  let state = stateCache.get(el)
-  if (!state) stateCache.set(el, state = {})
-  return state
-}
-Spect.effect(
+// core effects
+registerEffect(
   function use(...fns) {
     let use = this[symbols.aspects]
 
@@ -348,41 +344,48 @@ Spect.effect(
     if (!this[symbols.deps](deps)) return this[symbols.proxy]
     this[symbols.run](fn)
     return this
-  },
-
-  function fx(fn, deps) {
-    if (!this[symbols.deps](deps, () => {
-      destroy.forEach(fn => fn && (fn.call && fn()) || (fn.then && fn.then(res => res())))
-    })) {
-      return this[symbols.proxy]
-    }
-
-    let destroy = []
-    this[symbols.promise].then(async () => {
-      destroy.push(fn.call(this[symbols.proxy]))
-    })
-
-    return this
-  },
-
-  {
-    name: 'state',
-    getValues,
-    getValue: (el, name) => getValues(el)[name],
-    setValue: (el, name, value) => getValues(el)[name] = value,
-    setValues: (el, obj) => Object.assign(getValues(el), obj),
-    template: (el, ...args) => getValues(el)[String.raw(...args)]
-  },
-
-  {
-    name: 'prop',
-    template: (el, ...args) => el[String.raw(...args)],
-    getValue: (el, name) => el[name],
-    getValues: el => el,
-    setValue: (el, name, value) => el[name] = value,
-    setValues: (el, values) => Object.assign(el, values)
   }
 )
+
+// optional effects
+export function fx(fn, deps) {
+  if (!this[symbols.deps](deps, () => {
+    destroy.forEach(fn => fn && (fn.call && fn()) || (fn.then && fn.then(res => res())))
+  })) {
+    return this[symbols.proxy]
+  }
+
+  let destroy = []
+  this[symbols.promise].then(async () => {
+    destroy.push(fn.call(this[symbols.proxy]))
+  })
+
+  return this
+}
+
+const stateCache = new WeakMap
+function getValues(el) {
+  let state = stateCache.get(el)
+  if (!state) stateCache.set(el, state = {})
+  return state
+}
+export const state = {
+  name: 'state',
+  getValues,
+  getValue: (el, name) => getValues(el)[name],
+  setValue: (el, name, value) => getValues(el)[name] = value,
+  setValues: (el, obj) => Object.assign(getValues(el), obj),
+  template: (el, ...args) => getValues(el)[String.raw(...args)]
+}
+
+export const prop = {
+  name: 'prop',
+  template: (el, ...args) => el[String.raw(...args)],
+  getValue: (el, name) => el[name],
+  getValues: el => el,
+  setValue: (el, name, value) => el[name] = value,
+  setValues: (el, values) => Object.assign(el, values)
+}
 
 function isPrimitive(arg) {
   try { new WeakSet([arg]); return false } catch (e) {
