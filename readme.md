@@ -98,7 +98,6 @@ await foo.run()
 
 [**`spect.fn`**]()&nbsp;&nbsp; [**`.fx`**](https://github.com/spectjs/spect/tree/nodom#fx-------bool--deps---generic-side-effect)&nbsp;&nbsp; [**`.state`**](https://github.com/spectjs/spect/tree/nodom#state-name--val-deps---getset-state)&nbsp;&nbsp; [**`.prop`**](https://github.com/spectjs/spect/tree/nodom#prop-name--val-deps---getset-properties)&nbsp;&nbsp;
 
-To provide effects for aspectful targets, spect exposes `spect.fn`. By default `.fx`, `.prop` and `.state` effects available.
 
 ### `spect.fn.<fx> = effect`
 
