@@ -93,6 +93,32 @@ await foo.run()
 ```
 
 
+
+## Effects API
+
+To provide effects for aspectful targets, spect exposes `spect.fn`. By default `.fx`, `.prop` and `.state` effects available.
+
+### `spect.fn.<fx> = effect`
+
+Register effect(s) available for targets.
+
+```js
+import spect, { state, prop, fx } from 'spect'
+import * as domfx from 'spect-dom'
+
+// register effects
+spect.fn.state = state
+spect.fn.prop = prop
+Object.assign(spect.fn, domfx)
+
+let target = spect(document.querySelector('#my-element'))
+
+// use effects
+target.attr('foo', 'bar')
+target.html`...markup`
+target.css`...styles`
+```
+
 ### `.fx( () => (() => {})? , bool | deps? )` − generic side-effect
 
 Run effect function as microtask, conditioned by `deps`. Very much like [`useEffect`](https://reactjs.org/docs/hooks-effect.html) with less limitations, eg. it can be nested into condition. Boolean `deps` can be used to organize toggle / FSM that triggers when value changes to non-false, which is useful for binary states like `visible/hidden`, `disabled/enabled` etc.
@@ -100,8 +126,8 @@ Run effect function as microtask, conditioned by `deps`. Very much like [`useEff
 ```js
 import spect, { fx } from 'spect'
 
-// `fx` effect must be registered
-spect.fn(fx)
+spect.fn.fx = fx
+
 
 let foo = spect()
 
@@ -126,8 +152,7 @@ Read or write state associated with target. Reading subscribes current aspect to
 ```js
 import spect, { state } from 'spect'
 
-// `state` effect must be registered
-spect.fn(state)
+spect.fn.state = state
 
 
 // write state
@@ -154,8 +179,7 @@ Read or write target properties. Same as `.state`, but provides access to elemen
 ```js
 import spect, { prop } from 'spect'
 
-// `prop` effect must be registered
-spect.fn(prop)
+spect.fn.prop = prop
 
 
 // write prop
@@ -174,29 +198,6 @@ $foo.prop('foo')
 $foo.prop()
 ```
 
-
-## Effects API
-
-To extend spect with effects, it provides `.fn` method and `symbols` to access internals.
-
-### `spect.fn.<fx> = effect`
-
-Register effect(s) available for targets.
-
-```js
-import spect, { state, prop, fx } from 'spect'
-import * as domfx from 'spect-dom'
-
-spect.fn.state = state
-spect.fn.prop = prop
-Object.assign(spect.fn, domfx)
-
-let target = spect(document.querySelector('#my-element'))
-
-target.attr('foo', 'bar')
-target.html`...markup`
-target.css`...styles`
-```
 
 <!--
 #### Internals
