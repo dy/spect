@@ -6,10 +6,10 @@ Enable [aspects](https://en.wikipedia.org/wiki/Aspect-oriented_programming) for 
 [![npm i spect](https://nodei.co/npm/spect.png?mini=true)](https://npmjs.org/package/spect/)
 
 ```js
-import spect, { state, fx, prop } from 'spect'
+import spect, { state } from 'spect'
 
 // register effects to use
-spect.fn(state, fx, prop)
+spect.fn.state = state
 
 // make target aspectful
 let foo = {}
