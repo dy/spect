@@ -2,7 +2,7 @@ import t from 'tst'
 import spect, * as fxs from '..'
 import { current } from '../src/core'
 
-spect.effect(...Object.values(fxs))
+Object.assign(spect.fn, fxs)
 
 t.skip('counter', t => {
   let $n = spect({

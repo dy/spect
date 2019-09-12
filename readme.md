@@ -9,7 +9,7 @@ Enable [aspects](https://en.wikipedia.org/wiki/Aspect-oriented_programming) for 
 import spect, { state, fx, prop } from 'spect'
 
 // register effects to use
-spect.effect(state, fx, prop)
+spect.fn(state, fx, prop)
 
 // make target aspectful
 let foo = {}
@@ -32,7 +32,7 @@ foo.use(foo => {
 
 ### `spect( target? )` − create aspectable
 
-Turn target into aspectable. The wrapper provides transparent access to target props, extended with registered effects via Proxy. `use` and `run` effects are provided by default, other effects must be registered via `spect.effect(...fxs)`.
+Turn target into aspectable. The wrapper provides transparent access to target props, extended with registered effects via Proxy. `use` and `run` effects are provided by default, other effects must be registered via `spect.fn(...fxs)`.
 
 ```js
 import spect from 'spect'
@@ -56,7 +56,7 @@ Assign aspect(s) to target. Each aspect `fn` is invoked as microtask. By reading
 ```js
 import spect, { prop, state } from 'spect'
 
-spect.effect(prop, state)
+spect.fn(prop, state)
 
 let foo = spect({})
 let bar = spect({})
@@ -101,7 +101,7 @@ Run effect function as microtask, conditioned by `deps`. Very much like [`useEff
 import spect, { fx } from 'spect'
 
 // `fx` effect must be registered
-spect.effect(fx)
+spect.fn(fx)
 
 let foo = spect()
 
@@ -127,7 +127,7 @@ Read or write state associated with target. Reading subscribes current aspect to
 import spect, { state } from 'spect'
 
 // `state` effect must be registered
-spect.effect(state)
+spect.fn(state)
 
 
 // write state
@@ -155,7 +155,7 @@ Read or write target properties. Same as `.state`, but provides access to elemen
 import spect, { prop } from 'spect'
 
 // `prop` effect must be registered
-spect.effect(prop)
+spect.fn(prop)
 
 
 // write prop
@@ -177,9 +177,9 @@ $foo.prop()
 
 ## Effects API
 
-To extend spect with effects, it provides `.effect` method and `symbols` to access internals.
+To extend spect with effects, it provides `.fn` method and `symbols` to access internals.
 
-### `spect.effect( ...effects )`
+### `spect.fn.<fx> = effect`
 
 Register effect(s) available for targets.
 
@@ -187,12 +187,9 @@ Register effect(s) available for targets.
 import spect, { state, prop, fx } from 'spect'
 import * as domfx from 'spect-dom'
 
-spect.effect(state, prop, ...domfx)
-
-// effects can be customized
-fx.deps = false
-fx.debounce = cb => raf(cb)
-spect.effect(fx)
+spect.fn.state = state
+spect.fn.prop = prop
+Object.assign(spect.fn, domfx)
 
 let target = spect(document.querySelector('#my-element'))
 
@@ -209,7 +206,7 @@ Internal methods are available for effects as
 ```js
 import spect, { symbols } from 'spect'
 
-spect.effect(function myEffect (arg, deps) {
+spect.fn(function myEffect (arg, deps) {
   // `this` is `spect` instance
   // `this[symbols.target]` - initial target object
 

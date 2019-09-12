@@ -11,6 +11,7 @@ export const symbols = {
   subscription: Symbol('subscription'),
   proxy: Symbol('proxy'),
   target: Symbol('target'),
+  effect: Symbol('effect'),
 }
 
 const cache = new WeakMap
@@ -24,7 +25,6 @@ export default function spect(arg) {
   return new Spect(arg)
 }
 
-// effect-able holder / target wrapper
 class Spect {
   constructor(arg) {
     if (cache.has(arg)) return cache.get(arg)
@@ -37,11 +37,28 @@ class Spect {
     this[symbols.promise] = Promise.resolve()
     this[symbols.aspects] = new Map
     this[symbols.subscription] = {}
+    this[symbols.effect] = {}
 
     let self = this
     this[symbols.proxy] = new Proxy(arg, {
-      get(target, name) {
+      get(target, name, proxy) {
+        // run effect, if registered
+        if (spect.fn[name]) {
+          let descriptor = spect.fn[name]
+
+          if (self[symbols.effect][name]) return self[symbols.effect][name]
+
+          const fn = typeof descriptor === 'function' ? descriptor : createEffect(name, descriptor)
+
+          let boundFn = self[symbols.effect][name] = fn.bind(proxy)
+          boundFn.target = proxy
+          return boundFn
+        }
+
+        // run internal method
         if (self[name]) return self[name]
+
+        // forward to target prop
         return target[name]
       }
     })
@@ -160,6 +177,9 @@ class Spect {
   }
 }
 
+// registered effects
+spect.fn = {}
+
 /*
 Object.defineProperty(Spect.prototype, 'then', {
   get() {
@@ -186,30 +206,6 @@ Object.defineProperty(Spect.prototype, 'then', {
   }
 })
 */
-
-export function effect(...fxs) {
-  fxs.forEach(descriptor => {
-    const name = descriptor.name
-
-    if (!name) return
-
-    const cache = new WeakMap
-
-    const fn = typeof descriptor === 'function' ? descriptor : createEffect(name, descriptor)
-
-    Object.defineProperty(Spect.prototype, name, {
-      get() {
-        let boundFn = cache.get(this[symbols.proxy])
-        if (!boundFn) {
-          cache.set(this[symbols.proxy], boundFn = fn.bind(this[symbols.proxy]))
-          boundFn.target = this[symbols.proxy]
-        }
-        return boundFn
-      },
-      set() { }
-    })
-  })
-}
 
 function createEffect(effectName, descriptor) {
   let {
@@ -329,31 +325,29 @@ function createEffect(effectName, descriptor) {
 }
 
 // core effects
-effect(
-  function use(...fns) {
-    let use = this[symbols.aspects]
+spect.fn.use = function (...fns) {
+  let use = this[symbols.aspects]
 
-    fns.forEach(fn => {
-      if (!use.has(fn)) {
-        let boundFn = fn.bind(this[symbols.proxy])
-        boundFn.fn = fn
-        boundFn.target = this[symbols.proxy]
-        boundFn.deps = {}
-        boundFn.destroy = {}
-        use.set(fn, boundFn)
-        this._run(fn)
-      }
-    })
+  fns.forEach(fn => {
+    if (!use.has(fn)) {
+      let boundFn = fn.bind(this[symbols.proxy])
+      boundFn.fn = fn
+      boundFn.target = this[symbols.proxy]
+      boundFn.deps = {}
+      boundFn.destroy = {}
+      use.set(fn, boundFn)
+      this._run(fn)
+    }
+  })
 
-    return this
-  },
+  return this
+}
 
-  function run(fn, deps) {
-    if (!this._deps(deps)) return this[symbols.proxy]
-    this._run(fn)
-    return this
-  }
-)
+spect.fn.run = function run(fn, deps) {
+  if (!this._deps(deps)) return this[symbols.proxy]
+  this._run(fn)
+  return this
+}
 
 
 function isPrimitive(arg) {
