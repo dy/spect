@@ -26,7 +26,7 @@ foo.use(foo => {
 
 ## API
 
-[**`spect`**]()&nbsp;&nbsp; [**`.use`**]()&nbsp;&nbsp; [**`.run`**]()&nbsp;&nbsp; [**`.fx`**]()&nbsp;&nbsp; [**`.state`**]()&nbsp;&nbsp; [**`.prop`**]()&nbsp;&nbsp; [**`spect.fn`**]()&nbsp;&nbsp;
+[**`spect`**](https://github.com/spectjs/spect/tree/nodom#spect-target---create-aspectable)&nbsp;&nbsp; [**`.use`**](https://github.com/spectjs/spect/tree/nodom#use-fns---assign-aspects)&nbsp;&nbsp; [**`.run`**](https://github.com/spectjs/spect/tree/nodom#run-fn-deps----run-aspect)&nbsp;&nbsp; [**`.fx`**](https://github.com/spectjs/spect/tree/nodom#fx-------bool--deps---generic-side-effect)&nbsp;&nbsp; [**`.state`**](https://github.com/spectjs/spect/tree/nodom#state-name--val-deps---getset-state)&nbsp;&nbsp; [**`.prop`**](https://github.com/spectjs/spect/tree/nodom#prop-name--val-deps---getset-properties)&nbsp;&nbsp;
 
 
 ### `spect( target? )` − create aspectable
@@ -168,7 +168,7 @@ target.css`...styles`
 
 ### `symbols.*`
 
-Access `spect` internals.
+Access instance internals.
 
 ```js
 import spect, { symbols } from 'spect'
