@@ -1,21 +1,18 @@
 # Spect ![unstable](https://img.shields.io/badge/stability-unstable-yellow) [![Build Status](https://travis-ci.org/spectjs/spect.svg?branch=master)](https://travis-ci.org/spectjs/spect)
 
-Spect is [aspects](https://en.wikipedia.org/wiki/Aspect-oriented_programming) provider for javascript objects.
+Enable [aspects](https://en.wikipedia.org/wiki/Aspect-oriented_programming) for javascript objects.
 
-> _Spect_ = _Reactive Aspects_ + _Side-Effects_
 
 [![npm i spect](https://nodei.co/npm/spect.png?mini=true)](https://npmjs.org/package/spect/)
 
 ```js
 import spect, { state, fx, prop } from 'spect'
 
-// use effects
+// register effects to use
 spect.effect(state, fx, prop)
 
-
+// make target aspectful
 let foo = {}
-
-// create aspectable
 foo = spect(foo)
 
 // add timer aspect
