@@ -42,11 +42,11 @@ let target = spect({ foo: 'bar' })
 // properties are transparent
 target.foo // 'bar'
 
-// registered effects shade properies
-target.use // function
-
 // targets are thenable
 await target.use(() => { /* ..aspect */ })
+
+// re-run all aspects
+target.run()
 ```
 
 ### `.use( ...fns? )` − assign aspects
