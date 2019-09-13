@@ -80,7 +80,7 @@ t('readme: run', async t => {
   let foo = spect({})
 
   function a () { log.push('a') }
-  foo.use(a, () => log.push('b'))
+  foo.use([a, () => log.push('b')])
 
   t.is(log, [])
 
@@ -203,14 +203,14 @@ t.todo('registering effects', t => {
 t('use: aspects must be called in order', async t => {
   let log = []
   let a = {}
-  await spect(a).use(() => log.push(1), () => log.push(2), () => log.push(3))
+  await spect(a).use([() => log.push(1), () => log.push(2), () => log.push(3)])
   t.deepEqual(log, [1, 2, 3])
 })
 
 t('use: duplicates are ignored', async t => {
   let log = []
 
-  await spect({}).use(fn, fn, fn)
+  await spect({}).use([fn, fn, fn])
 
   function fn() {
     log.push(1)
@@ -218,7 +218,7 @@ t('use: duplicates are ignored', async t => {
 
   t.is(log, [1])
 
-  await spect({}).use(fn, fn, fn)
+  await spect({}).use([fn, fn, fn])
 
   t.is(log, [1, 1])
 })
@@ -231,7 +231,7 @@ t('use: aspects must not be called multiple times, unless target state changes',
   t.is(log, ['x'])
   await $a.use(fn)
   t.is(log, ['x'])
-  await $a.use(fn, fn)
+  await $a.use([fn, fn])
   t.is(log, ['x'])
   await $a.run()
   t.is(log, ['x', 'x'])
@@ -263,9 +263,9 @@ t('use: Same target different aspects', async t => {
   let a = {}
 
   let afx, bfx
-  await spect(a).use(afx = () => (log.push('a'), () => log.push('de a')))
+  await spect(a).use([afx = () => (log.push('a'), () => log.push('de a'))])
   t.deepEqual(log, ['a'])
-  await spect(a).use(bfx = () => (log.push('b'), () => log.push('de b')))
+  await spect(a).use([bfx = () => (log.push('b'), () => log.push('de b'))])
   t.deepEqual(log, ['a', 'b'])
 })
 

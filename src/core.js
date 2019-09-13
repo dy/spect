@@ -328,8 +328,10 @@ function createEffect(effectName, descriptor) {
 }
 
 // core effects
-spect.fn(function use (...fns) {
+spect.fn(function use (fns) {
     let use = this[symbols.aspects]
+
+    if (!Array.isArray(fns)) fns = [fns]
 
     fns.forEach(fn => {
       if (!use.has(fn)) {
