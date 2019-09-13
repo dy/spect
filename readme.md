@@ -27,8 +27,26 @@ foo.use(foo => {
 
 ## API
 
-[**`spect`**](https://github.com/spectjs/spect/tree/nodom#spect-target---create-aspectable)&nbsp;&nbsp; [**`.use`**](https://github.com/spectjs/spect/tree/nodom#use-fns---assign-aspects)&nbsp;&nbsp; [**`.run`**](https://github.com/spectjs/spect/tree/nodom#run-fn-deps----run-aspect)
+[**`spect`**](https://github.com/spectjs/spect/tree/nodom#spect-target---create-aspectable)&nbsp;&nbsp; [**`spect.fn`**]()&nbsp;&nbsp; [**`.use`**](https://github.com/spectjs/spect/tree/nodom#use-fns---assign-aspects)&nbsp;&nbsp; [**`.run`**](https://github.com/spectjs/spect/tree/nodom#run-fn-deps----run-aspect)&nbsp;&nbsp; [**`.fx`**](https://github.com/spectjs/spect/tree/nodom#fx-------bool--deps---generic-side-effect)&nbsp;&nbsp; [**`.state`**](https://github.com/spectjs/spect/tree/nodom#state-name--val-deps---getset-state)&nbsp;&nbsp; [**`.prop`**](https://github.com/spectjs/spect/tree/nodom#prop-name--val-deps---getset-properties)&nbsp;&nbsp;
 
+
+### `spect.fn( ...fns )` - register effects
+
+Register effect(s) available for targets.
+
+```js
+import spect, { state, prop, fx } from 'spect'
+import { html, css, attr } from 'spect-dom'
+
+spect.fn(state, prop, fx, html, css, attr)
+
+let target = spect(document.querySelector('#my-element'))
+
+// use effects
+target.attr('foo', 'bar')
+target.html`...markup`
+target.css`...styles`
+```
 
 ### `spect( target? )` − create aspectable
 
@@ -92,31 +110,6 @@ await foo.run(a)
 await foo.run()
 ```
 
-
-
-## Effects API
-
-[**`spect.fn`**]()&nbsp;&nbsp; [**`.fx`**](https://github.com/spectjs/spect/tree/nodom#fx-------bool--deps---generic-side-effect)&nbsp;&nbsp; [**`.state`**](https://github.com/spectjs/spect/tree/nodom#state-name--val-deps---getset-state)&nbsp;&nbsp; [**`.prop`**](https://github.com/spectjs/spect/tree/nodom#prop-name--val-deps---getset-properties)&nbsp;&nbsp;
-
-
-### `spect.fn( ...fns )`
-
-Register effect(s) available for targets.
-
-```js
-import spect, { state, prop, fx } from 'spect'
-import * as domfx from 'spect-dom'
-
-// register effects
-spect.fn(state, prop, domfx)
-
-let target = spect(document.querySelector('#my-element'))
-
-// use effects
-target.attr('foo', 'bar')
-target.html`...markup`
-target.css`...styles`
-```
 
 ### `.fx( () => (() => {})? , bool | deps? )` − generic side-effect
 
