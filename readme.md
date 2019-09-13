@@ -1,6 +1,6 @@
 # Spect ![unstable](https://img.shields.io/badge/stability-unstable-yellow) [![Build Status](https://travis-ci.org/spectjs/spect.svg?branch=master)](https://travis-ci.org/spectjs/spect)
 
-Enable [aspects](https://en.wikipedia.org/wiki/Aspect-oriented_programming) for javascript objects.
+Reactive [aspects](https://en.wikipedia.org/wiki/Aspect-oriented_programming) for javascript objects.
 
 
 [![npm i spect](https://nodei.co/npm/spect.png?mini=true)](https://npmjs.org/package/spect/)
