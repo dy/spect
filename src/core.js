@@ -7,7 +7,7 @@ const isStacktraceAvailable = !!(new Error).stack
 // available for effects
 export const symbols = {
   promise: Symbol('promise'),
-  aspects: Symbol('use'),
+  use: Symbol('use'),
   subscription: Symbol('subscription'),
   proxy: Symbol('proxy'),
   target: Symbol('target')
@@ -28,13 +28,13 @@ class Spect {
   constructor(arg) {
     if (cache.has(arg)) return cache.get(arg)
 
-    if (arg && arg[symbols.aspects]) return arg
+    if (arg && arg[symbols.use]) return arg
     if (arg == null) arg = {}
     if (isPrimitive(arg)) arg = new (Object.getPrototypeOf(arg).constructor)(arg)
 
     this[symbols.target] = arg
     this[symbols.promise] = Promise.resolve()
-    this[symbols.aspects] = new Map
+    this[symbols.use] = new Map
     this[symbols.subscription] = {}
 
     let self = this
@@ -49,46 +49,89 @@ class Spect {
     return this[symbols.proxy]
   }
 
-  _run(fns) {
+  _use(fn) {
+    let px = this[symbols.proxy]
+    let use = this[symbols.use]
+
+    if (use.has(fn)) return px
+
+    let boundFn = fn.bind(this[symbols.proxy])
+    boundFn.fn = fn
+    boundFn.target = this[symbols.proxy]
+    boundFn.deps = {}
+    boundFn.destroy = {}
+    use.set(fn, boundFn)
+    this._run(fn)
+
+    return px
+  }
+
+  _run(fn) {
     let px = this[symbols.proxy]
 
-    if (this.error) return px
-    if (!Array.isArray(fns)) {
-      if (!fns) {
-        fns = [...this[symbols.aspects].keys()]
-      }
-      else fns = [fns]
+    if (this._error) return px
+
+    if (!fn.fn) {
+      if (!this[symbols.use].has(fn)) return px
+      fn = this[symbols.use].get(fn)
     }
 
-    fns.forEach(fn => {
-      if (!fn.fn) {
-        if (!this[symbols.aspects].has(fn)) throw Error('Unknown aspect `' + fn.name + '`')
-        fn = this[symbols.aspects].get(fn)
-      }
+    this[symbols.promise].then(async () => {
+      let prev = current
+      fxCount = 0
+      current = fn
+      await fn(px)
+      current = prev
+      return px
+    })
 
-      this[symbols.promise].then(async () => {
-        let prev = current
-        fxCount = 0
-        current = fn
-        await fn(px)
-        current = prev
+    if (!recurseCount) {
+      recurseCount = 1
+      this[symbols.promise].then(() => {
+        recurseCount = 0
         return px
       })
-
-      if (!recurseCount) {
-        recurseCount = 1
-        this[symbols.promise].then(() => {
-          recurseCount = 0
-          return px
-        })
-      } else {
-        recurseCount++
-        if (recurseCount > MAX_DEPTH) {
-          this.error = true
-          throw Error('Recursion')
-        }
+    } else {
+      recurseCount++
+      if (recurseCount > MAX_DEPTH) {
+        this._error = Error('Recursion')
+        throw this._error
       }
-    })
+    }
+
+    return px
+  }
+
+  _dispose(fn) {
+    let px = this[symbols.proxy]
+
+    if (!fn.fn) {
+      if (!this[symbols.use].has(fn)) return px
+      fn = this[symbols.use].get(fn)
+    }
+
+    // call planned destructors, clear
+    for (let key in fn.destroy) {
+      fn.destroy[key]()
+    }
+    fn.destroy = null
+    fn.deps = null
+    fn.target = null
+    fn.fn = null
+
+    // clear subscriptions
+    for (let key in this[symbols.subscription]) {
+      this[symbols.subscription][key].clear()
+    }
+    this[symbols.subscription] = null
+
+    // clean bound fns
+    this[symbols.use].clear()
+
+    // FIXME: revoke proxy
+
+    // remove arg from cache, if no aspects left
+    cache.delete(this[symbols.target])
 
     return px
   }
@@ -331,29 +374,40 @@ function createEffect(effectName, descriptor) {
 }
 
 // core effects
-spect.fn(function use (fns) {
-    let use = this[symbols.aspects]
+spect.fn(function use(fns, deps) {
+    if (!this._deps(deps)) return this
+
 
     if (!Array.isArray(fns)) fns = [fns]
 
-    fns.forEach(fn => {
-      if (!use.has(fn)) {
-        let boundFn = fn.bind(this[symbols.proxy])
-        boundFn.fn = fn
-        boundFn.target = this[symbols.proxy]
-        boundFn.deps = {}
-        boundFn.destroy = {}
-        use.set(fn, boundFn)
-        this._run(fn)
-      }
-    })
+    fns.forEach(fn => this._use(fn))
 
     return this
   },
 
   function run(fns, deps) {
-    if (!this._deps(deps)) return this[symbols.proxy]
-    this._run(fns)
+    if (!this._deps(deps)) return this
+
+    if (!Array.isArray(fns)) {
+      if (!fns) fns = [...this[symbols.use].keys()]
+      else fns = [fns]
+    }
+
+    fns.forEach(fn => this._run(fn))
+
+    return this
+  },
+
+  function dispose(fns, deps) {
+    if (!this._deps(deps)) return this
+
+    if (!Array.isArray(fns)) {
+      if (!fns) fns = [...this[symbols.use].keys()]
+      else fns = [fns]
+    }
+
+    fns.forEach(fn => this._dispose(fn))
+
     return this
   }
 )

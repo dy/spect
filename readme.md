@@ -27,7 +27,7 @@ foo.use(foo => {
 
 ## API
 
-[**`spect`**](https://github.com/spectjs/spect/tree/nodom#spect-target---create-aspectable)&nbsp;&nbsp; [**`spect.fn`**]()&nbsp;&nbsp; [**`.use`**](https://github.com/spectjs/spect/tree/nodom#use-fns---assign-aspects)&nbsp;&nbsp; [**`.run`**](https://github.com/spectjs/spect/tree/nodom#run-fn-deps----run-aspect)&nbsp;&nbsp; [**`.destroy`**]()&nbsp;&nbsp; [**`.fx`**](https://github.com/spectjs/spect/tree/nodom#fx-------bool--deps---generic-side-effect)&nbsp;&nbsp; [**`.state`**](https://github.com/spectjs/spect/tree/nodom#state-name--val-deps---getset-state)&nbsp;&nbsp; [**`.prop`**](https://github.com/spectjs/spect/tree/nodom#prop-name--val-deps---getset-properties)&nbsp;&nbsp;
+[**`spect`**](https://github.com/spectjs/spect/tree/nodom#spect-target---create-aspectable)&nbsp;&nbsp; [**`spect.fn`**]()&nbsp;&nbsp; [**`.use`**](https://github.com/spectjs/spect/tree/nodom#use-fns---assign-aspects)&nbsp;&nbsp; [**`.run`**](https://github.com/spectjs/spect/tree/nodom#run-fn-deps----run-aspect)&nbsp;&nbsp; [**`.dispose`**]()&nbsp;&nbsp; [**`.fx`**](https://github.com/spectjs/spect/tree/nodom#fx-------bool--deps---generic-side-effect)&nbsp;&nbsp; [**`.state`**](https://github.com/spectjs/spect/tree/nodom#state-name--val-deps---getset-state)&nbsp;&nbsp; [**`.prop`**](https://github.com/spectjs/spect/tree/nodom#prop-name--val-deps---getset-properties)&nbsp;&nbsp;
 
 
 ### `spect.fn( ...fns )` - register effects
@@ -110,9 +110,9 @@ await foo.run(a)
 await foo.run()
 ```
 
-### `.destroy( fns?, deps? )` - run aspect
+### `.dispose( fns? )` - remove aspect
 
-(re-)Run assigned aspects. If `fn` isn't provided, rerenders all aspects. `deps` control the conditions when the aspect must be rerun, they take same signature as `useEffect` hook.
+Remove assigned aspects. If `fn` isn't provided, removes all aspects.
 
 ```js
 import spect from 'spect'
@@ -121,11 +121,11 @@ let foo = spect({})
 
 foo.use(a, b)
 
-// update only a
-await foo.run(a)
+// remove a
+await foo.dispose(a)
 
-// update all
-await foo.run()
+// remove all
+await foo.dispose()
 ```
 
 

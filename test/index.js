@@ -174,7 +174,25 @@ t('readme: prop', async t => {
 })
 
 t('readme: destroy', async t => {
+  let log = []
 
+  let foo = spect({})
+
+  foo.state('x', 0)
+
+  await foo.use(foo => {
+    log.push(foo.state('x'))
+  })
+
+  t.is(log, [0])
+
+  await foo.run()
+
+  t.is(log, [0, 0])
+
+  await foo.dispose().run()
+
+  t.is(log, [0, 0])
 })
 
 t('core: empty / primitive selectors', t => {
