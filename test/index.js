@@ -195,6 +195,20 @@ t('readme: destroy', async t => {
   t.is(log, [0, 0])
 })
 
+t('readme: standalone effects', async t => {
+  const { state, fx, prop } = fxs
+
+  let foo = { x: 1 }
+
+  state.call(foo, 'y', 2)
+  prop.call(foo, 'x', 3)
+
+  fx.call(foo, () => {
+    t.is(state.call(foo, 'y'), 2)
+    t.is(prop.call(foo, 'x'), 3)
+  })
+})
+
 t('core: empty / primitive selectors', t => {
   let $x = spect()
   let $x1 = spect()

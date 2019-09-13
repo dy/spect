@@ -208,6 +208,24 @@ $foo.prop('foo')
 $foo.prop()
 ```
 
+### Standalone effects
+
+Effects can be used on their own, without `spect`:
+
+```js
+import { fx, state, prop } from 'spect'
+
+let foo = {x: 1}
+
+state.call(foo, 'y', 2)
+prop.call(foo, 'x', 3)
+
+fx.call(foo, () => {
+  state.call(foo, 'y') // 2
+  state.call(foo, 'x') // 3
+})
+```
+
 
 <!--
 #### Internals

@@ -5,7 +5,6 @@ const _pub = Symbol.for('spect.publish')
 const _deps = Symbol.for('spect.deps')
 const _target = Symbol.for('spect.target')
 
-
 const stateCache = new WeakMap
 function getValues(el) {
   let state = stateCache.get(el)
