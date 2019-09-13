@@ -49,43 +49,46 @@ class Spect {
     return this[symbols.proxy]
   }
 
-  _run(fn) {
+  _run(fns) {
     let px = this[symbols.proxy]
 
     if (this.error) return px
-
-    if (!fn) {
-      for (let [, fn] of this[symbols.aspects]) this._run(fn)
-      return px
+    if (!Array.isArray(fns)) {
+      if (!fns) {
+        fns = [...this[symbols.aspects].keys()]
+      }
+      else fns = [fns]
     }
 
-    if (!fn.fn) {
-      if (!this[symbols.aspects].has(fn)) throw Error('Unknown aspect `' + fn.name + '`')
-      fn = this[symbols.aspects].get(fn)
-    }
+    fns.forEach(fn => {
+      if (!fn.fn) {
+        if (!this[symbols.aspects].has(fn)) throw Error('Unknown aspect `' + fn.name + '`')
+        fn = this[symbols.aspects].get(fn)
+      }
 
-    this[symbols.promise].then(async () => {
-      let prev = current
-      fxCount = 0
-      current = fn
-      await fn(px)
-      current = prev
-      return px
-    })
-
-    if (!recurseCount) {
-      recurseCount = 1
-      this[symbols.promise].then(() => {
-        recurseCount = 0
+      this[symbols.promise].then(async () => {
+        let prev = current
+        fxCount = 0
+        current = fn
+        await fn(px)
+        current = prev
         return px
       })
-    } else {
-      recurseCount++
-      if (recurseCount > MAX_DEPTH) {
-        this.error = true
-        throw Error('Recursion')
+
+      if (!recurseCount) {
+        recurseCount = 1
+        this[symbols.promise].then(() => {
+          recurseCount = 0
+          return px
+        })
+      } else {
+        recurseCount++
+        if (recurseCount > MAX_DEPTH) {
+          this.error = true
+          throw Error('Recursion')
+        }
       }
-    }
+    })
 
     return px
   }
@@ -348,9 +351,9 @@ spect.fn(function use (fns) {
     return this
   },
 
-  function run(fn, deps) {
+  function run(fns, deps) {
     if (!this._deps(deps)) return this[symbols.proxy]
-    this._run(fn)
+    this._run(fns)
     return this
   }
 )
