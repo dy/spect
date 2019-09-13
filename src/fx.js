@@ -1,15 +1,17 @@
-// optional effects
+const _deps = Symbol.for('spect.deps')
+
 export default function fx(fn, deps) {
-  if (!this._deps(deps, () => {
-    destroy.forEach(fn => fn && (fn.call && fn()) || (fn.then && fn.then(res => res())))
-  })) {
-    return this
-  }
+  // check [meta] deps
+  if (this[_deps]) if (!this[_deps](deps, () => {
+    destroy.forEach(
+      fn => fn && (fn.call && fn()) ||
+      fn.then && fn.then(fn => fn && fn.call && fn())
+    )
+  })) return this
 
   let destroy = []
-  this.then(async () => {
-    destroy.push(fn.call(this))
-  })
+
+  destroy.push(Promise.resolve().then(() => fn.call(this)))
 
   return this
 }

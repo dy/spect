@@ -122,7 +122,7 @@ t('readme: fx', async t => {
 
   await foo.run()
 
-  t.is(log, [1, 2, 3, 5, 4, 6, 1, 3])
+  t.is(log, [1, 2, 3, 5, 1, 4, 3, 6])
 })
 
 t('readme: state', async t => {
@@ -401,7 +401,7 @@ t('fx: runs destructor', async t => {
   log = [], id = 1
   $a.run()
   await Promise.resolve().then()
-  t.is(log, ['destroy 1', 'destroy 3', 'init 1', 'init 3'])
+  t.is(log, ['destroy 1', 'init 1', 'destroy 3', 'init 3'])
 })
 
 t('fx: toggle deps', async t => {
