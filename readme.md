@@ -8,18 +8,16 @@ Reactive [aspects](https://en.wikipedia.org/wiki/Aspect-oriented_programming) fo
 ```js
 import spect, { state } from 'spect'
 
-// register effects to use
 spect.fn(state)
 
-// make target aspectful
 let foo = {}
 foo = spect(foo)
 
-// add timer aspect
+// timer aspect
 foo.use(foo => {
   console.log(foo.state('count'))
 
-  // rerender after 1s
+  // rerender
   setTimeout(() => foo.state( state => state.count++ ), 1000)
 })
 ```
@@ -27,8 +25,7 @@ foo.use(foo => {
 
 ## API
 
-[**`spect`**](https://github.com/spectjs/spect/tree/nodom#spect-target---create-aspectable)&nbsp;&nbsp; [**`spect.fn`**]()&nbsp;&nbsp; [**`.use`**](https://github.com/spectjs/spect/tree/nodom#use-fns---assign-aspects)&nbsp;&nbsp; [**`.run`**](https://github.com/spectjs/spect/tree/nodom#run-fn-deps----run-aspect)&nbsp;&nbsp; [**`.dispose`**]()&nbsp;&nbsp; [**`.fx`**](https://github.com/spectjs/spect/tree/nodom#fx-------bool--deps---generic-side-effect)&nbsp;&nbsp; [**`.state`**](https://github.com/spectjs/spect/tree/nodom#state-name--val-deps---getset-state)&nbsp;&nbsp; [**`.prop`**](https://github.com/spectjs/spect/tree/nodom#prop-name--val-deps---getset-properties)&nbsp;&nbsp;
-
+[**`spect.fn`**](#spectfn-fns----register-effects)&nbsp;&nbsp; [**`spect`**](#spect-target---create-aspectable)&nbsp;&nbsp; [**`.use`**](#use-fns---assign-aspects)&nbsp;&nbsp; [**`.run`**](#run-fns-deps----run-aspects)&nbsp;&nbsp; [**`.dispose`**](#dispose-fns----remove-aspect)&nbsp;&nbsp; [**`.fx`**](#fx-------bool--deps---generic-side-effect)&nbsp;&nbsp; [**`.state`**](#state-name--val-deps---getset-state)&nbsp;&nbsp; [**`.prop`**](#prop-name--val-deps---getset-properties)&nbsp;&nbsp;
 
 ### `spect.fn( ...fns )` - register effects
 
