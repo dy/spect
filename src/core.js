@@ -19,7 +19,8 @@ const _promise = Symbol.for('spect.promise'),
       _using = Symbol.for('spect.using'),
       _dispose = Symbol.for('spect.dispose'),
       _deps = Symbol.for('spect.deps'),
-      _error = Symbol.for('spect.error')
+      _error = Symbol.for('spect.error'),
+      _instance = Symbol.for('spect.instance')
 
 const cache = new WeakMap
 
@@ -44,6 +45,10 @@ class Spect {
     this[_promise] = Promise.resolve()
     this[_using] = new Map
     this[_subscription] = {}
+    this[_instance] = this
+
+    // FIXME: this should be whether polyfilled or ...
+    this[Symbol.thenable] = false
 
     let self = this
     this[_proxy] = new Proxy(arg, {
