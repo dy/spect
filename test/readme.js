@@ -1,7 +1,7 @@
 import t from 'tst'
 import $ from '..'
 
-t.only('readme: A simple aspect', async t => {
+t('readme: A simple aspect', async t => {
   let el = document.body.appendChild(document.createElement('div'))
   el.id = 'hello-example'
 

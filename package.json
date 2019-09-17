@@ -70,7 +70,9 @@
   "type": "module",
   "dependencies": {
     "fast-deep-equal": "^2.0.1",
+    "htm": "^2.2.1",
     "immutable-tuple": "^0.4.10",
+    "incremental-dom": "^0.6.0",
     "is-plain-obj": "^2.0.0",
     "kebab-case": "^1.0.0",
     "negative-index": "^1.0.3",

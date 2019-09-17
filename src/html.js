@@ -18,12 +18,9 @@ attributes.class = applyAttr
 attributes.is = (...args) => (applyAttr(...args), applyProp(...args))
 attributes[symbols.default] = applyProp
 
-let html = htm.bind(h)
 
-const _sub = Symbol.for('spect.subscribe')
-const _pub = Symbol.for('spect.publish')
-const _deps = Symbol.for('spect.deps')
 const _target = Symbol.for('spect.target')
+const _instance = Symbol.for('spect.instance')
 
 const SPECT_CLASS = '👁'
 
@@ -32,7 +29,7 @@ export default function html(...args) {
 
   // tpl string: html`<a foo=${bar}/>`
   let vdom
-  if (args[0].raw) vdom = html(...args)
+  if (args[0].raw) vdom = htm.call(h, ...args)
 
   // html('<a foo/>')
   // else if (typeof args[0] === 'string') vdom = html(args)
@@ -117,7 +114,9 @@ function render(arg) {
   if (typeof arg === 'number') return text(arg)
   if (typeof arg === 'string') return text(arg)
 
-  if (isIterable(arg.length)) for (let el of arg) render(el)
+  if (isIterable(arg)) {
+    for (let el of arg) render.call(this, el)
+  }
 
   // stub refs to native els
   if (arg.ref) return elementVoid('span', null, ['id', SPECT_CLASS + '-ref-' + arg.ref])
@@ -126,7 +125,7 @@ function render(arg) {
   let { tag, key, props, staticProps, children, use, create, fn } = arg
 
   // fragment (direct vdom)
-  if (!tag) return children && children.forEach(render)
+  if (!tag) return children && children.forEach(render, this)
 
   let el
   if (!children || !children.length) {
@@ -134,44 +133,23 @@ function render(arg) {
   }
   else {
     el = elementOpen(create, key, staticProps, ...props)
-    children.forEach(render)
+    children.forEach(render, this)
     elementClose(create)
   }
 
   // if spect instance - init aspects
-  if (this[_instance] && (fn || use)) {
+  if (this[_instance]) {
     let Spect = this[_instance].constructor
     let proto = Spect.prototype
 
-    // find out effects
+    const $el = new Spect(el)
+
+    if (fn) $el.use(fn)
+    if (use) $el.use(use)
+
     for (let i = 0, key, value; i < props.length; i += 2) {
       key = props[i], value = props[i + 1]
-      if (key in proto)
-    }
-
-    const $el = spect(el) : null
-
-    // pass props down to aspects/init
-    if ($el) {
-      for (let i = 0; i < props.length; i += 2) {
-        let name = props[i]
-        if ($.prototype.hasOwnProperty(name)) continue
-        $el[name] = props[i + 1]
-      }
-    }
-
-    // init component
-    if (fn) $el.queue(fn)
-
-    // run aspects
-    if (use) use.forEach(fn => $el.queue(fn))
-
-    // run inline effects
-    for (let i = 0; i < fx.length; i += 2) {
-      let effect = fx[i], val = fx[i + 1]
-      let arg = [val]
-      arg.raw = arg
-      $el[effect](arg)
+      if (key in proto) $el[key](value)
     }
   }
 }
@@ -182,7 +160,7 @@ const customElementsCache = {}
 export function h(target, props = {}, ...children) {
   let use = [], propsList = []
   let staticProps = []
-  let tag, classes = [], id, create, is, fn, fx = []
+  let tag, classes = [], id, create, is, fn
 
   if (typeof target === 'function') {
     fn = target
@@ -233,11 +211,6 @@ export function h(target, props = {}, ...children) {
       classes.push(...parts[2])
     }
 
-    // <div effect=${value}/>
-    // else if (effects[prop]) {
-    //   fx.push(prop, val)
-    // }
-
     else {
       propsList.push(prop, val)
     }
@@ -260,8 +233,7 @@ export function h(target, props = {}, ...children) {
     staticProps,
     children,
     is,
-    fn,
-    // fx
+    fn
   }
 }
 

@@ -1,24 +1,27 @@
 import t from 'tst'
-import $ from '..'
+import spect from '../src/core'
+import html from '../src/html'
 
-t('html: readme default', t => {
-  let $div = $(document.createElement('div'))
+spect.fn(html)
 
-  $div.html`<div#id.class foo=bar>baz</div>`
+t('html: readme default', async t => {
+  let $div = spect(document.createElement('div'))
 
-  t.is($div[0].innerHTML, '<div id="id" class="class">baz</div>')
-  t.is($div[0].firstChild.foo, 'bar')
+  await $div.html`<div#id.class foo=bar>baz</div>`
+
+  t.is($div.innerHTML, '<div id="id" class="class">baz</div>')
+  t.is($div.firstChild.foo, 'bar')
 })
 
 t('html: attributes', t => {
-  let $div = $(document.createElement('div'))
+  let $div = spect(document.createElement('div'))
 
   $div.html`<a href='/' foo=bar>baz</a>`
-  t.is($div[0].firstChild.outerHTML, '<a href="/">baz</a>')
-  t.is($div[0].firstChild.foo, 'bar')
+  t.is($div.firstChild.outerHTML, '<a href="/">baz</a>')
+  t.is($div.firstChild.foo, 'bar')
 })
 
-t('html: component static props', async t => {
+t.only('html: component static props', async t => {
   let log = []
   let $el = $`<div/>`.html`<${C}#x.y.z/>`
 
