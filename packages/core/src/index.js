@@ -15,7 +15,7 @@ const _promise = Symbol.for('spect.promise'),
       _target = Symbol.for('spect.target'),
       _publish = Symbol.for('spect.publish'),
       _subscribe = Symbol.for('spect.subscribe'),
-      _run = Symbol.for('spect.run'),
+      _update = Symbol.for('spect.update'),
       _using = Symbol.for('spect.using'),
       _dispose = Symbol.for('spect.dispose'),
       _deps = Symbol.for('spect.deps'),
@@ -74,12 +74,12 @@ class Spect {
     boundFn.deps = {}
     boundFn.destroy = {}
     use.set(fn, boundFn)
-    this[_run](fn)
+    this[_update](fn)
 
     return px
   }
 
-  [_run](fn) {
+  [_update](fn) {
     let px = this[_proxy]
 
     if (this[_error]) return px
@@ -168,7 +168,7 @@ class Spect {
     let subscriptions = this[_subscription]
     if (!subscriptions[name]) return
     let subscribers = subscriptions[name]
-    for (let aspect of subscribers) aspect.target[_run](aspect)
+    for (let aspect of subscribers) aspect.target[_update](aspect)
     return this[_proxy]
   }
 
@@ -281,7 +281,7 @@ spect.fn(function use(fns, deps) {
     return this
   },
 
-  function run(fns, deps) {
+  function update(fns, deps) {
     if (!this[_deps](deps)) return this
 
     if (!Array.isArray(fns)) {
@@ -289,7 +289,7 @@ spect.fn(function use(fns, deps) {
       else fns = [fns]
     }
 
-    fns.forEach(fn => this[_run](fn))
+    fns.forEach(fn => this[_update](fn))
 
     return this
   },

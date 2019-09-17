@@ -1,20 +1,19 @@
 import t from 'tst'
-import spect, * as fxs from '..'
-import { current } from '../src/core'
+import spect, { current } from '..'
 
-spect.fn(...Object.values(fxs))
 
 t.skip('counter', t => {
   let $n = spect({
     x: 1
   })
 
-  $n.use(({ state }) => {
-    state({ count: 0 }, [])
+  $n.use($n => {
+    if (!$n.count) $n.count = 0
 
-    console.log(state('count'))
+    console.log($n.count)
     setTimeout(() => {
-      state(s => ++s.count)
+      $n.count++
+      $n.update()
     }, 1000)
   })
 })
@@ -32,12 +31,12 @@ t('readme: spect(target)', async t => {
   })
 
   // effects are awaitable
-  let x = await spect({}).fx(() => { log.push(1) }, [])
+  let x = await spect({})//.fx(() => { log.push(1) }, [])
 
-  t.is(log, [0, 1])
+  t.is(log, [0])
 })
 
-t('readme: use', async t => {
+t.skip('readme: use', async t => {
   let log = []
 
   let foo = spect({})
@@ -74,7 +73,7 @@ t('readme: use', async t => {
   t.is(log, [0, 0, 1, 0, 1, 1])
 })
 
-t('readme: run', async t => {
+t('readme: update', async t => {
   let log = []
 
   let foo = spect({})
@@ -89,17 +88,17 @@ t('readme: run', async t => {
   t.is(log, ['a', 'b'])
 
   // update only a
-  await foo.run(a)
+  await foo.update(a)
 
   t.is(log, ['a', 'b', 'a'])
 
   // update all
-  await foo.run()
+  await foo.update()
 
   t.is(log, ['a', 'b', 'a', 'a', 'b'])
 })
 
-t('readme: fx', async t => {
+t.skip('readme: fx', async t => {
   let log = []
 
   let foo = spect()
@@ -120,12 +119,12 @@ t('readme: fx', async t => {
 
   t.is(log, [1, 2, 3, 5])
 
-  await foo.run()
+  await foo.update()
 
   t.is(log, [1, 2, 3, 5, 1, 4, 3, 6])
 })
 
-t('readme: state', async t => {
+t.skip('readme: state', async t => {
   let foo = spect()
 
   await foo.use(() => {
@@ -149,7 +148,7 @@ t('readme: state', async t => {
   t.is(foo.state(), {a: 1, b: 2, c: 3, d: 4, e: 5})
 })
 
-t('readme: prop', async t => {
+t.skip('readme: prop', async t => {
   let foo = spect()
 
   await foo.use(() => {
@@ -178,24 +177,24 @@ t('readme: destroy', async t => {
 
   let foo = spect({})
 
-  foo.state('x', 0)
+  foo.x = 0
 
   await foo.use(foo => {
-    log.push(foo.state('x'))
+    log.push(foo.x)
   })
 
   t.is(log, [0])
 
-  await foo.run()
+  await foo.update()
 
   t.is(log, [0, 0])
 
-  await foo.dispose().run()
+  await foo.dispose().update()
 
   t.is(log, [0, 0])
 })
 
-t('readme: standalone effects', async t => {
+t.skip('readme: standalone effects', async t => {
   const { state, fx, prop } = fxs
 
   let foo = { x: 1 }
@@ -209,7 +208,7 @@ t('readme: standalone effects', async t => {
   })
 })
 
-t('core: empty / primitive selectors', t => {
+t.skip('core: empty / primitive selectors', t => {
   let $x = spect()
   let $x1 = spect()
   t.is($x !== $x1, true)
@@ -269,7 +268,7 @@ t('use: aspects must not be called multiple times, unless target state changes',
   t.is(log, ['x'])
   await $a.use([fn, fn])
   t.is(log, ['x'])
-  await $a.run()
+  await $a.update()
   t.is(log, ['x', 'x'])
 
   function fn(el) { log.push('x') }
@@ -355,7 +354,6 @@ t('use: async aspects', t => {
     await Promise.resolve().then()
     t.is(a, current.fn)
   })
-
 })
 
 t.skip('use: promise', async t => {
@@ -367,7 +365,7 @@ t.skip('use: promise', async t => {
 })
 
 
-t('fx: global effect is triggered after current callstack', async t => {
+t.skip('fx: global effect is triggered after current callstack', async t => {
   let log = []
   spect({}).fx(() => log.push('a'))
 
@@ -378,7 +376,7 @@ t('fx: global effect is triggered after current callstack', async t => {
   t.is(log, ['a'])
 })
 
-t('fx: runs destructor', async t => {
+t.skip('fx: updates destructor', async t => {
   let log = []
   let $a = spect({})
 
@@ -408,17 +406,17 @@ t('fx: runs destructor', async t => {
   t.is(log, ['init 1', 'init 2', 'init 3'])
 
   log = []
-  $a.run()
+  $a.update()
   await Promise.resolve().then()
   t.is(log, ['destroy 1', 'init 1'])
 
   log = [], id = 1
-  $a.run()
+  $a.update()
   await Promise.resolve().then()
   t.is(log, ['destroy 1', 'init 1', 'destroy 3', 'init 3'])
 })
 
-t('fx: toggle deps', async t => {
+t.skip('fx: toggle deps', async t => {
   let log = []
   let $a = spect()
 
@@ -465,7 +463,7 @@ t('fx: toggle deps', async t => {
   t.is(log, ['on', 'off', 'on', 'off'])
 })
 
-t('fx: async fx chain', async t => {
+t.skip('fx: async fx chain', async t => {
   let log = []
   let a = spect().fx(() => log.push(1)).fx(() => log.push(2))
   t.is(log, [])
@@ -473,7 +471,7 @@ t('fx: async fx chain', async t => {
   t.is(log, [1, 2, 3])
 })
 
-t('fx: async fx', async t => {
+t.skip('fx: async fx', async t => {
   let log = []
 
   let el = spect().use(async () => {
@@ -489,7 +487,7 @@ t('fx: async fx', async t => {
 
   t.is(log, ['foo'])
 
-  await el.run()
+  await el.update()
 
   t.is(log, ['foo', 'unfoo', 'foo'])
 })
@@ -502,7 +500,7 @@ t.todo('fx: varying number of effects')
 
 t.todo('fx: remove all effects on aspect removal')
 
-t('state: direct get/set', t => {
+t.skip('state: direct get/set', t => {
   spect().use(el => {
     el.state('c', 1)
 
@@ -510,7 +508,7 @@ t('state: direct get/set', t => {
   })
 })
 
-t('state: object set', t => {
+t.skip('state: object set', t => {
   spect().use(el => {
     el.state({ c: 1, d: 2 })
 
@@ -518,7 +516,7 @@ t('state: object set', t => {
   })
 })
 
-t('state: functional get/set', t => {
+t.skip('state: functional get/set', t => {
   let a = spect()
 
   a.state(s => s.count = 0)
@@ -529,7 +527,7 @@ t('state: functional get/set', t => {
   t.is(a.state`count`, 1)
 })
 
-t('state: init gate', async t => {
+t.skip('state: init gate', async t => {
   let log = [], x = 1
   let $a = spect()
 
@@ -538,7 +536,7 @@ t('state: init gate', async t => {
   t.is($a.state`x`, 1)
 
   x++
-  $a.run()
+  $a.update()
   t.is($a.state`x`, 1)
 
   function fn($a) {
@@ -546,7 +544,7 @@ t('state: init gate', async t => {
   }
 })
 
-t('state: reducer', t => {
+t.skip('state: reducer', t => {
   let $a = spect({})
 
   $a.state({ x: 1 })
@@ -569,7 +567,7 @@ t.todo('state: get/set path', t => {
   t.is($a.state('x.y.z'), 1)
 })
 
-t('state: reading state registers any-change listener', async t => {
+t.skip('state: reading state registers any-change listener', async t => {
   let log = []
   let $a = spect()
 
@@ -585,7 +583,7 @@ t('state: reading state registers any-change listener', async t => {
   t.is(log, [undefined, 1])
 })
 
-t('state: recursion on both reading/setting state', async t => {
+t.skip('state: recursion on both reading/setting state', async t => {
   let log = []
   await spect().use($el => {
     log.push($el.state('x'))
@@ -596,7 +594,7 @@ t('state: recursion on both reading/setting state', async t => {
   t.is(log, [undefined, 1])
 })
 
-t('state: same-effect different paths dont trigger update', async t => {
+t.skip('state: same-effect different paths dont trigger update', async t => {
   let log = []
   await spect().use($el => {
     log.push($el.state('x'))
@@ -626,7 +624,7 @@ t.skip('core: await returns promise', async t => {
   t.is(!!x.then, true)
 })
 
-t('state: reading state from async stack doesnt register listener', async t => {
+t.skip('state: reading state from async stack doesnt register listener', async t => {
   let log = []
   let $a = spect().use($el => {
     log.push(1)
@@ -647,7 +645,7 @@ t('state: reading state from async stack doesnt register listener', async t => {
   }, 10))
 })
 
-t('state: deps cases', async t => {
+t.skip('state: deps cases', async t => {
   let el = spect({})
 
   let x, y, z, w
@@ -669,7 +667,7 @@ t('state: deps cases', async t => {
   t.is(el.state('w'), undefined)
 
   x=y=z=w=2
-  await el.run()
+  await el.update()
 
   t.is(el.state('x'), 1)
   t.is(el.state('y'), 2)
@@ -677,7 +675,7 @@ t('state: deps cases', async t => {
   t.is(el.state('w'), 2)
 })
 
-t('state: destructuring', async t => {
+t.skip('state: destructuring', async t => {
   let log = []
   await spect().use(({state}) => {
     // init/get state
@@ -694,7 +692,7 @@ t('state: destructuring', async t => {
   t.deepEqual(log, ['get foo,bar', 1, undefined, 'set foo,bar', 'get foo,bar', 'a', 'b', 'set foo,bar'])
 })
 
-t('state: direct get/set', async t => {
+t.skip('state: direct get/set', async t => {
   let log = []
   await spect().use(({state}) => {
     let s = state()
@@ -709,7 +707,7 @@ t('state: direct get/set', async t => {
   t.deepEqual(log, ['get foo,bar', undefined, undefined, 'set foo,bar'])
 })
 
-t('state: shared between aspects', async t => {
+t.skip('state: shared between aspects', async t => {
   let log = []
   let el = spect()
 
@@ -726,14 +724,14 @@ t('state: shared between aspects', async t => {
   t.deepEqual(log, ['a', 'b', 'bar'])
 })
 
-t('prop: direct get/set', t => {
+t.skip('prop: direct get/set', t => {
   spect().use(el => {
     el.prop('c', 1)
     t.is(el.c, 1)
   })
 })
 
-t('prop: object set', t => {
+t.skip('prop: object set', t => {
   spect().use(el => {
     el.prop({ c: 1, d: 2 })
 
@@ -741,7 +739,7 @@ t('prop: object set', t => {
   })
 })
 
-t('prop: functional get/set', t => {
+t.skip('prop: functional get/set', t => {
   let $a = spect()
 
   $a.prop(s => s.count = 0)

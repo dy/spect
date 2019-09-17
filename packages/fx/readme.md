@@ -1,4 +1,4 @@
-# Spect ![unstable](https://img.shields.io/badge/stability-unstable-yellow) [![Build Status](https://travis-ci.org/spectjs/spect.svg?branch=master)](https://travis-ci.org/spectjs/spect)
+# @spect/core ![unstable](https://img.shields.io/badge/stability-unstable-yellow) [![Build Status](https://travis-ci.org/spectjs/spect.svg?branch=master)](https://travis-ci.org/spectjs/spect)
 
 Reactive [aspects](https://en.wikipedia.org/wiki/Aspect-oriented_programming) for javascript objects.
 
@@ -25,7 +25,7 @@ foo.use(foo => {
 
 ## API
 
-[**`spect.fn`**](#spectfn-fns----register-effects)&nbsp;&nbsp; [**`spect`**](#spect-target---create-aspectable)&nbsp;&nbsp; [**`.use`**](#use-fns---assign-aspects)&nbsp;&nbsp; [**`.run`**](#run-fns-deps----run-aspects)&nbsp;&nbsp; [**`.dispose`**](#dispose-fns----remove-aspect)&nbsp;&nbsp; [**`.fx`**](#fx-------bool--deps---generic-side-effect)&nbsp;&nbsp; [**`.state`**](#state-name--val-deps---getset-state)&nbsp;&nbsp; [**`.prop`**](#prop-name--val-deps---getset-properties)&nbsp;&nbsp;
+[**`spect.fn`**](#spectfn-fns----register-effects)&nbsp;&nbsp; [**`spect`**](#spect-target---create-aspectable)&nbsp;&nbsp; [**`.use`**](#use-fns---assign-aspects)&nbsp;&nbsp; [**`.update`**](#update-fns-deps----update-aspects)&nbsp;&nbsp; [**`.dispose`**](#dispose-fns----remove-aspect)&nbsp;&nbsp; [**`.fx`**](#fx-------bool--deps---generic-side-effect)&nbsp;&nbsp; [**`.state`**](#state-name--val-deps---getset-state)&nbsp;&nbsp; [**`.prop`**](#prop-name--val-deps---getset-properties)&nbsp;&nbsp;
 
 ### `spect.fn( ...fns )` - register effects
 
@@ -47,7 +47,7 @@ target.css`...styles`
 
 ### `spect( target? )` − create aspectable
 
-Turn target into aspectable. The wrapper provides transparent access to target props, extended with registered effects via Proxy. `use` and `run` effects are provided by default, other effects must be registered via `spect.fn(...fxs)`.
+Turn target into aspectable. The wrapper provides transparent access to target props, extended with registered effects via Proxy. `use` and `update` effects are provided by default, other effects must be registered via `spect.fn(...fxs)`.
 
 ```js
 import spect from 'spect'
@@ -60,8 +60,8 @@ target.foo // 'bar'
 // targets are thenable
 await target.use(() => { /* ..aspect */ })
 
-// re-run all aspects
-target.run()
+// re-update all aspects
+target.update()
 ```
 
 ### `.use( fns? )` − assign aspects
@@ -89,9 +89,9 @@ foo.use(foo => {
 bar.prop('y', 1)
 ```
 
-### `.run( fns?, deps? )` - run aspect(s)
+### `.update( fns?, deps? )` - update aspect(s)
 
-(re-)Run assigned aspects. If `fn` isn't provided, rerenders all aspects. `deps` control the conditions when the aspect must be rerun, they take same signature as `useEffect` hook.
+(re-)Run assigned aspects. If `fn` isn't provided, rerenders all aspects. `deps` control the conditions when the aspect must be reupdate, they take same signature as `useEffect` hook.
 
 ```js
 import spect from 'spect'
@@ -101,10 +101,10 @@ let foo = spect({})
 foo.use(a, b)
 
 // update only a
-await foo.run(a)
+await foo.update(a)
 
 // update all
-await foo.run()
+await foo.update()
 ```
 
 ### `.dispose( fns? )` - remove aspect
@@ -242,7 +242,7 @@ spect.fn(function myEffect (arg, deps) {
   // `this._pub(path)` - publishes update of some name / path string
   // `this._sub(path, aspect?)` - subscribes current aspect to paths
   // `this[symbols.subscription]` - subscriptions dict
-  // `this._run(aspect)` - runs aspect as microtask
+  // `this._update(aspect)` - updates aspect as microtask
   // `this[symbols.promise]` - internal queue
   // `this[symbols.aspects]` - internal map of assigned aspects
 
