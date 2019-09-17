@@ -3,10 +3,10 @@
 Reactive [aspects](https://en.wikipedia.org/wiki/Aspect-oriented_programming) for javascript objects.
 
 
-[![npm i spect](https://nodei.co/npm/spect.png?mini=true)](https://npmjs.org/package/spect/)
+[![npm i @spect/core](https://nodei.co/npm/@spect/core.png?mini=true)](https://npmjs.org/package/@spect/core/)
 
 ```js
-import spect, { state } from 'spect'
+import spect from '@spect/core'
 
 spect.fn(state)
 
@@ -32,17 +32,16 @@ foo.use(foo => {
 Register effect(s) available for targets.
 
 ```js
-import spect, { state, prop, fx } from 'spect'
-import { html, css, attr } from 'spect-dom'
+import spect from '@spect/core'
+import prop from '@spect/prop'
+import state from '@spect/state'
+import fx from '@spect/fx'
 
-spect.fn(state, prop, fx, html, css, attr)
+spect.fn(state, prop, fx)
 
-let target = spect(document.querySelector('#my-element'))
+let target = spect({ foo: 'bar' })
 
-// use effects
-target.attr('foo', 'bar')
-target.html`...markup`
-target.css`...styles`
+target.state('foo', 'baz')
 ```
 
 ### `spect( target? )` − create aspectable
@@ -50,7 +49,7 @@ target.css`...styles`
 Turn target into aspectable. The wrapper provides transparent access to target props, extended with registered effects via Proxy. `use` and `update` effects are provided by default, other effects must be registered via `spect.fn(...fxs)`.
 
 ```js
-import spect from 'spect'
+import spect from '@spect/core'
 
 let target = spect({ foo: 'bar' })
 
@@ -69,7 +68,9 @@ target.update()
 Assign aspect(s) to target. Each aspect `fn` is invoked as microtask. By reading/writing effects, aspect subscribes/publishes changes, causing update.
 
 ```js
-import spect, { prop, state } from 'spect'
+import spect from '@spect/core'
+import prop from '@spect/prop'
+import state from '@spect/state'
 
 spect.fn(prop, state)
 
@@ -94,7 +95,7 @@ bar.prop('y', 1)
 (re-)Run assigned aspects. If `fn` isn't provided, rerenders all aspects. `deps` control the conditions when the aspect must be reupdate, they take same signature as `useEffect` hook.
 
 ```js
-import spect from 'spect'
+import spect from '@spect/core'
 
 let foo = spect({})
 
@@ -112,7 +113,7 @@ await foo.update()
 Remove assigned aspects. If `fn` isn't provided, removes all aspects.
 
 ```js
-import spect from 'spect'
+import spect from '@spect/core'
 
 let foo = spect({})
 
@@ -125,24 +126,6 @@ await foo.dispose(a)
 await foo.dispose()
 ```
 
-### Standalone effects
-
-Effects can be used on their own, without `spect`:
-
-```js
-import { fx, state, prop } from 'spect'
-
-let foo = {x: 1}
-
-state.call(foo, 'y', 2)
-prop.call(foo, 'x', 3)
-
-fx.call(foo, () => {
-  state.call(foo, 'y') // 2
-  state.call(foo, 'x') // 3
-})
-```
-
 
 <!--
 #### Internals
@@ -150,7 +133,7 @@ fx.call(foo, () => {
 Internal methods are available for effects as
 
 ```js
-import spect, { symbols } from 'spect'
+import spect, { symbols } from '@spect/core'
 
 spect.fn(function myEffect (arg, deps) {
   // `this` is `spect` instance
