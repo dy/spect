@@ -1,4 +1,8 @@
-import spect from '@spect/core'
-import $ from '@spect/collection'
-import * as fx from '@spect/util'
-import * as domfx from '@spect/dom'
+import $ from 'packages/collection'
+import * as fx from 'packages/util'
+import * as domfx from 'packages/dom'
+
+$.fn(Object.values(fx))
+$.fn(Object.values(domfx))
+
+export default $

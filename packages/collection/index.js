@@ -1,4 +1,4 @@
-import spect from 'spect'
+import spect from '../spect'
 import nidx from 'negative-index'
 import { isIterable } from './util'
 
