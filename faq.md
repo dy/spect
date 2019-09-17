@@ -262,4 +262,3 @@ const dom = new JSDOM(`<!DOCTYPE html><p>Hello world</p>`)
 
 const $ = Spect.bind(dom.window.document)
 ```
-

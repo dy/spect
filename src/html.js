@@ -144,8 +144,8 @@ function render(arg) {
     let proto = Spect.prototype
 
     // find out effects
-    for (let i = 0, key, value; i < props.length; i+=2) {
-      key = props[i], value = props[i+1]
+    for (let i = 0, key, value; i < props.length; i += 2) {
+      key = props[i], value = props[i + 1]
       if (key in proto)
     }
 
