@@ -5,16 +5,20 @@ const _pub = Symbol.for('spect.publish')
 const _deps = Symbol.for('spect.deps')
 const _target = Symbol.for('spect.target')
 
+const stateCache = new WeakMap
+function getValues(el) {
+  let state = stateCache.get(el)
+  if (!state) stateCache.set(el, state = {})
+  return state
+}
+const getValue = (el, name) => getValues(el)[name],
+  setValue = (el, name, value) => getValues(el)[name] = value,
+  setValues = (el, obj) => Object.assign(getValues(el), obj),
+  template = (el, ...args) => getValues(el)[String.raw(...args)],
+  effectName = 'state'
 
-const template = (el, ...args) => el[String.raw(...args)],
-  getValue = (el, name) => el[name],
-  getValues = el => el,
-  setValue = (el, name, value) => el[name] = value,
-  setValues = (el, values) => Object.assign(el, values),
-  effectName = 'prop'
 
-
-export default function prop(...args) {
+export default function state(...args) {
   const target = this[_target] || this
 
   // effect()

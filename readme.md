@@ -80,7 +80,7 @@ foo.use(foo => {
 bar.prop('y', 1)
 ```
 
-### `.run( fns?, deps? )` - run aspect(s)
+### `.update( fns?, deps? )` - run aspect(s)
 
 (re-)Run assigned aspects. If `fn` isn't provided, rerenders all aspects. `deps` control the conditions when the aspect must be rerun, they take same signature as `useEffect` hook.
 
@@ -92,10 +92,10 @@ let foo = spect({})
 foo.use(a, b)
 
 // update only a
-await foo.run(a)
+await foo.update(a)
 
 // update all
-await foo.run()
+await foo.update()
 ```
 
 ### `.dispose( fns? )` - remove aspect

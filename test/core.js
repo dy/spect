@@ -1,7 +1,10 @@
 import t from 'tst'
 import spect, { current } from '../src/core'
+import state from '../src/state'
+import prop from '../src/prop'
+import fx from '../src/fx'
 
-spect.fn(...Object.values(fxs))
+spect.fn(fx, prop, state)
 
 t.skip('counter', t => {
   let $n = spect({
@@ -73,7 +76,7 @@ t('readme: use', async t => {
   t.is(log, [0, 0, 1, 0, 1, 1])
 })
 
-t('readme: run', async t => {
+t('readme: update', async t => {
   let log = []
 
   let foo = spect({})
@@ -88,12 +91,12 @@ t('readme: run', async t => {
   t.is(log, ['a', 'b'])
 
   // update only a
-  await foo.run(a)
+  await foo.update(a)
 
   t.is(log, ['a', 'b', 'a'])
 
   // update all
-  await foo.run()
+  await foo.update()
 
   t.is(log, ['a', 'b', 'a', 'a', 'b'])
 })
@@ -119,7 +122,7 @@ t('readme: fx', async t => {
 
   t.is(log, [1, 2, 3, 5])
 
-  await foo.run()
+  await foo.update()
 
   t.is(log, [1, 2, 3, 5, 1, 4, 3, 6])
 })
@@ -185,18 +188,16 @@ t('readme: destroy', async t => {
 
   t.is(log, [0])
 
-  await foo.run()
+  await foo.update()
 
   t.is(log, [0, 0])
 
-  await foo.dispose().run()
+  await foo.dispose().update()
 
   t.is(log, [0, 0])
 })
 
 t('readme: standalone effects', async t => {
-  const { state, fx, prop } = fxs
-
   let foo = { x: 1 }
 
   state.call(foo, 'y', 2)
@@ -268,7 +269,7 @@ t('use: aspects must not be called multiple times, unless target state changes',
   t.is(log, ['x'])
   await $a.use([fn, fn])
   t.is(log, ['x'])
-  await $a.run()
+  await $a.update()
   t.is(log, ['x', 'x'])
 
   function fn(el) { log.push('x') }
@@ -407,12 +408,12 @@ t('fx: runs destructor', async t => {
   t.is(log, ['init 1', 'init 2', 'init 3'])
 
   log = []
-  $a.run()
+  $a.update()
   await Promise.resolve().then()
   t.is(log, ['destroy 1', 'init 1'])
 
   log = [], id = 1
-  $a.run()
+  $a.update()
   await Promise.resolve().then()
   t.is(log, ['destroy 1', 'init 1', 'destroy 3', 'init 3'])
 })
@@ -488,7 +489,7 @@ t('fx: async fx', async t => {
 
   t.is(log, ['foo'])
 
-  await el.run()
+  await el.update()
 
   t.is(log, ['foo', 'unfoo', 'foo'])
 })
@@ -537,7 +538,7 @@ t('state: init gate', async t => {
   t.is($a.state`x`, 1)
 
   x++
-  $a.run()
+  $a.update()
   t.is($a.state`x`, 1)
 
   function fn($a) {
@@ -668,7 +669,7 @@ t('state: deps cases', async t => {
   t.is(el.state('w'), undefined)
 
   x=y=z=w=2
-  await el.run()
+  await el.update()
 
   t.is(el.state('x'), 1)
   t.is(el.state('y'), 2)
