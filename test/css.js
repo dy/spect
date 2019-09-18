@@ -4,7 +4,7 @@ import css from '../src/css'
 
 $.fn(css)
 
-t.only('css: basic styling', t => {
+t('css: basic styling', t => {
   let $a = $`<a><span>123</span></a>`
 
   $a.css`

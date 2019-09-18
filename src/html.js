@@ -12,7 +12,7 @@ import {
   currentPointer,
   skipNode
 } from 'incremental-dom'
-import { isIterable, paramCase } from './util'
+import { isIterable, paramCase, SPECT_CLASS } from './util'
 
 attributes.class = applyAttr
 attributes.is = (...args) => (applyAttr(...args), applyProp(...args))
@@ -22,7 +22,6 @@ attributes[symbols.default] = applyProp
 const _target = Symbol.for('spect.target')
 const _instance = Symbol.for('spect.instance')
 
-const SPECT_CLASS = '👁'
 
 export default function html(...args) {
   let el = this[_target] || this

@@ -6,6 +6,8 @@ const _pub = Symbol.for('spect.publish')
 const _deps = Symbol.for('spect.deps')
 const _target = Symbol.for('spect.target')
 
+export const SPECT_CLASS = '👁'
+
 export function isIterable(val) {
   if (val instanceof Node) return false
   return (val != null && typeof val[Symbol.iterator] === 'function');

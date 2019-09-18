@@ -74,8 +74,10 @@
     "fast-on-load": "^1.2.0",
     "htm": "^2.2.1",
     "incremental-dom": "^0.6.0",
+    "insert-styles": "^1.2.1",
     "kebab-case": "^1.0.0",
-    "negative-index": "^1.0.3"
+    "negative-index": "^1.0.3",
+    "scope-css": "^1.2.1"
   },
   "devDependencies": {
     "@pika/pack": "^0.5.0",
