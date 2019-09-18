@@ -1,5 +1,15 @@
 import t from 'tst'
-import $ from '..'
+import $ from '../src/$'
+
+$.fn($)
+
+t('$: simple selector', t => {
+  let $b = $('body')
+  t.is($b.length, 1)
+
+  let $b1 = $(document.body)
+  t.is($b1[0], $b[0])
+})
 
 t('$: create from nodes', t => {
   let el = document.createElement('div')
@@ -31,7 +41,8 @@ t('$: create new', t => {
 t('$: subselect nodes', t => {
   let $foo = $`<foo><bar/></foo>`
 
-  let $bar = $(`bar`, $foo)
+  console.log('bar')
+  let $bar = $foo.$(`bar`)
 
   t.is($bar[0], $foo[0].firstChild)
 })
@@ -51,7 +62,7 @@ t.skip('$: live nodes list as reference under the hood', t => {
   t.is($children.length, 2)
 })
 
-t.skip('$: rebinding to other document', async t => {
+t('$: rebinding to other document', async t => {
   let { document } = await import('dom-lite')
 
   // FIXME: w
@@ -91,7 +102,7 @@ t('$: fragments', t => {
   // t.ok(foo2 instanceof Node)
 })
 
-t('$: empty selectors', t => {
+t.skip('$: empty selectors', t => {
   let $x = $()
   t.is($x.length, 0)
 

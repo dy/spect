@@ -2,22 +2,18 @@ import spect from './core'
 import nidx from 'negative-index'
 import { isIterable } from './util'
 
+const _target = Symbol.for('spect.target')
 
 const cache = new WeakMap,
       setCache = new WeakMap
 
-export default function _$(...args) {
-  return new $(...args)
-}
-
-class $ extends Array {
-  constructor(arg, ...args) {
+const _ = {
+  $: function (arg, ...args) {
     if (arg instanceof $) return arg
     if (cache.has(arg)) return cache.get(arg)
 
-    super()
-
-    setCache.set(this, new Set)
+    let el = this && this[_target] || this
+    let doc = (el && el.documentElement) ? el : el && el.ownerDocument || window.document
 
     // $('.selector')
     if (typeof arg === 'string') {
@@ -27,30 +23,45 @@ class $ extends Array {
       // if ((args.length && args[0] == null) || isObject(args[0])) return h(arg, ...args)
 
       // create html: $('<></> html content')
-      // if (/</.test(arg)) {
-      //   let statics = [arg]
-      //   statics.raw = [arg]
-      //   let result = (spect(document.createDocumentFragment())).html(statics, ...args)
-      //   return spect(unwrapElement(result[0].childNodes))
-      // }
+      if (/</.test(arg)) {
+        let statics = [arg]
+        statics.raw = [arg]
+        let $frag = spect(doc.createDocumentFragment()).html(statics)
+        arg = $frag.childNodes.length == 1 ? $frag.firstChild : $frag.childNodes
+      }
 
-      // FIXME: get global doc properly
-      let within = this && this.querySelectorAll ? this : document
-
-      arg = within.querySelectorAll(arg)
-    }
-
-    // $`...tpl`
-    if (this.html) {
-      if (arg && arg.raw) {
-        let $frag = spect(document.createDocumentFragment()).html(arg, ...args)
-        return _$($frag.childNodes)
+      // $('.selector')
+      else {
+        // FIXME: get global doc properly
+        let within = (el && el.querySelectorAll) ? el : doc
+        arg = within.querySelectorAll(arg)
       }
     }
 
-    this.add(arg)
+    // $`...tpl`
+    if ('html' in $.prototype) {
+      if (arg && arg.raw) {
+        let $frag = spect(doc.createDocumentFragment()).html(arg, ...args)
+        arg = $frag.childNodes.length == 1 ? $frag.firstChild : $frag.childNodes
+      }
+    }
 
-    cache.set(arg, this)
+    let collection = new $(arg)
+    cache.set(arg, collection)
+
+    return collection
+  }
+}
+
+export default _.$
+
+class $ extends Array {
+  constructor(arg) {
+    super()
+
+    setCache.set(this, new Set)
+
+    this.add(arg)
 
     return this
   }
@@ -89,7 +100,7 @@ class $ extends Array {
   // default map calls Array(n)
   map(fn) {
     // FIXME: may lose props, not sure that's good
-    return _$([...this].map(fn))
+    return new $([...this].map(fn))
   }
 
   then(fn) {
@@ -98,7 +109,7 @@ class $ extends Array {
 }
 
 // register regular spect effects broadcast to collections
-_$.fn = function (...fxs) {
+_.$.fn = function (...fxs) {
   fxs.forEach(fx => {
     if ($.prototype[fx.name]) return
 
@@ -137,6 +148,6 @@ function broadcast(collection, name) {
 }
 
 // core effects
-_$.fn({ name: 'use' })
-_$.fn({ name: 'run' })
-_$.fn({ name: 'dispose' })
+_.$.fn({ name: 'use' })
+_.$.fn({ name: 'run' })
+_.$.fn({ name: 'dispose' })
