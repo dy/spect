@@ -106,7 +106,7 @@ t('readme: fx', async t => {
 
   let foo = spect()
 
-  await foo.use(() => {
+  await foo.use((el) => {
     // called each time
     foo.fx(() => log.push(1));
 

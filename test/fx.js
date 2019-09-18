@@ -53,7 +53,7 @@ t('fx: runs destructor', async t => {
   t.is(log, ['destroy 1', 'destroy 3', 'init 1', 'init 3'])
 })
 
-t.only('fx: toggle deps', async t => {
+t('fx: toggle deps', async t => {
   let log = []
   let $a = $`<a/>`
 
@@ -161,14 +161,14 @@ t.todo('fx: sync fx', t => {
 
 })
 
-t.todo('fx: async fx', t => {
+t('fx: async fx', async t => {
   let log = []
 
-  $(document.createElement('div'), el => {
-    fx(async () => {
+  await $(document.createElement('div')).use(el => {
+    el.fx(async () => {
       await null
       log.push('foo')
-      html`<foo/>`
+      el.html`<foo/>`
       t.equal(el.innerHTML, '<foo></foo>', 'html aftereffect')
 
       return () => {
@@ -176,11 +176,12 @@ t.todo('fx: async fx', t => {
       }
     }, [])
 
-    // fx(async () => {
-    //   t.equal(el.innerHTML, '<foo></foo>')
-    //   html`<bar/>`
-    //   t.equal(el.innerHTML, '<bar></bar>')
-    // }, [])
+    el.fx(async () => {
+      await null
+      t.equal(el.innerHTML, '<foo></foo>')
+      el.html`<bar/>`
+      t.equal(el.innerHTML, '<bar></bar>')
+    }, [])
   })
 
   // t.deepEqual(log, ['before', 'between', 'after', 'foo', 'bar'], 'correct sequence of calls')
