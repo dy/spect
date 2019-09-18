@@ -1,5 +1,8 @@
 import t from 'tst'
 import $ from '..';
+import state from '../src/state'
+
+$.fn(state)
 
 t('state: direct get/set', t => {
   $`<div.a/>`.use(el => {
@@ -32,11 +35,11 @@ t('state: functional get/set', t => {
   t.is($a.state`count`, 1)
 })
 
-t('state: init gate', t => {
+t('state: init gate', async t => {
   let log = [], x = 1
   let $a = $`<a/>`
 
-  $a.use(fn)
+  await $a.use(fn)
   t.is($a.state`x`, 1)
 
   x++
@@ -87,7 +90,7 @@ t.skip('state: counter', t => {
   })
 })
 
-t('state: get/set path', t => {
+t.todo('state: get/set path', t => {
   let $a = $`<a/>`
 
   t.is($a.state('x.y.z'), undefined)
@@ -142,7 +145,7 @@ t('state: reading state registers any-change listener', async t => {
   let log = []
   let $a = $`<a/>`
 
-  $a.use(el => {
+  await $a.use(el => {
     let $el = $(el)
     let s = $el.state()
 

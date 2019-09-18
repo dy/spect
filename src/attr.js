@@ -1,17 +1,19 @@
 import {createEffect} from './util'
 
+const _pub = Symbol.for('spect.publish')
+
 const cache = new WeakMap
 const getValues = el => {
     let obj = {}
     for (let attr of el.attributes) obj[attr.name] = attr.value
     return obj
   },
-  getValue = (el, name) => {
+  getValue = function (el, name) {
   if (!cache.has(el)) {
     let observer = new MutationObserver(records => {
       for (let i = 0, length = records.length; i < length; i++) {
         let { target, oldValue, attributeName } = records[i];
-        updateObservers(target, 'attr', attributeName)
+        this[_pub] && this[_pub]('attr.' + attributeName)
       }
     })
     observer.observe(el, { attributes: true })
@@ -27,8 +29,8 @@ const getValues = el => {
     else el.setAttribute(name, value)
   },
   setValues = (el, obj) => Object.assign(getValues(el), obj),
-  template = function (...args) {
-    return this[0].getAttribute(String.raw(...args))
+  template = function (target, ...args) {
+    return target.getAttribute(String.raw(...args))
   },
   effectName = 'attr'
 

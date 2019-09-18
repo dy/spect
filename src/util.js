@@ -35,12 +35,12 @@ export function createEffect({name: effectName, getValues, getValue, setValues, 
     // effect()
     if (!args.length) {
       this[_sub] && this[_sub](effectName)
-      return getValues(target)
+      return getValues.call(this, target)
     }
 
     // effect`...`
     if (args[0].raw) {
-      return template(target, ...args)
+      return template.call(this, target, ...args)
     }
 
     // effect(s => {...}, deps)
@@ -48,7 +48,7 @@ export function createEffect({name: effectName, getValues, getValue, setValues, 
       let [fn, deps] = args
       if (this[_deps] && !this[_deps](deps)) return this
 
-      let state = getValues(target)
+      let state = getValues.call(this, target)
       let result
       try {
         result = fn(new Proxy(state, {
@@ -60,7 +60,7 @@ export function createEffect({name: effectName, getValues, getValue, setValues, 
       } catch (e) { }
 
       if (result !== state && typeof result === typeof state) {
-        setValues(target, result)
+        setValues.call(this, target, result)
 
         if (this[_pub]) {
           this[_pub](effectName)
@@ -77,7 +77,7 @@ export function createEffect({name: effectName, getValues, getValue, setValues, 
 
       this[_sub] && this[_sub](effectName + '.' + name)
 
-      return getValue(target, name)
+      return getValue.call(this, target, name)
     }
 
     // effect(obj, deps)
@@ -85,10 +85,10 @@ export function createEffect({name: effectName, getValues, getValue, setValues, 
       let [props, deps] = args
       if (this[_deps] && !this[_deps](deps)) return this
 
-      let prev = getValues(target)
+      let prev = getValues.call(this, target)
 
       if (!equal(prev, props)) {
-        setValues(target, props)
+        setValues.call(this, target, props)
 
         if (this[_pub]) {
           this[_pub](effectName)
@@ -104,9 +104,9 @@ export function createEffect({name: effectName, getValues, getValue, setValues, 
       let [name, value, deps] = args
       if (this[_deps] && !this[_deps](deps)) return this
 
-      let prev = getValue(target, name)
+      let prev = getValue.call(this, target, name)
       if (equal(prev, value)) return this
-      setValue(target, name, value)
+      setValue.call(this, target, name, value)
       this[_pub] && this[_pub](effectName + '.' + name)
     }
 

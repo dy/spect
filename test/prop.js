@@ -1,6 +1,8 @@
 import t from 'tst'
 import $ from '..'
+import prop from '../src/prop'
 
+$(prop)
 
 t('prop: direct get/set', t => {
   $`<div.a/>`.use(el => {

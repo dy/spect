@@ -1,6 +1,8 @@
 import t from 'tst'
 import $ from '..'
+import attr from '../src/attr'
 
+$.fn(attr)
 
 t('attr: direct get/set', t => {
   $`<div.a/>`.use(el => {
@@ -11,7 +13,7 @@ t('attr: direct get/set', t => {
   })
 })
 
-t('attr: object set', t => {
+t.only('attr: object set', t => {
   $`<div.a/>`.use(el => {
     let $el = $(el)
 
