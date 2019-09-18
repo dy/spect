@@ -1,4 +1,4 @@
-import delegate from 'delegate-it'
+import delegated from 'delegate-it'
 
 const _deps = Symbol.for('spect.deps')
 const _target = Symbol.for('spect.target')

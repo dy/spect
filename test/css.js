@@ -1,7 +1,10 @@
 import t from 'tst'
 import $ from '..'
+import css from '../src/css'
 
-t('css: basic styling', t => {
+$.fn(css)
+
+t.only('css: basic styling', t => {
   let $a = $`<a><span>123</span></a>`
 
   $a.css`

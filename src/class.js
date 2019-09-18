@@ -15,10 +15,9 @@ const getValue = (el, name) => el.classList.contains(name),
     for (let name in obj) setValue(el, name, obj[name])
     return this
   },
-  template = function (...args) {
+  template = function (el, ...args) {
     let str = String.raw(...args)
-    this.forEach(el => el.className = str)
-    return this
+    el.className = str
   },
   effectName = 'class'
 

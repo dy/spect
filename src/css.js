@@ -1,5 +1,5 @@
 
-export const css = (statics, ...parts) => {
+export function css (statics, ...parts) {
   let str = String.raw(statics, ...parts)
 
   let className = cssClassCache.get(this)

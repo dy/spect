@@ -18,11 +18,11 @@ t('readme: A simple aspect', async t => {
   document.body.removeChild(el)
 })
 
-t('readme: A stateful aspect', t => {
+t('readme: A stateful aspect', async t => {
   let el = document.body.appendChild(document.createElement('div'))
   el.id = 'timer-example'
 
-  $('#timer-example').use($el => {
+  await $('#timer-example').use($el => {
     // init
     $el.state({ seconds: 0 }, [])
 
