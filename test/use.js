@@ -1,7 +1,7 @@
 import t from 'tst'
 import $ from '..'
 
-t('use: aspects, assigned through parent wrapper', t => {
+t('use: aspects, assigned through parent wrapper', async t => {
   // some wrappers over same elements can be created in different ways
   // but effects must be bound to final elements
   let a = document.createElement('a')
@@ -15,7 +15,7 @@ t('use: aspects, assigned through parent wrapper', t => {
   let $a5 = $(frag.querySelector('*'))
 
   let log = []
-  $a3.use(([el]) => {
+  await $a3.use(({ element: el}) => {
     t.is(el, a)
     log.push('a3')
   })
@@ -28,17 +28,18 @@ t('use: aspects, assigned through parent wrapper', t => {
   t.is($a5[0], a)
 })
 
-t('use: aspects must be called in order', t => {
+t('use: aspects must be called in order', async t => {
   let log = []
   let a = document.createElement('a')
-  $(a).use(() => log.push(1), () => log.push(2), () => log.push(3))
+  await $(a).use([() => log.push(1), () => log.push(2), () => log.push(3)])
+
   t.deepEqual(log, [1,2,3])
 })
 
-t('use: duplicates are ignored', t => {
+t('use: duplicates are ignored', async t => {
   let log = []
 
-  $(document.createElement('a')).use(fn, fn, fn)
+  await $(document.createElement('a')).use([fn, fn, fn])
 
   function fn () {
     log.push(1)
@@ -46,101 +47,103 @@ t('use: duplicates are ignored', t => {
 
   t.is(log, [1])
 
-  $(document.createElement('a')).use(fn, fn, fn)
+  await $(document.createElement('a')).use([fn, fn, fn])
 
   t.is(log, [1, 1])
 })
 
-t('use: aspects must not be called multiple times, unless target state changes', t => {
+t('use: aspects must not be called multiple times, unless target state changes', async t => {
   let log = []
 
   let $a = $`<a/>`
-  $a.use(fn)
+  await $a.use(fn)
   t.is(log, ['x'])
-  $a.use(fn)
+  await $a.use(fn)
   t.is(log, ['x'])
-  $a.use(fn, fn)
+  await $a.use(fn, fn)
   t.is(log, ['x'])
-  $a.update()
+  await $a.update()
   t.is(log, ['x', 'x'])
 
   function fn(el) {log.push('x')}
 })
 
-t('use: same aspect different targets', t => {
+t('use: same aspect different targets', async t => {
   let log = []
-  function fx([el]) {
+  function fx(el) {
     log.push(el.tagName)
-    // return () => log.push('destroy ' + el.tagName)
+    return () => log.push('destroy ' + el.tagName)
   }
 
   let $el = $(document.createElement('a')).use(fx)
+
+  await $el
 
   t.is($el[0].tagName, log[0])
   t.is(log, ['A'])
 
   $el[0].innerHTML = '<span></span>'
-  $($el[0].firstChild).use(fx)
+  await $($el[0].firstChild).use(fx)
 
   t.deepEqual(log, ['A', 'SPAN'])
 })
 
-t('use: Same target different aspects', t => {
+t('use: Same target different aspects', async t => {
   let log = []
 
   let a = document.createElement('a')
   document.body.appendChild(a)
 
   let afx, bfx
-  $('a').use(afx = () => (log.push('a'), () => log.push('de a')))
+  await $('a').use(afx = () => (log.push('a'), () => log.push('de a')))
   t.deepEqual(log, ['a'])
-  $('a').use(bfx = () => (log.push('b'), () => log.push('de b')))
+  await $('a').use(bfx = () => (log.push('b'), () => log.push('de b')))
   t.deepEqual(log, ['a', 'b'])
 
   document.body.removeChild(a)
 })
 
-t('use: same aspect same target', t => {
+t('use: same aspect same target', async t => {
   let log = []
   let a = document.createElement('a')
   document.body.appendChild(a)
 
   let fx = () => (log.push('a'), () => log.push('z'))
-  $(a).use(fx)
+  await $(a).use(fx)
   t.deepEqual(log, ['a'])
-  $(a).use(fx)
+  await $(a).use(fx)
   t.deepEqual(log, ['a'])
-  $('a').use(fx)
+  await $('a').use(fx)
   t.deepEqual(log, ['a'])
 
   document.body.removeChild(a)
 })
 
-t('use: subaspects init themselves independent of parent aspects', t => {
+t('use: subaspects init themselves independent of parent aspects', async t => {
   let log = []
 
   let a = document.body.appendChild(document.createElement('a'))
   let b = a.appendChild(document.createElement('b'))
   let c = b.appendChild(document.createElement('c'))
 
-  $('a').use(el => {
+  await $('a').use(el => {
     log.push('a')
     $('b').use(el => {
       log.push('b')
       $('c').use(el => {
         log.push('c')
-        // return () => log.push('-c')
+        return () => log.push('-c')
       })
-      // return () => log.push('-b')
+      return () => log.push('-b')
     })
-    // return () => log.push('-a')
+    return () => log.push('-a')
   })
 
   t.deepEqual(log, ['a', 'b', 'c'])
 
-  // $.destroy(a)
+  $(a).dispose()
 
-  // t.deepEqual(log, ['a', 'b', 'c', '-c', '-b', '-a'])
+  t.deepEqual(log, ['a', 'b', 'c', '-c', '-b', '-a'])
 
   document.body.removeChild(a)
 })

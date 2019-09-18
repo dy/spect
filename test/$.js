@@ -152,5 +152,5 @@ t('$: promise postpones properly / effects are bound', async t => {
 t('$: create document fragment is ok', t => {
   let $d = $(document.createDocumentFragment())
 
-  t.is($d.length, 1)
+  t.is($d.length, 0)
 })

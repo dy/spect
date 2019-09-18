@@ -73,6 +73,11 @@ class Spect {
     boundFn.target = this[_proxy]
     boundFn.deps = {}
     boundFn.destroy = {}
+    boundFn.children = new Set()
+
+    // register child aspects
+    if (current) current.children.add(boundFn)
+
     using.set(fn, boundFn)
     this[_update](fn)
 
@@ -132,12 +137,20 @@ class Spect {
 
     // call planned effect destructors
     for (let key in fn.destroy) {
-      fn.destroy[key]()
+      let destroy = fn.destroy[key]
+      destroy && destroy.call && destroy()
     }
+
+    // destruct all child aspects
+    for (let childfn of fn.children) {
+      childfn.target[_dispose](childfn)
+    }
+    fn.children.clear()
 
     // call destructor
     if (fn.destructor) fn.destructor.call(px)
 
+    fn.children = null
     fn.destructor = null
     fn.destroy = null
     fn.deps = null

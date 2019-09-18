@@ -27,7 +27,7 @@ const _ = {
         let statics = [arg]
         statics.raw = [arg]
         let $frag = spect(doc.createDocumentFragment()).html(statics)
-        arg = $frag.childNodes.length == 1 ? $frag.firstChild : $frag.childNodes
+        arg = $frag
       }
 
       // $('.selector')
@@ -42,8 +42,14 @@ const _ = {
     if ('html' in $.prototype) {
       if (arg && arg.raw) {
         let $frag = spect(doc.createDocumentFragment()).html(arg, ...args)
-        arg = $frag.childNodes.length == 1 ? $frag.firstChild : $frag.childNodes
+        arg = $frag
       }
+    }
+
+    // unwrap document fragment
+    if (arg && arg.nodeType === 11) {
+      arg = arg.childNodes
+      if (arg.length === 1) arg = arg[0]
     }
 
     let collection = new $(arg)
@@ -149,5 +155,5 @@ function broadcast(collection, name) {
 
 // core effects
 _.$.fn({ name: 'use' })
-_.$.fn({ name: 'run' })
+_.$.fn({ name: 'update' })
 _.$.fn({ name: 'dispose' })
