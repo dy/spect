@@ -32,7 +32,7 @@ export default function html(...args) {
   if (args[0].raw) vdom = htm.call(h, ...args)
 
   // html('<a foo/>')
-  // else if (typeof args[0] === 'string') vdom = html(args)
+  else if (typeof args[0] === 'string') vdom = htm.call(h, args)
 
   // fn: html(children => [...children])
   else if (typeof args[0] === 'function') {
@@ -145,10 +145,8 @@ function render(arg) {
     const $el = new Spect(el)
     $el.element = el
 
-    if (fn) $el.use(fn)
-    if (use) {
-      $el.use(use)
-    }
+    if (fn) $el.update(fn)
+    if (use) $el.update(use)
 
     for (let i = 0, key, value; i < props.length; i += 2) {
       key = props[i], value = props[i + 1]

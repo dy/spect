@@ -366,11 +366,10 @@ t('html: null-like insertions', t => {
   t.is($a[0].innerHTML, 'foo   0')
 })
 
-t.only('html: parent props must rerender nested components', async t => {
+t('html: parent props must rerender nested components', async t => {
   let $x = $`<div x=0/>`
 
   $x.use(x => {
-    console.log(123, x.prop('x'))
     $x.html`<div is=${y} value=${ $x.prop('x') }/>`
   })
   function y ({ value }) {
@@ -384,14 +383,14 @@ t.only('html: parent props must rerender nested components', async t => {
   $x.prop('x', 1)
 
   await $x
-  console.log($x)
+
   t.is($x[0].firstChild.innerHTML, `value: 1`)
 })
 
 t('html: html effect', async t => {
   let $el = $`<a html=${'<span>foo</span>'}/>`
 
-  await Promise.resolve().then()
+  await $el
 
   t.is($el[0].innerHTML, `<span>foo</span>`)
 })

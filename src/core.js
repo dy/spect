@@ -85,7 +85,9 @@ class Spect {
     if (this[_error]) return px
 
     if (!fn.fn) {
-      if (!this[_using].has(fn)) return px
+      if (!this[_using].has(fn)) {
+        return this[_use](fn)
+      }
       fn = this[_using].get(fn)
     }
 
