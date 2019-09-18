@@ -1,5 +1,8 @@
 import t from 'tst'
 import $ from '..'
+import on from '../src/on'
+
+$.fn(on)
 
 t('on: instant trigger must be handled', t => {
   let log = []
