@@ -691,7 +691,7 @@ await foo.update()
 
 ### `.dispose( fns? )` - remove aspect
 
-Remove assigned aspects. If `fn` isn't provided, removes all aspects.
+Remove assigned aspects. If `fn` isn't provided, removes all aspects. Function, returned by aspect is used as destructor.
 
 ```js
 import spect from 'spect'
@@ -705,6 +705,16 @@ await foo.dispose(a)
 
 // remove all
 await foo.dispose()
+
+function a () {
+
+}
+
+function b () {
+  return () => {
+    // destructor
+  }
+}
 ```
 
 

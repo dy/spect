@@ -396,3 +396,19 @@ t('html: html effect', async t => {
 })
 
 t.todo('html: it microtasks dom diffing, not applies instantly')
+
+t('html: removing aspected element should trigger destructor', async t => {
+  let log = []
+  let $el = $`<foo><bar use=${fn} /></foo>`
+
+  function fn (el) {
+    log.push(1)
+    return () => log.push(2)
+  }
+
+  await $el
+  t.is(log, [1])
+
+  $el.html`<baz/>`
+  await $el
+})

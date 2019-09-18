@@ -64,16 +64,16 @@ class Spect {
 
   [_use](fn) {
     let px = this[_proxy]
-    let use = this[_using]
+    let using = this[_using]
 
-    if (use.has(fn)) return px
+    if (using.has(fn)) return px
 
     let boundFn = fn.bind(this[_proxy])
     boundFn.fn = fn
     boundFn.target = this[_proxy]
     boundFn.deps = {}
     boundFn.destroy = {}
-    use.set(fn, boundFn)
+    using.set(fn, boundFn)
     this[_update](fn)
 
     return px
@@ -97,7 +97,7 @@ class Spect {
       current = fn
       // FIXME: there can be a better way to handle errors than keeping as is
       try {
-        await fn(px)
+        fn.destructor = await fn(px)
       } catch (e) {
         console.error(e)
       }
@@ -130,10 +130,15 @@ class Spect {
       fn = this[_using].get(fn)
     }
 
-    // call planned destructors, clear
+    // call planned effect destructors
     for (let key in fn.destroy) {
       fn.destroy[key]()
     }
+
+    // call destructor
+    if (fn.destructor) fn.destructor.call(px)
+
+    fn.destructor = null
     fn.destroy = null
     fn.deps = null
     fn.target = null

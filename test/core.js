@@ -184,6 +184,7 @@ t('readme: destroy', async t => {
 
   await foo.use(foo => {
     log.push(foo.state('x'))
+    return () => log.push(1)
   })
 
   t.is(log, [0])
@@ -194,7 +195,7 @@ t('readme: destroy', async t => {
 
   await foo.dispose().update()
 
-  t.is(log, [0, 0])
+  t.is(log, [0, 0, 1])
 })
 
 t('readme: standalone effects', async t => {
