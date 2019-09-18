@@ -1,13 +1,16 @@
 import t from 'tst'
 import $ from '..'
+import mount from '../src/mount'
+
+$.fn(mount)
 
 
-t.todo('mount: multiple mount callbacks', async t => {
+t('mount: multiple mount callbacks', async t => {
   let log = []
 
   let x = document.createElement('div')
 
-  $(x, el => {
+  let $x = $(x).use(({mount}) => {
     mount(() => {
       log.push('mount A')
       return () => {
@@ -23,41 +26,40 @@ t.todo('mount: multiple mount callbacks', async t => {
 
   document.documentElement.appendChild(x)
 
-  await (() => { })
+  await $x
 
   t.deepEqual(log, ['mount A', 'mount B'], 'multiple mounts')
 
   document.documentElement.removeChild(x)
-
-  await (() => { })
+  await $x
 
   t.deepEqual(log, ['mount A', 'mount B', 'unmount A', 'unmount B'], 'multiple unmounts')
 })
 
-t.todo('mount: unsynced aspects should not affect mount of each other', async t => {
+t('mount: unsynced aspects should not affect mount of each other', async t => {
   let log = []
 
   let el = document.createElement('div')
 
-  $(el, () => {
+  let $el = $(el).use(({mount}) => {
     mount(() => {
       log.push('+a')
       return () => log.push('-a')
     })
   })
 
-  $(el, () => {
+  $(el).use(({mount}) => {
     mount(() => {
       log.push('+b')
       return () => log.push('-b')
     })
   })
 
-  await (_ => _)
+  await $el
   t.deepEqual(log, [])
 
   document.body.appendChild(el)
-  await (_ => _)
+  await $el
   t.deepEqual(log, ['+a', '+b'])
 })
 

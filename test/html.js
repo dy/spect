@@ -205,9 +205,9 @@ t('html: re-rendering inner nodes shouldn\'t trigger mount callback', async t =>
   let $a = $`<div.a><div.b use=${fn}/></>`
   document.body.appendChild($a[0])
 
-  function fn (el) {
+  function fn ({ mount }) {
     log.push(0)
-    el.mount(() => {
+    mount(() => {
       log.push(1)
       return () => log.push(2)
     })
@@ -349,7 +349,7 @@ t.skip('html: connecting aspect as array spread', t => {
   t.deepEqual(log, ['a'])
 })
 
-t('html: class components')
+t.todo('html: class components')
 
 t.skip('html: duplicate id warning', t => {
   let el = document.createElement('div')

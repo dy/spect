@@ -10,7 +10,7 @@ import './cases.js'
 import './html.js'
 import './on.js'
 import './class.js'
-// import './mount.js'
+import './mount.js'
 // import './css.js'
 // import './readme.js'
 
