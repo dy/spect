@@ -28,7 +28,9 @@ const getValues = el => {
     else if ((value === false || value == null) && el.hasAttribute(name)) el.removeAttribute(name)
     else el.setAttribute(name, value)
   },
-  setValues = (el, obj) => Object.assign(getValues(el), obj),
+  setValues = (el, obj) => {
+    for (let name in obj) el.setAttribute(name, obj[name])
+  },
   template = function (target, ...args) {
     return target.getAttribute(String.raw(...args))
   },

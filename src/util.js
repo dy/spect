@@ -54,6 +54,7 @@ export function createEffect({name: effectName, getValues, getValue, setValues, 
         result = fn(new Proxy(state, {
           set: (t, prop, value) => {
             if (this[_pub]) if (t[prop] !== value) this[_pub](effectName + '.' + prop)
+            setValue.call(this, target, prop, value)
             return Reflect.set(t, prop, value)
           }
         }))

@@ -13,13 +13,11 @@ t('attr: direct get/set', t => {
   })
 })
 
-t.only('attr: object set', t => {
+t('attr: object set', t => {
   $`<div.a/>`.use(el => {
-    let $el = $(el)
+    el.attr({ c: 1, d: 2 })
 
-    $el.attr({ c: 1, d: 2 })
-
-    t.is($el.attr`c`, '1')
+    t.is(el.attr('c'), '1')
   })
 })
 
@@ -33,7 +31,7 @@ t('attr: functional get/set', t => {
   $a.attr(s => {
     s.count++
   })
-  t.is($a.attr`count`, '1')
+  t.is($a.attr('count'), '1')
 })
 
 t('attr: boolean', t => {
