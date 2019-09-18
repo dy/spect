@@ -1,6 +1,9 @@
 import t from 'tst'
 import $ from '..'
+import fx from '../src/fx'
 import 'setimmediate'
+
+$.fn(fx)
 
 t('fx: global effect is triggered after current callstack', async t => {
   let log = []
@@ -8,7 +11,7 @@ t('fx: global effect is triggered after current callstack', async t => {
 
   t.is(log, [])
 
-  await Promise.resolve()
+  await ''
 
   t.is(log, ['a'])
 })
@@ -38,26 +41,23 @@ t('fx: runs destructor', async t => {
     }, [id])
   }
 
-  $a.use(fn)
-  await Promise.resolve()
+  await $a.use(fn)
   t.is(log, ['init 1', 'init 2', 'init 3'])
 
   log = []
-  $a.update()
-  await Promise.resolve()
+  await $a.update()
   t.is(log, ['destroy 1', 'init 1'])
 
   log = [], id = 1
-  $a.update()
-  await Promise.resolve()
+  await $a.update()
   t.is(log, ['destroy 1', 'destroy 3', 'init 1', 'init 3'])
 })
 
-t('fx: toggle deps', async t => {
+t.only('fx: toggle deps', async t => {
   let log = []
   let $a = $`<a/>`
 
-  $a.use(() => {
+  await $a.use(() => {
     $a.fx(() => {
       log.push('on')
       return () => log.push('off')
@@ -65,38 +65,29 @@ t('fx: toggle deps', async t => {
   })
 
   t.is(log, [])
-  await Promise.resolve().then()
 
-  $a.prop('on', false)
-  await Promise.resolve().then()
+  await $a.prop('on', false)
   t.is(log, [])
 
-  $a.prop('on', true)
-  await Promise.resolve().then()
+  await $a.prop('on', true)
   t.is(log, ['on'])
 
-  $a.prop('on', true)
-  await Promise.resolve().then()
+  await $a.prop('on', true)
   t.is(log, ['on'])
 
-  $a.prop('on', false)
-  await Promise.resolve().then()
+  await $a.prop('on', false)
   t.is(log, ['on', 'off'])
 
-  $a.prop('on', false)
-  await Promise.resolve().then()
+  await $a.prop('on', false)
   t.is(log, ['on', 'off'])
 
-  $a.prop('on', true)
-  await Promise.resolve().then()
+  await $a.prop('on', true)
   t.is(log, ['on', 'off', 'on'])
 
-  $a.prop('on', true)
-  await Promise.resolve().then()
+  await $a.prop('on', true)
   t.is(log, ['on', 'off', 'on'])
 
-  $a.prop('on', false)
-  await Promise.resolve().then()
+  await $a.prop('on', false)
   t.is(log, ['on', 'off', 'on', 'off'])
 })
 

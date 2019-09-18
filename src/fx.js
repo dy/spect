@@ -11,7 +11,7 @@ export default function fx(fn, deps) {
 
   let destroy = []
 
-  destroy.push(Promise.resolve().then(() => fn.call(this)))
+  Promise.resolve().then(() => destroy.push(fn.call(this)))
 
   return this
 }

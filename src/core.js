@@ -1,5 +1,4 @@
 import equal from 'fast-deep-equal'
-import { parse as parseStack } from 'stacktrace-parser'
 import { isPrimitive } from './util'
 
 const isStacktraceAvailable = !!(new Error).stack
@@ -20,7 +19,8 @@ const _promise = Symbol.for('spect.promise'),
       _dispose = Symbol.for('spect.dispose'),
       _deps = Symbol.for('spect.deps'),
       _error = Symbol.for('spect.error'),
-      _instance = Symbol.for('spect.instance')
+      _instance = Symbol.for('spect.instance'),
+      _fxkey = Symbol.for('spect.fxkey')
 
 const cache = new WeakMap
 
@@ -196,16 +196,7 @@ class Spect {
   [_deps](deps, destroy) {
     if (!current) return true
 
-    let key
-    if (isStacktraceAvailable) {
-      let [testDepssite, effectsite, callsite, ...trace] = parseStack((new Error).stack)
-      let callsiteurl = callsite.file + ':' + callsite.lineNumber + ':' + callsite.column
-      key = callsiteurl
-    }
-    // fallback to react order-based key
-    else {
-      key = fxCount++
-    }
+    let key = this[_fxkey]()
 
     if (deps == null) {
       let prevDestroy = current.destroy[key]
@@ -235,6 +226,24 @@ class Spect {
 
     current.destroy[key] = destroy
     return true
+  }
+
+  // get unique key for current fx
+  [_fxkey]() {
+    let key
+    if (isStacktraceAvailable) {
+      // FIXME: parsing callstack is unreliable, but taking it as a whole is fine
+      // the only thing that varies is line number
+      // let [coresite, effectsite, callsite, ...trace] = parseStack((new Error).stack)
+      // let callsiteurl = callsite.file + ':' + callsite.lineNumber + ':' + callsite.column
+      // key = callsiteurl
+      key = (new Error).stack + ''
+    }
+    // fallback to react order-based key
+    else {
+      key = fxCount++
+    }
+    return key
   }
 
   then(fn) {
