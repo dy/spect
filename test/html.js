@@ -1,8 +1,14 @@
 import t from 'tst'
 import spect from '../src/core'
 import html from '../src/html'
+import state from '../src/state'
+import $ from '../src/$'
+import clsx from '../src/class'
+import attr from '../src/attr'
+import mount from '../src/mount'
+import prop from '../src/prop'
 
-spect.fn(html)
+$.fn(html, state, clsx, attr, mount, prop)
 
 t('html: readme default', async t => {
   let $div = spect(document.createElement('div'))
@@ -21,12 +27,12 @@ t('html: attributes', t => {
   t.is($div.firstChild.foo, 'bar')
 })
 
-t.only('html: component static props', async t => {
+t('html: component static props', async t => {
   let log = []
   let $el = $`<div/>`.html`<${C}#x.y.z/>`
 
-  function C ([el]) {
-    log.push(el.tagName, el.id, el.className)
+  function C ({ element }) {
+    log.push(element.tagName, element.id, element.className)
   }
 
   await Promise.resolve()
@@ -38,12 +44,13 @@ t('html: direct component rerendering should not destroy state', async t => {
   let $c = $($el[0].firstChild)
   $c.state({ x: 1 })
 
-  await Promise.resolve().then()
+  await $c
   t.is($c.state('x'), 1)
 
   $el.html`<${fn}.foo/>`
 
   let $c1 = $($el[0].firstChild)
+
   t.is($c1.state('x'), 1)
   t.is($c1, $c)
   t.is($c1.class('foo'), true)
@@ -56,7 +63,7 @@ t('html: rerendered component state should persist', async t => {
   let $c = $($el[0].firstChild)
   $c.state({ x: 1 })
 
-  await Promise.resolve().then()
+  await $c
   t.is($c.state('x'), 1)
 
   $el.html`<span.foo.bar/>`
@@ -72,7 +79,7 @@ t('html: extended component rerendering should not destroy state', async t => {
   let $c = $($el[0].firstChild)
   $c.state({ x: 1 })
 
-  await Promise.resolve().then()
+  await $c
   t.is($c.state('x'), 1)
 
   $el.html`<div.foo is=${fn}/>`
@@ -200,29 +207,29 @@ t('html: re-rendering inner nodes shouldn\'t trigger mount callback', async t =>
 
   function fn (el) {
     log.push(0)
-    $(el).mount(() => {
+    el.mount(() => {
       log.push(1)
       return () => log.push(2)
     })
   }
 
-  await Promise.resolve().then()
+  await $a
   t.is(log, [0, 1])
 
-  $a.html`<div.b use=${fn}/>`
-  await Promise.resolve().then()
-  t.is(log, [0, 1, 0])
+  $a.html``
+  await $a
+  t.is(log, [0, 1, 2])
 
   $a.html`<div.b use=${fn}/>`
-  await Promise.resolve().then()
-  t.is(log, [0, 1, 0, 0])
+  await $a
+  t.is(log, [0, 1, 2, 0, 1])
 
   $a.html``
-  await Promise.resolve().then()
-  t.is(log, [0, 1, 0, 0, 2])
+  await $a
+  t.is(log, [0, 1, 2, 0, 1, 2])
 })
 
-t('html: h plain node', t => {
+t.todo('html: h plain node', t => {
   let target = document.createElement('div')
 
   $(target).html(
@@ -359,24 +366,25 @@ t('html: null-like insertions', t => {
   t.is($a[0].innerHTML, 'foo   0')
 })
 
-t('html: parent props must rerender nested components', async t => {
+t.only('html: parent props must rerender nested components', async t => {
   let $x = $`<div x=0/>`
 
   $x.use(x => {
+    console.log(123, x.prop('x'))
     $x.html`<div is=${y} value=${ $x.prop('x') }/>`
   })
   function y ({ value }) {
     $(this).html`value: ${ value }`
   }
 
-  await Promise.resolve().then()
+  await $x
 
   t.is($x[0].firstChild.innerHTML, `value: 0`)
 
   $x.prop('x', 1)
 
-  await Promise.resolve().then()
-
+  await $x
+  console.log($x)
   t.is($x[0].firstChild.innerHTML, `value: 1`)
 })
 

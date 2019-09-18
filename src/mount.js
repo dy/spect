@@ -1,11 +1,19 @@
+import onload from 'fast-on-load'
 
-export function mount(fn, deps = true) {
-  if (!commit(fxKey('mount'), deps, () => destroy.forEach(fn => fn && fn()))) return
+const _deps = Symbol.for('spect.deps')
+const _target = Symbol.for('spect.target')
+
+export default function mount(fn, deps) {
+  if (this[_deps]) if (!this[_deps](deps, () => {
+    destroy.forEach(fn => fn && fn())
+  })) return this
 
   let destroy = []
 
   let unload, connected = false
   let handle = [() => (unload = fn(), connected = true), () => unload && unload()]
+
+  let el = this[_target] || this
 
   onload(el, ...handle)
 
@@ -18,3 +26,7 @@ export function mount(fn, deps = true) {
 
   return this
 }
+
+export const isConnected = 'isConnected' in window.Node.prototype
+  ? node => node.isConnected
+  : node => document.documentElement.contains(node)

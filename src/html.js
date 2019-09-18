@@ -12,7 +12,7 @@ import {
   currentPointer,
   skipNode
 } from 'incremental-dom'
-import { isIterable } from './util'
+import { isIterable, paramCase } from './util'
 
 attributes.class = applyAttr
 attributes.is = (...args) => (applyAttr(...args), applyProp(...args))
@@ -143,9 +143,12 @@ function render(arg) {
     let proto = Spect.prototype
 
     const $el = new Spect(el)
+    $el.element = el
 
     if (fn) $el.use(fn)
-    if (use) $el.use(use)
+    if (use) {
+      $el.use(use)
+    }
 
     for (let i = 0, key, value; i < props.length; i += 2) {
       key = props[i], value = props[i + 1]

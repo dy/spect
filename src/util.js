@@ -21,3 +21,9 @@ export function uid() { return Math.random().toString(36).slice(2, 8) }
 export const isConnected = 'isConnected' in window.Node.prototype
   ? node => node.isConnected
   : node => document.documentElement.contains(node)
+
+export function isPrimitive(arg) {
+  try { new WeakSet([arg]); return false } catch (e) {
+    return true
+  }
+}

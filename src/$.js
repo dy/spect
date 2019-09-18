@@ -1,4 +1,4 @@
-import spect from '../core'
+import spect from './core'
 import nidx from 'negative-index'
 import { isIterable } from './util'
 
@@ -6,7 +6,7 @@ import { isIterable } from './util'
 const cache = new WeakMap,
       setCache = new WeakMap
 
-export default function $spect(...args) {
+export default function _$(...args) {
   return new $(...args)
 }
 
@@ -20,8 +20,6 @@ class $ extends Array {
     setCache.set(this, new Set)
 
     // $('.selector')
-    // FIXME live collection would require whether re-querying each fx call
-    // or selector observer - probably too expensive
     if (typeof arg === 'string') {
       arg = arg.trim()
 
@@ -36,16 +34,19 @@ class $ extends Array {
       //   return spect(unwrapElement(result[0].childNodes))
       // }
 
-      // selector
-      let within = document
+      // FIXME: get global doc properly
+      let within = this && this.querySelectorAll ? this : document
 
       arg = within.querySelectorAll(arg)
     }
 
     // $`...tpl`
-    // if (arg && arg.raw) {
-    //   return spect(unwrapElement(spect(document.createDocumentFragment()).html(arg, ...args)))
-    // }
+    if (this.html) {
+      if (arg && arg.raw) {
+        let $frag = spect(document.createDocumentFragment()).html(arg, ...args)
+        return _$($frag.childNodes)
+      }
+    }
 
     this.add(arg)
 
@@ -81,14 +82,14 @@ class $ extends Array {
 
   item(id) {
     // similar to .item(n)
-    if (typeof id === 'number') return spect(this[nidx(id, this.length)])
-    if (typeof id === 'string') return spect(this.find(el => el.id === id) || this.find(el => el.name === id) || this.find(el => el.key === id))
+    if (typeof id === 'number') return this[nidx(id, this.length)]
+    if (typeof id === 'string') return this.find(el => el.id === id) || this.find(el => el.name === id) || this.find(el => el.key === id)
   }
 
   // default map calls Array(n)
   map(fn) {
     // FIXME: may lose props, not sure that's good
-    return $spect([...this].map(fn))
+    return _$([...this].map(fn))
   }
 
   then(fn) {
@@ -97,7 +98,7 @@ class $ extends Array {
 }
 
 // register regular spect effects broadcast to collections
-$spect.fn = function (...fxs) {
+_$.fn = function (...fxs) {
   fxs.forEach(fx => {
     if ($.prototype[fx.name]) return
 
@@ -121,6 +122,10 @@ function broadcast(collection, name) {
   return (...args) => {
     for (let el of collection) {
       let instance = spect(el)
+
+      // provide element property
+      instance.element = el
+
       let result = instance[name](...args)
 
       // if result is not chainable - that is getter, bail out
@@ -132,6 +137,6 @@ function broadcast(collection, name) {
 }
 
 // core effects
-$spect.fn({ name: 'use' })
-$spect.fn({ name: 'run' })
-$spect.fn({ name: 'dispose' })
+_$.fn({ name: 'use' })
+_$.fn({ name: 'run' })
+_$.fn({ name: 'dispose' })

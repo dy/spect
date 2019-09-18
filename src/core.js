@@ -1,6 +1,6 @@
 import equal from 'fast-deep-equal'
 import { parse as parseStack } from 'stacktrace-parser'
-
+import { isPrimitive } from './util'
 
 const isStacktraceAvailable = !!(new Error).stack
 
@@ -308,9 +308,3 @@ spect.fn(function use(fns, deps) {
   }
 )
 
-
-function isPrimitive(arg) {
-  try { new WeakSet([arg]); return false } catch (e) {
-    return true
-  }
-}
