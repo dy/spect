@@ -242,6 +242,17 @@ t.todo('html: h plain node', t => {
   t.equal(target.innerHTML, '<x>Text content </x>')
 })
 
+t.todo('html: init aspects on fragments', t => {
+  let log = []
+  let $a = $`< is=${fn}/>`
+
+  function fn(frag) {
+    log.push(frag.nodeType)
+  }
+
+  t.is(log, [11])
+})
+
 t('html: text content', t => {
   let $el = $(document.createElement('div'))
 

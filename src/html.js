@@ -16,8 +16,12 @@ import {
 import morph from 'nanomorph'
 import { isIterable, paramCase, SPECT_CLASS } from './util'
 
+
 attributes.class = applyAttr
-attributes.is = (...args) => (applyAttr(...args), applyProp(...args))
+attributes.is = (target, name, value) => {
+  if (target.setAttribute) applyAttr(target, name, value)
+  return applyProp(target, name, value)
+}
 attributes[symbols.default] = applyProp
 
 notifications.nodesDeleted = function (nodes) {
@@ -86,7 +90,7 @@ export default function html(...args) {
     }
 
     if (arg instanceof NodeList || arg instanceof HTMLCollection) {
-      let frag = document.createDocumentFragment()
+      let frag = el.ownerDocument.createDocumentFragment()
       while (arg.length) frag.appendChild(arg[0])
       refs[++count] = frag
       return { _ref: count }
@@ -152,7 +156,9 @@ function render(arg) {
   let { tag, key, props, staticProps, children, use, create, fn } = arg
 
   // fragment (direct vdom)
-  if (!tag) return children && children.forEach(render, this)
+  if (!tag) {
+    return children && children.forEach(render, this)
+  }
 
   let el
   if (!children || !children.length) {
@@ -204,6 +210,11 @@ export function h(target, props = {}, ...children) {
     id = parts[1]
     classes = parts[2]
   }
+  // <is=${target}/> - special case of custom fragments
+  if (tag === 'is') {
+    tag = ''
+    TODO
+  }
 
   for (let prop in props) {
     let val = props[prop]
@@ -213,18 +224,28 @@ export function h(target, props = {}, ...children) {
     // <div is=${fn}>
     else if (prop === 'is') {
       if (typeof val === 'function') {
+        // FIXME: detect document properly here
+        // let document = this.ownerDocument
         fn = val
-        is = getTagName(fn)
-        staticProps.push('is', is)
 
-        if (isCustomElementsAvailable) {
-          if (!customElements.get(is)) {
-            let Component = createClass(Object.getPrototypeOf(document.createElement(tag)).constructor)
-            customElements.define(is, Component, { extends: tag })
-            create = customElementsCache[is] = function () { return document.createElement(tag, { is }) }
+        // fragment creator
+        if (!tag) {
+          create = function () {
+            return document.createDocumentFragment()
           }
-          else {
-            create = customElementsCache[is]
+        }
+        else {
+          is = getTagName(fn)
+          staticProps.push('is', is)
+          if (isCustomElementsAvailable) {
+            if (!customElements.get(is)) {
+              let Component = createClass(Object.getPrototypeOf(document.createElement(tag)).constructor)
+              customElements.define(is, Component, { extends: tag })
+              create = customElementsCache[is] = function () { return document.createElement(tag, { is })}
+            }
+            else {
+              create = customElementsCache[is]
+            }
           }
         }
       }
