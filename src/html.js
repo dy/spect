@@ -43,9 +43,24 @@ export default function html(...args) {
 
   // fn: html(children => [...children])
   else if (typeof args[0] === 'function') {
-    let input = [...el.childNodes]
-    let output = args[0](input)
-    morph(el, { childNodes: output }, { childrenOnly: true })
+    let output = args[0](el)
+    if (output && output !== el) {
+      // substitute previous node with the new one in both DOM/spect collection
+
+      // TODO: wrapping part is not ready
+      // wrapping
+      if (output[0].contains(el)) {
+        throw Error('TODO: organize wrapping')
+      }
+
+      // new node
+      else {
+        el.replaceWith(...output)
+      }
+
+      // TODO: figure out if we need disposal here
+      // if (el[_spect]) el[_spect].dispose()
+    }
     return this
   }
 
@@ -74,16 +89,16 @@ export default function html(...args) {
       let frag = document.createDocumentFragment()
       while (arg.length) frag.appendChild(arg[0])
       refs[++count] = frag
-      return { ref: count }
+      return { _ref: count }
     }
     if (arg instanceof DocumentFragment || typeof arg === 'function') {
       refs[++count] = arg
-      return { ref: count }
+      return { _ref: count }
     }
     if (arg instanceof Node) {
       arg.remove()
       refs[++count] = arg
-      return { ref: count }
+      return { _ref: count }
     }
 
     if (arg.children) arg.children = map(arg.children)
@@ -123,10 +138,15 @@ function render(arg) {
 
   if (isIterable(arg)) {
     for (let el of arg) render.call(this, el)
+    return
+  }
+
+  if (typeof arg === 'object' && !arg._ref && !arg._vnode) {
+    return text(arg.toString())
   }
 
   // stub refs to native els
-  if (arg.ref) return elementVoid('span', null, ['id', SPECT_CLASS + '-ref-' + arg.ref])
+  if (arg._ref) return elementVoid('span', null, ['id', SPECT_CLASS + '-ref-' + arg._ref])
 
   // objects create elements
   let { tag, key, props, staticProps, children, use, create, fn } = arg
@@ -233,6 +253,7 @@ export function h(target, props = {}, ...children) {
 
   // FIXME: use more static props, like `type`
   return {
+    _vnode: true,
     tag,
     key,
     use,

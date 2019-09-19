@@ -252,18 +252,28 @@ t('html: text content', t => {
   t.equal($el[0].innerHTML, 'bar')
 })
 
-t('html: reducers', t => {
+t('html: object insertions', t => {
+  let $a = $`<div>${ {x:1} }</div>`
+  t.is($a[0].outerHTML, '<div>[object Object]</div>')
+})
+
+t.todo('html: reducers', t => {
   let $el = $`<div><bar/></>`
 
-  // append/prepend, reduce, wrap/unwrap
-  $el.html(children => [$`<foo/>`, ...children, document.createElement('baz')])
+  // append/prepend
+  $el.html(el => {
+    el.append(...$`<foo/>`, ...el.childNodes, document.createElement('baz'))
+  })
+
   t.is($el[0].outerHTML, '<div><foo></foo><bar></bar><baz></baz></div>')
 
-  $el.html(children => $`<div.foo>${ children }</div>`)
-  t.is($el[0].outerHTML, '<div><div class="foo"><foo></foo><bar></bar><baz></baz></div></div>')
+  // wrap
+  // $el.html(el => $`<div.foo>${ el }</div>`)
+  // t.is($el[0].outerHTML, '<div class="foo"><div><foo></foo><bar></bar><baz></baz></div></div>')
 
-  $el.html(([foo]) => foo.childNodes)
-  t.is($el[0].outerHTML, '<div><foo></foo><bar></bar><baz></baz></div>')
+  // unwrap
+  // $el.html(el => el.children[0].children)
+  // t.is($el[0].outerHTML, '<div><foo></foo><bar></bar><baz></baz></div>')
 })
 
 t.todo('html: deps', t => {

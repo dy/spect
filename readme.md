@@ -475,11 +475,11 @@ $els.html(document.querySelector('.bar'), deps)
 $els.html([foo, bar, baz], deps)
 
 // append/prepend, reduce, wrap/unwrap
-$els.html(children => [prepend, ...children, append])
-$els.html(children => $`<div.foo>${ children }</div>`)
+// TODO $els.html(el => [prepend, ...children, append])
+// TODO $els.html(children => $`<div.foo>${ children }</div>`)
 
 /* @jsx $.h */
-$els.html(<>Markup</>)
+// TODO $els.html(<>Markup</>)
 
 // components
 $els.html`<button is=${SuperButton}></button>`
