@@ -62,6 +62,11 @@ class Spect {
     return this[_proxy]
   }
 
+  // for detructuring: let [target] = $target
+  *[Symbol.iterator] () {
+    yield this[_target]
+  }
+
   [_use](fn) {
     let px = this[_proxy]
     let using = this[_using]

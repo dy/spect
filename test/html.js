@@ -31,7 +31,8 @@ t('html: component static props', async t => {
   let log = []
   let $el = $`<div/>`.html`<${C}#x.y.z/>`
 
-  function C ({ element }) {
+  function C (e) {
+    let [element] = e
     log.push(element.tagName, element.id, element.className)
   }
 

@@ -624,7 +624,7 @@ target.css`...styles`
 
 ### `spect( target? )` − create aspectable
 
-Turn target into aspectable. The wrapper provides transparent access to target props, extended with registered effects via Proxy. `use` and `run` effects are provided by default, other effects must be registered via `spect.fn(...fxs)`.
+Turn target into aspectable. The wrapper provides transparent access to target props, extended with registered effects via Proxy. `use`, `update` and `dispose` methods are provided by default, other effects must be registered via `spect.fn(...fxs)`.
 
 ```js
 import spect, { state } from 'spect'
@@ -632,18 +632,21 @@ import spect, { state } from 'spect'
 spect.fn(state)
 
 let foo = {}
-foo = spect(foo)
+let $foo = spect(foo)
 
 // targets are thenable
-await foo.use(foo => {
-  console.log(foo.state('count'))
+await $foo.use($foo => {
+  // get foo by deconstructing:
+  let [foo] = $foo
+
+  console.log($foo.state('count'))
 
   // rerender
-  setTimeout(() => foo.state( state => state.count++ ), 1000)
+  setTimeout(() => $foo.state( state => state.count++ ), 1000)
 })
 
 // re-run all aspects
-target.run()
+$foo.update()
 ```
 
 ### `.use( fns? )` − assign aspects

@@ -149,7 +149,6 @@ function render(arg) {
     let proto = Spect.prototype
 
     const $el = new Spect(el)
-    $el.element = el
     el[_spect] = $el
 
     if (fn) $el.update(fn)

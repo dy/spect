@@ -15,7 +15,7 @@ t('use: aspects, assigned through parent wrapper', async t => {
   let $a5 = $(frag.querySelector('*'))
 
   let log = []
-  await $a3.use(({ element: el}) => {
+  await $a3.use(([ el ]) => {
     t.is(el, a)
     log.push('a3')
   })
