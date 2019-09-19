@@ -1,5 +1,37 @@
 import t from 'tst'
-import $ from '..'
+import $, {h} from '..'
+
+t('html: should destroy replaced new internal nodes', async t => {
+  let log = []
+
+  let $app = $`<div#content/>`
+  document.body.appendChild($app[0])
+
+  let data = Array(2).fill(0).map(_ => ({name: 'foo'}))
+
+  await $app.use(({ html }) => {
+    log.push('app')
+    html`${data.map(data => $`<${Card} title=${data.name}/>`)}`
+  })
+
+  function Card({ html, title }) {
+    log.push(title)
+    html`
+    <div.card>
+    <div.card-title>${ title }</div>
+    </div>
+    `
+    return () => log.push('-' + title)
+  }
+
+  t.is(log, ['app', 'foo', 'foo'])
+
+  data[1].name = 'bar'
+  await $app.update()
+
+  t.is(log, ['app', 'foo', 'foo', 'app', '-foo', '-foo', 'foo', 'bar'])
+})
+
 
 t.todo('case: readme intro', t => {
   let el = document.createElement('div')

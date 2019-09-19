@@ -10,7 +10,8 @@ import {
   applyAttr,
   elementVoid,
   currentPointer,
-  skipNode
+  skipNode,
+  notifications
 } from 'incremental-dom'
 import { isIterable, paramCase, SPECT_CLASS } from './util'
 
@@ -18,9 +19,13 @@ attributes.class = applyAttr
 attributes.is = (...args) => (applyAttr(...args), applyProp(...args))
 attributes[symbols.default] = applyProp
 
+notifications.nodesDeleted = function (nodes) {
+  nodes.forEach((node) => node[_spect] && node[_spect].dispose())
+};
 
 const _target = Symbol.for('spect.target')
 const _instance = Symbol.for('spect.instance')
+const _spect = Symbol.for('spect')
 
 
 export default function html(...args) {
@@ -28,7 +33,9 @@ export default function html(...args) {
 
   // tpl string: html`<a foo=${bar}/>`
   let vdom
-  if (args[0].raw) vdom = htm.call(h, ...args)
+  if (args[0].raw) {
+    vdom = htm.call(h, ...args)
+  }
 
   // html('<a foo/>')
   else if (typeof args[0] === 'string') vdom = htm.call(h, args)
@@ -143,6 +150,7 @@ function render(arg) {
 
     const $el = new Spect(el)
     $el.element = el
+    el[_spect] = $el
 
     if (fn) $el.update(fn)
     if (use) $el.update(use)
