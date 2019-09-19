@@ -30,6 +30,8 @@ t('html: should destroy replaced new internal nodes', async t => {
   await $app.update()
 
   t.is(log, ['app', 'foo', 'foo', 'app', '-foo', '-foo', 'foo', 'bar'])
+
+  document.body.removeChild($app[0])
 })
 
 

@@ -41,7 +41,7 @@ class Spect {
     if (arg == null) arg = {}
     if (isPrimitive(arg)) arg = new (Object.getPrototypeOf(arg).constructor)(arg)
 
-    this[_target] = arg
+    this[_target] = this[0] = arg
     this[_promise] = Promise.resolve()
     this[_using] = new Map
     this[_subscription] = {}

@@ -38,6 +38,15 @@ t('$: create new', t => {
   t.equal($tpl.length, 2)
 })
 
+t.todo('$: create components', t => {
+  let $el = $`<${C}/>`
+
+  function C($el) {
+    console.log($el[0])
+  }
+  console.log($el)
+})
+
 t('$: subselect nodes', t => {
   let $foo = $`<foo><bar/></foo>`
 

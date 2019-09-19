@@ -76,6 +76,7 @@
     "incremental-dom": "^0.6.0",
     "insert-styles": "^1.2.1",
     "kebab-case": "^1.0.0",
+    "nanomorph": "^5.4.0",
     "negative-index": "^1.0.3",
     "scope-css": "^1.2.1"
   },

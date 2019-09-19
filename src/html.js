@@ -13,6 +13,7 @@ import {
   skipNode,
   notifications
 } from 'incremental-dom'
+import morph from 'nanomorph'
 import { isIterable, paramCase, SPECT_CLASS } from './util'
 
 attributes.class = applyAttr
@@ -44,7 +45,7 @@ export default function html(...args) {
   else if (typeof args[0] === 'function') {
     let input = [...el.childNodes]
     let output = args[0](input)
-    html.call(this, output)
+    morph(el, { childNodes: output }, { childrenOnly: true })
     return this
   }
 
@@ -58,8 +59,8 @@ export default function html(...args) {
   }
 
   if (!Array.isArray(vdom)) vdom = [vdom]
-
   // stub native nodes
+  // FIXME: this removes elements from the initial tree instead of morphing
   let count = 0, refs = {}
   vdom = vdom.map(function map(arg) {
     if (arg == null) return
@@ -292,3 +293,5 @@ function createClass(HTMLElement) {
     }
   }
 }
+
+
