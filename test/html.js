@@ -446,3 +446,12 @@ t('html: 50+ elements shouldnt invoke recursion', t => {
 
   t.is(el.length, 100)
 })
+
+t.only('html: templates', t => {
+  $`<${C}></>`
+
+  function C (target) {
+    console.log(target)
+    target.html`foo`
+  }
+})
