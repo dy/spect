@@ -434,3 +434,15 @@ t('html: removing aspected element should trigger destructor', async t => {
   $el.html`<baz/>`
   await $el
 })
+
+t('html: 50+ elements shouldnt invoke recursion', t => {
+  let data = Array(100).fill({x:1})
+
+  let el = $`${data.map(item => $`<${fn} ...${item}/>`)}`
+
+  function fn ({html, x}) {
+    html`x: ${x}`
+  }
+
+  t.is(el.length, 100)
+})

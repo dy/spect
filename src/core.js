@@ -24,10 +24,8 @@ const _promise = Symbol.for('spect.promise'),
 
 const cache = new WeakMap
 
-let fxCount, recurseCount
+let fxCount
 export let current = null
-
-const MAX_DEPTH = 50
 
 export default function spect(arg) {
   return new Spect(arg)
@@ -114,20 +112,6 @@ class Spect {
       current = prev
       return px
     })
-
-    if (!recurseCount) {
-      recurseCount = 1
-      this[_promise].then(() => {
-        recurseCount = 0
-        return px
-      })
-    } else {
-      recurseCount++
-      if (recurseCount > MAX_DEPTH) {
-        this[_error] = Error('Recursion')
-        throw this[_error]
-      }
-    }
 
     return px
   }
