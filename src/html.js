@@ -13,7 +13,6 @@ import {
   skipNode,
   notifications
 } from 'incremental-dom'
-import morph from 'nanomorph'
 import { isIterable, paramCase, SPECT_CLASS } from './util'
 
 
