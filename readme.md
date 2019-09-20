@@ -38,7 +38,7 @@ Other approaches include:
 
 <!--
 ```js
-import $ from 'spect-dom'
+import $ from 'spect'
 import ky from 'ky'
 import { t, useLocale } from 'ttag'
 
@@ -90,10 +90,10 @@ $('.preloadable').use(preloader)
 
 **A.** As _npm_ package:
 
-[![npm i spect-dom](https://nodei.co/npm/spect-dom.png?mini=true)](https://npmjs.org/package/spect-dom/)
+[![npm i spect](https://nodei.co/npm/spect.png?mini=true)](https://npmjs.org/package/spect/)
 
 ```js
-import $ from 'spect-dom'
+import $ from 'spect'
 
 // ...UI code
 ```
@@ -102,7 +102,7 @@ import $ from 'spect-dom'
 
 ```html
 <script type="module">
-import $ from 'https://unpkg.com/spect-dom@latest?module'
+import $ from 'https://unpkg.com/spect@latest?module'
 
 // ...UI code
 </script>
@@ -111,7 +111,7 @@ import $ from 'https://unpkg.com/spect-dom@latest?module'
 **C.** As standalone bundle:
 
 ```html
-<script src="https://unpkg.com/spect-dom/dist-umd/index.bundled.js"></script>
+<script src="https://unpkg.com/spect/dist-umd/index.bundled.js"></script>
 <script>
   let $ = window.spect
 
@@ -133,7 +133,7 @@ This example assigns `hello` aspect to `#hello-example` element and renders sing
 <div id="hello-example" name="Cyril"></div>
 
 <script type="module">
-import $ from 'spect-dom'
+import $ from 'spect'
 
 function hello({ html, attr }) {
   html`<div.message>
@@ -153,7 +153,7 @@ $('#hello-example').use(hello)
 _Spect_ introduces `.state`, `.mount`, `.fx` and other effects, similar to `useState` and `useEffect` hooks and jQuery utils. Effects may accept `deps` argument for conditional triggering.
 
 ```js
-import $ from 'spect-dom'
+import $ from 'spect'
 
 $('#timer-example').use(({ state, mount, html, state }) => {
   // init
@@ -183,7 +183,7 @@ $('#timer-example').use(({ state, mount, html, state }) => {
 Events are provided by `.on` effect, decoupling callbacks from markup and enabling event delegation. They can be used along with direct `on*` attributes.
 
 ```js
-import $ from 'spect-dom'
+import $ from 'spect'
 
 $('#todos-example').use(Todo)
 
@@ -241,7 +241,7 @@ _Spect_ is able to create components via native web-components mechanism, as see
 
 ```js
 // index.js
-import $ from 'spect-dom'
+import $ from 'spect'
 import MarkdownEditor from './editor.js'
 
 // MarkdownEditor is created as web-component
@@ -250,13 +250,13 @@ $('#markdown-example').use(({ html }) => html`<${MarkdownEditor} content='Hello,
 
 ```js
 // editor.js
-import $ from 'spect-dom'
+import $ from 'spect'
 import { Remarkable } from 'remarkable'
 
-export default function MarkdownEditor ({ prop, state, class: cls }) {
+export default function MarkdownEditor ({ prop, state, class: className }) {
   state({ value: prop('content') }, [ prop('content') ])
 
-  cls`markdown-editor`
+  className`markdown-editor`
 
   html`
     <h3>Input</h3>
@@ -608,7 +608,7 @@ Register effect(s) available for targets.
 
 ```js
 import spect, { state, prop, fx } from 'spect'
-import { html, css, attr } from 'spect-dom'
+import { html, css, attr } from 'spect'
 
 spect.fn(state, prop, fx, html, css, attr)
 
