@@ -36,8 +36,6 @@ Other approaches include:
 * streamlized html (orig holder, vdom, attaching fx, API, carrying over DOM nodes)
 -->
 
-[![npm i spect](https://nodei.co/npm/spect.png?mini=true)](https://npmjs.org/package/spect/)
-
 <!--
 ```js
 import $ from 'spect-dom'
