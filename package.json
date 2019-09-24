@@ -33,7 +33,7 @@
   },
   "scripts": {
     "build": "pika build",
-    "start": "parcel serve test/index.html",
+    "start": "parcel serve --no-hmr test/index.html",
     "test": "node -r esm -r ./test/register.js test/index.js"
   },
   "repository": {
