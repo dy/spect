@@ -447,11 +447,17 @@ t('html: 50+ elements shouldnt invoke recursion', t => {
   t.is(el.length, 100)
 })
 
-t.only('html: templates', t => {
-  $`<${C}></>`
+t.only('html: templates', async t => {
+  // $`<${C}></>`
+  let { default: htm } = await import('htm')
 
-  function C (target) {
-    console.log(target)
-    target.html`foo`
-  }
+  htm = htm.bind((...args) => console.log(args))
+
+  htm`<a class="${x} c d"/>`
+
+  function x () {}
+  // function C (target) {
+  //   console.log(target)
+  //   target.html`foo`
+  // }
 })

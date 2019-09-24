@@ -1,22 +1,16 @@
 import t from 'tst'
-import spect, { current } from '../src/core'
-import state from '../src/state'
-import prop from '../src/prop'
-import fx from '../src/fx'
+import { run, state, store } from '../src/atoms'
 
-spect.fn(fx, prop, state)
 
-t.skip('counter', t => {
-  let $n = spect({
-    x: 1
+t.only('counter', t => {
+  store({
+    count: 0
   })
 
-  $n.use(({ state }) => {
-    state({ count: 0 }, [])
-
-    console.log(state('count'))
+  run(() => {
+    console.log(store('count'))
     setTimeout(() => {
-      state(s => ++s.count)
+      store(s => ++s.count)
     }, 1000)
   })
 })

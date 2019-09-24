@@ -4,7 +4,7 @@
 
 #### 🎡 Concept
 
-_Spect_ is a mixture of jQuery-like _collections_, _ reactive aspects_ and _side-effects_ (similar to react components and hooks).
+_Spect_ is collection of _ reactive effects_.
 
 #### 🏛️ Principles
 
@@ -36,53 +36,48 @@ Other approaches include:
 * streamlized html (orig holder, vdom, attaching fx, API, carrying over DOM nodes)
 -->
 
-<!--
+
 ```js
-import $ from 'spect'
+import { html, attr, state, fx, deps, toggle, h } from 'spect'
 import ky from 'ky'
 import { t, useLocale } from 'ttag'
 
-Object.assign($.fn, { html, attr, state, fx })
-
 // main app aspect - load & render data
-function main ({ state, fx, attr, html }) {
-  // init state
-  state({ id: 1 }, [])
+use(document.querySelector('#app'), async el => {
+  // init effect
+  fx(() => state(el, { id: 1 }))
 
   // run state effect when `id` changes (useState + useEffect)
-  fx(() => {
-    attr('loading', true)
+  // TODO can be used as if (fx(id)) { ... }
+  fx(id, () => {
+    attr(el, 'loading', true)
     state({ user: await ky.get`./api/user/${ state('id') }` })
-    attr('loading', false)
-  }, [id])
+    attr(el,'loading', false)
+  })
 
   // html side-effect
-  html`<p use=${i18n}>${
-    attr('loading') ? `Hello, ${ state('user.name') }!` : `Thanks for patience...`
-  }</p>`
+  html(el, h`<p use=${i18n}>${
+    attr(el, 'loading') ? `Hello, ${ state('user.name') }!` : `Thanks for patience...`
+  }</p>`)
 }
 
 // preloader aspect - append/remove spinner if loading state changes
-function preloader ({ fx, html, attr }) {
-  // toggle
-  fx(() => {
-    html(children => [...children, $`<progress.progress-circle />`])
-    return () => html(children => children.slice(0, -1))
-  }, attr('loading'))
-}
+observe('.preloadable', el => {
+  toggle(attr(el, 'loading'), () => {
+    let progress = html`<progress.progress-circle />`
+    el.append(progress)
+    return () => el.remove(progress)
+  })
+})
 
 // i18n aspect - translates content when `lang` attribute changes
-function i18n ({ attr, fx, text }) {
-  let lang = attr('lang') || $(document.documentElement).attr('lang')
-  fx(() => {
+const i18n = el => {
+  let lang = attr(el, 'lang') || attr(document.documentElement, 'lang')
+  fx(lang, () => {
     useLocale(lang)
     text(text => t(text))
-  }, lang)
+  })
 }
-
-// assign aspects
-$('#app').use(main)
-$('.preloadable').use(preloader)
 ```
 -->
 
@@ -133,15 +128,17 @@ This example assigns `hello` aspect to `#hello-example` element and renders sing
 <div id="hello-example" name="Cyril"></div>
 
 <script type="module">
-import $ from 'spect'
+import { html, use } from 'spect'
 
-function hello({ html, attr }) {
-  html`<div.message>
-    Hello, ${ attr('name') }!
+let el = document.getElementById('#hello-example')
+
+function hello() {
+  html(el, `<div.message>
+    Hello, ${ el.name }!
   </div>`
 }
 
-$('#hello-example').use(hello)
+run(hello)
 </script>
 ```
 
@@ -153,24 +150,23 @@ $('#hello-example').use(hello)
 _Spect_ introduces `.state`, `.mount`, `.fx` and other effects, similar to `useState` and `useEffect` hooks and jQuery utils. Effects may accept `deps` argument for conditional triggering.
 
 ```js
-import $ from 'spect'
+import { use, state, mount, fx, live } from 'spect'
 
-$('#timer-example').use(({ state, mount, html, state }) => {
-  // init
-  state({ seconds: 0 }, [])
+live(`#timer-example`, el => {
+  fx([], () => state(el, { seconds: 0 }))
 
   // start timer when connected
-  mount(() => {
-    let i = setInterval( () => state(s => s.seconds++), 1000 )
+  mount(el, () => {
+    let i = setInterval( () => state(el, s => s.seconds++ ), 1000 )
 
     // disconnected
     return () => clearInterval(i)
   })
 
   // html is side-effect, not aspect result
-  html`Seconds: ${ state('seconds') }`
+  html(el, `Seconds: ${ state(el, 'seconds') }`)
 
-  console.log( state('seconds') )
+  console.log( state(el, 'seconds') )
 })
 
 ```
@@ -183,52 +179,52 @@ $('#timer-example').use(({ state, mount, html, state }) => {
 Events are provided by `.on` effect, decoupling callbacks from markup and enabling event delegation. They can be used along with direct `on*` attributes.
 
 ```js
-import $ from 'spect'
+import { $, use, on, delegate, html, state, h } from 'spect'
 
-$('#todos-example').use(Todo)
+use(Todo)
 
-function Todo({ state, on, html }) {
-  // init
-  state({ items: [], text: '' }, [])
+function Todo() {
+  let el = $('#todos-example')
 
-  on('submit', e => {
-    e.preventDefault();
+  let {items = [], text: ''} = state(el)
 
-    if (!state('text.length')) return;
+  on(el, 'submit', e => {
+    e.preventDefault()
+
+    if (!text.length) return
 
     const newItem = {
-      text: state('text'),
+      text,
       id: Date.now()
     };
 
-    // in-place reducer
-    state(state => ({
+    state(el, {
       items: [...state.items, newItem],
       text: ''
-    }))
+    })
   })
 
-  on('change', '#new-todo', e => state({ text: e.target.value }));
+  delegate(el, 'change', '#new-todo', e => state(el, { text: e.target.value }))
 
-  html`
-  <h3>TODO</h3>
-  <main is=${TodoList} items=${ state('items') }/>
-  <form>
-    <label for=new-todo>
-      What needs to be done?
-    </label>
-    <br/>
-    <input#new-todo value=${ state('text') }/>
-    <button>
-      Add #${ state('items.length') + 1 }
-    </button>
-  </form>
-`
+  html(el, h`
+    <h3>TODO</h3>
+    <main is=${TodoList} items=${ items }/>
+    <form>
+      <label for=new-todo>
+        What needs to be done?
+      </label>
+      <br/>
+      <input#new-todo value=${ text }/>
+      <button>
+        Add #${ items.length + 1 }
+      </button>
+    </form>
+  `)
 }
 
-// TodoList component
-function TodoList({ html, items }) {
-  html`<ul>${ items.map(item => $`<li>${ item.text }</li>`) }</ul>`
+// <main is=todo-list/>
+function TodoList({ items, shadowRoot }) {
+  html(shadowRoot, h`<ul>${ items.map(item => h`<li>${ item.text }</li>`) }</ul>`)
 }
 ```
 
@@ -241,35 +237,35 @@ _Spect_ is able to create components via native web-components mechanism, as see
 
 ```js
 // index.js
-import $ from 'spect'
+import { h, html } from 'spect'
 import MarkdownEditor from './editor.js'
 
 // MarkdownEditor is created as web-component
-$('#markdown-example').use(({ html }) => html`<${MarkdownEditor} content='Hello, **world**!'/>`)
+use(() => html($('#markdown-example'), h`<${MarkdownEditor} content='Hello, **world**!'/>`))
 ```
 
 ```js
 // editor.js
-import $ from 'spect'
+import { prop, state, html, h } from 'spect'
 import { Remarkable } from 'remarkable'
 
-export default function MarkdownEditor ({ prop, state, class: className }) {
-  state({ value: prop('content') }, [ prop('content') ])
+export default function MarkdownEditor (el) {
+  fx([prop(el, 'content')], content => state(el, { value: content }))
 
   className`markdown-editor`
 
-  html`
+  html(el, h`
     <h3>Input</h3>
     <label for="markdown-content">
       Enter some markdown
     </label>
     <textarea#markdown-content
-      onchange=${ e => state({ value: e.target.value }) }
+      onchange=${ e => state(el, { value: e.target.value }) }
     >${ state('value') }</textarea>
 
     <h3>Output</h3>
-    <div.content html=${ getRawMarkup( state('value') ) }/>
-  `
+    <div.content ref=${ el => html(el, getRawMarkup( state(el, 'value') )) }/>
+  `)
 }
 
 let getRawMarkup = content => {
