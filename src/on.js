@@ -1,53 +1,35 @@
-import delegated from 'delegate-it'
+import delegate from 'delegated-events'
+import { deps } from './core'
 
-const _deps = Symbol.for('spect.deps')
-const _target = Symbol.for('spect.target')
 
-export default function on (evts, delegate, fn, deps) {
-  if (typeof delegate === 'function') {
-    deps = fn
-    fn = delegate
-    delegate = null
-  }
-
-  if (this[_deps] && !this[_deps](deps, () => destroy.forEach(fn => fn && fn()))) return this
+export default function on (target, evts, fn) {
+  deps(undefined, () => destroy.forEach(fn => fn()))
 
   let destroy = []
 
   evts = evts.split(/\s+/)
 
-  let el = this[_target] || this
-
-  if (delegate) {
+  if (typeof target === 'string') {
     evts.forEach(evt => {
-      const delegation = delegated(el, delegate, evt, fn)
-      destroy.push(() => delegation.destroy())
+      delegate.on(target, evt, fn)
+      destroy.push(() => delegation.off(target, evt, fn))
     })
   }
   else {
     evts.forEach(evt => {
-      el.addEventListener(evt, fn)
-      destroy.push(() => el.removeEventListener(evt, fn))
+      target.addEventListener(evt, fn)
+      destroy.push(() => target.removeEventListener(evt, fn))
     })
   }
 }
 
-
-
-export function emit(evt, o, deps) {
-  if (this[_deps] && !this[_deps](deps)) return this
-
-  let el = this[_target] || this
-
+export function fire(target, evt, o) {
   if (evt instanceof Event) {
-    el.dispatchEvent(evt)
+    target.dispatchEvent(evt)
   }
-  else if (typeof evt === 'string') {
+  else {
     evt = evt.split(/\s+/)
-    evt.forEach(evt => el.dispatchEvent(new CustomEvent(evt)))
-  }
-  else if (typeof evt === 'object') {
-    el.dispatchEvent(new CustomEvent(evt.name, e))
+    evt.forEach(evt => delegate.fire(target, evt, o))
   }
 
   return this

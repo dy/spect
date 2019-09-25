@@ -1,16 +1,13 @@
 import t from 'tst'
-import { run, state, store } from '../src/atoms'
+import { run, state } from '..'
 
 
 t.only('counter', t => {
-  store({
-    count: 0
-  })
-
+  state(t).count = 0
   run(() => {
-    console.log(store('count'))
+    console.log(state(t).count)
     setTimeout(() => {
-      store(s => ++s.count)
+      state(t).count++
     }, 1000)
   })
 })

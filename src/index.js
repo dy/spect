@@ -1,15 +1,12 @@
-import $ from './$'
-import html, {h} from './html'
-import on from './on'
+import use from './use'
+import on, { fire } from './on'
+import { run } from './core'
 import attr from './attr'
 import state from './state'
 import prop from './prop'
-import fx from './fx'
-import mount from './mount'
-import css from './css'
-import clx from './class'
+import local from './local'
+import data from './data'
+import query from './query'
 
-$.fn(html, on, attr, state, prop, fx, mount, css, clx)
 
-export { h }
-export default $
+export { use, on, fire, state, run }

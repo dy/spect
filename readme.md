@@ -295,26 +295,26 @@ $`foo <bar.baz/>`
 <p align="right">Ref: <a href="https://jquery.com">jquery</a>, etc.</p> -->
 
 
-### `use( selector, fn )` − assign aspects
+### `use( selector, fn )` − assign aspect
 
-Assign aspects to elements in collection. Aspect `fn` is invoked immediately for each element. See [spect#use](https://github.com/spectjs/spect/tree/nodom#use-fns---assign-aspects) for details.
+Assign aspect to elements matching selector. Aspect `fn` is when element appears in the DOM and rerenders whenever its dependencies update. See [spect#use](https://github.com/spectjs/spect/tree/nodom#use-fns---assign-aspects) for details.
 
 ```js
 let bar = $('.bar')
 
 use('.foo', el => {
   // subscribe to updates
-  let x = attr( el, 'x' )
-  let y = attr( bar, 'y' )
+  let x = attr( el ).x
+  let y = attr( bar ).y
 
   // rerender after 1s
-  setTimeout(() => attr( el, a => a.x++ ), 1000)
+  setTimeout(() => attr( el ).x++, 1000)
 })
 
 // triggers rerendering $foo
 attr(bar, { y: 1 })
 ```
-
+<!--
 Aspects can be attached via `.html` effect as well:
 
 ```js
@@ -322,9 +322,11 @@ $els.html`<div is=${foo} use=${[bar, baz]}></div>`
 ```
 
 Aspects, assigned via `is`, define custom elements, see `.html` for details.
-Note that aspects "upgrade" elements - once assigned, elements cannot be "downgraded", very much like custom elements.
+Note that aspects "upgrade" elements - once assigned, elements cannot be "downgraded", very much like custom elements. -->
 
 
+
+<!--
 ### `run( fn )` - run aspect function
 
 Run assigned aspect or a single aspect for all elements in collection. See [spect#update](https://github.com/spectjs/spect/tree/nodom#update-fn-deps----update-aspect).
@@ -335,54 +337,26 @@ $els.update()
 
 // run single aspect
 $els.update( fn )
-```
+``` -->
 
 
-### `fx( deps, el => destroy )` − generic side-effect
+### `state( target, obj? )` − read / write target state
 
-Run effect function for each element in collection, with optional `deps` check. See [spect#fx](https://github.com/spectjs/spect/tree/nodom#fx-------bool--deps---generic-side-effect) for details.
-
-```js
-// called each time
-$els.fx($el => {});
-
-// called when value changes to non-false
-$els.fx($el => { $el.show(); return () => $el.hide(); }, $el.visible);
-
-// called on init only
-$els.fx($el => {}, []);
-
-// destructor is called any time deps change
-$els.fx($el => () => {}, deps);
-```
-
-
-### `state( target, obj )` − read / write target state
-
-Read or write state associated with an element. Reading returns first element state in the set. Reading subscribes current aspect to changes of that state. Writing rerenders all subscribed aspects. Optional `deps` param can define bypassing strategy, see `.fx`.
+Read or write state associated with any target. Reading returns first element state in the set. Reading subscribes current aspect to changes of that state. Writing rerenders all subscribed aspects. Optional `deps` param can define bypassing strategy, see `.fx`.
 
 ```js
-// write state
-$els.state('foo', 1)
-$els.state({ foo: 1 })
-$els.state('foo.bar.baz', 1) // safe-path set
+// write
+state(target, { foo: 'bar' })
+state(target).foo = bar
 
 // mutate/reduce
-$els.state(s => s.foo = 1)
-$els.state(s => {...s, foo: 1})
+state(target, s => s.foo = 1)
+state(target, s => {...s, foo: 1})
 
-// init
-$els.state({foo: 1}, [])
-
-// read (first element)
-$els.state('foo')
-$els.state('foo.bar.baz') // safe-path get
-
-// read full
-$els.state()
+// read
+state(target).foo
+state(target)
 ```
-
-<p align="right">Ref: <a href="https://reactjs.org/docs/hooks-state.html">useState</a>, <a href="https://www.npmjs.com/package/icaro">icaro</a>, <a href="https://www.npmjs.com/package/introspected">introspected</a>, <a href="https://ghub.io/dlv">dlv</a></p>
 
 
 ### `prop( target, obj? )` − target properties
@@ -573,6 +547,25 @@ $target.class()
 ```
 
 <p align="right">Ref: <a href="https://ghub.io/clsx">clsx</a>, <a href="https://ghub.io/classnames">classnames</a></p>
+
+
+### `fx( deps, el => destroy )` − generic side-effect
+
+Run effect function for each element in collection, with optional `deps` check. See [spect#fx](https://github.com/spectjs/spect/tree/nodom#fx-------bool--deps---generic-side-effect) for details.
+
+```js
+// called each time
+$els.fx($el => {});
+
+// called when value changes to non-false
+$els.fx($el => { $el.show(); return () => $el.hide(); }, $el.visible);
+
+// called on init only
+$els.fx($el => {}, []);
+
+// destructor is called any time deps change
+$els.fx($el => () => {}, deps);
+```
 
 
 

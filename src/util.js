@@ -1,5 +1,8 @@
 import kebab from 'kebab-case'
 import equal from 'fast-deep-equal'
+import tuple from 'immutable-tuple'
+import introspected from 'introspected'
+import { subscribe, publish } from './core'
 
 export const SPECT_CLASS = '👁'
 
@@ -25,19 +28,27 @@ export function isPrimitive(arg) {
   }
 }
 
-
+const storeCache = new WeakMap()
 export function createEffect(get) {
   let name = get.name
   let _ = {
     [name]: (target, ...args) => {
       let key = tuple(target, name)
       let curr = get(target)
+      let store = storeCache.get(curr)
+      if (!store) {
+        store = introspected(curr, (store, path) => {
+          publish(key)
+          // for (let [key, value] of changes) publish(key, value)
+        })
+        storeCache.set(curr, store)
+      }
 
       switch(true) {
         // effect(target)
         case (!args.length):
           subscribe(key)
-          return curr
+          return store
 
         // effect`...`
         // case (args[0].raw):
@@ -47,11 +58,11 @@ export function createEffect(get) {
         // effect(target, s => {...})
         case (typeof args[0] === 'function'):
           let fn = args[0]
-          let result = fn(curr)
-          if (result !== curr && typeof result === typeof curr) {
+          let result = fn(store)
+          if (result !== store && typeof result === typeof store) {
             _[name](target, result)
           }
-          return curr
+          return store
 
         // effect(target, obj)
         case (typeof args[0] === 'object'):
@@ -59,12 +70,12 @@ export function createEffect(get) {
           let changed = false
           for (let name in obj) {
             let value = obj[name]
-            if (equal(curr[name], value)) continue
-            curr[name] = value
+            if (equal(store[name], value)) continue
+            store[name] = value
             changed = true
           }
           if (changed) publish(key)
-          return curr
+          return store
       }
     }
   }
