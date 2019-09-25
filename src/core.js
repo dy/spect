@@ -1,328 +1,180 @@
 import equal from 'fast-deep-equal'
+import { render as prender, h as hs } from 'preact'
+import htm from 'htm'
+import tuple from 'immutable-tuple'
 import { isPrimitive } from './util'
 
 const isStacktraceAvailable = !!(new Error).stack
 
-// hooks for effects
-// since spect is proxy over target, it provides transparent access to target props
-// therefore own props are hidden to avoid shading target props
-// to avoid extra import, we use global symbols
-const _promise = Symbol.for('spect.promise'),
-      _use = Symbol.for('spect.use'),
-      _subscription = Symbol.for('spect.subscription'),
-      _proxy = Symbol.for('spect.proxy'),
-      _target = Symbol.for('spect.target'),
-      _publish = Symbol.for('spect.publish'),
-      _subscribe = Symbol.for('spect.subscribe'),
-      _update = Symbol.for('spect.update'),
-      _using = Symbol.for('spect.using'),
-      _dispose = Symbol.for('spect.dispose'),
-      _deps = Symbol.for('spect.deps'),
-      _error = Symbol.for('spect.error'),
-      _instance = Symbol.for('spect.instance'),
-      _fxkey = Symbol.for('spect.fxkey')
-
-const cache = new WeakMap
-
+// run aspect
 let fxCount
-export let current = null
+let current = null
+export function run(fn) {
+  let prev = current
+  fxCount = 0
 
-export default function spect(arg) {
-  return new Spect(arg)
+  // identify consequent fn call
+  current = fnState(fn)
+
+  let result
+  result = fn()
+  if (result && result.then) result = result.then((result) => {
+    current.destroy[current.key] = result
+    current = prev
+  })
+  else {
+    current.destroy[current.key] = result
+    current = prev
+  }
+}
+let fnStates = new WeakMap
+function fnState(fn) {
+  let state = fnStates.get(fn)
+  if (!state) {
+    fnStates.set(fn, state = {
+      fn, deps: {}, destroy: {}
+    })
+  }
+  return state
 }
 
-class Spect {
-  constructor(arg) {
-    if (cache.has(arg)) return cache.get(arg)
-
-    if (arg && arg[_use]) return arg
-    if (arg == null) arg = {}
-    if (isPrimitive(arg)) arg = new (Object.getPrototypeOf(arg).constructor)(arg)
-
-    this[_target] = this[0] = arg
-    this[_promise] = Promise.resolve()
-    this[_using] = new Map
-    this[_subscription] = {}
-    this[_instance] = this
-
-    // FIXME: this should be whether polyfilled or ...
-    this[Symbol.thenable] = false
-
-    let self = this
-    this[_proxy] = new Proxy(arg, {
-      get(target, name, proxy) {
-        if (self[name]) return self[name]
-        return target[name]
-      }
-    })
-
-    cache.set(arg, this[_proxy])
-    return this[_proxy]
+function callsiteId() {
+  let key
+  if (isStacktraceAvailable) {
+    key = (new Error).stack + ''
   }
-
-  // for detructuring: let [target] = $target
-  *[Symbol.iterator] () {
-    yield this[_target]
+  // fallback to react order-based key
+  else {
+    key = fxCount++
   }
+  return key
+}
 
-  [_use](fn) {
-    let px = this[_proxy]
-    let using = this[_using]
+function checkDeps(deps, destroy) {
+  if (!current) return true
 
-    if (using.has(fn)) return px
+  let key = callsiteId()
 
-    let boundFn = fn.bind(this[_proxy])
-    boundFn.fn = fn
-    boundFn.target = this[_proxy]
-    boundFn.deps = {}
-    boundFn.destroy = {}
-    boundFn.children = new Set()
-
-    // register child aspects
-    if (current) current.children.add(boundFn)
-
-    using.set(fn, boundFn)
-    this[_update](fn)
-
-    return px
-  }
-
-  [_update](fn) {
-    let px = this[_proxy]
-
-    if (this[_error]) return px
-
-    if (!fn.fn) {
-      if (!this[_using].has(fn)) {
-        return this[_use](fn)
-      }
-      fn = this[_using].get(fn)
-    }
-
-    this[_promise].then(async () => {
-      let prev = current
-      fxCount = 0
-      current = fn
-      // FIXME: there can be a better way to handle errors than keeping as is
-      try {
-        fn.destructor = await fn(px)
-      } catch (e) {
-        console.error(e)
-      }
-      current = prev
-      return px
-    })
-
-    return px
-  }
-
-  [_dispose](fn) {
-    let px = this[_proxy]
-
-    if (!fn.fn) {
-      if (!this[_using].has(fn)) return px
-      fn = this[_using].get(fn)
-    }
-
-    // call planned effect destructors
-    for (let key in fn.destroy) {
-      let destroy = fn.destroy[key]
-      destroy && destroy.call && destroy()
-    }
-
-    // destruct all child aspects
-    for (let childfn of fn.children) {
-      childfn.target[_dispose](childfn)
-    }
-    fn.children.clear()
-
-    // call destructor
-    if (fn.destructor) fn.destructor.call(px)
-
-    fn.children = null
-    fn.destructor = null
-    fn.destroy = null
-    fn.deps = null
-    fn.target = null
-    fn.fn = null
-
-    // clear subscriptions
-    for (let key in this[_subscription]) {
-      this[_subscription][key].clear()
-    }
-    this[_subscription] = null
-
-    // clean bound fns
-    this[_using].clear()
-
-    // FIXME: revoke proxy
-
-    // remove arg from cache, if no aspects left
-    cache.delete(this[_target])
-
-    return px
-  }
-
-  // subscribe target aspect to updates of the indicated path
-  [_subscribe](name, aspect = current) {
-    if (!aspect) return this[_proxy]
-    let subscriptions = this[_subscription]
-    if (!subscriptions[name]) subscriptions[name] = new Set()
-    subscriptions[name].add(aspect)
-    return this[_proxy]
-  }
-
-  // update effect observers
-  [_publish](name) {
-    let subscriptions = this[_subscription]
-    if (!subscriptions[name]) return
-    let subscribers = subscriptions[name]
-    for (let aspect of subscribers) aspect.target[_update](aspect)
-    return this[_proxy]
-  }
-
-  // check if deps changed, call destroy
-  [_deps](deps, destroy) {
-    if (!current) return true
-
-    let key = this[_fxkey]()
-
-    if (deps == null) {
-      let prevDestroy = current.destroy[key]
-      if (prevDestroy && prevDestroy.call) prevDestroy()
-      current.destroy[key] = destroy
-      return true
-    }
-
-    let prevDeps = current.deps[key]
-    if (deps === prevDeps) return false
-    if (!isPrimitive(deps)) {
-      if (equal(deps, prevDeps)) return false
-    }
-    current.deps[key] = deps
-
-    // enter false state - ignore effect
-    if (prevDeps === undefined && deps === false) return false
-
+  if (deps == null) {
     let prevDestroy = current.destroy[key]
     if (prevDestroy && prevDestroy.call) prevDestroy()
-
-    // toggle/fsm case
-    if (deps === false) {
-      current.destroy[key] = null
-      return false
-    }
-
     current.destroy[key] = destroy
     return true
   }
 
-  // get unique key for current fx
-  [_fxkey]() {
-    let key
-    if (isStacktraceAvailable) {
-      // FIXME: parsing callstack is unreliable, but taking it as a whole is fine
-      // the only thing that varies is line number
-      // let [coresite, effectsite, callsite, ...trace] = parseStack((new Error).stack)
-      // let callsiteurl = callsite.file + ':' + callsite.lineNumber + ':' + callsite.column
-      // key = callsiteurl
-      key = (new Error).stack + ''
-    }
-    // fallback to react order-based key
-    else {
-      key = fxCount++
-    }
-    return key
+  let prevDeps = current.deps[key]
+  if (deps === prevDeps) return false
+  if (!isPrimitive(deps)) {
+    if (equal(deps, prevDeps)) return false
+  }
+  current.deps[key] = deps
+
+  // enter false state - ignore effect
+  if (prevDeps === undefined && deps === false) return false
+
+  let prevDestroy = current.destroy[key]
+  if (prevDestroy && prevDestroy.call) prevDestroy()
+
+  // toggle/fsm case
+  if (deps === false) {
+    current.destroy[key] = null
+    return false
   }
 
-  then(fn) {
-    this[_promise].then(fn)
-    return this[_proxy]
-  }
+  current.destroy[key] = destroy
+  return true
 }
 
-spect.fn = function registerEffect(...fxs) {
-  fxs.forEach(fx => {
-    const name = fx.name
-    if (!name || name in Spect.prototype) return
-    const cache = new WeakMap
-
-    Object.defineProperty(Spect.prototype, name, {
-      get() {
-        let boundFn = cache.get(this[_proxy])
-        if (!boundFn) {
-          cache.set(this[_proxy], boundFn = fx.bind(this[_proxy]))
-          boundFn.target = this[_proxy]
-        }
-        return boundFn
-      },
-      set() { }
+const subscriptions = new WeakMap
+export function subscribe(key, aspect = current) {
+  if (!aspect) return
+  if (!subscriptions.has(key)) {
+    subscriptions.set(key, new Set())
+  }
+  subscriptions.get(key).add(aspect)
+}
+export function publish(key) {
+  if (!subscriptions.has(key)) return
+  let subscribers = subscriptions.get(key)
+  for (let aspect of subscribers) queue(aspect.fn)
+}
+let planned
+function queue(fn) {
+  if (!planned) {
+    planned = new Set()
+    planned.add(fn)
+    Promise.resolve().then(() => {
+      for (let fn of planned) run(fn)
+      planned = null
     })
-  })
+  }
 }
 
-/*
-Object.defineProperty(Spect.prototype, 'then', {
-  get() {
+// render vdom into element
+export function render(vdom, el) {
+  if (typeof el === 'string') el = $$(el)
+  else if (el instanceof Node) prender(vdom, el)
+  else el.forEach(el => prender(vdom, el))
+}
 
-    let [protogetsite, proxygetsite, anonsite, queuesite, ...stack] = parseStack((new Error).stack)
-    // FIXME: heuristic criteria to enable returning thenable from await
-    if (!queuesite) return null
 
-    if (
-      // /anonymous function/.test(anonsite.methodName) &&
-      // /Tick/.test(queuesite.methodName) &&
-      /^internal/.test(queuesite.file) &&
-      // /anonymous/.test(stack[stack.length - 1].methodName)
-    ) {
-      // console.log(parseStack((new Error).stack))
-      return null
+// build vdom
+export const html = htm.bind(h)
+
+// select elements
+export function $(sel) {
+  return document.querySelector(sel)
+}
+export function $$(sel) {
+  return document.querySelectorAll(sel)
+}
+
+function h(tagName, props, ...children) {
+  if (typeof tagName !== 'string') return hs(...arguments)
+
+  if (!props) props = {}
+  let [tag, id, classes] = parseTagComponents(tagName)
+  if (!props.id) props.id = id
+  if (!props.class) props.class = classes.join(' ')
+
+  return hs(tag, props, ...children)
+}
+
+function parseTagComponents(str) {
+  let tag, id, classes
+  let [beforeId, afterId = ''] = str.split('#')
+  let beforeClx = beforeId.split('.')
+  tag = beforeClx.shift()
+  let afterClx = afterId.split('.')
+  id = afterClx.shift()
+  classes = [...beforeClx, ...afterClx]
+  return [tag, id, classes]
+}
+
+
+// turn function into a web-component
+const _destroy = Symbol('destroy')
+export function component(fn) {
+  class HTMLCustomComponent extends HTMLElement {
+    constructor() {
+      super()
     }
-
-    return (fn) => {
-      // this[_promise].then(() => fn(this[_proxy]))
-      this[_promise].then(() => fn())
-      return this[_proxy]
+    connectedCallback() {
+      // take over attrs as props
+      [...this.attributes].forEach(({ name, value }) => {
+        this[name] = value
+      })
+      new Promise((ok) => {
+        setTimeout(() => {
+          ok()
+          this[_destroy] = fn.call(this, this)
+        })
+      })
+    }
+    disconnectedCallback() {
+      this[_destroy] && this[_destroy]
     }
   }
-})
-*/
 
-// core effects
-spect.fn(function use(fns, deps) {
-    if (!this[_deps](deps)) return this
-
-    if (!Array.isArray(fns)) fns = [fns]
-
-    fns.forEach(fn => this[_use](fn))
-
-    return this
-  },
-
-  function update(fns, deps) {
-    if (!this[_deps](deps)) return this
-
-    if (!Array.isArray(fns)) {
-      if (!fns) fns = [...this[_using].keys()]
-      else fns = [fns]
-    }
-
-    fns.forEach(fn => this[_update](fn))
-
-    return this
-  },
-
-  function dispose(fns, deps) {
-    if (!this[_deps](deps)) return this
-
-    if (!Array.isArray(fns)) {
-      if (!fns) fns = [...this[_using].keys()]
-      else fns = [fns]
-    }
-
-    fns.forEach(fn => this[_dispose](fn))
-
-    return this
-  }
-)
-
+  return HTMLCustomComponent
+}
