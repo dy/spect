@@ -248,10 +248,10 @@ export default function MarkdownEditor (el) {
     </label>
     <textarea#markdown-content
       onchange=${ e => state(el, { value: e.target.value }) }
-    >${ state(el, 'value') }</textarea>
+    >${ state(el).value }</textarea>
 
     <h3>Output</h3>
-    <div.content>${ html({ raw: getRawMarkup( state(el, 'value'))}) }</>
+    <div.content>${ html({ raw: getRawMarkup( state(el).value )}) }</>
   </>`)
 }
 
@@ -300,20 +300,19 @@ $`foo <bar.baz/>`
 Assign aspects to elements in collection. Aspect `fn` is invoked immediately for each element. See [spect#use](https://github.com/spectjs/spect/tree/nodom#use-fns---assign-aspects) for details.
 
 ```js
-let $foo = $('.foo')
-let $bar = $('.bar')
+let bar = $('.bar')
 
-$foo.use($el => {
+use('.foo', el => {
   // subscribe to updates
-  let x = $el.attr('x')
-  let y = $bar.attr('y')
+  let x = attr( el, 'x' )
+  let y = attr( bar, 'y' )
 
   // rerender after 1s
-  setTimeout(() => $el.attr( a => a.x++ ), 1000)
+  setTimeout(() => attr( el, a => a.x++ ), 1000)
 })
 
 // triggers rerendering $foo
-$bar.attr('y', 1)
+attr(bar, { y: 1 })
 ```
 
 Aspects can be attached via `.html` effect as well:
