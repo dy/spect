@@ -55,3 +55,48 @@ t.skip('prop: counter', t => {
     }, [$a.prop`count`])
   })
 })
+
+t('prop: direct get/set', t => {
+  spect().use(el => {
+    el.prop('c', 1)
+    t.is(el.c, 1)
+  })
+})
+
+t('prop: object set', t => {
+  spect().use(el => {
+    el.prop({ c: 1, d: 2 })
+
+    t.is(el.prop`c`, 1)
+  })
+})
+
+t('prop: functional get/set', t => {
+  let $a = spect()
+
+  $a.prop(s => s.count = 0)
+
+  t.is($a.prop(), $a)
+
+  $a.prop(s => {
+    s.count++
+  })
+  t.is($a.count, 1)
+})
+
+t.skip('prop: counter', t => {
+  let stop = 0
+  spect().use($a => {
+    $a.prop({ count: 0 }, [])
+
+    console.log($a.prop('count'))
+    $a.fx(s => {
+      if (stop < 6) {
+        setTimeout(() => {
+          $a.prop(s => s.count++)
+          stop++
+        }, 1000)
+      }
+    }, [$a.prop`count`])
+  })
+})

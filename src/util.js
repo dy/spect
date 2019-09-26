@@ -2,6 +2,7 @@ import kebab from 'kebab-case'
 import equal from 'fast-deep-equal'
 import introspected from 'introspected'
 import { subscribe, publish } from './core'
+import tuple from 'immutable-tuple'
 
 export const SPECT_CLASS = '👁'
 
@@ -32,10 +33,11 @@ export function createEffect(get) {
   let name = get.name
   let _ = {
     [name]: (target, ...args) => {
-      let curr = get(target)
-      let store = storeCache.get(curr)
+      let store = storeCache.get(tuple(name, target))
 
       if (!store) {
+        let curr = get(target)
+
         store = new Proxy(introspected(curr, (store, path) => {
           publish([target, name, path[0]])
         }), {
@@ -44,7 +46,8 @@ export function createEffect(get) {
             return Reflect.get(store, prop, receiver)
           }
         })
-        storeCache.set(curr, store)
+
+        storeCache.set(tuple(name, target), store)
       }
 
       switch(true) {

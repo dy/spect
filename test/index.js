@@ -1,7 +1,7 @@
 import './core.js'
 // import './cases.js'
 // import './$.js'
-// import './use.js'
+import './use.js'
 // import './fx.js'
 // import './is.js'
 // import './state.js'

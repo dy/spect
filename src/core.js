@@ -7,23 +7,28 @@ const isStacktraceAvailable = !!(new Error).stack
 // run aspect
 let fxCount
 let current = null
-export function run(fn) {
-  let prev = current
-  fxCount = 0
+export function run(...fns) {
+  return Promise.all(fns.map(fn => {
+    if (fn.then) return fn
 
-  // identify consequent fn call
-  current = fnState(fn)
+    let prev = current
+    fxCount = 0
 
-  let result
-  result = fn()
-  if (result && result.then) result = result.then((result) => {
-    current.destroy[current.key] = result
-    current = prev
-  })
-  else {
-    current.destroy[current.key] = result
-    current = prev
-  }
+    // identify consequent fn call
+    current = fnState(fn)
+
+    let result
+    result = fn()
+    if (result && result.then) result = result.then((result) => {
+      current.destroy[current.key] = result
+      current = prev
+    })
+    else {
+      current.destroy[current.key] = result
+      current = prev
+    }
+    return result
+  }))
 }
 let fnStates = new WeakMap
 function fnState(fn) {
@@ -39,7 +44,10 @@ function fnState(fn) {
 function callsiteId() {
   let key
   if (isStacktraceAvailable) {
+    let limit = Error.stackTraceLimit
+    Error.stackTraceLimit = 5
     key = (new Error).stack + ''
+    Error.stackTraceLimit = limit
   }
   // fallback to react order-based key
   else {
@@ -61,23 +69,15 @@ export function deps(deps, destroy) {
   }
 
   let prevDeps = current.deps[key]
+
   if (deps === prevDeps) return false
   if (!isPrimitive(deps)) {
     if (equal(deps, prevDeps)) return false
   }
   current.deps[key] = deps
 
-  // enter false state - ignore effect
-  if (prevDeps === undefined && deps === false) return false
-
   let prevDestroy = current.destroy[key]
   if (prevDestroy && prevDestroy.call) prevDestroy()
-
-  // toggle/fsm case
-  if (deps === false) {
-    current.destroy[key] = null
-    return false
-  }
 
   current.destroy[key] = destroy
   return true

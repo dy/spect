@@ -55,7 +55,7 @@ use('#app', async el => {
 
   // html side-effect
   html`<${el}.preloadable>
-    <p.i18n>${ attr(el).loading ? `Hello, ${ state(el).user?.name }!` : `Thanks for patience...` }</p>
+    <p.i18n>${ attr(el).loading ? `Hello, ${ state(el).user.name }!` : `Thanks for patience...` }</p>
   </>`
 }
 
@@ -295,15 +295,15 @@ $`foo <bar.baz/>`
 <p align="right">Ref: <a href="https://jquery.com">jquery</a>, etc.</p> -->
 
 
-### `use( selector, fn )` − assign aspect
+### `use( selector | element, (el) => () => {} )` − assign aspect
 
-Assign aspect to elements matching selector. Aspect `fn` is when element appears in the DOM and rerenders whenever its dependencies update. See [spect#use](https://github.com/spectjs/spect/tree/nodom#use-fns---assign-aspects) for details.
+Observe selector in DOM, run init function when element appears in the DOM. Run optional destroy when element is removed from the DOM.
 
 ```js
 let bar = $('.bar')
 
 use('.foo', el => {
-  // subscribe to updates
+  // subscribe to attribute updates
   let x = attr( el ).x
   let y = attr( bar ).y
 
@@ -311,110 +311,108 @@ use('.foo', el => {
   setTimeout(() => attr( el ).x++, 1000)
 })
 
-// triggers rerendering $foo
+// triggers rerendering of `.foo`
 attr(bar, { y: 1 })
 ```
-<!--
-Aspects can be attached via `.html` effect as well:
+
+### `run( ...fns )` - run aspects
+
+Run aspect functions. Used internally by `use`.
 
 ```js
-$els.html`<div is=${foo} use=${[bar, baz]}></div>`
+run(() => {
+  // ...aspect with subscriptions
+})
+
+// async aspects make result async
+await run(() => {}, async () => {}, Promise.resolve().then())
 ```
 
-Aspects, assigned via `is`, define custom elements, see `.html` for details.
-Note that aspects "upgrade" elements - once assigned, elements cannot be "downgraded", very much like custom elements. -->
 
-
-
-<!--
-### `run( fn )` - run aspect function
-
-Run assigned aspect or a single aspect for all elements in collection. See [spect#update](https://github.com/spectjs/spect/tree/nodom#update-fn-deps----update-aspect).
-
-```js
-// run all assigned aspects
-$els.update()
-
-// run single aspect
-$els.update( fn )
-``` -->
-
-
-### `state( target, obj? )` − read / write target state
+### `state( target, obj | fn ? )` − read / write state
 
 Read or write state associated with any target. Reading returns first element state in the set. Reading subscribes current aspect to changes of that state. Writing rerenders all subscribed aspects. Optional `deps` param can define bypassing strategy, see `.fx`.
 
 ```js
-// write
-state(target, { foo: 'bar' })
-state(target).foo = bar
-
-// mutate/reduce
-state(target, s => s.foo = 1)
-state(target, s => {...s, foo: 1})
+// create / get state, associated with target
+let s = state(target)
 
 // read
-state(target).foo
-state(target)
+s.foo
+s.foo.bar.baz // safe-get
+
+// write
+s.foo = 'bar'
+s.foo.bar.baz = 'qux' // safe-set
+
+// update / reduce
+state(target, { foo: 'bar' })
+state(target, s => s.foo = 1)
+state(target, s => {...s, foo: 1})
 ```
 
+### `fx( deps, el => destroy )` − side-effect
 
-### `prop( target, obj? )` − target properties
-
-Read or write elements properties. Same as `.state`, but provides access to element properties.
+Run effect function, with optional `deps` check.
 
 ```js
-// write prop
-$els.prop('foo', 1)
-$els.prop({foo: 1})
+// called each time
+fx(() => {})
 
-// mutate
-$els.prop(p => p.foo = 1)
+// called on init only
+fx([], () => {});
 
-// reduce
-$els.prop(p => {...p, foo: 1})
+// toggle: called when value changes to non-false
+fx(el.visible, visible => (visible && show(), hide))
 
-// init
-$els.prop({foo: 1}, [])
-
-// read first element prop
-$els.prop('foo')
-
-// read all
-$els.prop()
+// destructor is called any time deps change
+fx(deps, (...deps) => () => {});
 ```
 
-<p align="right">Ref: <a href="https://reactjs.org/docs/hooks-state.html">useState</a></p>
 
+### `prop( target, obj | fn ? )` − read / write properties
 
-### `attr( element, obj? )` − read / write element attributes
-
-Read or write attributes to elements in a set. Same as `.prop`, but works with attributes, therefore values are always strings. Reading creates observer for external attribute changes. For boolean values, it sets/unsets attribute, rather than stringifies value.
+Read or write target properties. Same as `.state`, but uses target as props holder.
 
 ```js
-// write attribute
-$els.attr('foo', 'bar')
-$els.attr({ foo: 'bar'})
+// create / get target props
+let p = prop(target)
 
-// mutate
-$els.attr(a => a.foo = 'bar')
+// read
+p.foo
+p.foo.bar.baz // safe-get
 
-// reduce
-$els.attr(a => {...a, foo: 'bar'})
+// write
+p.foo = 'bar'
+p.foo.bar.baz = 'qux' // safe-set
 
-// read first element attribute
-$els.attr('foo')
-
-// read all
-$els.attr()
-
-// set/unset attribute
-$els.attr('foo', true)
-$els.attr('foo', false) // same as null or undefined
+// update / reduce
+prop(target, { foo: 'bar' })
+prop(target, p => p.foo = 1)
+prop(target, p => {...p, foo: 1})
 ```
 
-<p align="right">Ref: <a href="https://ghub.io/attributechanged">attributechanged</a></p>
+### `attr( element, obj | fn ? )` − read / write attributes
 
+Read or write attributes of element. Same as `.state`, but works with attributes, therefore values are always strings. Reading creates observer for external attribute changes. For boolean values, it sets/unsets attribute, rather than stringifies value.
+
+```js
+// create / get target props
+let a = attr(element)
+
+// read
+a.foo
+a.foo.bar.baz // safe-get
+
+// write
+a.foo = 'bar'
+a.foo.bar.baz = 'qux' // safe-set
+
+// update / reduce
+attr(element, { foo: 'bar' })
+attr(element, a => a.foo = 1)
+attr(element, a => {...a, foo: 1})
+```
 
 ### ``.html`...markup` `` − create html
 
@@ -422,11 +420,11 @@ Patch HTML for elements in collection. Internally uses [htm](https://ghub.io/htm
 
 ```js
 // set html
-$els.html`foo <bar><baz/></> qux`
-$els.html`foo ${ document.querySelector('.bar') } ${ $baz }`
-$els.html`<div>${ $div => {} }</div>`
-$els.html(document.querySelector('.bar'), deps)
-$els.html([foo, bar, baz], deps)
+html`foo <bar><baz/></> qux`
+html`foo ${ document.querySelector('.bar') } ${ $baz }`
+html`<div>${ $div => {} }</div>`
+html(document.querySelector('.bar'), deps)
+html([foo, bar, baz], deps)
 
 // append/prepend, reduce, wrap/unwrap
 // TODO $els.html(el => [prepend, ...children, append])
@@ -547,26 +545,6 @@ $target.class()
 ```
 
 <p align="right">Ref: <a href="https://ghub.io/clsx">clsx</a>, <a href="https://ghub.io/classnames">classnames</a></p>
-
-
-### `fx( deps, el => destroy )` − generic side-effect
-
-Run effect function for each element in collection, with optional `deps` check. See [spect#fx](https://github.com/spectjs/spect/tree/nodom#fx-------bool--deps---generic-side-effect) for details.
-
-```js
-// called each time
-$els.fx($el => {});
-
-// called when value changes to non-false
-$els.fx($el => { $el.show(); return () => $el.hide(); }, $el.visible);
-
-// called on init only
-$els.fx($el => {}, []);
-
-// destructor is called any time deps change
-$els.fx($el => () => {}, deps);
-```
-
 
 
 ## [FAQ](./faq.md)

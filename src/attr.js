@@ -1,10 +1,11 @@
 import {createEffect} from './util'
+import {publish} from './core'
 
 const cache = new WeakMap
 export default createEffect(function attr (el) {
   if (!cache.has(el)) {
     let observer = new MutationObserver(records => {
-      publish(tuple(el, 'attr'))
+      // publish([el, 'attr', ''])
     })
     observer.observe(el, { attributes: true })
     cache.set(el, observer)

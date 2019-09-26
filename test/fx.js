@@ -198,3 +198,121 @@ t('fx: no-deps call')
 t('fx: varying number of effects')
 
 t('fx: removes all effects on aspect removal')
+
+
+
+t('fx: runs destructor', async t => {
+  let log = []
+  let $a = spect({})
+
+  let id = 0
+  let fn = () => {
+    // called each time
+    $a.fx(() => {
+      log.push('init 1')
+      return () => log.push('destroy 1')
+    })
+
+    // called once
+    $a.fx(() => {
+      log.push('init 2')
+      return () => log.push('destroy 2')
+    }, [])
+
+    // called any time deps change
+    $a.fx(() => {
+      log.push('init 3')
+      return () => log.push('destroy 3')
+    }, [id])
+  }
+
+  $a.use(fn)
+  await Promise.resolve().then()
+  t.is(log, ['init 1', 'init 2', 'init 3'])
+
+  log = []
+  $a.update()
+  await Promise.resolve().then()
+  t.is(log, ['destroy 1', 'init 1'])
+
+  log = [], id = 1
+  $a.update()
+  await Promise.resolve().then()
+  t.is(log, ['destroy 1', 'destroy 3', 'init 1', 'init 3'])
+})
+
+t('fx: toggle deps', async t => {
+  let log = []
+  let $a = spect()
+
+  $a.use(() => {
+    $a.fx(() => {
+      log.push('on')
+      return () => log.push('off')
+    }, !!$a.prop('on'))
+  })
+
+  t.is(log, [])
+  await Promise.resolve().then()
+
+  $a.prop('on', false)
+  await Promise.resolve().then()
+  t.is(log, [])
+
+  $a.prop('on', true)
+  await Promise.resolve().then()
+  t.is(log, ['on'])
+
+  $a.prop('on', true)
+  await Promise.resolve().then()
+  t.is(log, ['on'])
+
+  $a.prop('on', false)
+  await Promise.resolve().then()
+  t.is(log, ['on', 'off'])
+
+  $a.prop('on', false)
+  await Promise.resolve().then()
+  t.is(log, ['on', 'off'])
+
+  $a.prop('on', true)
+  await Promise.resolve().then()
+  t.is(log, ['on', 'off', 'on'])
+
+  $a.prop('on', true)
+  await Promise.resolve().then()
+  t.is(log, ['on', 'off', 'on'])
+
+  $a.prop('on', false)
+  await Promise.resolve().then()
+  t.is(log, ['on', 'off', 'on', 'off'])
+})
+
+t('fx: async fx chain', async t => {
+  let log = []
+  let a = spect().fx(() => log.push(1)).fx(() => log.push(2))
+  t.is(log, [])
+  await a.fx(() => log.push(3))
+  t.is(log, [1, 2, 3])
+})
+
+t('fx: async fx', async t => {
+  let log = []
+
+  let el = spect().use(async () => {
+    await el.fx(async () => {
+      await null
+      log.push('foo')
+      return () => {
+        log.push('unfoo')
+      }
+    })
+  })
+  await el
+
+  t.is(log, ['foo'])
+
+  await el.update()
+
+  t.is(log, ['foo', 'unfoo', 'foo'])
+})

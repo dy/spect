@@ -1,17 +1,16 @@
-const _deps = Symbol.for('spect.deps')
+import { deps as checkDeps } from './core'
+import { isIterable } from 'core-js'
 
-export default function fx(fn, deps) {
-  // check [meta] deps
-  if (this[_deps]) if (!this[_deps](deps, () => {
-    destroy.forEach(
-      fn => fn && (fn.call && fn()) ||
-      fn.then && fn.then(fn => fn && fn.call && fn())
-    )
-  })) return this
+export default function fx(deps, fn) {
+  if (typeof deps === 'function') {
+    fn = deps
+    deps = null
+  }
 
-  let destroy = []
+  let destroy
+  if (!checkDeps(deps, () => destroy && destroy.call && destroy.call())) return
+  if (!isIterable(deps)) deps = [deps]
+  destroy = fn(...deps)
 
-  Promise.resolve().then(() => destroy.push(fn.call(this)))
-
-  return this
+  return
 }

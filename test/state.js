@@ -285,3 +285,233 @@ t.todo('state: render from another tick from another scope', t => {
     t.deepEqual(log, [undefined, 1])
   }, 10)
 })
+
+t('state: empty / primitive selectors', t => {
+  let $x = spect()
+  let $x1 = spect()
+  t.is($x !== $x1, true)
+
+  $x.state('x', 1)
+  t.is($x.state('x'), 1)
+
+  let $y = spect('xyz')
+  let $y1 = spect('xyz')
+  t.is($y !== $y1, true)
+
+  $y.state('y', 1)
+  t.is($y.state('y'), 1)
+
+  let $z = spect(null)
+  let $z1 = spect(null)
+  t.is($z !== $z1, true)
+
+  $z.state('y', 1)
+  t.is($z.state('y'), 1)
+})
+
+
+
+t('state: direct get/set', t => {
+  spect().use(el => {
+    el.state('c', 1)
+
+    t.is(el.state('c'), 1)
+  })
+})
+
+t('state: object set', t => {
+  spect().use(el => {
+    el.state({ c: 1, d: 2 })
+
+    t.is(el.state('c'), 1)
+  })
+})
+
+t('state: functional get/set', t => {
+  let a = spect()
+
+  a.state(s => s.count = 0)
+
+  t.is(a.state(), { count: 0 })
+
+  a.state(s => s.count++)
+  t.is(a.state`count`, 1)
+})
+
+t('state: init gate', async t => {
+  let log = [], x = 1
+  let $a = spect()
+
+  await $a.use(fn)
+
+  t.is($a.state`x`, 1)
+
+  x++
+  $a.update()
+  t.is($a.state`x`, 1)
+
+  function fn($a) {
+    $a.state({ x }, [])
+  }
+})
+
+t('state: reducer', t => {
+  let $a = spect({})
+
+  $a.state({ x: 1 })
+
+  let log = []
+  $a.state(s => {
+    log.push(s.x)
+  })
+
+  t.is(log, [1])
+})
+
+t.todo('state: get/set path', t => {
+  let $a = spect()
+
+  t.is($a.state('x.y.z'), undefined)
+
+  $a.state('x.y.z', 1)
+  t.is($a.state(), { x: { y: { z: 1 } } })
+  t.is($a.state('x.y.z'), 1)
+})
+
+t('state: reading state registers any-change listener', async t => {
+  let log = []
+  let $a = spect()
+
+  await $a.use($el => {
+    let s = $el.state()
+
+    log.push(s.x)
+  })
+  t.is(log, [undefined])
+
+  await $a.state({ x: 1 })
+
+  t.is(log, [undefined, 1])
+})
+
+t('state: recursion on both reading/setting state', async t => {
+  let log = []
+  await spect().use($el => {
+    log.push($el.state('x'))
+    // alert($el.state('x'))
+    $el.state({ x: 1 })
+  })
+
+  t.is(log, [undefined, 1])
+})
+
+t('state: same-effect different paths dont trigger update', async t => {
+  let log = []
+  await spect().use($el => {
+    log.push($el.state('x'))
+    $el.state('x')
+    $el.state({ y: 1 })
+  })
+  t.is(log, [undefined])
+})
+
+
+t('state: reading state from async stack doesnt register listener', async t => {
+  let log = []
+  let $a = spect().use($el => {
+    log.push(1)
+    setTimeout(() => {
+      $el.state('x')
+    })
+  })
+  $a.state('x', 1)
+
+  await $a
+
+  // console.log($a, $a.fx(()=>{}))
+  t.is(log, [1])
+
+  await new Promise((ok, nok) => setTimeout(() => {
+    t.is(log, [1])
+    ok()
+  }, 10))
+})
+
+t('state: deps cases', async t => {
+  let el = spect({})
+
+  let x, y, z, w
+
+  x = y = z = w = 1
+  await el.use(() => {
+    el.state('x', x, [])
+
+    el.state('y', y)
+
+    el.state('z', z, [el.state('x')])
+
+    el.state('w', w, !!(el.state('y') - 1))
+  })
+
+  t.is(el.state('x'), 1)
+  t.is(el.state('y'), 1)
+  t.is(el.state('z'), 1)
+  t.is(el.state('w'), undefined)
+
+  x = y = z = w = 2
+  await el.update()
+
+  t.is(el.state('x'), 1)
+  t.is(el.state('y'), 2)
+  t.is(el.state('z'), 1)
+  t.is(el.state('w'), 2)
+})
+
+t('state: destructuring', async t => {
+  let log = []
+  await spect().use(({ state }) => {
+    // init/get state
+    let { foo = 1, bar } = state()
+
+    log.push('get foo,bar', foo, bar)
+
+    // set registered listener updates element
+    state({ foo: 'a', bar: 'b' })
+
+    log.push('set foo,bar')
+  })
+
+  t.deepEqual(log, ['get foo,bar', 1, undefined, 'set foo,bar', 'get foo,bar', 'a', 'b', 'set foo,bar'])
+})
+
+t('state: direct get/set', async t => {
+  let log = []
+  await spect().use(({ state }) => {
+    let s = state()
+
+    log.push('get foo,bar', s.foo, s.bar)
+
+    Object.assign(s, { foo: 'a', bar: 'b' })
+
+    log.push('set foo,bar')
+  })
+
+  t.deepEqual(log, ['get foo,bar', undefined, undefined, 'set foo,bar'])
+})
+
+t('state: shared between aspects', async t => {
+  let log = []
+  let el = spect()
+
+  el.use(({ state }) => {
+    log.push('a')
+    state({ foo: 'bar' })
+  })
+
+  await el.use(({ state }) => {
+    let { foo } = state()
+    log.push('b', foo)
+  })
+
+  t.deepEqual(log, ['a', 'b', 'bar'])
+})

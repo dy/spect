@@ -1,4 +1,4 @@
-import delegate from 'delegated-events'
+import * as delegate from 'delegated-events'
 import { deps } from './core'
 
 
@@ -29,7 +29,12 @@ export function fire(target, evt, o) {
   }
   else {
     evt = evt.split(/\s+/)
-    evt.forEach(evt => delegate.fire(target, evt, o))
+    // evt.forEach(evt => delegate.fire(target, evt, o))
+    evt.forEach(evt => target.dispatchEvent(new CustomEvent(evt, {
+      bubbles: true,
+      cancelable: true,
+      detail: o
+    })))
   }
 
   return this
