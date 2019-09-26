@@ -9,7 +9,9 @@ export default function fx(deps, fn) {
 
   let destroy
   if (!checkDeps(deps, () => destroy && destroy.call && destroy.call())) return
+
   if (!isIterable(deps)) deps = [deps]
+
   destroy = fn(...deps)
 
   return

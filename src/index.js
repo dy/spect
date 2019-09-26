@@ -10,5 +10,4 @@ import local from './local'
 import data from './data'
 import query from './query'
 
-
 export { attr, local, data, query, use, on, fire, state, run, fx, prop, $, $$ }

@@ -37,13 +37,15 @@ export function createEffect(name, get, set) {
       if (!store) {
         let curr = get(target)
 
-        store = new Proxy(introspected(curr, (store, path) => {
-          set(target, { [path[0]]: curr[path[0]] })
-          publish([target, name, path[0]])
-        }), {
+        store = new Proxy(curr, {
           get(store, prop, receiver) {
             subscribe([target, name, prop])
             return Reflect.get(store, prop, receiver)
+          },
+          set(store, prop, value, receiver) {
+            set(target, { [prop]: value })
+            publish([target, name, prop])
+            return Reflect.set(store, prop, value, receiver)
           }
         })
 
