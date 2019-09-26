@@ -11,4 +11,4 @@ import data from './data'
 import query from './query'
 
 
-export { use, on, fire, state, run, fx, prop, $, $$ }
+export { attr, local, data, query, use, on, fire, state, run, fx, prop, $, $$ }

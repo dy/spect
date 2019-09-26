@@ -29,8 +29,7 @@ export function isPrimitive(arg) {
 }
 
 const storeCache = new WeakMap()
-export function createEffect(get) {
-  let name = get.name
+export function createEffect(name, get, set) {
   let _ = {
     [name]: (target, ...args) => {
       let store = storeCache.get(tuple(name, target))
@@ -39,6 +38,7 @@ export function createEffect(get) {
         let curr = get(target)
 
         store = new Proxy(introspected(curr, (store, path) => {
+          set(target, { [path[0]]: curr[path[0]] })
           publish([target, name, path[0]])
         }), {
           get(store, prop, receiver) {
@@ -72,15 +72,15 @@ export function createEffect(get) {
         // effect(target, obj)
         case (typeof args[0] === 'object'):
           let obj = args[0]
-          let changed = false
+          let changed = {}
           for (let prop in obj) {
             let value = obj[prop]
             if (equal(store[prop], value)) continue
             publish([target, name, prop])
             store[prop] = value
-            changed = true
+            changed[prop] = obj[prop]
           }
-          if (changed) publish([target, name])
+          set(target, changed)
           return store
       }
     }

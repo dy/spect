@@ -1,4 +1,4 @@
-import * as delegate from 'delegated-events'
+import delegate from 'delegate-it'
 import { deps } from './core'
 
 
@@ -11,8 +11,8 @@ export default function on (target, evts, fn) {
 
   if (typeof target === 'string') {
     evts.forEach(evt => {
-      delegate.on(target, evt, fn)
-      destroy.push(() => delegation.off(target, evt, fn))
+      let delegation = delegate(target, evt, fn)
+      destroy.push(() => delegation.destroy(target, evt, fn))
     })
   }
   else {

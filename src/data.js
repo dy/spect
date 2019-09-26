@@ -1,8 +1,24 @@
-import equal from 'fast-deep-equal'
-import tuple from 'immutable-tuple'
-import { publish, subscibe } from './core'
-import { createEffect } from './util'
+import {createEffect} from './util'
 
-export default createEffect(function data(el) {
-  return el.dataset
-})
+const cache = new WeakMap
+export default createEffect(
+  'data',
+  function get(el) {
+    let state = cache.get(el)
+    if (!state) {
+      cache.set(el, state = {})
+    }
+
+    for (let attr of el.dataset) state[attr.name] = attr.value
+    return state
+  },
+  function set(el, obj) {
+    // let state = cache.get(el)
+    // if (!state) return false
+    // for (let prop in obj) {
+    //   state[prop] = obj[prop]
+    //   el.setAttribute(prop, obj[prop])
+    // }
+    // return true
+  }
+)
