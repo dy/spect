@@ -81,6 +81,7 @@
     "nanomorph": "^5.4.0",
     "negative-index": "^1.0.3",
     "preact": "^10.0.0-rc.3",
+    "primitive-pool": "^1.1.0",
     "scope-css": "^1.2.1",
     "selector-observer": "^2.1.6"
   },

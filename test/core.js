@@ -12,40 +12,24 @@ t.only('counter', t => {
   })
 })
 
-t('readme: spect(target)', async t => {
-  let log = []
-  let target = spect({ foo: 'bar' })
-
-  // properties are transparent
-  t.is(target.foo, 'bar')
-
-  // registered effects shade properies
-  target.use(() => {
-    log.push(0)
-  })
-
-  // effects are awaitable
-  let x = await spect({}).fx(() => { log.push(1) }, [])
-
-  t.is(log, [0, 1])
-})
-
 t('readme: use', async t => {
   let log = []
 
-  let foo = spect({})
-  let bar = spect({y: 0})
+  let foo = state('foo', {})
+  let bar = state('bar', {y: 0})
 
-  foo.state('x', 0)
+  foo.x = 0
 
-  await foo.use(foo => {
+  run(() => {
     // subscribe to updates
-    let x = foo.state('x')
-    let y = bar.prop('y')
+    let x = foo.x
+    let y = bar.y
 
     log.push(x, y)
 
-    setTimeout(() => foo.state(state => state.x++), 1)
+    setTimeout(() => {
+      if (!foo.x) foo.x++
+    }, 1)
   })
 
   t.is(log, [0, 0])
@@ -59,11 +43,8 @@ t('readme: use', async t => {
   t.is(log, [0, 0, 1, 0])
 
   // update foo
-  bar.prop('y', 1)
-
-  t.is(log, [0, 0, 1, 0])
-  await ''
-
+  bar.y = 1
+  await '';
   t.is(log, [0, 0, 1, 0, 1, 1])
 })
 

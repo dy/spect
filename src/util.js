@@ -1,6 +1,5 @@
 import kebab from 'kebab-case'
 import equal from 'fast-deep-equal'
-import tuple from 'immutable-tuple'
 import introspected from 'introspected'
 import { subscribe, publish } from './core'
 
@@ -33,13 +32,17 @@ export function createEffect(get) {
   let name = get.name
   let _ = {
     [name]: (target, ...args) => {
-      let key = tuple(target, name)
       let curr = get(target)
       let store = storeCache.get(curr)
+
       if (!store) {
-        store = introspected(curr, (store, path) => {
-          publish(key)
-          // for (let [key, value] of changes) publish(key, value)
+        store = new Proxy(introspected(curr, (store, path) => {
+          publish([target, name, path[0]])
+        }), {
+          get(store, prop, receiver) {
+            subscribe([target, name, prop])
+            return Reflect.get(store, prop, receiver)
+          }
         })
         storeCache.set(curr, store)
       }
@@ -47,7 +50,6 @@ export function createEffect(get) {
       switch(true) {
         // effect(target)
         case (!args.length):
-          subscribe(key)
           return store
 
         // effect`...`
@@ -68,13 +70,14 @@ export function createEffect(get) {
         case (typeof args[0] === 'object'):
           let obj = args[0]
           let changed = false
-          for (let name in obj) {
-            let value = obj[name]
-            if (equal(store[name], value)) continue
-            store[name] = value
+          for (let prop in obj) {
+            let value = obj[prop]
+            if (equal(store[prop], value)) continue
+            publish([target, name, prop])
+            store[prop] = value
             changed = true
           }
-          if (changed) publish(key)
+          if (changed) publish([target, name])
           return store
       }
     }

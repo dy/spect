@@ -1,5 +1,6 @@
 import equal from 'fast-deep-equal'
 import { isPrimitive } from './util'
+import tuple from 'immutable-tuple'
 
 const isStacktraceAvailable = !!(new Error).stack
 
@@ -84,6 +85,7 @@ export function deps(deps, destroy) {
 
 const subscriptions = new WeakMap
 export function subscribe(key, aspect = current) {
+  key = key.length ? tuple(...key) : key
   if (!aspect) return
   if (!subscriptions.has(key)) {
     subscriptions.set(key, new Set())
@@ -91,6 +93,7 @@ export function subscribe(key, aspect = current) {
   subscriptions.get(key).add(aspect)
 }
 export function publish(key) {
+  key = key.length ? tuple(...key) : key
   if (!subscriptions.has(key)) return
   let subscribers = subscriptions.get(key)
   for (let aspect of subscribers) queue(aspect.fn)
