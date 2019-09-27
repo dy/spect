@@ -9,5 +9,6 @@ import prop from './prop'
 import local from './local'
 import data from './data'
 import query from './query'
+import html from './preact'
 
-export { attr, local, data, query, use, on, fire, state, run, fx, prop, $, $$ }
+export { attr, local, data, query, use, on, fire, state, run, fx, prop, $, $$, html }

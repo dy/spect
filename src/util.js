@@ -28,6 +28,10 @@ export function isPrimitive(arg) {
   }
 }
 
+export function isElement (arg) {
+  return typeof arg === 'object' && arg && 'ownerDocument' in arg
+}
+
 const storeCache = new WeakMap()
 export function createEffect(name, get, set) {
   let _ = {

@@ -1,32 +1,61 @@
-import { render as prender, h as hs } from 'preact'
+// preact-based html implementation
+// portals have discrepancy with
+
+import { createPortal, createElement, render as prender } from 'preact/compat'
 import htm from 'htm'
-
-// build vdom
-export const html = htm.bind(h)
-
+import { isElement, isIterable } from './util'
+import domdiff from 'domdiff'
 
 
 // render vdom into element
-export function render(vdom, el) {
-  if (typeof el === 'string') el = $$(el)
-  else if (el instanceof Node) prender(vdom, el)
-  else el.forEach(el => prender(vdom, el))
-}
+export default function html(el, ...args) {
+  let content
+  // html`<...>`
+  // html(...)
+  if (!args.length || (Array.isArray(el) && el.raw)) {
+    content = htm.call(h, el, ...args)
+    el = document.createDocumentFragment()
+  }
+  // html(el, ...)`
+  else {
+    content = args[0]
+    // html('.selector', ...)
+    if (typeof el === 'string') el = document.querySelectorAll(el)
 
+  }
+
+  if (isElement(el)) {
+    // html(el, htmlContent)
+    if (isElement(content) || isIterable(content)) {
+      if (isElement(content)) content = [content]
+      domdiff(el, [...el.childNodes], content)
+    }
+    else {
+      prender(content, el)
+    }
+  }
+  else el.forEach(prender(content, el))
+
+  return el.childNodes.length === 1 ? el.firstChild : el.childNodes
+}
 
 
 function h(tagName, props, ...children) {
-  if (typeof tagName !== 'string') return hs(...arguments)
+  if (isElement(tagName)) {
+    return createPortal(children, tagName)
+  }
+
+  if (typeof tagName !== 'string') return createElement(...arguments)
 
   if (!props) props = {}
-  let [tag, id, classes] = parseTagComponents(tagName)
+  let [tag, id, classes] = parseTag(tagName)
   if (!props.id) props.id = id
   if (!props.class) props.class = classes.join(' ')
 
-  return hs(tag, props, ...children)
+  return createElement(tag, props, ...children)
 }
 
-function parseTagComponents(str) {
+function parseTag(str) {
   let tag, id, classes
   let [beforeId, afterId = ''] = str.split('#')
   let beforeClx = beforeId.split('.')
@@ -35,32 +64,4 @@ function parseTagComponents(str) {
   id = afterClx.shift()
   classes = [...beforeClx, ...afterClx]
   return [tag, id, classes]
-}
-
-
-// turn function into a web-component
-const _destroy = Symbol('destroy')
-export function component(fn) {
-  class HTMLCustomComponent extends HTMLElement {
-    constructor() {
-      super()
-    }
-    connectedCallback() {
-      // take over attrs as props
-      [...this.attributes].forEach(({ name, value }) => {
-        this[name] = value
-      })
-      new Promise((ok) => {
-        setTimeout(() => {
-          ok()
-          this[_destroy] = fn.call(this, this)
-        })
-      })
-    }
-    disconnectedCallback() {
-      this[_destroy] && this[_destroy]
-    }
-  }
-
-  return HTMLCustomComponent
 }
