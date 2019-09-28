@@ -339,11 +339,9 @@ let s = state(target)
 
 // read
 s.foo
-s.foo.bar.baz // safe-get
 
 // write
 s.foo = 'bar'
-s.foo.bar.baz = 'qux' // safe-set
 
 // update / reduce
 state(target, { foo: 'bar' })
@@ -380,11 +378,9 @@ let p = prop(target)
 
 // read
 p.foo
-p.foo.bar.baz // safe-get
 
 // write
 p.foo = 'bar'
-p.foo.bar.baz = 'qux' // safe-set
 
 // update / reduce
 prop(target, { foo: 'bar' })
@@ -397,16 +393,10 @@ prop(target, p => {...p, foo: 1})
 Read or write attributes of element. Same as `.state`, but works with attributes, therefore values are always strings. Reading creates observer for external attribute changes. For boolean values, it sets/unsets attribute, rather than stringifies value.
 
 ```js
-// create / get target props
 let a = attr(element)
 
-// read
-a.foo
-a.foo.bar.baz // safe-get
-
-// write
 a.foo = 'bar'
-a.foo.bar.baz = 'qux' // safe-set
+a.foo
 
 // update / reduce
 attr(element, { foo: 'bar' })
@@ -414,56 +404,38 @@ attr(element, a => a.foo = 1)
 attr(element, a => {...a, foo: 1})
 ```
 
-### ``.html`...markup` `` − create html
+### ``.html`...markup` `` − patch html
 
-Patch HTML for elements in collection. Internally uses [htm](https://ghub.io/htm) and [incremental-dom](https://ghub.io/incremental-dom) for efficient rendering.
+Create / update html.
 
 ```js
-// set html
-html`foo <bar><baz/></> qux`
-html`foo ${ document.querySelector('.bar') } ${ $baz }`
-html`<div>${ $div => {} }</div>`
-html(document.querySelector('.bar'), deps)
-html([foo, bar, baz], deps)
+// create
+let foo = html`<div#foo/>`
 
-// append/prepend, reduce, wrap/unwrap
-// TODO $els.html(el => [prepend, ...children, append])
-// TODO $els.html(children => $`<div.foo>${ children }</div>`)
+// update
+html`<${foo}><div.bar/><${baz}.baz/></>`
 
-/* @jsx $.h */
-// TODO $els.html(<>Markup</>)
-
-// components
-$els.html`<button is=${SuperButton}></button>`
-$els.html`<${SuperButton}/>`
-function SuperButton($btn) {
-  // ...
+function baz(props) {
+  return html`<div>baz</div>`
 }
-
-// assign aspects
-$els.html`<foo use=${bar}/>`
-$els.html`<foo use=${[bar, baz]}/>`
 ```
-
-<p align="right">Ref: <a href="https://ghub.io/incremental-dom">incremental-dom</a>, <a href='https://ghub.io/htm'>htm</a></p>
-
 
 ### `on( element, evt, fn )` − events provider
 
 Registers event listeners for elements in collection.
 
 ```js
-// single event
-$target.on('foo', e => {})
+// direct
+on(el, 'foo', e => {})
+
+// delegate
+on('.target', 'foo', e => {})
 
 // multiple events
-$target.on('foo bar', e => {})
-
-// delegate selector
-$target.on('foo', '.bar', e => {})
+on('.target', 'foo bar', e => {})
 
 // sequences
-$target.on('touchstart > touchmove > touchend', e => {
+on('.target', 'touchstart > touchmove > touchend', e => {
   // touchstart
 
   return e =>
@@ -476,9 +448,7 @@ $target.on('touchstart > touchmove > touchend', e => {
 })
 ```
 
-<p align="right">Ref: <a href="https://github.com/donavon/use-event-listener">use-event-listener</a></p>
-
-
+<!--
 ### `mount( fn: onmount => onunmount )` - lifecycle callbacks
 
 Triggers callback `fn` when element is connected to the DOM. Returned function is triggered when the element is disconnected.
@@ -491,9 +461,9 @@ $el.mount(() => {
     // disconnected
   }
 })
-```
+``` -->
 
-
+<!--
 ### `text( element, content ) ` − text content side-effect
 
 Provide text content for elements.
@@ -505,9 +475,9 @@ $target.text(str => i18n(nbsp(clean(str))))
 
 // get text
 $target.text()
-```
+``` -->
 
-
+<!--
 ### `css( element, styles )` − CSS side-effect
 
 Provide scoped CSS styles for collection.
@@ -516,38 +486,23 @@ Provide scoped CSS styles for collection.
 // write css
 $target.css` :host { width: 100%} `
 ```
-
-<!-- $target.css({ ':host': { width: 100%} }) -->
-<!-- $target.css(rules => rules[':host'].width = '100%') -->
-<!-- $target.css(':host').width -->
-<!-- $target.css.path = obj|str -->
-<!-- $target.css.path // obj -->
-<!-- $target.css`selector { ...rules }` -->
-<!-- $target.css = `selector { ...rules }` -->
-
-<p align="right">Ref: <a href="https://ghub.io/virtual-css">virtual-css</a></p>
+<p align="right">Ref: <a href="https://ghub.io/virtual-css">virtual-css</a></p> -->
 
 
-### `class( ...classes, deps? )` − classes side-effect
+### `class( ...classes, deps? )` − manipulate classes
 
-Manipulate elements classes.
+Add/remove classes, update dependent aspects.
 
 ```js
 // write classes
-$target.class`foo bar baz`
-$target.class('foo', true && 'bar', 'baz')
-$target.class({ foo: true, bar: false, bas: isTrue() })
-$target.class(clsx => clsx.foo = false)
+class(el).foo = true
+class(el, { foo: true, bar: false, bas: isTrue() })
+class(el, clsx => clsx.foo = false)
 
 // read classes
-$target.class('foo')
-$target.class()
+class(el).foo
+class(el)
 ```
-
-<p align="right">Ref: <a href="https://ghub.io/clsx">clsx</a>, <a href="https://ghub.io/classnames">classnames</a></p>
-
-
-## [FAQ](./faq.md)
 
 
 <!--
