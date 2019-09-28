@@ -12,7 +12,7 @@ export default function html (...args) {
 }
 
 function h(tag, props, ...children) {
-  children = children.flatten().map(child =>
+  children = children.flat().map(child =>
     isElement(child) ? child
     : document.createTextNode(child)
   )
@@ -72,6 +72,10 @@ function createElement(el, props, children) {
       el[name] = value
     }
   }
+
+  // FIXME: nanomorph doesn't do key optimization
+  // let key = props.id || props['data-nanomorph-component-id'] || props.key || props.id
+  // if (key) el.setAttribute('data-nanomorph-component-id', key)
 
   if (children) el.append(...children)
   return el
