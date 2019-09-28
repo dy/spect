@@ -1,31 +1,34 @@
-import {createEffect} from './util'
-const stateCache = new WeakMap
-const getValues = el => {
-  let obj = {}
-  for (let cl of el.classList) obj[cl.name] = cl.value
-  return obj
-}
-const getValue = (el, name) => el.classList.contains(name),
-  setValue = (el, name, value) => {
-    if (!value) el.classList.remove(name)
-    else el.classList.add(name)
-    return this
-  },
-  setValues = (el, obj) => {
-    for (let name in obj) setValue(el, name, obj[name])
-    return this
-  },
-  template = function (el, ...args) {
-    let str = String.raw(...args)
-    el.className = str
-  },
-  effectName = 'class'
+import { createEffect } from './util'
 
-export default createEffect({
-  template,
-  getValue,
-  getValues,
-  setValue,
-  setValues,
-  name: effectName
-})
+const cache = new WeakMap
+export default createEffect(
+  'class',
+  function get(el) {
+    let state = cache.get(el)
+    if (!state) cache.set(el, state = {})
+
+    for (let cl of el.classList) {
+      state[cl] = true
+    }
+
+    return state
+  },
+  function set(el, obj) {
+    let state = cache.get(el)
+    if (!state) return false
+
+    for (let prop in obj) {
+      let value = obj[prop]
+      if (!value) {
+          delete state[prop]
+          el.classList.remove(prop)
+      }
+      else {
+        state[prop] = true
+        el.classList.add(prop, '')
+      }
+    }
+    return true
+  }
+)
+
