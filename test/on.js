@@ -1,6 +1,6 @@
 import t from 'tst'
 import $ from '..'
-import on from '../src/on'
+import on from '../src/on-delegated'
 
 $.fn(on)
 

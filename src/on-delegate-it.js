@@ -29,7 +29,6 @@ export function fire(target, evt, o) {
   }
   else {
     evt = evt.split(/\s+/)
-    // evt.forEach(evt => delegate.fire(target, evt, o))
     evt.forEach(evt => target.dispatchEvent(new CustomEvent(evt, {
       bubbles: true,
       cancelable: true,
