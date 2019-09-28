@@ -1,5 +1,5 @@
 import { deps as checkDeps } from './core'
-import { isIterable } from 'core-js'
+import { isIterable } from './util'
 
 export default function fx(deps, fn) {
   if (typeof deps === 'function') {

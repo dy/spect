@@ -1,6 +1,6 @@
 // domdiff html implementation
 import htm from 'htm'
-import { isElement, isIterable } from './util'
+import { isElement } from './util'
 import morph from 'nanomorph'
 import clsx from 'clsx'
 

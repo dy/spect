@@ -1,6 +1,5 @@
 import kebab from 'kebab-case'
 import equal from 'fast-deep-equal'
-import introspected from 'introspected'
 import { subscribe, publish } from './core'
 import tuple from 'immutable-tuple'
 
