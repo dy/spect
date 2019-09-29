@@ -42,39 +42,45 @@ import { html, attr, state, fx, deps, route } from 'spect'
 import ky from 'ky'
 import { t, useLocale } from 'ttag'
 
-// main app aspect - load & render data
-use('#app', async el => {
-  let { id } = route('users/:id')
-
-  // run state effect when `id` changes (useEffect)
-  fx(id, id => {
-    attr(el, { loading: true })
-    state(el, { user: await ky.get`./api/user/${ id }` })
-    attr(el, { loading: false })
+// main app aspect - load data aspect
+on('#app', 'connected', async (el) => {
+  // load data aspect
+  fx(() => {
+    let { id } = route('users/:id')
+    attr(el).loading = true
+    state(el).user = await ky.get`./api/user/${ id }`
+    attr(el).loading = false
   })
 
-  // html side-effect
-  html`<${el}.preloadable>
-    <p.i18n>${ attr(el).loading ? `Hello, ${ state(el).user.name }!` : `Thanks for patience...` }</p>
-  </>`
+  // render data aspect
+  fx(() => {
+    let user = state(el).user, loading = attr(el).loading
+    html`<${el}.preloadable>
+      <p.i18n>${ loading ? `Hello, ${ user.name }!` : `Thanks for patience...` }</p>
+    </>`
+  })
 }
 
 // preloader aspect - append/remove spinner if loading state changes
-use('.preloadable', el => {
-  fx(attr(el).loading, loading => {
-    if (!loading) return
-    let progress = html`<progress.progress-circle />`
-    el.append(progress)
-    return () => el.remove(progress)
+on('.preloadable', 'connected', async el => {
+  fx(() => {
+    let loading = attr(el).loading
+    if (loading) {
+      let progress = html`<progress.progress-circle />`
+      el.append(progress)
+    }
+    return el.remove(progress)
   })
 })
 
 // i18n aspect - translates content when `lang` attribute changes
-use('.i18n', el => {
-  fx(attr(el).lang || attr(document.documentElement).lang,
-  lang => {
+on('.i18n', 'connected', el => {
+  let str = text(el)
+
+  fx(() => {
+    let lang = attr(el).lang || attr(document.documentElement).lang
     useLocale(lang)
-    text(el, t(text))
+    text(el, t(str))
   })
 })
 ```
@@ -128,8 +134,8 @@ This example assigns `hello` aspect to `#hello-example` element and renders sing
 
 <script type="module">
 import { html, use } from 'spect'
-
-use('#hello-example', function hello(el) {
+fx() => {
+  let el = $('#hello-example')
   html`<${el}>
     <div.message>
       Hello, ${ el.name }!
@@ -149,20 +155,20 @@ _Spect_ introduces `.state`, `.mount`, `.fx` and other effects, similar to `useS
 ```js
 import { use, state, on, fx, mount } from 'spect'
 
-use(`#timer-example`, el => {
+
+on('#timer-example', 'connected', e => {
+  let el = e.target
   let { seconds = 0 } = state(el)
 
-  // connected callback
-  mount(el, () => {
-    let i = setInterval( () => state(el, { seconds++ }), 1000 )
-    return () => clearInterval(i)
+  let i = setInterval( () => state(el, { seconds++ }), 1000 )
+
+  fx(() => {
+    html`<${el}>Seconds: ${ state(el).seconds }</>`
+    console.log( state(el).seconds )
   })
 
-  html`<${el}>Seconds: ${ state(el, 'seconds') }</>`
-
-  console.log( state(el).seconds )
+  on(e.target, 'disconnected', () => clearInterval(i))
 })
-
 ```
 
 <p align='right'><a href="https://codesandbox.io/s/a-stateful-aspect-9pbji">Open in sandbox</a></p>
@@ -175,7 +181,8 @@ Events are provided by `.on` effect, decoupling callbacks from markup and enabli
 ```js
 import { $, use, on, delegate, html, state, h } from 'spect'
 
-use('#todos-example', (el) => {
+on('#todos-example', 'connected', (e) => {
+  let el = e.target
   let {items = [], text: ''} = state(el)
 
   on(el, 'submit', e => {
@@ -194,9 +201,7 @@ use('#todos-example', (el) => {
     })
   })
 
-  on(el, '#new-todo', 'change', e => state(el, { text: e.target.value }))
-
-  html(el, html`
+  html`<${el}>
     <h3>TODO</h3>
     <main.todo-list items=${ items }/>
     <form>
@@ -204,16 +209,17 @@ use('#todos-example', (el) => {
         What needs to be done?
       </label>
       <br/>
-      <input#new-todo value=${ text }/>
+      <input#new-todo onchange=${ e => state(el).text = e.target.value } value=${ text }/>
       <button>
         Add #${ items.length + 1 }
       </button>
     </form>
-  `)
+  </>`
 })
 
-use('.todo-list', el => {
-  html(el, html`<ul>${ el.items.map(item => html`<li>${ item.text }</li>`) }</ul>`)
+on('.todo-list', 'connected', e => {
+  let el = e.target
+  fx(() => html`<${el}><ul>${ prop(el).items.map(item => html`<li>${ item.text }</li>`) }</ul></>`)
 })
 ```
 
@@ -230,7 +236,7 @@ import { h, html } from 'spect'
 import MarkdownEditor from './editor.js'
 
 // MarkdownEditor is created as web-component
-use('#markdown-example', el => html(el, html`<${MarkdownEditor} content='Hello, **world**!'/>`))
+on('#markdown-example', 'connected', e => html`<${MarkdownEditor} content='Hello, **world**!'/>`)
 ```
 
 ```js
@@ -239,20 +245,22 @@ import { prop, state, html } from 'spect'
 import { Remarkable } from 'remarkable'
 
 export default function MarkdownEditor (el) {
-  fx(prop(el).content, content => state(el, { value: content }))
+  state(el).value = el.content
 
-  html`<${el}.markdown-editor>
-    <h3>Input</h3>
-    <label for="markdown-content">
-      Enter some markdown
-    </label>
-    <textarea#markdown-content
-      onchange=${ e => state(el, { value: e.target.value }) }
-    >${ state(el).value }</textarea>
+  fx(() => {
+    html`<${el}.markdown-editor>
+      <h3>Input</h3>
+      <label for="markdown-content">
+        Enter some markdown
+      </label>
+      <textarea#markdown-content
+        onchange=${ e => state(el).value = e.target.value ) }
+      >${ state(el).value }</textarea>
 
-    <h3>Output</h3>
-    <div.content>${ html({ raw: getRawMarkup( state(el).value )}) }</>
-  </>`)
+      <h3>Output</h3>
+      <div.content innerHTML=${ getRawMarkup( state(el).value ) }></>
+    </>`
+  })
 }
 
 let getRawMarkup = content => {
@@ -273,7 +281,7 @@ let getRawMarkup = content => {
 
 ## API
 
-[**`$`**](#-selector--els--markup---selector--h)&nbsp;&nbsp; [**`.use`**](#use-fns---assign-aspects)&nbsp;&nbsp; [**`.fx`**](#fx-el--destroy--deps---generic-side-effect)&nbsp;&nbsp; [**`.state`**](#state-name--val-deps---state-provider)&nbsp;&nbsp; [**`.prop`**](#prop-name--val-deps---properties-provider)&nbsp;&nbsp; [**`.attr`**](#attr-name--val-deps---attributes-provider)&nbsp;&nbsp; [**`.html`**](#htmlmarkup---html-side-effect)&nbsp;&nbsp; [**`.text`**](#text-content----text-content-side-effect)&nbsp;&nbsp; [**`.clsx`**](#class-classes-deps---classes-side-effect)&nbsp;&nbsp; [**`.css`**](#css-styles-deps---css-side-effect)&nbsp;&nbsp; [**`.on`**](#on-evt-fn---events-provider)&nbsp;&nbsp; [**`.mount`**](#mount-fn-onmount--onunmount----lifecycle-callbacks)
+[**`.fx`**](#fx-el--destroy--deps---generic-side-effect)&nbsp;&nbsp; [**`.state`**](#state-name--val-deps---state-provider)&nbsp;&nbsp; [**`.prop`**](#prop-name--val-deps---properties-provider)&nbsp;&nbsp; [**`.attr`**](#attr-name--val-deps---attributes-provider)&nbsp;&nbsp; [**`.html`**](#htmlmarkup---html-side-effect)&nbsp;&nbsp; [**`.text`**](#text-content----text-content-side-effect)&nbsp;&nbsp; [**`.clsx`**](#class-classes-deps---classes-side-effect)&nbsp;&nbsp; [**`.css`**](#css-styles-deps---css-side-effect)&nbsp;&nbsp; [**`.on`**](#on-evt-fn---events-provider)&nbsp;&nbsp; [**`.mount`**](#mount-fn-onmount--onunmount----lifecycle-callbacks)
 
 ##
 
@@ -294,7 +302,7 @@ $`foo <bar.baz/>`
 
 <p align="right">Ref: <a href="https://jquery.com">jquery</a>, etc.</p> -->
 
-
+<!--
 ### `use( selector | element, (el) => () => {} )` − assign aspect
 
 Observe selector in DOM, run init function when element appears in the DOM. Run optional destroy when element is removed from the DOM.
@@ -326,6 +334,26 @@ run(() => {
 
 // async aspects make result async
 await run(() => {}, async () => {}, Promise.resolve().then())
+``` -->
+
+
+### `fx( el => destroy )` − side-effect
+
+Run effect function, with optional `deps` check.
+Observe selector in DOM, run init function when element appears in the DOM. Run optional destroy when element is removed from the DOM.
+
+```js
+// called each time
+fx(() => {})
+
+// called on init only
+fx([], () => {});
+
+// toggle: called when value changes to non-false
+fx(el.visible, visible => (visible && show(), hide))
+
+// destructor is called any time deps change
+fx(deps, (...deps) => () => {});
 ```
 
 
@@ -348,25 +376,6 @@ state(target, { foo: 'bar' })
 state(target, s => s.foo = 1)
 state(target, s => {...s, foo: 1})
 ```
-
-### `fx( deps, el => destroy )` − side-effect
-
-Run effect function, with optional `deps` check.
-
-```js
-// called each time
-fx(() => {})
-
-// called on init only
-fx([], () => {});
-
-// toggle: called when value changes to non-false
-fx(el.visible, visible => (visible && show(), hide))
-
-// destructor is called any time deps change
-fx(deps, (...deps) => () => {});
-```
-
 
 ### `prop( target, obj | fn ? )` − read / write properties
 
@@ -433,19 +442,6 @@ on('.target', 'foo', e => {})
 
 // multiple events
 on('.target', 'foo bar', e => {})
-
-// sequences
-on('.target', 'touchstart > touchmove > touchend', e => {
-  // touchstart
-
-  return e =>
-    // touchmove
-
-    return e => {
-      // touchend
-    }
-  }
-})
 ```
 
 <!--
