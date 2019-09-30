@@ -49,57 +49,59 @@ t('readme: A stateful aspect', async t => {
   document.body.removeChild(el)
 })
 
-t.todo('readme: An application', t => {
+t.only('readme: An application', t => {
   let el = document.body.appendChild(document.createElement('div'))
   el.id = 'todos-example'
 
-  $("#todos-example").use(Todo);
+  use('#todos-example', el => {
+    state(el, { items: [], text: '' })
 
+    on(el, 'submit', e => {
+      e.preventDefault()
 
-  function Todo(el) {
-    $el.state({ items: [], text: "" }, []);
+      let { text, items } = state(el)
 
-    $el.on("submit", e => {
-      e.preventDefault();
-
-      if (!$el.state("text.length")) return;
+      if (!text.length) return
 
       const newItem = {
-        text: $el.state("text"),
+        text,
         id: Date.now()
       };
 
-      // in-place reducer
-      $el.state(state => ({
-        items: [...state.items, newItem],
-        text: ""
-      }));
-    });
+      state(el, {
+        items: [...items, newItem],
+        text: ''
+      })
+    })
 
-    $el.on("change", "#new-todo", e => $el.state({ text: e.target.value }));
+    fx(() => {
+      let s = state(el)
 
-    $el.html`
-      <h3>TODO</h3>
-      <main is=${TodoList} items=${$el.state("items")}/>
-      <form>
-        <label for=new-todo>
-          What needs to be done?
-        </label>
-        <br/>
-        <input#new-todo value=${$el.state("text")}/>
-        <button>
-          Add #${$el.state("items.length") + 1}
-        </button>
-      </form>
-    `;
-  }
+      html`<${el}>
+        <h3>TODO</h3>
+        <main.todo-list items=${ s.items }/>
+        <form>
+          <label for=new-todo>
+            What needs to be done?
+          </label>
+          <br/>
+          <input#new-todo onchange=${ e => s.text = e.target.value} value=${ s.text }/>
+          <button>
+            Add #${ s.items.length + 1}
+          </button>
+        </form>
+      </>`
+    })
+  })
 
-  // TodoList component
-  function TodoList({ html, items }) {
-    html`<ul>${ items.map(item => $`<li>${item.text}</li>`) }</ul>`;
-  }
+  use('.todo-list', el => {
+    fx(() => {
+      console.log(el.items)
+      html`<${el}><ul>${prop(el).items.map(item => html`<li>${item.text}</li>`)}</ul></>`
+    })
+  })
 
-  document.body.removeChild(el)
+  // document.body.removeChild(el)
 })
 
 t.todo('readme: A component with external plugin', async t => {

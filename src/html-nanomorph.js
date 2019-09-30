@@ -1,8 +1,12 @@
 // domdiff html implementation
 import htm from 'htm'
 import { isElement } from './util'
-import morph from 'nanomorph'
+import morph from 'morphdom'
 import clsx from 'clsx'
+import { publish } from './core'
+import equal from 'fast-deep-equal'
+
+const propsCache = new WeakMap()
 
 
 export default function html (...args) {
@@ -32,7 +36,26 @@ function h(tag, props, ...children) {
     // keep existing props / attrs
     if (!props.id && tag.id) props.id = tag.id
 
-    morph(tag, createElement(tag.tagName, {}, children), { childrenOnly: true })
+    morph(tag, createElement(null, null, children), {
+      getNodeKey: (el) => {
+        return el.key || el.id
+      },
+      onBeforeElUpdated: (fromEl, toEl) => {
+        if (fromEl.isEqualNode(toEl)) return false
+
+        if (propsCache.has(toEl)) {
+          for (let prop of propsCache.get(toEl)) {
+            if (!equal(fromEl[prop], toEl[prop])) {
+              fromEl[prop] = toEl[prop]
+              publish([fromEl, 'prop', prop])
+            }
+          }
+        }
+
+        return true
+      },
+      childrenOnly: true
+    })
     applyProps(tag, props)
     return tag
   }
@@ -55,12 +78,7 @@ function createElement(el, props, children) {
   if (!el) el = document.createDocumentFragment()
   else if (typeof el === 'string') el = document.createElement(el)
 
-  applyProps(el, props)
-
-  // FIXME: nanomorph doesn't do key optimization
-  // let key = props.id || props['data-nanomorph-component-id'] || props.key || props.id
-  // if (key) el.setAttribute('data-nanomorph-component-id', key)
-
+  if (props) applyProps(el, props)
   if (children) el.append(...children)
   return el
 }
@@ -84,6 +102,9 @@ function applyProps(el, props) {
     }
     else {
       el[name] = value
+      if (!propsCache.has(el)) propsCache.set(el, new Set)
+      propsCache.get(el).add(name)
+      publish([el, 'prop', name])
     }
   }
   return el

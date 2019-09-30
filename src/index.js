@@ -12,8 +12,8 @@ import prop from './prop'
 import local from './local'
 import data from './data'
 import query from './query'
-// import html from './html-preact'
+import html from './html-preact'
 // import html from './html-idom'
-import html from './html-nanomorph'
+// import html from './html-nanomorph'
 
 export { attr, local, data, query, use, on, off, fire, state, run, fx, prop, $, $$, html, cls }

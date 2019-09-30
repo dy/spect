@@ -41,8 +41,9 @@ export function queue(fn) {
     planned = new Set()
     planned.add(fn)
     Promise.resolve().then(() => {
-      for (let fn of planned) run(fn)
+      let fns = planned
       planned = null
+      for (let fn of fns) run(fn)
     })
   }
 }

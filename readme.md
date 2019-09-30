@@ -176,9 +176,8 @@ Events are provided by `.on` effect, decoupling callbacks from markup and enabli
 ```js
 import { $, use, on, delegate, html, state, h } from 'spect'
 
-use('#todos-example', (e) => {
-  let el = e.target
-  let {items = [], text: ''} = state(el)
+use('#todos-example', el => {
+  let {items = [], text = ''} = state(el)
 
   on(el, 'submit', e => {
     e.preventDefault()
@@ -204,7 +203,7 @@ use('#todos-example', (e) => {
         What needs to be done?
       </label>
       <br/>
-      <input#new-todo onchange=${ e => state(el).text = e.target.value } value=${ text }/>
+      <input#new-todo onchange=${ e => state(el).text = e.target.value } value=${ state(el).text }/>
       <button>
         Add #${ items.length + 1 }
       </button>

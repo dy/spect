@@ -1,56 +1,34 @@
 // preact-based html implementation
 // portals have discrepancy with
 
-import { createPortal, createElement, render as prender } from 'preact/compat'
+import { createElement, render } from 'preact/compat'
 import htm from 'htm'
-import { isElement, isIterable } from './util'
-import domdiff from 'domdiff'
+import { isElement } from './util'
 
 
 // render vdom into element
-export default function html(el, ...args) {
-  let content
-  // html`<...>`
-  // html(...)
-  if (!args.length || (Array.isArray(el) && el.raw)) {
-    content = htm.call(h, el, ...args)
-    el = document.createDocumentFragment()
-  }
-  // html(el, ...)`
-  else {
-    content = args[0]
-    // html('.selector', ...)
-    if (typeof el === 'string') el = document.querySelectorAll(el)
-
-  }
-
-  if (isElement(el)) {
-    // html(el, htmlContent)
-    if (isElement(content) || isIterable(content)) {
-      if (isElement(content)) content = [content]
-      domdiff(el, [...el.childNodes], content)
-    }
-    else {
-      prender(content, el)
-    }
-  }
-  else el.forEach(prender(content, el))
-
-  return el.childNodes.length === 1 ? el.firstChild : el.childNodes
-}
-
+export default htm.bind(h)
 
 function h(tagName, props, ...children) {
   if (isElement(tagName)) {
-    return createPortal(children, tagName)
+    return render(children, tagName)
   }
 
   if (typeof tagName !== 'string') return createElement(...arguments)
 
   if (!props) props = {}
   let [tag, id, classes] = parseTag(tagName)
-  if (!props.id) props.id = id
-  if (!props.class) props.class = classes.join(' ')
+  if (!props.id && id) props.id = id
+  if (!props.class && classes.length) props.class = classes.join(' ')
+
+  // put props to real elements
+  let ref = props.ref
+  props.ref = (el) => {
+    for (let name in props) {
+      if (!el[name]) el[name] = props[name]
+    }
+    ref && ref.call && ref(el)
+  }
 
   return createElement(tag, props, ...children)
 }

@@ -32,6 +32,24 @@ t('html: function renders external component', async t => {
   t.is(el.outerHTML, `<a>foo <bar></bar><baz></baz></a>`)
 })
 
+t('html: rerendering with props: must persist', t => {
+  let el = document.createElement('x')
+  let div = document.createElement('div')
+
+  html`<${el}>${div}</>`
+  t.is(el.firstChild, div)
+  html`<${el}><${div}/></>`
+  t.is(el.firstChild, div)
+  html`<${el}><${div}/></>`
+  t.is(el.firstChild, div)
+  html`<${el}><div/></>`
+  t.is(el.firstChild, div)
+  html`<${el}><div.foo items=${[]}/></>`
+  t.is(el.firstChild, div)
+  t.is(div.className, 'foo')
+  t.is(div.items, [])
+})
+
 t('html: fragments', t => {
   let el = html`<foo/><bar/>`
   t.is(el.length, 2)
