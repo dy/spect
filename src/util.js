@@ -21,10 +21,11 @@ export function noop() { }
 
 export function uid() { return Math.random().toString(36).slice(2, 8) }
 
-export function isPrimitive(arg) {
-  try { new WeakSet([arg]); return false } catch (e) {
-    return true
+export function isPrimitive(val) {
+  if (typeof val === 'object') {
+    return val === null;
   }
+  return typeof val !== 'function';
 }
 
 export function isElement (arg) {

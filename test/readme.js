@@ -49,7 +49,7 @@ t('readme: A stateful aspect', async t => {
   document.body.removeChild(el)
 })
 
-t.only('readme: An application', t => {
+t('readme: An application', t => {
   let el = document.body.appendChild(document.createElement('div'))
   el.id = 'todos-example'
 
@@ -79,7 +79,7 @@ t.only('readme: An application', t => {
 
       html`<${el}>
         <h3>TODO</h3>
-        <main.todo-list items=${ s.items }/>
+        <main#todo-list items=${ s.items } x=${Math.random()}/>
         <form>
           <label for=new-todo>
             What needs to be done?
@@ -94,9 +94,8 @@ t.only('readme: An application', t => {
     })
   })
 
-  use('.todo-list', el => {
+  use('#todo-list', el => {
     fx(() => {
-      console.log(el.items)
       html`<${el}><ul>${prop(el).items.map(item => html`<li>${item.text}</li>`)}</ul></>`
     })
   })
