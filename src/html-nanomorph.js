@@ -29,8 +29,11 @@ function h(tag, props, ...children) {
         if (classes.length) (props.class = (props.class || [])).push(...classes)
       }
     }
+    // keep existing props / attrs
+    if (!props.id && tag.id) props.id = tag.id
 
-    morph(tag, createElement(tag.tagName, props, children))
+    morph(tag, createElement(tag.tagName, {}, children), { childrenOnly: true })
+    applyProps(tag, props)
     return tag
   }
   // html`<${C} />`
@@ -52,6 +55,17 @@ function createElement(el, props, children) {
   if (!el) el = document.createDocumentFragment()
   else if (typeof el === 'string') el = document.createElement(el)
 
+  applyProps(el, props)
+
+  // FIXME: nanomorph doesn't do key optimization
+  // let key = props.id || props['data-nanomorph-component-id'] || props.key || props.id
+  // if (key) el.setAttribute('data-nanomorph-component-id', key)
+
+  if (children) el.append(...children)
+  return el
+}
+
+function applyProps(el, props) {
   for (let name in props) {
     let value = props[name]
     if (name === 'style') {
@@ -72,12 +86,6 @@ function createElement(el, props, children) {
       el[name] = value
     }
   }
-
-  // FIXME: nanomorph doesn't do key optimization
-  // let key = props.id || props['data-nanomorph-component-id'] || props.key || props.id
-  // if (key) el.setAttribute('data-nanomorph-component-id', key)
-
-  if (children) el.append(...children)
   return el
 }
 

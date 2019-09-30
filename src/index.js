@@ -1,6 +1,6 @@
 import use from './use-selector-observer'
 // import use from './use-regular-elements'
-import on, { fire } from './on-delegated'
+import on, { fire, off } from './on-delegated'
 // import on, { fire } from './on-delegate-it'
 import { run } from './core'
 import fx from './fx'
@@ -16,4 +16,4 @@ import query from './query'
 // import html from './html-idom'
 import html from './html-nanomorph'
 
-export { attr, local, data, query, use, on, fire, state, run, fx, prop, $, $$, html, cls }
+export { attr, local, data, query, use, on, off, fire, state, run, fx, prop, $, $$, html, cls }

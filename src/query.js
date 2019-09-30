@@ -25,7 +25,7 @@ export default createEffect(
 
 
 // make sure lang is in query always
-history.listen((location) => {
-  let query = qs.parse(location.search)
-  if (!query.lang && currentLocale) setLocale(currentLocale)
-});
+// history.listen((location) => {
+//   let query = qs.parse(location.search)
+//   if (!query.lang && currentLocale) setLocale(currentLocale)
+// });

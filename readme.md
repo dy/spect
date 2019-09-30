@@ -38,12 +38,12 @@ Other approaches include:
 
 
 ```js
-import { html, attr, state, fx, deps, route } from 'spect'
+import { html, attr, state, fx, route } from 'spect'
 import ky from 'ky'
 import { t, useLocale } from 'ttag'
 
 // main app aspect - load data aspect
-on('#app', 'connected', async (el) => {
+use('#app', async (el) => {
   // load data aspect
   fx(() => {
     let { id } = route('users/:id')
@@ -62,19 +62,14 @@ on('#app', 'connected', async (el) => {
 }
 
 // preloader aspect - append/remove spinner if loading state changes
-on('.preloadable', 'connected', async el => {
-  fx(() => {
-    let loading = attr(el).loading
-    if (loading) {
-      let progress = html`<progress.progress-circle />`
-      el.append(progress)
-    }
-    return el.remove(progress)
-  })
+use('.preloadable', async el => {
+  let progress = html`<progress.progress-circle />`
+  let content = [...el.childNodes]
+  fx((loading) => html`<${el}>${ attr(el).loading ? progress : content }</>`)
 })
 
 // i18n aspect - translates content when `lang` attribute changes
-on('.i18n', 'connected', el => {
+use('.i18n', el => {
   let str = text(el)
 
   fx(() => {
@@ -93,7 +88,7 @@ on('.i18n', 'connected', el => {
 [![npm i spect](https://nodei.co/npm/spect.png?mini=true)](https://npmjs.org/package/spect/)
 
 ```js
-import $ from 'spect'
+import { fx, on } from 'spect'
 
 // ...UI code
 ```
@@ -102,7 +97,7 @@ import $ from 'spect'
 
 ```html
 <script type="module">
-import $ from 'https://unpkg.com/spect@latest?module'
+import { fx, on } from 'https://unpkg.com/spect@latest?module'
 
 // ...UI code
 </script>
@@ -113,7 +108,7 @@ import $ from 'https://unpkg.com/spect@latest?module'
 ```html
 <script src="https://unpkg.com/spect/dist-umd/index.bundled.js"></script>
 <script>
-  let $ = window.spect
+  let { fx, on } = window.spect
 
   // ...UI code
 </script>
@@ -133,12 +128,12 @@ This example assigns `hello` aspect to `#hello-example` element and renders sing
 <div id="hello-example" name="Cyril"></div>
 
 <script type="module">
-import { html, use } from 'spect'
-fx() => {
-  let el = $('#hello-example')
+import { html, $, fx } from 'spect'
+
+use('#hello-example', el => {
   html`<${el}>
     <div.message>
-      Hello, ${ el.name }!
+      Hello, ${ prop(el).name }!
     </div>
   </>`
 })
@@ -153,21 +148,21 @@ fx() => {
 _Spect_ introduces `.state`, `.mount`, `.fx` and other effects, similar to `useState` and `useEffect` hooks and jQuery utils. Effects may accept `deps` argument for conditional triggering.
 
 ```js
-import { use, state, on, fx, mount } from 'spect'
+import { state, on, fx } from 'spect'
 
 
-on('#timer-example', 'connected', e => {
+use('#timer-example', el => {
   let el = e.target
-  let { seconds = 0 } = state(el)
+  state(el, { seconds: 0 })
 
-  let i = setInterval( () => state(el, { seconds++ }), 1000 )
+  let i = setInterval( () => state(el).seconds++, 1000 )
 
   fx(() => {
     html`<${el}>Seconds: ${ state(el).seconds }</>`
     console.log( state(el).seconds )
   })
 
-  on(e.target, 'disconnected', () => clearInterval(i))
+  return () => clearInterval(i)
 })
 ```
 
@@ -181,7 +176,7 @@ Events are provided by `.on` effect, decoupling callbacks from markup and enabli
 ```js
 import { $, use, on, delegate, html, state, h } from 'spect'
 
-on('#todos-example', 'connected', (e) => {
+use('#todos-example', (e) => {
   let el = e.target
   let {items = [], text: ''} = state(el)
 
@@ -217,7 +212,7 @@ on('#todos-example', 'connected', (e) => {
   </>`
 })
 
-on('.todo-list', 'connected', e => {
+use('.todo-list', e => {
   let el = e.target
   fx(() => html`<${el}><ul>${ prop(el).items.map(item => html`<li>${ item.text }</li>`) }</ul></>`)
 })
@@ -258,7 +253,7 @@ export default function MarkdownEditor (el) {
       >${ state(el).value }</textarea>
 
       <h3>Output</h3>
-      <div.content innerHTML=${ getRawMarkup( state(el).value ) }></>
+      <div.content innerHTML=${ getRawMarkup( state(el).value ) }/>
     </>`
   })
 }
@@ -281,7 +276,7 @@ let getRawMarkup = content => {
 
 ## API
 
-[**`.fx`**](#fx-el--destroy--deps---generic-side-effect)&nbsp;&nbsp; [**`.state`**](#state-name--val-deps---state-provider)&nbsp;&nbsp; [**`.prop`**](#prop-name--val-deps---properties-provider)&nbsp;&nbsp; [**`.attr`**](#attr-name--val-deps---attributes-provider)&nbsp;&nbsp; [**`.html`**](#htmlmarkup---html-side-effect)&nbsp;&nbsp; [**`.text`**](#text-content----text-content-side-effect)&nbsp;&nbsp; [**`.clsx`**](#class-classes-deps---classes-side-effect)&nbsp;&nbsp; [**`.css`**](#css-styles-deps---css-side-effect)&nbsp;&nbsp; [**`.on`**](#on-evt-fn---events-provider)&nbsp;&nbsp; [**`.mount`**](#mount-fn-onmount--onunmount----lifecycle-callbacks)
+[**`.use`**](#use-el--destroy--deps---generic-side-effect)&nbsp;&nbsp; [**`.fx`**](#fx-el--destroy--deps---generic-side-effect)&nbsp;&nbsp; [**`.state`**](#state-name--val-deps---state-provider)&nbsp;&nbsp; [**`.prop`**](#prop-name--val-deps---properties-provider)&nbsp;&nbsp; [**`.attr`**](#attr-name--val-deps---attributes-provider)&nbsp;&nbsp; [**`.html`**](#htmlmarkup---html-side-effect)&nbsp;&nbsp; [**`.text`**](#text-content----text-content-side-effect)&nbsp;&nbsp; [**`.clsx`**](#class-classes-deps---classes-side-effect)&nbsp;&nbsp; [**`.css`**](#css-styles-deps---css-side-effect)&nbsp;&nbsp; [**`.on`**](#on-evt-fn---events-provider)&nbsp;&nbsp; [**`.mount`**](#mount-fn-onmount--onunmount----lifecycle-callbacks)
 
 ##
 
@@ -302,7 +297,7 @@ $`foo <bar.baz/>`
 
 <p align="right">Ref: <a href="https://jquery.com">jquery</a>, etc.</p> -->
 
-<!--
+
 ### `use( selector | element, (el) => () => {} )` − assign aspect
 
 Observe selector in DOM, run init function when element appears in the DOM. Run optional destroy when element is removed from the DOM.
@@ -310,19 +305,26 @@ Observe selector in DOM, run init function when element appears in the DOM. Run 
 ```js
 let bar = $('.bar')
 
-use('.foo', el => {
+await use('.foo', el => {
   // subscribe to attribute updates
-  let x = attr( el ).x
-  let y = attr( bar ).y
+  fx(() => {
+    let x = attr( el ).x
+    let y = attr( bar ).y
 
-  // rerender after 1s
-  setTimeout(() => attr( el ).x++, 1000)
+    // rerender after 1s
+    setTimeout(() => attr( el ).x++, 1000)
+  })
 })
 
-// triggers rerendering of `.foo`
+// triggers rerendering of `.foo` fx
 attr(bar, { y: 1 })
+
+// destroy observer
+let { abort } = use('.bar', el => {})
+abort()
 ```
 
+<!--
 ### `run( ...fns )` - run aspects
 
 Run aspect functions. Used internally by `use`.
@@ -339,8 +341,7 @@ await run(() => {}, async () => {}, Promise.resolve().then())
 
 ### `fx( el => destroy )` − side-effect
 
-Run effect function, with optional `deps` check.
-Observe selector in DOM, run init function when element appears in the DOM. Run optional destroy when element is removed from the DOM.
+Run effect function - subscribes rerendering itself whenever internal dependencies change.
 
 ```js
 // called each time

@@ -1,5 +1,5 @@
-import { run } from './core'
+import { queue } from './core'
 
 export default function fx(fn) {
-  run(fn)
+  queue(fn)
 }

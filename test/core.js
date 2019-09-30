@@ -54,7 +54,8 @@ t('legacy readme: update', async t => {
   let foo = state(null, {})
 
   function a () { log.push('a') }
-  run(a, () => log.push('b'))
+  run(a)
+  run(() => log.push('b'))
 
   // t.is(log, [])
   // await ''
@@ -71,7 +72,7 @@ t('legacy readme: update', async t => {
   // t.is(log, ['a', 'b', 'a', 'a', 'b'])
 })
 
-t('legacy readme: fx', async t => {
+t.todo('legacy readme: fx', async t => {
   let log = []
 
   const a = () => {

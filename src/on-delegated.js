@@ -1,25 +1,29 @@
 // import delegate from 'delegate-it'
 import * as delegate from 'delegated-events'
-import { deps } from './core'
 
 
-export default function on (target, evts, fn) {
-  deps(undefined, () => destroy.forEach(fn => fn()))
+export default function on (target, evt, fn) {
+  return Promise.race(evt.split(/\s+/).map(evt => new Promise(ok => {
+    if (typeof target === 'string') {
+      delegate(target, evt, e => { fn(e); ok() })
+    }
+    else {
+      target.addEventListener(evt, e => { fn(e); ok() })
+    }
+  })))
+}
 
-  let destroy = []
-
+export function off(target, evts, fn) {
   evts = evts.split(/\s+/)
 
   if (typeof target === 'string') {
     evts.forEach(evt => {
-      delegate.on(evt, target, fn)
-      destroy.push(() => delegate.off(evt, target, fn))
+      delegate.off(evt, target, fn)
     })
   }
   else {
     evts.forEach(evt => {
-      target.addEventListener(evt, fn)
-      destroy.push(() => target.removeEventListener(evt, fn))
+      target.removeEventListener(evt, fn)
     })
   }
 }
