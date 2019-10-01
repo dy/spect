@@ -72,9 +72,9 @@ t('html: fragments', async t => {
   t.is(el3, 'foo')
 })
 
-t('html: put data directly to props', t => {
+t('html: put data directly to props', async t => {
   let x = {}
-  let el = html`<div x=${x}/>`
+  let el = await html`<div x=${x}/>`
   t.is(el.x, x)
 })
 
@@ -83,7 +83,7 @@ t('legacy html: readme default', async t => {
 
   html`<${div}><div#id.class foo=bar>baz</div></div>`
 
-  t.is(div.innerHTML, '<div id="id" class="class">baz</div>')
+  t.is(div.innerHTML, '<div foo="bar" id="id" class="class">baz</div>')
   t.is(div.firstChild.foo, 'bar')
 })
 
@@ -91,7 +91,7 @@ t('legacy html: attributes', t => {
   let div = document.createElement('div')
 
   html`<${div}><a href='/' foo=bar>baz</a></>`
-  t.is(div.firstChild.outerHTML, '<a href="/">baz</a>')
+  t.is(div.firstChild.outerHTML, '<a href="/" foo="bar">baz</a>')
   t.is(div.firstChild.foo, 'bar')
 })
 
@@ -109,7 +109,7 @@ t.skip('legacy html: component static props', async t => {
 })
 
 t('legacy html: direct component rerendering should not destroy state', async t => {
-  let el = html`<div><${fn}/></div>`
+  let el = await html`<div><${fn}/></div>`
   let c = el.firstChild
   state(c, { x: 1 })
 
@@ -129,7 +129,7 @@ t('legacy html: direct component rerendering should not destroy state', async t 
 })
 
 t('legacy html: rerendered component state should persist', async t => {
-  let el = html`<div><span.foo/></div>`
+  let el = await html`<div><span.foo/></div>`
   let c = el.firstChild
   state(c, { x: 1 })
 

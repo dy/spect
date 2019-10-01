@@ -80,8 +80,13 @@ function h(tagName, props, ...children) {
       let value = props[name]
       if (value === true && name[0] === '#' || name[0] === '.') {
         let [, id, classes] = parseTag(name)
-        if (id && !props.id) props.id = id
-        if (classes.length) (props.class = (props.class || [])).push(...classes)
+        if (id && !props.id) tagName.id = id
+        if (classes.length) {
+          classes.forEach(cl => tagName.classList.add(cl))
+        }
+      }
+      else {
+        tagName[name] = value
       }
     }
 
@@ -105,7 +110,6 @@ function h(tagName, props, ...children) {
   // put props to real elements
   let ref = props.ref
   props.ref = (el) => {
-    if (!el.x) el.x = 1
     for (let name in props) {
       if (name === 'ref') continue
       // FIXME: pract X-only effect - it automatically assigns props

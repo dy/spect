@@ -297,30 +297,21 @@ $`foo <bar.baz/>`
 <p align="right">Ref: <a href="https://jquery.com">jquery</a>, etc.</p> -->
 
 
-### `use( selector | element, (el) => () => {} )` − assign aspect
+### `use( selector | element, el => {} )` − assign aspect to elements
 
-Observe selector in DOM, run init function when element appears in the DOM. Run optional destroy when element is removed from the DOM.
+Observe selector in DOM, run init function when element appears in the DOM. Returns thenable abortable handler.
 
 ```js
-let bar = $('.bar')
-
-await use('.foo', el => {
-  // subscribe to attribute updates
-  fx(() => {
-    let x = attr( el ).x
-    let y = attr( bar ).y
-
-    // rerender after 1s
-    setTimeout(() => attr( el ).x++, 1000)
-  })
+let { abort } = use('.foo', el => {
+  // connected
+  return () => {
+    // disconnected
+  }
 })
-
-// triggers rerendering of `.foo` fx
-attr(bar, { y: 1 })
-
-// destroy observer
-let { abort } = use('.bar', el => {})
 abort()
+
+// awaits the first element in the DOM
+await use('#bar', el => {})
 ```
 
 <!--
@@ -338,28 +329,34 @@ await run(() => {}, async () => {}, Promise.resolve().then())
 ``` -->
 
 
-### `fx( el => destroy )` − side-effect
+### `fx( el => {} )` − side-effect
 
-Run effect function - subscribes rerendering itself whenever internal dependencies change.
+Creates reactive effect function - it is re-run whenever any of internal dependencies change.
 
 ```js
-// called each time
-fx(() => {})
+let bar = $('.bar')
 
-// called on init only
-fx([], () => {});
+await use('.foo', el => {
+  // subscribe to attribute updates
+  fx(() => {
+    let x = attr( el ).x
+    let y = attr( bar ).y
 
-// toggle: called when value changes to non-false
-fx(el.visible, visible => (visible && show(), hide))
+    // rerender after 1s
+    let i = setTimeout(() => attr( el ).x++, 1000)
 
-// destructor is called any time deps change
-fx(deps, (...deps) => () => {});
+    return () => clearTimeout(i)
+  })
+})
+
+// triggers rerendering of `.foo` fx
+attr(bar, { y: 1 })
 ```
 
 
 ### `state( target, obj | fn ? )` − read / write state
 
-Read or write state associated with any target. Reading returns first element state in the set. Reading subscribes current aspect to changes of that state. Writing rerenders all subscribed aspects. Optional `deps` param can define bypassing strategy, see `.fx`.
+Read or write state associated with target. Target can be any object or primitive. Reading subscribes current effect to changes of that state. Writing rerenders all subscribed effects.
 
 ```js
 // create / get state, associated with target
@@ -379,7 +376,7 @@ state(target, s => {...s, foo: 1})
 
 ### `prop( target, obj | fn ? )` − read / write properties
 
-Read or write target properties. Same as `.state`, but uses target as props holder.
+Read or write target properties. Same as `.state`, but uses target own properties.
 
 ```js
 // create / get target props
@@ -399,7 +396,7 @@ prop(target, p => {...p, foo: 1})
 
 ### `attr( element, obj | fn ? )` − read / write attributes
 
-Read or write attributes of element. Same as `.state`, but works with attributes, therefore values are always strings. Reading creates observer for external attribute changes. For boolean values, it sets/unsets attribute, rather than stringifies value.
+Read or write attributes of an element. Same as `.state`, but works with attributes, therefore values are strings. Reading creates observer for external attribute changes. For boolean values, it sets/unsets attribute, rather than stringifies value.
 
 ```js
 let a = attr(element)
@@ -415,17 +412,21 @@ attr(element, a => {...a, foo: 1})
 
 ### ``.html`...markup` `` − patch html
 
-Create / update html.
+Render html. Uses [`htm`](https://ghub.io/htm) syntax. Combines vdom with real dom - sync call creates vdom node, that hardens in the next tick, unless replaced with the new vnode.
+
 
 ```js
-// create
+// create vdom
 let foo = html`<div#foo/>`
 
-// update
-html`<${foo}><div.bar/><${baz}.baz/></>`
+// vdom → element
+let fooEl = await foo
+
+// render to target
+html`<${fooEl}><div.bar/><${baz}/></>`
 
 function baz(props) {
-  return html`<div>baz</div>`
+  return html`<div.baz>baz</div>`
 }
 ```
 
@@ -443,21 +444,6 @@ on('.target', 'foo', e => {})
 // multiple events
 on('.target', 'foo bar', e => {})
 ```
-
-<!--
-### `mount( fn: onmount => onunmount )` - lifecycle callbacks
-
-Triggers callback `fn` when element is connected to the DOM. Returned function is triggered when the element is disconnected.
-If an aspect is assigned to connected elements, the `onmount` is triggered immediately.
-
-```js
-$el.mount(() => {
-  // connected
-  return () => {
-    // disconnected
-  }
-})
-``` -->
 
 <!--
 ### `text( element, content ) ` − text content side-effect
@@ -501,252 +487,6 @@ class(el)
 ```
 
 
-<!--
-## Core API
-
-[**`spect.fn`**](#spectfn-fns----register-effects)&nbsp;&nbsp; [**`spect`**](#spect-target---create-aspectable)&nbsp;&nbsp; [**`.use`**](#use-fns---assign-aspects)&nbsp;&nbsp; [**`.run`**](#run-fns-deps----run-aspects)&nbsp;&nbsp; [**`.dispose`**](#dispose-fns----remove-aspect)&nbsp;&nbsp; [**`.fx`**](#fx-------bool--deps---generic-side-effect)&nbsp;&nbsp; [**`.state`**](#state-name--val-deps---getset-state)&nbsp;&nbsp; [**`.prop`**](#prop-name--val-deps---getset-properties)&nbsp;&nbsp;
-
-### `spect.fn( ...fns )` - register effects
-
-Register effect(s) available for targets.
-
-```js
-import spect, { state, prop, fx } from 'spect'
-import { html, css, attr } from 'spect'
-
-spect.fn(state, prop, fx, html, css, attr)
-
-let target = spect(document.querySelector('#my-element'))
-
-// use effects
-target.attr('foo', 'bar')
-target.html`...markup`
-target.css`...styles`
-```
-
-### `spect( target? )` − create aspectable
-
-Turn target into aspectable. The wrapper provides transparent access to target props, extended with registered effects via Proxy. `use`, `update` and `dispose` methods are provided by default, other effects must be registered via `spect.fn(...fxs)`.
-
-```js
-import spect, { state } from 'spect'
-
-spect.fn(state)
-
-let foo = {}
-let $foo = spect(foo)
-
-// targets are thenable
-await $foo.use($foo => {
-  // get foo by deconstructing:
-  let [foo] = $foo
-
-  console.log($foo.state('count'))
-
-  // rerender
-  setTimeout(() => $foo.state( state => state.count++ ), 1000)
-})
-
-// re-run all aspects
-$foo.update()
-```
-
-### `use( fns? )` − assign aspects
-
-Assign aspect(s) to target. Each aspect `fn` is invoked as microtask. By reading/writing effects, aspect subscribes/publishes changes, causing update.
-
-```js
-import spect, { prop, state } from 'spect'
-
-spect.fn(prop, state)
-
-let foo = spect({})
-let bar = spect({})
-
-foo.use(foo => {
-  // subscribe to updates
-  let x = foo.state('x')
-  let y = bar.prop('y')
-
-  // update after 1s
-  setTimeout(() => foo.state( state => state.x++ ), 1000)
-})
-
-// update foo
-bar.prop('y', 1)
-```
-
-### `update( fns?, deps? )` - run aspect(s)
-
-(re-)Run assigned aspects. If `fn` isn't provided, rerenders all aspects. `deps` control the conditions when the aspect must be rerun, they take same signature as `useEffect` hook.
-
-```js
-import spect from 'spect'
-
-let foo = spect({})
-
-foo.use(a, b)
-
-// update only a
-await foo.update(a)
-
-// update all
-await foo.update()
-```
-
-### `dispose( fns? )` - remove aspect
-
-Remove assigned aspects. If `fn` isn't provided, removes all aspects. Function, returned by aspect is used as destructor.
-
-```js
-import spect from 'spect'
-
-let foo = spect({})
-
-foo.use(a, b)
-
-// remove a
-await foo.dispose(a)
-
-// remove all
-await foo.dispose()
-
-function a () {
-
-}
-
-function b () {
-  return () => {
-    // destructor
-  }
-}
-```
-
-
-### `fx( () => (() => {})? , bool | deps? )` − generic side-effect
-
-Run effect function as microtask, conditioned by `deps`. Very much like [`useEffect`](https://reactjs.org/docs/hooks-effect.html) with less limitations, eg. it can be nested into condition. Boolean `deps` can be used to organize toggle / FSM that triggers when value changes to non-false, which is useful for binary states like `visible/hidden`, `disabled/enabled` etc.
-
-```js
-import spect, { fx } from 'spect'
-
-spect.fn(fx)
-
-
-let foo = spect()
-
-// called each time
-foo.fx(() => {});
-
-// called on init only
-foo.fx(() => {}, []);
-
-// destructor is called any time deps change
-foo.fx(() => () => {}, [...deps]);
-
-// called when value changes to non-false
-foo.fx(() => { show(); return () => hide(); }, visible);
-```
-
-
-### `state( name | val, deps? )` − get/set state
-
-Read or write state associated with target. Reading subscribes current aspect to changes of that state. Writing rerenders all subscribed aspects. Optional `deps` param can define trigger condition, see `.fx`.
-
-```js
-import spect, { state } from 'spect'
-
-spect.fn(state)
-
-
-// write state
-$foo.state('foo', 1)
-$foo.state({ foo: 1 })
-
-// mutate/reduce
-$foo.state(s => s.foo = 1)
-$foo.state(s => ({...s, foo: 1}))
-
-// init
-$foo.state({foo: 1}, [])
-
-// read
-$foo.state('foo')
-$foo.state()
-```
-
-
-### `prop( name | val, deps? )` − get/set properties
-
-Read or write target properties. Same as `.state`, but provides access to element properties.
-
-```js
-import spect, { prop } from 'spect'
-
-spect.fn(prop)
-
-
-// write prop
-$foo.prop('foo', 1)
-$foo.prop({foo: 1})
-
-// mutate/reduce
-$foo.prop(p => p.foo = 1)
-$foo.prop(p => ({...p, foo: 1}))
-
-// init
-$foo.prop({foo: 1}, [])
-
-// read
-$foo.prop('foo')
-$foo.prop()
-```
-
-### Standalone effects
-
-Effects can be used on their own, without `spect`:
-
-```js
-import { fx, state, prop } from 'spect'
-
-let foo = {x: 1}
-
-state.call(foo, 'y', 2)
-prop.call(foo, 'x', 3)
-
-fx.call(foo, () => {
-  state.call(foo, 'y') // 2
-  state.call(foo, 'x') // 3
-})
-```
--->
-
-<!--
-#### Internals
-
-Internal methods are available for effects as
-
-```js
-import spect, { symbols } from 'spect'
-
-spect.fn(function myEffect (arg, deps) {
-  // `this` is `spect` instance
-  // `this[symbols.target]` - initial target object
-
-  // `this._deps(deps, destructor)` - is dependencies gate
-  if (!this._deps(deps, () => { /* destructor */})) return this
-
-  // `this._pub(path)` - publishes update of some name / path string
-  // `this._sub(path, aspect?)` - subscribes current aspect to paths
-  // `this[symbols.subscription]` - subscriptions dict
-  // `this._run(aspect)` - runs aspect as microtask
-  // `this[symbols.promise]` - internal queue
-  // `this[symbols.aspects]` - internal map of assigned aspects
-
-  return this
-})
-```
--->
 
 
 ## Changelog

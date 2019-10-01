@@ -11,7 +11,7 @@ export default function use(selector, fn) {
   let { abort } = observe(selector, {
     initialize(el) {
       fire(el, 'init', {selector})
-      resolve()
+      resolve({ abort })
     },
     add(el) {
       cache.set(tuple(el, fn), fn(el))
