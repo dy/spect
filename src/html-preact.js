@@ -1,78 +1,78 @@
 // preact-based html implementation
 // portals have discrepancy with
 
-import { createElement, render, Fragment } from 'preact'
+import { createElement, render as preactRender, Fragment, hydrate } from 'preact'
 import htm from 'htm'
-import { isElement, isIterable, isPrimitive } from './util'
+import { isElement, SPECT_CLASS } from './util'
 import { publish } from './core'
 
-let p = Promise.resolve()
-
-let planned = null
-function planRender(vdom) {
-  if (!planned) {
-    p = p.then(() => {
-      if (!planned) return vdom
-      let frag = document.createDocumentFragment()
-      render(planned, frag)
-      planned = null
-      return frag.childNodes.length === 1 ? frag.firstChild : frag
-    })
-  }
-  planned = vdom
-  vdom.then = p.then.bind(p)
-  return vdom
-}
 
 // render vdom into element
-export default function html (...args) {
-  let vdom = htm.call(h, ...args)
-
-  // real dom in fact
-  if (isElement(vdom)) {
-    // clean planned things
-    planned = null
-    return vdom
-  }
-  if (isPrimitive(vdom)) {
-    return vdom
-  }
-  if (isIterable(vdom)) {
-    let onlyReal = true
-    for (let item of vdom) {
-      if (!isElement(item)) {
-        onlyReal = false; break;
-      }
-    }
-    if (onlyReal) return vdom
-    return planRender(vdom)
-  }
-
-  return planRender(vdom)
-}
+export default htm.bind(h)
 
 function toVdom(el) {
+  if (el.nodeType === 3) return el.textContent
+  if (el.nodeType !== 1) return
+
   // FIXME: there can be a better clone
+  let proto = el.constructor.prototype
   let props = {
     ref: node => {
       if (node) node.append(...el.childNodes)
+      for (let name in el) {
+        if (!(name in proto) && name[0] !== '_') node[name] = el[name]
+      }
     }
   }
   for (let attr of el.attributes) {
-    let value = attr.value
     props[attr.name] = attr.value
   }
-  let proto = el.constructor.prototype
-  for (let name in el) {
-    if (!(name in proto)) props[name] = el[name]
+  // let children = [...el.childNodes].map(toVdom)
+
+  return createElement(el.tagName.toLowerCase(), props)
+}
+
+const _replaced = Symbol('replaced')
+const elCache = new WeakSet
+export function render (vdom, el) {
+  // unreplace
+  el.querySelectorAll(`.${SPECT_CLASS}-replaced`).forEach(el => {
+    el.replaceWith(el[_replaced])
+  })
+
+  if (!elCache.has(el)) {
+    if (el.childNodes.length) {
+      hydrate(vdom, el)
+    }
+    else {
+      preactRender(vdom, el)
+    }
+  }
+  else {
+    preactRender(vdom, el)
   }
 
-  return createElement(el.tagName, props)
+  elCache.add(el)
 }
 
 function h(tagName, props, ...children) {
-  children = children.flat().map(child => isElement(child) ? toVdom(child) : child)
+  children = children.flat().map(child => isElement(child) ?
+    createElement(child.tagName.toLowerCase(),{
+      ref: el => {
+        el && el.replaceWith(child)
+        child.classList.add(SPECT_CLASS + '-replaced')
+        child[_replaced] = el
+      }
+    })
+    : child)
   if (!props) props = {}
+  // html`<.target>...</>`
+  if (tagName[0] === '.' || tagName[0] === '#') {
+    tagName = document.querySelector(tagName)
+  }
+  if (!tagName) {
+    return Fragment({ children })
+  }
 
   if (isElement(tagName)) {
     // html`<${el}.a.b.c />`
@@ -89,18 +89,12 @@ function h(tagName, props, ...children) {
         tagName[name] = value
       }
     }
-
-    // return createPortal(toChildArray(children), tagName)
     render(children, tagName)
+
     return tagName
   }
-  if (typeof tagName !== 'string') {
-    return createElement(...arguments)
-  }
 
-  if (!tagName) {
-    return Fragment({ children })
-  }
+  if (typeof tagName !== 'string') return createElement(tagName, props, children)
 
   if (!props) props = {}
   let [tag, id, classes] = parseTag(tagName)
@@ -110,6 +104,7 @@ function h(tagName, props, ...children) {
   // put props to real elements
   let ref = props.ref
   props.ref = (el) => {
+    if (!el) return
     for (let name in props) {
       if (name === 'ref') continue
       // FIXME: pract X-only effect - it automatically assigns props
@@ -119,7 +114,7 @@ function h(tagName, props, ...children) {
     ref && ref.call && ref(el)
   }
 
-  return createElement(tag, props, ...children)
+  return createElement(tag, props, children)
 }
 
 function parseTag(str) {

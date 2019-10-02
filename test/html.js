@@ -1,9 +1,9 @@
 import t from 'tst'
-import { html, state, cls } from '..'
+import { html, state, cls, $ } from '..'
 
 t('html: apply direct props', async t => {
   let a = document.createElement('a')
-  let el = await html`<${a}#x.y.z/>`
+  let el = html`<${a}#x.y.z/>`
   t.is(el.className, 'y z')
   t.is(el.id, 'x')
 })
@@ -19,11 +19,11 @@ t('html: render existing children', async t => {
   let baz = document.createElement('baz')
   let qux = document.createElement('qux')
   let el = html`<${a}>foo <bar>${baz}</>${qux}</>`
-  t.is(el.outerHTML, `<a>foo <bar><baz></baz></bar><qux></qux></a>`)
+  t.is(el.outerHTML, `<a>foo <bar><baz class="👁-replaced"></baz></bar><qux class="👁-replaced"></qux></a>`)
 })
 
 t('html: function renders external component', async t => {
-  let el = await html`<a>foo <${bar}/></><b/>`
+  let el = $`<a>foo <${bar}/></><b/>`
 
   function bar () {
     return html`<bar/><baz/>`
@@ -65,17 +65,58 @@ t('html: fragments', async t => {
   let el = html`<foo/><bar/>`
   t.is(el.length, 2)
 
-  let el2 = await html`<>foo</>`
+  let el2 = $`<>foo</>`
   t.is(el2.textContent, 'foo')
 
-  let el3 = await html`foo`
-  t.is(el3, 'foo')
+  let el3 = $`foo`
+  t.is(el3.textContent, 'foo')
+})
+
+t('html: wrapping', async t => {
+  let root = document.createElement('div')
+  root.innerHTML = '<foo/>'
+  let foo = root.firstChild
+  foo.x = 1
+
+  let wrapped = $`<div>
+    <${foo}.foo><bar/></>
+  </div>`
+
+  t.is(wrapped.outerHTML, '<div><foo class="foo 👁-replaced"><bar></bar></foo></div>')
+  t.is(wrapped.firstChild.x, 1)
+})
+
+t.todo('html: selector elements', t => {
+  html`<.sel></>`
 })
 
 t('html: put data directly to props', async t => {
   let x = {}
-  let el = await html`<div x=${x}/>`
+  let el = $`<div x=${x}/>`
   t.is(el.x, x)
+})
+
+t('html: rerender real dom', t => {
+  let real = document.createElement('div')
+  let virt = html`<div/>`
+  let el = document.createElement('div')
+  el.innerHTML = '<div></div>'
+
+  html`<${el}>${real}</>`
+  t.is(el.outerHTML, '<div><div class="👁-replaced"></div></div>')
+  t.is(el.firstChild, real)
+
+  html`<${el}>${virt}</>`
+  t.is(el.outerHTML, '<div><div></div></div>')
+  t.is(el.firstChild, real)
+
+  html`<${el}>${virt}</>`
+  t.is(el.outerHTML, '<div><div></div></div>')
+  t.is(el.firstChild, real)
+
+  html`<${el}>${real}</>`
+  t.is(el.outerHTML, '<div><div class="👁-replaced"></div></div>')
+  t.is(el.firstChild, real)
 })
 
 t('legacy html: readme default', async t => {
@@ -83,8 +124,9 @@ t('legacy html: readme default', async t => {
 
   html`<${div}><div#id.class foo=bar>baz</div></div>`
 
-  t.is(div.innerHTML, '<div foo="bar" id="id" class="class">baz</div>')
+  t.is(div.outerHTML, '<div><div foo="bar" id="id" class="class">baz</div></div>')
   t.is(div.firstChild.foo, 'bar')
+  t.is(div.firstChild.id, 'id')
 })
 
 t('legacy html: attributes', t => {
@@ -109,7 +151,7 @@ t.skip('legacy html: component static props', async t => {
 })
 
 t('legacy html: direct component rerendering should not destroy state', async t => {
-  let el = await html`<div><${fn}/></div>`
+  let el = $`<div><${fn}/></div>`
   let c = el.firstChild
   state(c, { x: 1 })
 
@@ -129,7 +171,7 @@ t('legacy html: direct component rerendering should not destroy state', async t 
 })
 
 t('legacy html: rerendered component state should persist', async t => {
-  let el = await html`<div><span.foo/></div>`
+  let el = $`<div><span.foo/></div>`
   let c = el.firstChild
   state(c, { x: 1 })
 

@@ -14,7 +14,13 @@ export default function use(selector, fn) {
       resolve({ abort })
     },
     add(el) {
-      cache.set(tuple(el, fn), fn(el))
+      // read props from attributes
+      let props = {}
+      for (let attr of el.attributes) {
+        props[attr.name] = attr.value
+      }
+
+      cache.set(tuple(el, fn), fn(el, props))
       fire(el, 'connected', {selector})
     },
     remove(el) {
