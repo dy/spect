@@ -1,10 +1,10 @@
-import { html, render } from '.'
+import { html } from '.'
 import { isIterable } from './util'
 
 export default function $(selector, within=document) {
   if (selector.raw) {
-    let el
-    render(html(...arguments), el = document.createDocumentFragment())
+    let el = document.createDocumentFragment()
+    html`<${el}>${html(...arguments)}</>`
     return el.childNodes.length === 1 ? el.firstChild : el
   }
 

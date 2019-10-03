@@ -1,6 +1,15 @@
 import t from 'tst'
 import { html, state, cls, $ } from '..'
 
+Object.defineProperty(DocumentFragment.prototype, 'outerHTML', {
+  get() {
+    let str = '<>'
+    this.childNodes.forEach(el => str += el.outerHTML)
+    str += '</>'
+    return str
+  }
+})
+
 t('html: apply direct props', async t => {
   let a = document.createElement('a')
   let el = html`<${a}#x.y.z/>`
@@ -19,7 +28,7 @@ t('html: render existing children', async t => {
   let baz = document.createElement('baz')
   let qux = document.createElement('qux')
   let el = html`<${a}>foo <bar>${baz}</>${qux}</>`
-  t.is(el.outerHTML, `<a>foo <bar><baz class="👁-replaced"></baz></bar><qux class="👁-replaced"></qux></a>`)
+  t.is(el.outerHTML, `<a>foo <bar><baz></baz></bar><qux></qux></a>`)
 })
 
 t('html: function renders external component', async t => {
@@ -72,7 +81,18 @@ t('html: fragments', async t => {
   t.is(el3.textContent, 'foo')
 })
 
-t('html: wrapping', async t => {
+t('html: reinsert self content', t => {
+  let el = document.createElement('div')
+  el.innerHTML = 'a <b>c <d>e <f></f> g</d> h</b> i'
+
+  let childNodes = [...el.childNodes]
+
+  html`<${el}>${ childNodes }</>`
+
+  t.is(el.outerHTML, `<div>a <b>c <d>e <f></f> g</d> h</b> i</div>`)
+})
+
+t.only('html: wrapping', async t => {
   let root = document.createElement('div')
   root.innerHTML = '<foo/>'
   let foo = root.firstChild
@@ -82,7 +102,8 @@ t('html: wrapping', async t => {
     <${foo}.foo><bar/></>
   </div>`
 
-  t.is(wrapped.outerHTML, '<div><foo class="foo 👁-replaced"><bar></bar></foo></div>')
+  t.is(wrapped.outerHTML, '<div><foo class="foo"><bar></bar></foo></div>')
+  t.is(wrapped.firstChild, foo)
   t.is(wrapped.firstChild.x, 1)
 })
 
@@ -103,7 +124,7 @@ t('html: rerender real dom', t => {
   el.innerHTML = '<div></div>'
 
   html`<${el}>${real}</>`
-  t.is(el.outerHTML, '<div><div class="👁-replaced"></div></div>')
+  t.is(el.outerHTML, '<div><div></div></div>')
   t.is(el.firstChild, real)
 
   html`<${el}>${virt}</>`
@@ -115,7 +136,11 @@ t('html: rerender real dom', t => {
   t.is(el.firstChild, real)
 
   html`<${el}>${real}</>`
-  t.is(el.outerHTML, '<div><div class="👁-replaced"></div></div>')
+  t.is(el.outerHTML, '<div><div></div></div>')
+  t.is(el.firstChild, real)
+
+  html`<${el}>${virt}</>`
+  t.is(el.outerHTML, '<div><div></div></div>')
   t.is(el.firstChild, real)
 })
 
@@ -152,22 +177,19 @@ t.skip('legacy html: component static props', async t => {
 
 t('legacy html: direct component rerendering should not destroy state', async t => {
   let el = $`<div><${fn}/></div>`
-  let c = el.firstChild
-  state(c, { x: 1 })
+  let abc = el.firstChild
+  state(abc, { x: 1 })
 
-  t.is(state(c).x, 1)
-  t.is(el.outerHTML, '<div>abc</div>')
+  t.is(state(abc).x, 1)
+  t.is(el.outerHTML, '<div><abc></abc></div>')
 
   html`<${el}><${fn}.foo/></>`
-  t.is(el.outerHTML, '<div>abc</div>')
+  t.is(el.outerHTML, '<div><abc></abc></div>')
+  let abc1 = el.firstChild
+  t.is(state(abc1).x, 1)
+  t.equal(abc1, abc)
 
-  let c1 = el.firstChild
-  t.is(el.outerHTML, '<div>abc</div>')
-
-  t.is(state(c1).x, 1)
-  t.is(c1, c)
-
-  function fn () { return html`abc` }
+  function fn () { return html`<abc/>` }
 })
 
 t('legacy html: rerendered component state should persist', async t => {
