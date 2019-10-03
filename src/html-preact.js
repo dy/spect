@@ -14,20 +14,13 @@ function toVdom(el) {
   if (el.nodeType === 3) return el.textContent
   if (el.nodeType !== 1) return
 
-  // FIXME: there can be a better clone
-  let proto = el.constructor.prototype
-  let props = {
+  el.classList.add(SPECT_CLASS + '-replaced')
+  const props = {
     ref: node => {
-      if (node) node.append(...el.childNodes)
-      for (let name in el) {
-        if (!(name in proto) && name[0] !== '_') node[name] = el[name]
-      }
+      node && node.replaceWith(el)
+      el[_replaced] = node
     }
   }
-  for (let attr of el.attributes) {
-    props[attr.name] = attr.value
-  }
-  // let children = [...el.childNodes].map(toVdom)
 
   return createElement(el.tagName.toLowerCase(), props)
 }
@@ -56,15 +49,7 @@ export function render (vdom, el) {
 }
 
 function h(tagName, props, ...children) {
-  children = children.flat().map(child => isElement(child) ?
-    createElement(child.tagName.toLowerCase(),{
-      ref: el => {
-        el && el.replaceWith(child)
-        child.classList.add(SPECT_CLASS + '-replaced')
-        child[_replaced] = el
-      }
-    })
-    : child)
+  children = children.flat().map(child => isElement(child) ? toVdom(child) : child)
   if (!props) props = {}
   // html`<.target>...</>`
   if (tagName[0] === '.' || tagName[0] === '#') {
@@ -86,6 +71,7 @@ function h(tagName, props, ...children) {
         }
       }
       else {
+        tagName.setAttribute(name, value)
         tagName[name] = value
       }
     }

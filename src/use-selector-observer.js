@@ -11,22 +11,19 @@ export default function use(selector, fn) {
   let { abort } = observe(selector, {
     initialize(el) {
       fire(el, 'init', {selector})
-      resolve({ abort })
-    },
-    add(el) {
-      // read props from attributes
+
       let props = {}
       for (let attr of el.attributes) {
         props[attr.name] = attr.value
       }
-
       cache.set(tuple(el, fn), fn(el, props))
+
+      resolve({ abort })
+    },
+    add(el) {
       fire(el, 'connected', {selector})
     },
     remove(el) {
-      let destroy = cache.get(tuple(el, fn))
-      if (destroy && destroy.call) destroy(el)
-      cache.delete(tuple(el, fn))
       fire(el, 'disconnected', {selector})
     }
   })
