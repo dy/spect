@@ -1,5 +1,5 @@
 import t from 'tst'
-import { use } from '..'
+import { use, html } from '..'
 
 t('use: observe selector', async t => {
   let log = []
@@ -24,6 +24,18 @@ t('use: observe selector', async t => {
   await ''
 
   // t.is(log, [el, el])
+})
+
+t('use: returned result replaces the target', async t => {
+  let container = document.createElement('div')
+  container.innerHTML = '<div class="item"></div>'
+  document.body.appendChild(container)
+
+  await use('.item', el => {
+    return [html`<foo/>`, 'bar']
+  })
+
+  t.is(container.innerHTML, '<foo></foo>bar')
 })
 
 t.todo('use: aspects, assigned through parent wrapper', async t => {

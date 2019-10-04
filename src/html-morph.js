@@ -1,6 +1,6 @@
 // domdiff html implementation
 import htm from 'htm'
-import { isElement } from './util'
+import { isElement, paramCase } from './util'
 import morph from 'morphdom'
 import clsx from 'clsx'
 import { publish } from './core'
@@ -9,12 +9,46 @@ import 'array-flat-polyfill'
 
 const propsCache = new WeakMap()
 
+let cuerrentUseCache
 
 export default function html (...args) {
+  currentUseCache = new Set()
+
   let result = htm.call(h, ...args)
   if (typeof result === 'string') return document.createTextNode(result)
+
+  // apply use
+  for (let el of currentUseCache) {
+    used(el)
+  }
+
+  if (Array.isArray(result)) {
+    let frag = document.createDocumentFragment()
+    frag.append(...result)
+    return frag
+  }
+
   return result
 }
+
+function used (el) {
+  let uselist = [el.is, el.use].flat().filter(Boolean)
+
+  let fn, result, props = propsCache.get(el) || {}
+  while (fn = uselist.shift()) {
+    for (let attr of el.attributes) {
+      if (!(attr.name in props)) props[attr.name] = attr.value
+    }
+    result = fn(el, props)
+    if (result !== undefined) {
+      let repl = isElement(result) ? result : html`<>${result}</>`
+      el.replaceWith(repl)
+      el = repl
+    }
+  }
+  return el
+}
+
 
 function h(tag, props, ...children) {
   children = children.flat()
@@ -48,8 +82,10 @@ function h(tag, props, ...children) {
     if (tag.id && !props.id) props.id = tag.id
 
     // keep attributes
-    for (let attr of tag.attributes) {
-      if (!props[attr.name]) props[attr.name] = attr.value
+    if (tag.attributes) {
+      for (let attr of tag.attributes) {
+        if (!props[attr.name]) props[attr.name] = attr.value
+      }
     }
 
     let newTag = createElement(tag.tagName, props, children)
@@ -70,27 +106,35 @@ function h(tag, props, ...children) {
               fromEl[prop] = toEl[prop]
               publish([fromEl, 'prop', prop])
             }
-            propsCache.delete(prop)
+            // propsCache.delete(prop)
           }
         }
 
         return true
       }
     })
-
     return tag
   }
-  // html`<${C} />`
-  else if (typeof tag === 'function') {
+
+
+  // html`<${C}/>`
+  if (typeof tag === 'function') {
     props.children = children
-    return tag(props)
+
+    let el = createElement(tag.name && paramCase(tag.name), { is: props.is })
+
+    let result = tag(el, props)
+    return result === undefined ? el : result
   }
 
+
+  // html`<>content...</>`
   let [tagName, id, classes] = parseTag(tag)
   if (id && !props.id) props.id = id
   if (classes.length) props.class = [props.class || '', ...classes].filter(Boolean).join(' ')
 
-  return createElement(tagName, props, children)
+  let el = createElement(tagName, props, children)
+  return el
 }
 
 function createElement(el, props, children) {
@@ -121,6 +165,7 @@ function applyProps(el, props) {
     }
     else {
       el[name] = value
+      if (name === 'use' || name === 'is') currentUseCache.add(el)
       if (!propsCache.has(el)) propsCache.set(el, new Set)
       propsCache.get(el).add(name)
     }

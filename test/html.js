@@ -32,7 +32,7 @@ t('html: render existing children', async t => {
 })
 
 t('html: function renders external component', async t => {
-  let el = $`<a>foo <${bar}/></><b/>`
+  let el = html`<a>foo <${bar}/></><b/>`
 
   function bar () {
     return html`<bar/><baz/>`
@@ -74,7 +74,7 @@ t('html: fragments', async t => {
   let el = html`<foo/><bar/>`
   t.is(el.length, 2)
 
-  let el2 = $`<>foo</>`
+  let el2 = html`<>foo</>`
   t.is(el2.textContent, 'foo')
 
   let el3 = $`foo`
@@ -98,7 +98,7 @@ t('html: wrapping', async t => {
   let foo = root.firstChild
   foo.x = 1
 
-  let wrapped = $`<div>
+  let wrapped = html`<div>
     <${foo}.foo><bar/></>
   </div>`
 
@@ -118,7 +118,7 @@ t('html: selector elements', t => {
 
 t('html: put data directly to props', async t => {
   let x = {}
-  let el = $`<div x=${x}/>`
+  let el = html`<div x=${x}/>`
   t.is(el.x, x)
 })
 
@@ -194,7 +194,7 @@ t.skip('legacy html: component static props', async t => {
 })
 
 t('legacy html: direct component rerendering should not destroy state', async t => {
-  let el = $`<div><${fn}/></div>`
+  let el = html`<div><${fn}/></div>`
   let abc = el.firstChild
   state(abc, { x: 1 })
 
@@ -211,7 +211,7 @@ t('legacy html: direct component rerendering should not destroy state', async t 
 })
 
 t('legacy html: rerendered component state should persist', async t => {
-  let el = $`<div><span.foo/></div>`
+  let el = html`<div><span.foo/></div>`
   let c = el.firstChild
   state(c, { x: 1 })
 
@@ -226,7 +226,7 @@ t('legacy html: rerendered component state should persist', async t => {
 })
 
 t('legacy html: extended component rerendering should not destroy state', async t => {
-  let el = $`<div><div is=${fn}/></div>`
+  let el = html`<div><div is=${fn}/></div>`
   let child = $(el.firstChild)
   state(child, { x: 1 })
 
@@ -240,6 +240,27 @@ t('legacy html: extended component rerendering should not destroy state', async 
   t.is(state(child1).x, 1)
 
   function fn(el) { }
+})
+
+t.only('html: functional components create element', t => {
+  let log = []
+  let el = html`<${el => {
+    let e = document.createElement('a')
+    log.push(e)
+    return e
+  }}/>`
+  t.is(log, [el])
+})
+
+t('html: use assigned via prop', t => {
+  let log = []
+  let el = html`<a use=${el => {
+    log.push(el.tagName.toLowerCase())
+    let e = document.createElement('b')
+    return e
+  }}/>`
+  t.is(log, ['a'])
+  t.is(el.tagName.toLowerCase(), 'b')
 })
 
 t.todo('legacy html: rerendering extended component should not register anonymous function')
@@ -310,7 +331,7 @@ t.todo('legacy html: insert self/array of nodes', t => {
 })
 
 t.todo('legacy html: child function as modifier', async t => {
-  let $el = $`<div/>`
+  let $el = html`<div/>`
   $el.html`<a>${ el => {
     t.is(el.tagName, 'A')
     $(el).html`<span/>`
@@ -345,14 +366,14 @@ t.todo('legacy html: child function as reducer', async t => {
 t.todo('legacy html: $ inside of html', t => {
   let $el = $(document.createElement('div'))
 
-  $el.html`<foo>${$`<bar>${$`<baz></baz>`}</bar>qux`}</foo>`
+  $el.html`<foo>${html`<bar>${html`<baz></baz>`}</bar>qux`}</foo>`
 
   t.equal($el[0].innerHTML, '<foo><bar><baz></baz></bar>qux</foo>')
 })
 
 t.todo('legacy html: re-rendering inner nodes shouldn\'t trigger mount callback', async t => {
   let log = []
-  let $a = $`<div.a><div.b use=${fn}/></>`
+  let $a = html`<div.a><div.b use=${fn}/></>`
   document.body.appendChild($a[0])
 
   function fn ({ mount }) {
@@ -393,7 +414,7 @@ t.todo('legacy html: h plain node', t => {
 
 t.todo('legacy html: init aspects on fragments', t => {
   let log = []
-  let $a = $`< is=${fn}/>`
+  let $a = html`< is=${fn}/>`
 
   function fn(frag) {
     log.push(frag.nodeType)
@@ -413,22 +434,22 @@ t.todo('legacy html: text content', t => {
 })
 
 t.todo('legacy html: object insertions', t => {
-  let $a = $`<div>${ {x:1} }</div>`
+  let $a = html`<div>${ {x:1} }</div>`
   t.is($a[0].outerHTML, '<div>[object Object]</div>')
 })
 
 t.todo('legacy html: reducers', t => {
-  let $el = $`<div><bar/></>`
+  let $el = html`<div><bar/></>`
 
   // append/prepend
   $el.html(el => {
-    el.append(...$`<foo/>`, ...el.childNodes, document.createElement('baz'))
+    el.append(...html`<foo/>`, ...el.childNodes, document.createElement('baz'))
   })
 
   t.is($el[0].outerHTML, '<div><foo></foo><bar></bar><baz></baz></div>')
 
   // wrap
-  // $el.html(el => $`<div.foo>${ el }</div>`)
+  // $el.html(el => html`<div.foo>${ el }</div>`)
   // t.is($el[0].outerHTML, '<div class="foo"><div><foo></foo><bar></bar><baz></baz></div></div>')
 
   // unwrap
@@ -437,12 +458,12 @@ t.todo('legacy html: reducers', t => {
 })
 
 t.todo('legacy html: deps', t => {
-  let $el = $`<div.foo/>`
+  let $el = html`<div.foo/>`
 })
 
 t.todo('legacy html: other element directly', t => {
-  let $el = $`<div/>`
-  let $a = $`<a/>`
+  let $el = html`<div/>`
+  let $a = html`<a/>`
   $el.html($a[0])
 
   t.is($el[0].outerHTML, `<div><a></a></div>`)
@@ -489,7 +510,7 @@ t.todo('legacy html: two wrapping aspects', async t => {
 t.skip('html: <host> tag')
 
 t.todo('legacy html: direct components case', async t => {
-  let $c = $`<${C} x y=1 z=${2} />`
+  let $c = html`<${C} x y=1 z=${2} />`
 
   function C($el) {
     t.is({ x: $el.x, y: $el.y, z: $el.z }, { x: true, y: '1', z: 2 })
@@ -532,13 +553,13 @@ t.skip('html: duplicate id warning', t => {
 })
 
 t('html: null-like insertions', t => {
-  let a = $`<a>foo ${ null } ${ undefined } ${ false } ${0}</a>`
+  let a = html`<a>foo ${ null } ${ undefined } ${ false } ${0}</a>`
 
   t.is(a.innerHTML, 'foo    0')
 })
 
 t.todo('legacy html: parent props must rerender nested components', async t => {
-  let $x = $`<div x=0/>`
+  let $x = html`<div x=0/>`
 
   $x.use(x => {
     $x.html`<div is=${y} value=${ $x.prop('x') }/>`
@@ -559,7 +580,7 @@ t.todo('legacy html: parent props must rerender nested components', async t => {
 })
 
 t.todo('legacy html: html effect', async t => {
-  let $el = $`<a html=${'<span>foo</span>'}/>`
+  let $el = html`<a html=${'<span>foo</span>'}/>`
 
   await $el
 
@@ -570,7 +591,7 @@ t.todo('legacy html: it microtasks dom diffing, not applies instantly')
 
 t.todo('legacy html: removing aspected element should trigger destructor', async t => {
   let log = []
-  let $el = $`<foo><bar use=${fn} /></foo>`
+  let $el = html`<foo><bar use=${fn} /></foo>`
 
   function fn (el) {
     log.push(1)
@@ -587,7 +608,7 @@ t.todo('legacy html: removing aspected element should trigger destructor', async
 t.todo('legacy html: 50+ elements shouldnt invoke recursion', t => {
   let data = Array(100).fill({x:1})
 
-  let el = $`${data.map(item => $`<${fn} ...${item}/>`)}`
+  let el = $`${data.map(item => html`<${fn} ...${item}/>`)}`
 
   function fn ({html, x}) {
     html`x: ${x}`
@@ -597,7 +618,7 @@ t.todo('legacy html: 50+ elements shouldnt invoke recursion', t => {
 })
 
 t.todo('legacy html: templates', async t => {
-  // $`<${C}></>`
+  // html`<${C}></>`
   let { default: htm } = await import('htm')
 
   htm = htm.bind((...args) => console.log(args))

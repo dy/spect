@@ -1,9 +1,8 @@
 // selector-observer based impl
 import { observe } from 'selector-observer'
 import { fire } from './on-delegated'
-import tuple from 'immutable-tuple'
+import { html } from '.'
 
-const cache = new WeakMap
 export default function use(selector, fn) {
   let resolve
   let p = new Promise(ok => { resolve = ok })
@@ -16,7 +15,13 @@ export default function use(selector, fn) {
       for (let attr of el.attributes) {
         props[attr.name] = attr.value
       }
-      cache.set(tuple(el, fn), fn(el, props))
+
+      let result = fn(el, props)
+
+      // non-zero results are treated as mappers
+      if (result !== undefined) {
+        el.replaceWith(html`<>${result}</>`)
+      }
 
       resolve({ abort })
     },
