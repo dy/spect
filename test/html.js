@@ -225,20 +225,19 @@ t('legacy html: rerendered component state should persist', async t => {
   t.is(cls(c1).foo, true)
 })
 
-t.todo('legacy html: extended component rerendering should not destroy state', async t => {
-  let $el = $`<div><div is=${fn}/></div>`
-  let $c = $($el[0].firstChild)
-  $c.state({ x: 1 })
+t('legacy html: extended component rerendering should not destroy state', async t => {
+  let el = $`<div><div is=${fn}/></div>`
+  let child = $(el.firstChild)
+  state(child, { x: 1 })
 
-  await $c
-  t.is($c.state('x'), 1)
+  await child
+  t.is(state(child).x, 1)
 
-  $el.html`<div.foo is=${fn}/>`
+  html`<${el}><div.foo is=${fn}/></>`
 
-  let $c1 = $($el[0].firstChild)
-  t.is($c1.state('x'), 1)
-  t.is($c1, $c)
-  t.is($c1.class('foo'), true)
+  let child1 = $(el.firstChild)
+  t.equal(child1, child)
+  t.is(state(child1).x, 1)
 
   function fn(el) { }
 })
@@ -533,9 +532,9 @@ t.skip('html: duplicate id warning', t => {
 })
 
 t('html: null-like insertions', t => {
-  let a = $`<a>foo ${ null } ${ undefined } ${0}</a>`
+  let a = $`<a>foo ${ null } ${ undefined } ${ false } ${0}</a>`
 
-  t.is(a.innerHTML, 'foo   0')
+  t.is(a.innerHTML, 'foo    0')
 })
 
 t.todo('legacy html: parent props must rerender nested components', async t => {

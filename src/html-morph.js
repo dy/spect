@@ -18,7 +18,7 @@ export default function html (...args) {
 
 function h(tag, props, ...children) {
   children = children.flat()
-    .filter(child => child != null)
+    .filter(child => typeof child === 'number' || child)
     .map(child =>
       isElement(child) ? child
       : document.createTextNode(child)
