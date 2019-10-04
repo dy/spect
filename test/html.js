@@ -107,8 +107,13 @@ t('html: wrapping', async t => {
   t.is(wrapped.firstChild.x, 1)
 })
 
-t.todo('html: selector elements', t => {
-  html`<.sel></>`
+t('html: selector elements', t => {
+  let el = document.createElement('div')
+  el.classList.add('sel')
+  document.body.appendChild(el)
+  html`<.sel>123</>`
+  t.is(el.textContent, '123')
+  document.body.removeChild(el)
 })
 
 t('html: put data directly to props', async t => {
@@ -142,6 +147,19 @@ t('html: rerender real dom', t => {
   html`<${el}>${virt}</>`
   t.is(el.outerHTML, '<div><div></div></div>')
   t.is(el.firstChild, real)
+})
+
+t('html: preserve rendering target classes/ids/attribs', t => {
+  let el = document.createElement('div')
+  el.setAttribute('x', 1)
+  el.classList.add('x')
+  el.id = 'x'
+
+  html`<${el}#y.z.w w=2/>`
+
+  t.is(el.outerHTML, `<div class="z w" id="y"></div>`)
+  t.is(el.x, '1')
+  t.is(el.w, '2')
 })
 
 t('legacy html: readme default', async t => {
@@ -514,10 +532,10 @@ t.skip('html: duplicate id warning', t => {
   })
 })
 
-t.todo('legacy html: null-like insertions', t => {
-  let $a = $`<a/>`.html`foo ${ null } ${ undefined } ${0}`
+t('html: null-like insertions', t => {
+  let a = $`<a>foo ${ null } ${ undefined } ${0}</a>`
 
-  t.is($a[0].innerHTML, 'foo   0')
+  t.is(a.innerHTML, 'foo   0')
 })
 
 t.todo('legacy html: parent props must rerender nested components', async t => {

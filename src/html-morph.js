@@ -5,6 +5,7 @@ import morph from 'morphdom'
 import clsx from 'clsx'
 import { publish } from './core'
 import equal from 'fast-deep-equal'
+import 'array-flat-polyfill'
 
 const propsCache = new WeakMap()
 
@@ -16,11 +17,19 @@ export default function html (...args) {
 }
 
 function h(tag, props, ...children) {
-  children = children.flat().map(child =>
-    isElement(child) ? child
-    : document.createTextNode(child)
-  )
+  children = children.flat()
+    .filter(child => child != null)
+    .map(child =>
+      isElement(child) ? child
+      : document.createTextNode(child)
+    )
   if (!props) props = {}
+
+  // html`<.sel></>`
+  if (typeof tag === 'string' && (tag[0] === '#' || tag[0] === '.')) {
+    tag = document.querySelector(tag)
+    if (!tag) return
+  }
 
   // html`<${el}>...</>`
   if (isElement(tag)) {
@@ -34,8 +43,14 @@ function h(tag, props, ...children) {
         delete props[name]
       }
     }
+
     // don't override initial tag id
-    if (tag.id) props.id = tag.id
+    if (tag.id && !props.id) props.id = tag.id
+
+    // keep attributes
+    for (let attr of tag.attributes) {
+      if (!props[attr.name]) props[attr.name] = attr.value
+    }
 
     let newTag = createElement(tag.tagName, props, children)
     morph(tag, newTag, {

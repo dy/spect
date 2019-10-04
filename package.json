@@ -69,6 +69,7 @@
   "homepage": "https://github.com/dy/spect#readme",
   "type": "module",
   "dependencies": {
+    "array-flat-polyfill": "^1.0.1",
     "clsx": "^1.0.4",
     "delegate-it": "^1.1.0",
     "delegated-events": "^1.1.1",
