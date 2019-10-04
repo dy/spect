@@ -6,35 +6,44 @@ import htm from 'htm'
 import { isElement, SPECT_CLASS } from './util'
 import { publish } from './core'
 import tuple from 'immutable-tuple'
+import morph from 'nanomorph'
 
 
 // render vdom into element
 export default htm.bind(h)
 
 const _vdom = Symbol('vdom')
-const _slot = Symbol('slot')
-const _repl = Symbol('repl')
 
 const testCache = new Map
 
 
+// TODO
+// turn vdom into real dom
+// since preact is isolated structure, it can't hydrate existing nodes
+// unless they 1:1 match rendered result
+// therefore we render preact into tmp DOM
+// and then morph that tmp DOM into real DOM
 const elCache = new WeakSet
 export function render (vdom, el) {
-  // unreplace
-  // el.querySelectorAll(`.${SPECT_CLASS}-repl`).forEach(el => {
-  //   el.replaceWith(el[_slot])
-  // })
-
-  if (!elCache.has(el)) {
-    if (el.childNodes.length) {
-      // fake-hydrate existing content to enable diffing
-      // let vdom = toVdom([...el.childNodes])
-      // hydrate(vdom, el)
-    }
+  // html`<${el}.a.b.c />`
+  for (let name in props) {
+    let value = props[name]
+    tagName.setAttribute(name, value)
+    tagName[name] = value
   }
-  elCache.add(el)
+
   preactRender(vdom, el)
+  // replace slots
+  // let slots = [...tagName.querySelectorAll('.' + SPECT_CLASS + '-slot')]
+  // slots.forEach(el => {
+  //   el[_repl][_slot] = el
+  //   el[_repl].classList.add(SPECT_CLASS + '-repl')
+  //   if (!el[_repl].isConnected) el.replaceWith(el[_repl])
+  //   console.log(el.outerHTML, '--- TO ---', el[_repl].outerHTML, el.parentNode, el[_repl].parentNode, tagName.outerHTML)
+  // })
 }
+
+
 
 function h(tagName, props, ...children) {
   children = children.flat().map(child => isElement(child) ? toVdom(child) : child)
@@ -59,34 +68,7 @@ function h(tagName, props, ...children) {
   }
 
   if (isElement(tagName)) {
-    // html`<${el}.a.b.c />`
-    for (let name in props) {
-      let value = props[name]
-      if (value === true && name[0] === '#' || name[0] === '.') {
-        let [, id, classes] = parseTag(name)
-        if (id && !props.id) tagName.id = id
-        if (classes.length) {
-          classes.forEach(cl => tagName.classList.add(cl))
-        }
-      }
-      else {
-        tagName.setAttribute(name, value)
-        tagName[name] = value
-      }
-    }
-
-    render(children, tagName)
-
-
-    // replace slots
-    // let slots = [...tagName.querySelectorAll('.' + SPECT_CLASS + '-slot')]
-    // slots.forEach(el => {
-    //   el[_repl][_slot] = el
-    //   el[_repl].classList.add(SPECT_CLASS + '-repl')
-    //   if (!el[_repl].isConnected) el.replaceWith(el[_repl])
-    //   console.log(el.outerHTML, '--- TO ---', el[_repl].outerHTML, el.parentNode, el[_repl].parentNode, tagName.outerHTML)
-    // })
-
+    render(tagName, props, children)
     return tagName
   }
 

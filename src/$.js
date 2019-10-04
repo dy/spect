@@ -3,7 +3,7 @@ import { isIterable } from './util'
 
 export default function $(selector, within=document) {
   if (selector.raw) {
-    let el = document.createDocumentFragment()
+    let el = document.createElement('_s')
     html`<${el}>${html(...arguments)}</>`
     return el.childNodes.length === 1 ? el.firstChild : el
   }

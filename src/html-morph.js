@@ -30,33 +30,39 @@ function h(tag, props, ...children) {
       if (value === true && name[0] === '#' || name[0] === '.') {
         let [, id, classes] = parseTag(name)
         if (id && !props.id) props.id = id
-        if (classes.length) (props.class = (props.class || [])).push(...classes)
+        if (classes.length) props.class = [props.class || '', ...classes].filter(Boolean).join(' ')
+        delete props[name]
       }
     }
-    // keep existing props / attrs
-    if (!props.id && tag.id) props.id = tag.id
+    // don't override initial tag id
+    if (tag.id) props.id = tag.id
 
-    morph(tag, createElement(null, null, children), {
+    let newTag = createElement(tag.tagName, props, children)
+    morph(tag, newTag, {
       getNodeKey: (el) => {
         return el.key || el.id
       },
       onBeforeElUpdated: (fromEl, toEl) => {
-        if (fromEl.isEqualNode(toEl)) return false
+        // FIXME: this blocks updating
+        // if (fromEl.isEqualNode(toEl)) {
+        //   return false
+        // }
 
         if (propsCache.has(toEl)) {
-          for (let prop of propsCache.get(toEl)) {
+          let changedProps = propsCache.get(toEl)
+          for (let prop of changedProps) {
             if (!equal(fromEl[prop], toEl[prop])) {
               fromEl[prop] = toEl[prop]
               publish([fromEl, 'prop', prop])
             }
+            propsCache.delete(prop)
           }
         }
 
         return true
-      },
-      childrenOnly: true
+      }
     })
-    applyProps(tag, props)
+
     return tag
   }
   // html`<${C} />`
@@ -65,18 +71,16 @@ function h(tag, props, ...children) {
     return tag(props)
   }
 
-  if (typeof tag !== 'string') return createElement(...arguments)
-
   let [tagName, id, classes] = parseTag(tag)
   if (id && !props.id) props.id = id
-  if (classes.length) (props.class = (props.class || [])).push(...classes)
+  if (classes.length) props.class = [props.class || '', ...classes].filter(Boolean).join(' ')
 
   return createElement(tagName, props, children)
 }
 
 function createElement(el, props, children) {
   if (!el) el = document.createDocumentFragment()
-  else if (typeof el === 'string') el = document.createElement(el)
+  else if (typeof el === 'string') el = document.createElement(el, {is: props.is})
 
   if (props) applyProps(el, props)
   if (children) el.append(...children)
@@ -104,7 +108,6 @@ function applyProps(el, props) {
       el[name] = value
       if (!propsCache.has(el)) propsCache.set(el, new Set)
       propsCache.get(el).add(name)
-      publish([el, 'prop', name])
     }
   }
   return el

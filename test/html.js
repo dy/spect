@@ -60,11 +60,11 @@ t('html: rerendering with props: must persist', async t => {
 
   html`<${el}><div/><x/></>`
   // FIXME: this is being cloned by preact
-  // t.equal(el.firstChild, div)
+  t.equal(el.firstChild, div)
   t.equal(el.childNodes.length, 2)
 
   html`<${el}><div class="foo" items=${[]}/><x/></>`
-  // t.equal(el.firstChild, div)
+  t.equal(el.firstChild, div)
   t.equal(el.childNodes.length, 2)
   t.equal(el.firstChild.className, 'foo')
   t.is(el.firstChild.items, [])
@@ -92,7 +92,7 @@ t('html: reinsert self content', t => {
   t.is(el.outerHTML, `<div>a <b>c <d>e <f></f> g</d> h</b> i</div>`)
 })
 
-t.only('html: wrapping', async t => {
+t('html: wrapping', async t => {
   let root = document.createElement('div')
   root.innerHTML = '<foo/>'
   let foo = root.firstChild
@@ -149,7 +149,7 @@ t('legacy html: readme default', async t => {
 
   html`<${div}><div#id.class foo=bar>baz</div></div>`
 
-  t.is(div.outerHTML, '<div><div foo="bar" id="id" class="class">baz</div></div>')
+  t.is(div.outerHTML, '<div><div id="id" class="class">baz</div></div>')
   t.is(div.firstChild.foo, 'bar')
   t.is(div.firstChild.id, 'id')
 })
@@ -158,7 +158,7 @@ t('legacy html: attributes', t => {
   let div = document.createElement('div')
 
   html`<${div}><a href='/' foo=bar>baz</a></>`
-  t.is(div.firstChild.outerHTML, '<a href="/" foo="bar">baz</a>')
+  t.is(div.firstChild.outerHTML, '<a href="/">baz</a>')
   t.is(div.firstChild.foo, 'bar')
 })
 

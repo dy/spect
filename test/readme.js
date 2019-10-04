@@ -79,13 +79,13 @@ t('readme: An application', t => {
 
       html`<${el}>
         <h3>TODO</h3>
-        <main#todo-list items=${ s.items } x=${Math.random()}/>
+        <main#todo-list items=${ s.items }/>
         <form>
           <label for=new-todo>
             What needs to be done?
           </label>
           <br/>
-          <input#new-todo onchange=${ e => s.text = e.target.value} value=${ s.text }/>
+          <input#new-todo onchange=${ e => s.text = e.target.value}/>
           <button>
             Add #${ s.items.length + 1}
           </button>
@@ -96,11 +96,12 @@ t('readme: An application', t => {
 
   use('#todo-list', el => {
     fx(() => {
+      console.log('rerender', el)
       html`<${el}><ul>${prop(el).items.map(item => html`<li>${item.text}</li>`)}</ul></>`
     })
   })
 
-  // document.body.removeChild(el)
+  document.body.removeChild(el)
 })
 
 t.todo('readme: A component with external plugin', async t => {
