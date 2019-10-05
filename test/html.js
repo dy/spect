@@ -72,12 +72,12 @@ t('html: rerendering with props: must persist', async t => {
 
 t('html: fragments', async t => {
   let el = html`<foo/><bar/>`
-  t.is(el.length, 2)
+  t.is(el.childNodes.length, 2)
 
   let el2 = html`<>foo</>`
   t.is(el2.textContent, 'foo')
 
-  let el3 = $`foo`
+  let el3 = html`foo`
   t.is(el3.textContent, 'foo')
 })
 
@@ -242,7 +242,7 @@ t('legacy html: extended component rerendering should not destroy state', async 
   function fn(el) { }
 })
 
-t.only('html: functional components create element', t => {
+t('html: functional components create element', t => {
   let log = []
   let el = html`<${el => {
     let e = document.createElement('a')

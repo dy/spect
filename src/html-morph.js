@@ -9,29 +9,35 @@ import 'array-flat-polyfill'
 
 const propsCache = new WeakMap()
 
-let cuerrentUseCache
+let currentUseCache = null
 
 export default function html (...args) {
+  let prevUseCache = currentUseCache
   currentUseCache = new Set()
 
+  // render DOM
   let result = htm.call(h, ...args)
-  if (typeof result === 'string') return document.createTextNode(result)
 
-  // apply use
-  for (let el of currentUseCache) {
-    used(el)
-  }
-
-  if (Array.isArray(result)) {
+  // non-DOM htm result to DOM
+  if (typeof result === 'string') result = document.createTextNode(result)
+  else if (Array.isArray(result)) {
+    result = result.map(used)
     let frag = document.createDocumentFragment()
     frag.append(...result)
-    return frag
+    result = frag
   }
+  else result = used(result)
 
+  // run `use`, `is`
+  for (let el of currentUseCache) used(el)
+  currentUseCache = prevUseCache
   return result
 }
 
 function used (el) {
+  if (!currentUseCache.has(el)) return el
+  currentUseCache.delete(el)
+
   let uselist = [el.is, el.use].flat().filter(Boolean)
 
   let fn, result, props = propsCache.get(el) || {}
@@ -122,7 +128,6 @@ function h(tag, props, ...children) {
     props.children = children
 
     let el = createElement(tag.name && paramCase(tag.name), { is: props.is })
-
     let result = tag(el, props)
     return result === undefined ? el : result
   }
@@ -165,7 +170,8 @@ function applyProps(el, props) {
     }
     else {
       el[name] = value
-      if (name === 'use' || name === 'is') currentUseCache.add(el)
+      // collect use/is patch rendered DOM
+      if (value && (name === 'use' || name === 'is')) currentUseCache.add(el)
       if (!propsCache.has(el)) propsCache.set(el, new Set)
       propsCache.get(el).add(name)
     }
