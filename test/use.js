@@ -31,7 +31,7 @@ t('use: returned result replaces the target', async t => {
   container.innerHTML = '<div class="item"></div>'
   document.body.appendChild(container)
 
-  await use('.item', el => {
+  let el = await use('.item', el => {
     return [html`<foo/>`, 'bar']
   })
 

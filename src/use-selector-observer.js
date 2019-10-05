@@ -22,8 +22,9 @@ export default function use(selector, fn) {
       if (result !== undefined) {
         el.replaceWith(html`<>${result}</>`)
       }
-
-      resolve({ abort })
+      resolve(el)
+      p = new Promise(ok => { resolve = ok })
+      destroy.then = p.then.bind(p)
     },
     add(el) {
       fire(el, 'connected', {selector})
@@ -33,8 +34,7 @@ export default function use(selector, fn) {
     }
   })
 
-  return {
-    abort,
-    then: p.then.bind(p)
-  }
+  function destroy() { abort() }
+  destroy.then = p.then.bind(p)
+  return destroy
 }

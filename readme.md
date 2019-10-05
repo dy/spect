@@ -275,7 +275,7 @@ let getRawMarkup = content => {
 
 ## API
 
-[**`.use`**](#use-el--destroy--deps---generic-side-effect)&nbsp;&nbsp; [**`.fx`**](#fx-el--destroy--deps---generic-side-effect)&nbsp;&nbsp; [**`.state`**](#state-name--val-deps---state-provider)&nbsp;&nbsp; [**`.prop`**](#prop-name--val-deps---properties-provider)&nbsp;&nbsp; [**`.attr`**](#attr-name--val-deps---attributes-provider)&nbsp;&nbsp; [**`.html`**](#htmlmarkup---html-side-effect)&nbsp;&nbsp; [**`.text`**](#text-content----text-content-side-effect)&nbsp;&nbsp; [**`.clsx`**](#class-classes-deps---classes-side-effect)&nbsp;&nbsp; [**`.css`**](#css-styles-deps---css-side-effect)&nbsp;&nbsp; [**`.on`**](#on-evt-fn---events-provider)&nbsp;&nbsp; [**`.mount`**](#mount-fn-onmount--onunmount----lifecycle-callbacks)
+[**`.use`**](#use-el--destroy--deps---generic-side-effect)&nbsp;&nbsp; [**`.fx`**](#fx-el--destroy--deps---generic-side-effect)&nbsp;&nbsp; [**`.on`**](#on-evt-fn---events-provider)&nbsp;&nbsp; [**`.state`**](#state-name--val-deps---state-provider)&nbsp;&nbsp; [**`.prop`**](#prop-name--val-deps---properties-provider)&nbsp;&nbsp; [**`.attr`**](#attr-name--val-deps---attributes-provider)&nbsp;&nbsp; [**`.html`**](#htmlmarkup---html-side-effect)&nbsp;&nbsp; [**`.cls`**](#class-classes-deps---classes-side-effect)&nbsp;&nbsp; [**`.css`**](#css-styles-deps---css-side-effect)&nbsp;&nbsp;
 
 ##
 
@@ -297,41 +297,27 @@ $`foo <bar.baz/>`
 <p align="right">Ref: <a href="https://jquery.com">jquery</a>, etc.</p> -->
 
 
-### `use( selector | element, el => {} )` − assign aspect to elements
+### `use( selector | element, el => {} )`
 
-Observe selector in DOM, run init function when element appears in the DOM. Returns thenable abortable handler.
+Initializes aspect on elements.
 
 ```js
-let { abort } = use('.foo', el => {
-  // connected
-  return () => {
-    // disconnected
-  }
+let unuse = use('.foo', el => {
+  // init
 })
-abort()
+// destroy
+unuse()
 
-// awaits the first element in the DOM
-await use('#bar', el => {})
+// replace element with another element
+use('.bar', (el, props) => document.createElement('baz'))
+
+// awaits element in the DOM
+await use('#qux', el => {})
 ```
 
-<!--
-### `run( ...fns )` - run aspects
+### `fx( () => {} )` − reactive effect
 
-Run aspect functions. Used internally by `use`.
-
-```js
-run(() => {
-  // ...aspect with subscriptions
-})
-
-// async aspects make result async
-await run(() => {}, async () => {}, Promise.resolve().then())
-``` -->
-
-
-### `fx( el => {} )` − side-effect
-
-Creates reactive effect function - it is re-run whenever any of internal dependencies change.
+Creates reactive effect function - it re-runs whenever any of internal dependencies change.
 
 ```js
 let bar = $('.bar')
@@ -353,13 +339,32 @@ await use('.foo', el => {
 attr(bar, { y: 1 })
 ```
 
+### `prop( target, obj | fn ? )` − read / write properties
+
+Read or write target properties. Reading subscribes current effect to changes of that prop, writing triggers subscribed effects.
+
+```js
+// get props
+let p = prop(target)
+
+// read
+p.foo
+
+// write
+p.foo = 'bar'
+
+// batch update / reduce
+prop(target, { foo: 'bar' })
+prop(target, p => p.foo = 1)
+prop(target, p => {...p, foo: 1})
+```
 
 ### `state( target, obj | fn ? )` − read / write state
 
-Read or write state associated with target. Target can be any object or primitive. Reading subscribes current effect to changes of that state. Writing rerenders all subscribed effects.
+Read or write state associated with target. Same as `prop`, but provides state, associated with target.
 
 ```js
-// create / get state, associated with target
+// get state
 let s = state(target)
 
 // read
@@ -374,53 +379,14 @@ state(target, s => s.foo = 1)
 state(target, s => {...s, foo: 1})
 ```
 
-### `prop( target, obj | fn ? )` − read / write properties
-
-Read or write target properties. Same as `.state`, but uses target own properties.
-
-```js
-// create / get target props
-let p = prop(target)
-
-// read
-p.foo
-
-// write
-p.foo = 'bar'
-
-// update / reduce
-prop(target, { foo: 'bar' })
-prop(target, p => p.foo = 1)
-prop(target, p => {...p, foo: 1})
-```
-
-### `attr( element, obj | fn ? )` − read / write attributes
-
-Read or write attributes of an element. Same as `.state`, but works with attributes, therefore values are strings. Reading creates observer for external attribute changes. For boolean values, it sets/unsets attribute, rather than stringifies value.
-
-```js
-let a = attr(element)
-
-a.foo = 'bar'
-a.foo
-
-// update / reduce
-attr(element, { foo: 'bar' })
-attr(element, a => a.foo = 1)
-attr(element, a => {...a, foo: 1})
-```
-
 ### ``.html`...markup` `` − patch html
 
-Render html. Uses [`htm`](https://ghub.io/htm) syntax. Combines vdom with real dom - sync call creates vdom node, that hardens in the next tick, unless replaced with the new vnode.
+Render html. Uses [`htm`](https://ghub.io/htm) syntax.
 
 
 ```js
-// create vdom
+// create element
 let foo = html`<div#foo/>`
-
-// vdom → element
-let fooEl = await foo
 
 // render to target
 html`<${fooEl}><div.bar/><${baz}/></>`
@@ -432,32 +398,46 @@ function baz(props) {
 
 ### `on( element, evt, fn )` − events provider
 
-Registers event listeners for elements in collection.
+Register event listeners for elements in collection.
 
 ```js
 // direct
-on(el, 'foo', e => {})
+let off = on(el, 'foo', e => {})
 
 // delegate
 on('.target', 'foo', e => {})
 
 // multiple events
 on('.target', 'foo bar', e => {})
+
+// event sequence
+on('.target', 'connected > disconnected', e => {
+  // connected
+
+  return () => {
+    // disconnected
+  }
+})
 ```
 
-<!--
-### `text( element, content ) ` − text content side-effect
+### `attr( element, obj | fn ? )` − read / write attributes
 
-Provide text content for elements.
+Read or write attributes of an element. Same as `.state` or `.prop`, but works with attributes, therefore values are strings. Reading creates observer for external attribute changes. For boolean values, it sets/unsets attribute, rather than stringifies value.
 
 ```js
-// set text
-$target.text`...text`
-$target.text(str => i18n(nbsp(clean(str))))
+let a = attr(element)
 
-// get text
-$target.text()
-``` -->
+// get
+a.foo
+
+// set
+a.foo = 'bar'
+
+// update / reduce
+attr(element, { foo: 'bar' })
+attr(element, a => a.foo = 1)
+attr(element, a => {...a, foo: 1})
+```
 
 <!--
 ### `css( element, styles )` − CSS side-effect
@@ -471,22 +451,20 @@ $target.css` :host { width: 100%} `
 <p align="right">Ref: <a href="https://ghub.io/virtual-css">virtual-css</a></p> -->
 
 
-### `class( ...classes, deps? )` − manipulate classes
+### `cls( ...classes )` − manipulate classes
 
 Add/remove classes, update dependent aspects.
 
 ```js
 // write classes
-class(el).foo = true
-class(el, { foo: true, bar: false, bas: isTrue() })
-class(el, clsx => clsx.foo = false)
+cls(el).foo = true
+cls(el, { foo: true, bar: false, bas: isTrue() })
+cls(el, clsx => clsx.foo = false)
 
 // read classes
-class(el).foo
-class(el)
+cls(el).foo
+cls(el)
 ```
-
-
 
 
 ## Changelog

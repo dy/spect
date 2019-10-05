@@ -1,5 +1,5 @@
 import t from 'tst'
-import { $, fx, prop, html, on, use, state } from '..'
+import { $, fx, prop, html, on, off, use, state } from '..'
 
 t('readme: A simple aspect', async t => {
   let el = document.body.appendChild(document.createElement('div'))
@@ -27,13 +27,14 @@ t('readme: A simple aspect', async t => {
   document.body.removeChild(el)
 })
 
-t('readme: A stateful aspect', async t => {
+t.todo('readme: A stateful aspect via await', async t => {
   let el = document.body.appendChild(document.createElement('div'))
   el.id = 'timer-example'
 
-  await use('#timer-example', el => {
+  await use('#timer-example', async el => {
     state(el, { seconds: 0 })
 
+    await on(el, 'connected')
     let i = setInterval(() => {
       state(el).seconds++
     }, 1000)
@@ -42,7 +43,35 @@ t('readme: A stateful aspect', async t => {
       html`<${el}>Seconds: ${state(el).seconds}</>`
     })
 
-    return () => clearInterval(i)
+    await on('disconnected')
+    clearInterval(i)
+  })
+
+  t.is(el.innerHTML, 'Seconds: 0')
+  document.body.removeChild(el)
+})
+
+t('readme: A stateful aspect via event sequence', async t => {
+  let el = document.body.appendChild(document.createElement('div'))
+  el.id = 'timer-example'
+
+  await use('#timer-example', async el => {
+    state(el, { seconds: 0 })
+
+    on(el, 'connected', e => {
+      let i = setInterval(() => {
+        state(el).seconds++
+      }, 1000)
+
+      on(el, 'disconnected', e => {
+        clearInterval(i)
+        off(el, 'disconnected')
+      })
+    })
+
+    fx(() => {
+      html`<${el}>Seconds: ${state(el).seconds}</>`
+    })
   })
 
   t.is(el.innerHTML, 'Seconds: 0')
