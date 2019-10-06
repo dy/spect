@@ -1,10 +1,7 @@
 import kebab from 'kebab-case'
 import equal from 'fast-deep-equal'
-
-const _sub = Symbol.for('spect.subscribe')
-const _pub = Symbol.for('spect.publish')
-const _deps = Symbol.for('spect.deps')
-const _target = Symbol.for('spect.target')
+import { subscribe, publish } from './core'
+import tuple from 'immutable-tuple'
 
 export const SPECT_CLASS = '👁'
 
@@ -24,97 +21,81 @@ export function noop() { }
 
 export function uid() { return Math.random().toString(36).slice(2, 8) }
 
-export function isPrimitive(arg) {
-  try { new WeakSet([arg]); return false } catch (e) {
-    return true
+export function isPrimitive(val) {
+  if (typeof val === 'object') {
+    return val === null;
   }
+  return typeof val !== 'function';
 }
 
-export function createEffect({name: effectName, getValues, getValue, setValues, setValue, template }) {
-  let _ = {[effectName]: function (...args) {
-    const target = this[_target] || this
+export function isElement (arg) {
+  return typeof arg === 'object' && arg && 'ownerDocument' in arg
+}
 
-    // effect()
-    if (!args.length) {
-      this[_sub] && this[_sub](effectName)
-      return getValues.call(this, target)
-    }
+export function isRenderable (arg) {
+  if (arg === undefined) return false
+  return arg === null || isPrimitive(arg) || Array.isArray(arg) || isElement(arg)
+}
 
-    // effect`...`
-    if (args[0].raw) {
-      return template.call(this, target, ...args)
-    }
+const storeCache = new WeakMap()
+export function createEffect(name, get, set) {
+  let _ = {
+    [name]: (target, ...args) => {
+      let store = storeCache.get(tuple(name, target))
 
-    // effect(s => {...}, deps)
-    if (typeof args[0] === 'function') {
-      let [fn, deps] = args
-      if (this[_deps] && !this[_deps](deps)) return this
+      if (!store) {
+        let curr = get(target)
 
-      let state = getValues.call(this, target)
-      let result
-      try {
-        result = fn(new Proxy(state, {
-          set: (t, prop, value) => {
-            if (this[_pub]) if (t[prop] !== value) this[_pub](effectName + '.' + prop)
-            setValue.call(this, target, prop, value)
-            return Reflect.set(t, prop, value)
+        store = new Proxy(curr, {
+          get(store, prop, receiver) {
+            subscribe([target, name, prop])
+            return Reflect.get(store, prop, receiver)
+          },
+          set(store, prop, value, receiver) {
+            set(target, { [prop]: value })
+            publish([target, name, prop])
+            return Reflect.set(store, prop, value, receiver)
           }
-        }))
-      } catch (e) { }
+        })
 
-      if (result !== state && typeof result === typeof state) {
-        setValues.call(this, target, result)
-
-        if (this[_pub]) {
-          this[_pub](effectName)
-          for (let name in result) this[_pub](effectName + '.' + name)
-        }
+        storeCache.set(tuple(name, target), store)
       }
 
-      return this
-    }
+      switch(true) {
+        // effect(target)
+        case (!args.length):
+          return store
 
-    // effect(name)
-    if (args.length == 1 && (typeof args[0] === 'string')) {
-      let [name] = args
+        // effect`...`
+        // case (args[0].raw):
+        //   return template.call(target, target, ...args)
+        //
 
-      this[_sub] && this[_sub](effectName + '.' + name)
+        // effect(target, s => {...})
+        case (typeof args[0] === 'function'):
+          let fn = args[0]
+          let result = fn(store)
+          if (result !== store && typeof result === typeof store) {
+            _[name](target, result)
+          }
+          return store
 
-      return getValue.call(this, target, name)
-    }
-
-    // effect(obj, deps)
-    if (typeof args[0] === 'object') {
-      let [props, deps] = args
-      if (this[_deps] && !this[_deps](deps)) return this
-
-      let prev = getValues.call(this, target)
-
-      if (!equal(prev, props)) {
-        setValues.call(this, target, props)
-
-        if (this[_pub]) {
-          this[_pub](effectName)
-          for (let name in props) this[_pub](effectName + '.' + name)
-        }
+        // effect(target, obj)
+        case (typeof args[0] === 'object'):
+          let obj = args[0]
+          let changed = {}
+          for (let prop in obj) {
+            let value = obj[prop]
+            if (equal(store[prop], value)) continue
+            publish([target, name, prop])
+            store[prop] = value
+            changed[prop] = obj[prop]
+          }
+          set(target, changed)
+          return store
       }
-
-      return this
     }
+  }
 
-    // effect(name, value, deps)
-    if (args.length >= 2) {
-      let [name, value, deps] = args
-      if (this[_deps] && !this[_deps](deps)) return this
-
-      let prev = getValue.call(this, target, name)
-      if (equal(prev, value)) return this
-      setValue.call(this, target, name, value)
-      this[_pub] && this[_pub](effectName + '.' + name)
-    }
-
-    return this
-  }}
-
-  return _[effectName]
+  return _[name]
 }

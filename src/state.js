@@ -1,23 +1,19 @@
-import {createEffect} from './util'
+import tuple from 'immutable-tuple'
+import { createEffect } from './util'
 
 const stateCache = new WeakMap
-function getValues(el) {
-  let state = stateCache.get(el)
-  if (!state) stateCache.set(el, state = {})
-  return state
-}
-const getValue = (el, name) => getValues(el)[name],
-  setValue = (el, name, value) => getValues(el)[name] = value,
-  setValues = (el, obj) => Object.assign(getValues(el), obj),
-  template = (el, ...args) => getValues(el)[String.raw(...args)],
-  effectName = 'state'
-
-
-export default createEffect({
-  template,
-  getValue,
-  getValues,
-  setValue,
-  setValues,
-  name: effectName
-})
+export default createEffect(
+  'state',
+  function get(target) {
+    let state = stateCache.get(tuple(target))
+    if (!state) stateCache.set(tuple(target), state = {})
+    return state
+  },
+  function set(target, obj) {
+    let state = stateCache.get(tuple(target))
+    if (!state) return false
+    for (let prop in obj) {
+      state[prop] = obj[prop]
+    }
+    return true
+  })

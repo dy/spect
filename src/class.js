@@ -1,31 +1,63 @@
-import {createEffect} from './util'
-const stateCache = new WeakMap
-const getValues = el => {
-  let obj = {}
-  for (let cl of el.classList) obj[cl.name] = cl.value
-  return obj
-}
-const getValue = (el, name) => el.classList.contains(name),
-  setValue = (el, name, value) => {
-    if (!value) el.classList.remove(name)
-    else el.classList.add(name)
-    return this
-  },
-  setValues = (el, obj) => {
-    for (let name in obj) setValue(el, name, obj[name])
-    return this
-  },
-  template = function (el, ...args) {
-    let str = String.raw(...args)
-    el.className = str
-  },
-  effectName = 'class'
+import { createEffect } from './util'
+import { publish } from './core'
 
-export default createEffect({
-  template,
-  getValue,
-  getValues,
-  setValue,
-  setValues,
-  name: effectName
-})
+const cache = new WeakMap
+function get(el) {
+  let state = cache.get(el)
+
+  if (!state) {
+    cache.set(el, state = {})
+
+    let observer = new MutationObserver(records => {
+      for (let i = 0, length = records.length; i < length; i++) {
+        let { target, oldValue, attributeName } = records[i];
+        if (attributeName !== 'class') continue
+        if (target !== el) continue
+        for (let cl of el.classList) {
+          if (state[cl]) continue
+          state[cl] = true
+          publish([el, 'class', cl])
+        }
+        for (let cl in state) {
+          if (state[cl] === false) delete state[cl]
+          if (!el.classList.contains(cl)) {
+            delete state[cl]
+            publish([el, 'class', cl])
+          }
+        }
+      }
+    })
+
+    observer.observe(el, { attributes: true, childList: false, subtree: false })
+    cache.set(el, state = { observer, data: {} })
+  }
+
+  for (let cl of el.classList) {
+    state[cl] = true
+  }
+
+  return state
+}
+
+export default createEffect(
+  'class',
+  get,
+  function set(el, obj) {
+    let state = get(el)
+
+    for (let prop in obj) {
+      let value = obj[prop]
+      if (!value) {
+          delete state[prop]
+          el.classList.remove(prop)
+      }
+      else {
+        state[prop] = true
+        el.classList.add(prop)
+      }
+    }
+
+    return true
+  }
+)
+

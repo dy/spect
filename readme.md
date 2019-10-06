@@ -1,10 +1,10 @@
-# Spect ![unstable](https://img.shields.io/badge/stability-unstable-yellow) [![Build Status](https://travis-ci.org/spectjs/spect.svg?branch=master)](https://travis-ci.org/spectjs/spect)
+# Spect ![experimental](https://img.shields.io/badge/stability-experimental-yellow) [![Build Status](https://travis-ci.org/spectjs/spect.svg?branch=master)](https://travis-ci.org/spectjs/spect)
 
-[Aspect-oriented](https://en.wikipedia.org/wiki/Aspect-oriented_programming) web-framework.
+_Spect_ is [aspect-oriented](https://en.wikipedia.org/wiki/Aspect-oriented_programming) web-framework.
 
 #### 🎡 Concept
 
-_Spect_ is a mixture of jQuery-like _collections_, _ reactive aspects_ and _side-effects_ (similar to react components and hooks).
+_Spect_ introduces _reactive aspects_ and collection of _side-effects_ to manipulate data domains: `attr`, `html`, `css`, `state`, `data`, `prop`, `on` etc.
 
 #### 🏛️ Principles
 
@@ -36,53 +36,48 @@ Other approaches include:
 * streamlized html (orig holder, vdom, attaching fx, API, carrying over DOM nodes)
 -->
 
-<!--
+
 ```js
-import $ from 'spect'
+import { html, attr, state, fx, route } from 'spect'
 import ky from 'ky'
 import { t, useLocale } from 'ttag'
 
-Object.assign($.fn, { html, attr, state, fx })
-
-// main app aspect - load & render data
-function main ({ state, fx, attr, html }) {
-  // init state
-  state({ id: 1 }, [])
-
-  // run state effect when `id` changes (useState + useEffect)
+// main app aspect - load data aspect
+use('#app', async (el) => {
+  // load data aspect
   fx(() => {
-    attr('loading', true)
-    state({ user: await ky.get`./api/user/${ state('id') }` })
-    attr('loading', false)
-  }, [id])
+    let { id } = route('users/:id')
+    attr(el).loading = true
+    state(el).user = await ky.get`./api/user/${ id }`
+    attr(el).loading = false
+  })
 
-  // html side-effect
-  html`<p use=${i18n}>${
-    attr('loading') ? `Hello, ${ state('user.name') }!` : `Thanks for patience...`
-  }</p>`
+  // render data aspect
+  fx(() => {
+    let user = state(el).user, loading = attr(el).loading
+    html`<${el}.preloadable>
+      <p.i18n>${ loading ? `Hello, ${ user.name }!` : `Thanks for patience...` }</p>
+    </>`
+  })
 }
 
 // preloader aspect - append/remove spinner if loading state changes
-function preloader ({ fx, html, attr }) {
-  // toggle
-  fx(() => {
-    html(children => [...children, $`<progress.progress-circle />`])
-    return () => html(children => children.slice(0, -1))
-  }, attr('loading'))
-}
+use('.preloadable', async el => {
+  let progress = html`<progress.progress-circle />`
+  let content = [...el.childNodes]
+  fx((loading) => html`<${el}>${ attr(el).loading ? progress : content }</>`)
+})
 
 // i18n aspect - translates content when `lang` attribute changes
-function i18n ({ attr, fx, text }) {
-  let lang = attr('lang') || $(document.documentElement).attr('lang')
-  fx(() => {
-    useLocale(lang)
-    text(text => t(text))
-  }, lang)
-}
+use('.i18n', el => {
+  let str = text(el)
 
-// assign aspects
-$('#app').use(main)
-$('.preloadable').use(preloader)
+  fx(() => {
+    let lang = attr(el).lang || attr(document.documentElement).lang
+    useLocale(lang)
+    text(el, t(str))
+  })
+})
 ```
 -->
 
@@ -93,7 +88,7 @@ $('.preloadable').use(preloader)
 [![npm i spect](https://nodei.co/npm/spect.png?mini=true)](https://npmjs.org/package/spect/)
 
 ```js
-import $ from 'spect'
+import { fx, on } from 'spect'
 
 // ...UI code
 ```
@@ -102,7 +97,7 @@ import $ from 'spect'
 
 ```html
 <script type="module">
-import $ from 'https://unpkg.com/spect@latest?module'
+import { fx, on } from 'https://unpkg.com/spect@latest?module'
 
 // ...UI code
 </script>
@@ -113,7 +108,7 @@ import $ from 'https://unpkg.com/spect@latest?module'
 ```html
 <script src="https://unpkg.com/spect/dist-umd/index.bundled.js"></script>
 <script>
-  let $ = window.spect
+  let { fx, on } = window.spect
 
   // ...UI code
 </script>
@@ -133,15 +128,15 @@ This example assigns `hello` aspect to `#hello-example` element and renders sing
 <div id="hello-example" name="Cyril"></div>
 
 <script type="module">
-import $ from 'spect'
+import { html, $, fx } from 'spect'
 
-function hello({ html, attr }) {
-  html`<div.message>
-    Hello, ${ attr('name') }!
-  </div>`
-}
-
-$('#hello-example').use(hello)
+use('#hello-example', el => {
+  html`<${el}>
+    <div.message>
+      Hello, ${ prop(el).name }!
+    </div>
+  </>`
+})
 </script>
 ```
 
@@ -153,26 +148,22 @@ $('#hello-example').use(hello)
 _Spect_ introduces `.state`, `.mount`, `.fx` and other effects, similar to `useState` and `useEffect` hooks and jQuery utils. Effects may accept `deps` argument for conditional triggering.
 
 ```js
-import $ from 'spect'
+import { state, on, fx } from 'spect'
 
-$('#timer-example').use(({ state, mount, html, state }) => {
-  // init
-  state({ seconds: 0 }, [])
 
-  // start timer when connected
-  mount(() => {
-    let i = setInterval( () => state(s => s.seconds++), 1000 )
+use('#timer-example', el => {
+  let el = e.target
+  state(el, { seconds: 0 })
 
-    // disconnected
-    return () => clearInterval(i)
+  let i = setInterval( () => state(el).seconds++, 1000 )
+
+  fx(() => {
+    html`<${el}>Seconds: ${ state(el).seconds }</>`
+    console.log( state(el).seconds )
   })
 
-  // html is side-effect, not aspect result
-  html`Seconds: ${ state('seconds') }`
-
-  console.log( state('seconds') )
+  return () => clearInterval(i)
 })
-
 ```
 
 <p align='right'><a href="https://codesandbox.io/s/a-stateful-aspect-9pbji">Open in sandbox</a></p>
@@ -183,53 +174,47 @@ $('#timer-example').use(({ state, mount, html, state }) => {
 Events are provided by `.on` effect, decoupling callbacks from markup and enabling event delegation. They can be used along with direct `on*` attributes.
 
 ```js
-import $ from 'spect'
+import { $, use, on, delegate, html, state, h } from 'spect'
 
-$('#todos-example').use(Todo)
+use('#todos-example', el => {
+  let {items = [], text = ''} = state(el)
 
-function Todo({ state, on, html }) {
-  // init
-  state({ items: [], text: '' }, [])
+  on(el, 'submit', e => {
+    e.preventDefault()
 
-  on('submit', e => {
-    e.preventDefault();
-
-    if (!state('text.length')) return;
+    if (!text.length) return
 
     const newItem = {
-      text: state('text'),
+      text,
       id: Date.now()
     };
 
-    // in-place reducer
-    state(state => ({
+    state(el, {
       items: [...state.items, newItem],
       text: ''
-    }))
+    })
   })
 
-  on('change', '#new-todo', e => state({ text: e.target.value }));
+  html`<${el}>
+    <h3>TODO</h3>
+    <main.todo-list items=${ items }/>
+    <form>
+      <label for=new-todo>
+        What needs to be done?
+      </label>
+      <br/>
+      <input#new-todo onchange=${ e => state(el).text = e.target.value } value=${ state(el).text }/>
+      <button>
+        Add #${ items.length + 1 }
+      </button>
+    </form>
+  </>`
+})
 
-  html`
-  <h3>TODO</h3>
-  <main is=${TodoList} items=${ state('items') }/>
-  <form>
-    <label for=new-todo>
-      What needs to be done?
-    </label>
-    <br/>
-    <input#new-todo value=${ state('text') }/>
-    <button>
-      Add #${ state('items.length') + 1 }
-    </button>
-  </form>
-`
-}
-
-// TodoList component
-function TodoList({ html, items }) {
-  html`<ul>${ items.map(item => $`<li>${ item.text }</li>`) }</ul>`
-}
+use('.todo-list', e => {
+  let el = e.target
+  fx(() => html`<${el}><ul>${ prop(el).items.map(item => html`<li>${ item.text }</li>`) }</ul></>`)
+})
 ```
 
 <p align='right'><a href="https://codesandbox.io/s/an-application-uiv4v">Open in sandbox</a></p>
@@ -241,35 +226,35 @@ _Spect_ is able to create components via native web-components mechanism, as see
 
 ```js
 // index.js
-import $ from 'spect'
+import { h, html } from 'spect'
 import MarkdownEditor from './editor.js'
 
 // MarkdownEditor is created as web-component
-$('#markdown-example').use(({ html }) => html`<${MarkdownEditor} content='Hello, **world**!'/>`)
+on('#markdown-example', 'connected', e => html`<${MarkdownEditor} content='Hello, **world**!'/>`)
 ```
 
 ```js
 // editor.js
-import $ from 'spect'
+import { prop, state, html } from 'spect'
 import { Remarkable } from 'remarkable'
 
-export default function MarkdownEditor ({ prop, state, class: className }) {
-  state({ value: prop('content') }, [ prop('content') ])
+export default function MarkdownEditor (el) {
+  state(el).value = el.content
 
-  className`markdown-editor`
+  fx(() => {
+    html`<${el}.markdown-editor>
+      <h3>Input</h3>
+      <label for="markdown-content">
+        Enter some markdown
+      </label>
+      <textarea#markdown-content
+        onchange=${ e => state(el).value = e.target.value ) }
+      >${ state(el).value }</textarea>
 
-  html`
-    <h3>Input</h3>
-    <label for="markdown-content">
-      Enter some markdown
-    </label>
-    <textarea#markdown-content
-      onchange=${ e => state({ value: e.target.value }) }
-    >${ state('value') }</textarea>
-
-    <h3>Output</h3>
-    <div.content html=${ getRawMarkup( state('value') ) }/>
-  `
+      <h3>Output</h3>
+      <div.content innerHTML=${ getRawMarkup( state(el).value ) }/>
+    </>`
+  })
 }
 
 let getRawMarkup = content => {
@@ -290,11 +275,11 @@ let getRawMarkup = content => {
 
 ## API
 
-[**`$`**](#-selector--els--markup---selector--h)&nbsp;&nbsp; [**`.use`**](#use-fns---assign-aspects)&nbsp;&nbsp; [**`.fx`**](#fx-el--destroy--deps---generic-side-effect)&nbsp;&nbsp; [**`.state`**](#state-name--val-deps---state-provider)&nbsp;&nbsp; [**`.prop`**](#prop-name--val-deps---properties-provider)&nbsp;&nbsp; [**`.attr`**](#attr-name--val-deps---attributes-provider)&nbsp;&nbsp; [**`.html`**](#htmlmarkup---html-side-effect)&nbsp;&nbsp; [**`.text`**](#text-content----text-content-side-effect)&nbsp;&nbsp; [**`.clsx`**](#class-classes-deps---classes-side-effect)&nbsp;&nbsp; [**`.css`**](#css-styles-deps---css-side-effect)&nbsp;&nbsp; [**`.on`**](#on-evt-fn---events-provider)&nbsp;&nbsp; [**`.mount`**](#mount-fn-onmount--onunmount----lifecycle-callbacks)
+[**`.use`**](#use-el--destroy--deps---generic-side-effect)&nbsp;&nbsp; [**`.fx`**](#fx-el--destroy--deps---generic-side-effect)&nbsp;&nbsp; [**`.on`**](#on-evt-fn---events-provider)&nbsp;&nbsp; [**`.state`**](#state-name--val-deps---state-provider)&nbsp;&nbsp; [**`.prop`**](#prop-name--val-deps---properties-provider)&nbsp;&nbsp; [**`.attr`**](#attr-name--val-deps---attributes-provider)&nbsp;&nbsp; [**`.html`**](#htmlmarkup---html-side-effect)&nbsp;&nbsp; [**`.cls`**](#class-classes-deps---classes-side-effect)&nbsp;&nbsp; [**`.css`**](#css-styles-deps---css-side-effect)&nbsp;&nbsp;
 
 ##
 
-### `$( selector | els | markup )` − create collection
+<!-- ### `$( selector | els | markup )` − create collection
 
 Create collection of elements, wrapped into [spect](https://ghub.io/spect). Effects broadcast to all items in collection.
 
@@ -309,252 +294,153 @@ $('<div.foo/>')
 $`foo <bar.baz/>`
 ```
 
-<p align="right">Ref: <a href="https://jquery.com">jquery</a>, etc.</p>
+<p align="right">Ref: <a href="https://jquery.com">jquery</a>, etc.</p> -->
 
 
-### `.use( ...fns )` − assign aspects
+### `use( selector | element, el => {} )`
 
-Assign aspects to elements in collection. Aspect `fn` is invoked immediately for each element. See [spect#use](https://github.com/spectjs/spect/tree/nodom#use-fns---assign-aspects) for details.
+Initializes aspect on elements.
 
 ```js
-let $foo = $('.foo')
-let $bar = $('.bar')
+let unuse = use('.foo', el => {
+  // init
+})
+// destroy
+unuse()
 
-$foo.use($el => {
-  // subscribe to updates
-  let x = $el.attr('x')
-  let y = $bar.attr('y')
+// replace element with another element
+use('.bar', (el, props) => document.createElement('baz'))
 
-  // rerender after 1s
-  setTimeout(() => $el.attr( a => a.x++ ), 1000)
+// awaits element in the DOM
+await use('#qux', el => {})
+```
+
+### `fx( () => {} )` − reactive effect
+
+Creates reactive effect function - it re-runs whenever any of internal dependencies change.
+
+```js
+let bar = $('.bar')
+
+await use('.foo', el => {
+  // subscribe to attribute updates
+  fx(() => {
+    let x = attr( el ).x
+    let y = attr( bar ).y
+
+    // rerender after 1s
+    let i = setTimeout(() => attr( el ).x++, 1000)
+
+    return () => clearTimeout(i)
+  })
 })
 
-// triggers rerendering $foo
-$bar.attr('y', 1)
+// triggers rerendering of `.foo` fx
+attr(bar, { y: 1 })
 ```
 
-Aspects can be attached via `.html` effect as well:
+### `prop( target, obj | fn ? )` − read / write properties
+
+Read or write target properties. Reading subscribes current effect to changes of that prop, writing triggers subscribed effects.
 
 ```js
-$els.html`<div is=${foo} use=${[bar, baz]}></div>`
+// get props
+let p = prop(target)
+
+// read
+p.foo
+
+// write
+p.foo = 'bar'
+
+// batch update / reduce
+prop(target, { foo: 'bar' })
+prop(target, p => p.foo = 1)
+prop(target, p => {...p, foo: 1})
 ```
 
-Aspects, assigned via `is`, define custom elements, see `.html` for details.
-Note that aspects "upgrade" elements - once assigned, elements cannot be "downgraded", very much like custom elements.
+### `state( target, obj | fn ? )` − read / write state
 
-
-### `.update( fn? )` - run aspects
-
-Run assigned aspect or a single aspect for all elements in collection. See [spect#update](https://github.com/spectjs/spect/tree/nodom#update-fn-deps----update-aspect).
+Read or write state associated with target. Same as `prop`, but provides state, associated with target.
 
 ```js
-// run all assigned aspects
-$els.update()
+// get state
+let s = state(target)
 
-// run single aspect
-$els.update( fn )
+// read
+s.foo
+
+// write
+s.foo = 'bar'
+
+// update / reduce
+state(target, { foo: 'bar' })
+state(target, s => s.foo = 1)
+state(target, s => {...s, foo: 1})
 ```
 
+### ``.html`...markup` `` − patch html
 
-### `.fx( el => destroy? , deps? )` − generic side-effect
+Render html. Uses [`htm`](https://ghub.io/htm) syntax.
 
-Run effect function for each element in collection, with optional `deps` check. See [spect#fx](https://github.com/spectjs/spect/tree/nodom#fx-------bool--deps---generic-side-effect) for details.
 
 ```js
-// called each time
-$els.fx($el => {});
+// create element
+let foo = html`<div#foo/>`
 
-// called when value changes to non-false
-$els.fx($el => { $el.show(); return () => $el.hide(); }, $el.visible);
+// render to target
+html`<${fooEl}><div.bar/><${baz}/></>`
 
-// called on init only
-$els.fx($el => {}, []);
-
-// destructor is called any time deps change
-$els.fx($el => () => {}, deps);
-```
-
-
-### `.state( name | val, deps? )` − state provider
-
-Read or write state associated with an element. Reading returns first element state in the set. Reading subscribes current aspect to changes of that state. Writing rerenders all subscribed aspects. Optional `deps` param can define bypassing strategy, see `.fx`.
-
-```js
-// write state
-$els.state('foo', 1)
-$els.state({ foo: 1 })
-$els.state('foo.bar.baz', 1) // safe-path set
-
-// mutate/reduce
-$els.state(s => s.foo = 1)
-$els.state(s => {...s, foo: 1})
-
-// init
-$els.state({foo: 1}, [])
-
-// read (first element)
-$els.state('foo')
-$els.state('foo.bar.baz') // safe-path get
-
-// read full
-$els.state()
-```
-
-<p align="right">Ref: <a href="https://reactjs.org/docs/hooks-state.html">useState</a>, <a href="https://www.npmjs.com/package/icaro">icaro</a>, <a href="https://www.npmjs.com/package/introspected">introspected</a>, <a href="https://ghub.io/dlv">dlv</a></p>
-
-
-### `.prop( name | val, deps? )` − properties provider
-
-Read or write elements properties. Same as `.state`, but provides access to element properties.
-
-```js
-// write prop
-$els.prop('foo', 1)
-$els.prop({foo: 1})
-
-// mutate
-$els.prop(p => p.foo = 1)
-
-// reduce
-$els.prop(p => {...p, foo: 1})
-
-// init
-$els.prop({foo: 1}, [])
-
-// read first element prop
-$els.prop('foo')
-
-// read all
-$els.prop()
-```
-
-<p align="right">Ref: <a href="https://reactjs.org/docs/hooks-state.html">useState</a></p>
-
-
-### `.attr( name | val, deps? )` − attributes provider
-
-Read or write attributes to elements in a set. Same as `.prop`, but works with attributes, therefore values are always strings. Reading creates observer for external attribute changes. For boolean values, it sets/unsets attribute, rather than stringifies value.
-
-```js
-// write attribute
-$els.attr('foo', 'bar')
-$els.attr({ foo: 'bar'})
-
-// mutate
-$els.attr(a => a.foo = 'bar')
-
-// reduce
-$els.attr(a => {...a, foo: 'bar'})
-
-// read first element attribute
-$els.attr('foo')
-
-// read all
-$els.attr()
-
-// set/unset attribute
-$els.attr('foo', true)
-$els.attr('foo', false) // same as null or undefined
-```
-
-<p align="right">Ref: <a href="https://ghub.io/attributechanged">attributechanged</a></p>
-
-
-### ``.html`...markup` `` − html side-effect
-
-Patch HTML for elements in collection. Internally uses [htm](https://ghub.io/htm) and [incremental-dom](https://ghub.io/incremental-dom) for efficient rendering.
-
-```js
-// set html
-$els.html`foo <bar><baz/></> qux`
-$els.html`foo ${ document.querySelector('.bar') } ${ $baz }`
-$els.html`<div>${ $div => {} }</div>`
-$els.html(document.querySelector('.bar'), deps)
-$els.html([foo, bar, baz], deps)
-
-// append/prepend, reduce, wrap/unwrap
-// TODO $els.html(el => [prepend, ...children, append])
-// TODO $els.html(children => $`<div.foo>${ children }</div>`)
-
-/* @jsx $.h */
-// TODO $els.html(<>Markup</>)
-
-// components
-$els.html`<button is=${SuperButton}></button>`
-$els.html`<${SuperButton}/>`
-function SuperButton($btn) {
-  // ...
+function baz(props) {
+  return html`<div.baz>baz</div>`
 }
-
-// assign aspects
-$els.html`<foo use=${bar}/>`
-$els.html`<foo use=${[bar, baz]}/>`
 ```
 
-<p align="right">Ref: <a href="https://ghub.io/incremental-dom">incremental-dom</a>, <a href='https://ghub.io/htm'>htm</a></p>
+### `on( element, evt, fn )` − events provider
 
-
-### `.on( evt, fn )` − events provider
-
-Registers event listeners for elements in collection.
+Register event listeners for elements in collection.
 
 ```js
-// single event
-$target.on('foo', e => {})
+// direct
+let off = on(el, 'foo', e => {})
+
+// delegate
+on('.target', 'foo', e => {})
 
 // multiple events
-$target.on('foo bar', e => {})
+on('.target', 'foo bar', e => {})
 
-// delegate selector
-$target.on('foo', '.bar', e => {})
-
-// sequences
-$target.on('touchstart > touchmove > touchend', e => {
-  // touchstart
-
-  return e =>
-    // touchmove
-
-    return e => {
-      // touchend
-    }
-  }
-})
-```
-
-<p align="right">Ref: <a href="https://github.com/donavon/use-event-listener">use-event-listener</a></p>
-
-
-### `.mount( fn: onmount => onunmount )` - lifecycle callbacks
-
-Triggers callback `fn` when element is connected to the DOM. Returned function is triggered when the element is disconnected.
-If an aspect is assigned to connected elements, the `onmount` is triggered immediately.
-
-```js
-$el.mount(() => {
+// event sequence
+on('.target', 'connected > disconnected', e => {
   // connected
+
   return () => {
     // disconnected
   }
 })
 ```
 
+### `attr( element, obj | fn ? )` − read / write attributes
 
-### ``.text( content ) `` − text content side-effect
-
-Provide text content for elements.
+Read or write attributes of an element. Same as `.state` or `.prop`, but works with attributes, therefore values are strings. Reading creates observer for external attribute changes. For boolean values, it sets/unsets attribute, rather than stringifies value.
 
 ```js
-// set text
-$target.text`...text`
-$target.text(str => i18n(nbsp(clean(str))))
+let a = attr(element)
 
-// get text
-$target.text()
+// get
+a.foo
+
+// set
+a.foo = 'bar'
+
+// update / reduce
+attr(element, { foo: 'bar' })
+attr(element, a => a.foo = 1)
+attr(element, a => {...a, foo: 1})
 ```
 
-
-### ``.css( styles, deps? )`` − CSS side-effect
+<!--
+### `css( element, styles )` − CSS side-effect
 
 Provide scoped CSS styles for collection.
 
@@ -562,293 +448,31 @@ Provide scoped CSS styles for collection.
 // write css
 $target.css` :host { width: 100%} `
 ```
-
-<!-- $target.css({ ':host': { width: 100%} }) -->
-<!-- $target.css(rules => rules[':host'].width = '100%') -->
-<!-- $target.css(':host').width -->
-<!-- $target.css.path = obj|str -->
-<!-- $target.css.path // obj -->
-<!-- $target.css`selector { ...rules }` -->
-<!-- $target.css = `selector { ...rules }` -->
-
-<p align="right">Ref: <a href="https://ghub.io/virtual-css">virtual-css</a></p>
+<p align="right">Ref: <a href="https://ghub.io/virtual-css">virtual-css</a></p> -->
 
 
-### `.class( ...classes, deps? )` − classes side-effect
+### `cls( ...classes )` − manipulate classes
 
-Manipulate elements classes.
+Add/remove classes, update dependent aspects.
 
 ```js
 // write classes
-$target.class`foo bar baz`
-$target.class('foo', true && 'bar', 'baz')
-$target.class({ foo: true, bar: false, bas: isTrue() })
-$target.class(clsx => clsx.foo = false)
+cls(el).foo = true
+cls(el, { foo: true, bar: false, bas: isTrue() })
+cls(el, clsx => clsx.foo = false)
 
 // read classes
-$target.class('foo')
-$target.class()
+cls(el).foo
+cls(el)
 ```
-
-<p align="right">Ref: <a href="https://ghub.io/clsx">clsx</a>, <a href="https://ghub.io/classnames">classnames</a></p>
-
-
-
-## [FAQ](./faq.md)
-
-
-<!--
-## Core API
-
-[**`spect.fn`**](#spectfn-fns----register-effects)&nbsp;&nbsp; [**`spect`**](#spect-target---create-aspectable)&nbsp;&nbsp; [**`.use`**](#use-fns---assign-aspects)&nbsp;&nbsp; [**`.run`**](#run-fns-deps----run-aspects)&nbsp;&nbsp; [**`.dispose`**](#dispose-fns----remove-aspect)&nbsp;&nbsp; [**`.fx`**](#fx-------bool--deps---generic-side-effect)&nbsp;&nbsp; [**`.state`**](#state-name--val-deps---getset-state)&nbsp;&nbsp; [**`.prop`**](#prop-name--val-deps---getset-properties)&nbsp;&nbsp;
-
-### `spect.fn( ...fns )` - register effects
-
-Register effect(s) available for targets.
-
-```js
-import spect, { state, prop, fx } from 'spect'
-import { html, css, attr } from 'spect'
-
-spect.fn(state, prop, fx, html, css, attr)
-
-let target = spect(document.querySelector('#my-element'))
-
-// use effects
-target.attr('foo', 'bar')
-target.html`...markup`
-target.css`...styles`
-```
-
-### `spect( target? )` − create aspectable
-
-Turn target into aspectable. The wrapper provides transparent access to target props, extended with registered effects via Proxy. `use`, `update` and `dispose` methods are provided by default, other effects must be registered via `spect.fn(...fxs)`.
-
-```js
-import spect, { state } from 'spect'
-
-spect.fn(state)
-
-let foo = {}
-let $foo = spect(foo)
-
-// targets are thenable
-await $foo.use($foo => {
-  // get foo by deconstructing:
-  let [foo] = $foo
-
-  console.log($foo.state('count'))
-
-  // rerender
-  setTimeout(() => $foo.state( state => state.count++ ), 1000)
-})
-
-// re-run all aspects
-$foo.update()
-```
-
-### `.use( fns? )` − assign aspects
-
-Assign aspect(s) to target. Each aspect `fn` is invoked as microtask. By reading/writing effects, aspect subscribes/publishes changes, causing update.
-
-```js
-import spect, { prop, state } from 'spect'
-
-spect.fn(prop, state)
-
-let foo = spect({})
-let bar = spect({})
-
-foo.use(foo => {
-  // subscribe to updates
-  let x = foo.state('x')
-  let y = bar.prop('y')
-
-  // update after 1s
-  setTimeout(() => foo.state( state => state.x++ ), 1000)
-})
-
-// update foo
-bar.prop('y', 1)
-```
-
-### `.update( fns?, deps? )` - run aspect(s)
-
-(re-)Run assigned aspects. If `fn` isn't provided, rerenders all aspects. `deps` control the conditions when the aspect must be rerun, they take same signature as `useEffect` hook.
-
-```js
-import spect from 'spect'
-
-let foo = spect({})
-
-foo.use(a, b)
-
-// update only a
-await foo.update(a)
-
-// update all
-await foo.update()
-```
-
-### `.dispose( fns? )` - remove aspect
-
-Remove assigned aspects. If `fn` isn't provided, removes all aspects. Function, returned by aspect is used as destructor.
-
-```js
-import spect from 'spect'
-
-let foo = spect({})
-
-foo.use(a, b)
-
-// remove a
-await foo.dispose(a)
-
-// remove all
-await foo.dispose()
-
-function a () {
-
-}
-
-function b () {
-  return () => {
-    // destructor
-  }
-}
-```
-
-
-### `.fx( () => (() => {})? , bool | deps? )` − generic side-effect
-
-Run effect function as microtask, conditioned by `deps`. Very much like [`useEffect`](https://reactjs.org/docs/hooks-effect.html) with less limitations, eg. it can be nested into condition. Boolean `deps` can be used to organize toggle / FSM that triggers when value changes to non-false, which is useful for binary states like `visible/hidden`, `disabled/enabled` etc.
-
-```js
-import spect, { fx } from 'spect'
-
-spect.fn(fx)
-
-
-let foo = spect()
-
-// called each time
-foo.fx(() => {});
-
-// called on init only
-foo.fx(() => {}, []);
-
-// destructor is called any time deps change
-foo.fx(() => () => {}, [...deps]);
-
-// called when value changes to non-false
-foo.fx(() => { show(); return () => hide(); }, visible);
-```
-
-
-### `.state( name | val, deps? )` − get/set state
-
-Read or write state associated with target. Reading subscribes current aspect to changes of that state. Writing rerenders all subscribed aspects. Optional `deps` param can define trigger condition, see `.fx`.
-
-```js
-import spect, { state } from 'spect'
-
-spect.fn(state)
-
-
-// write state
-$foo.state('foo', 1)
-$foo.state({ foo: 1 })
-
-// mutate/reduce
-$foo.state(s => s.foo = 1)
-$foo.state(s => ({...s, foo: 1}))
-
-// init
-$foo.state({foo: 1}, [])
-
-// read
-$foo.state('foo')
-$foo.state()
-```
-
-
-### `.prop( name | val, deps? )` − get/set properties
-
-Read or write target properties. Same as `.state`, but provides access to element properties.
-
-```js
-import spect, { prop } from 'spect'
-
-spect.fn(prop)
-
-
-// write prop
-$foo.prop('foo', 1)
-$foo.prop({foo: 1})
-
-// mutate/reduce
-$foo.prop(p => p.foo = 1)
-$foo.prop(p => ({...p, foo: 1}))
-
-// init
-$foo.prop({foo: 1}, [])
-
-// read
-$foo.prop('foo')
-$foo.prop()
-```
-
-### Standalone effects
-
-Effects can be used on their own, without `spect`:
-
-```js
-import { fx, state, prop } from 'spect'
-
-let foo = {x: 1}
-
-state.call(foo, 'y', 2)
-prop.call(foo, 'x', 3)
-
-fx.call(foo, () => {
-  state.call(foo, 'y') // 2
-  state.call(foo, 'x') // 3
-})
-```
--->
-
-<!--
-#### Internals
-
-Internal methods are available for effects as
-
-```js
-import spect, { symbols } from 'spect'
-
-spect.fn(function myEffect (arg, deps) {
-  // `this` is `spect` instance
-  // `this[symbols.target]` - initial target object
-
-  // `this._deps(deps, destructor)` - is dependencies gate
-  if (!this._deps(deps, () => { /* destructor */})) return this
-
-  // `this._pub(path)` - publishes update of some name / path string
-  // `this._sub(path, aspect?)` - subscribes current aspect to paths
-  // `this[symbols.subscription]` - subscriptions dict
-  // `this._run(aspect)` - runs aspect as microtask
-  // `this[symbols.promise]` - internal queue
-  // `this[symbols.aspects]` - internal map of assigned aspects
-
-  return this
-})
-```
--->
 
 
 ## Changelog
 
 Version | Changes
 ---|---
+8.0.0 | Atomize: split core to multiple effects.
+7.0.0 | Deatomize; single core approach; final ref-based approach.
 6.0.0 | DOM-less core. Pluggable effects.
 5.0.0 | Wrapper as aspect argument, along with props for react-compatible API. Effect queues.
 4.0.0 | Functional effects API design.

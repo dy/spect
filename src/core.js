@@ -1,328 +1,49 @@
-import equal from 'fast-deep-equal'
-import { isPrimitive } from './util'
+import tuple from 'immutable-tuple'
 
-const isStacktraceAvailable = !!(new Error).stack
+// run aspect
+let current = null
+export function run(fn) {
+  let prev = current
 
-// hooks for effects
-// since spect is proxy over target, it provides transparent access to target props
-// therefore own props are hidden to avoid shading target props
-// to avoid extra import, we use global symbols
-const _promise = Symbol.for('spect.promise'),
-      _use = Symbol.for('spect.use'),
-      _subscription = Symbol.for('spect.subscription'),
-      _proxy = Symbol.for('spect.proxy'),
-      _target = Symbol.for('spect.target'),
-      _publish = Symbol.for('spect.publish'),
-      _subscribe = Symbol.for('spect.subscribe'),
-      _update = Symbol.for('spect.update'),
-      _using = Symbol.for('spect.using'),
-      _dispose = Symbol.for('spect.dispose'),
-      _deps = Symbol.for('spect.deps'),
-      _error = Symbol.for('spect.error'),
-      _instance = Symbol.for('spect.instance'),
-      _fxkey = Symbol.for('spect.fxkey')
+  // identify consequent fn call
+  current = fn
 
-const cache = new WeakMap
+  let result = fn()
 
-let fxCount
-export let current = null
-
-export default function spect(arg) {
-  return new Spect(arg)
-}
-
-class Spect {
-  constructor(arg) {
-    if (cache.has(arg)) return cache.get(arg)
-
-    if (arg && arg[_use]) return arg
-    if (arg == null) arg = {}
-    if (isPrimitive(arg)) arg = new (Object.getPrototypeOf(arg).constructor)(arg)
-
-    this[_target] = this[0] = arg
-    this[_promise] = Promise.resolve()
-    this[_using] = new Map
-    this[_subscription] = {}
-    this[_instance] = this
-
-    // FIXME: this should be whether polyfilled or ...
-    this[Symbol.thenable] = false
-
-    let self = this
-    this[_proxy] = new Proxy(arg, {
-      get(target, name, proxy) {
-        if (self[name]) return self[name]
-        return target[name]
-      }
-    })
-
-    cache.set(arg, this[_proxy])
-    return this[_proxy]
-  }
-
-  // for detructuring: let [target] = $target
-  *[Symbol.iterator] () {
-    yield this[_target]
-  }
-
-  [_use](fn) {
-    let px = this[_proxy]
-    let using = this[_using]
-
-    if (using.has(fn)) return px
-
-    let boundFn = fn.bind(this[_proxy])
-    boundFn.fn = fn
-    boundFn.target = this[_proxy]
-    boundFn.deps = {}
-    boundFn.destroy = {}
-    boundFn.children = new Set()
-
-    // register child aspects
-    if (current) current.children.add(boundFn)
-
-    using.set(fn, boundFn)
-    this[_update](fn)
-
-    return px
-  }
-
-  [_update](fn) {
-    let px = this[_proxy]
-
-    if (this[_error]) return px
-
-    if (!fn.fn) {
-      if (!this[_using].has(fn)) {
-        return this[_use](fn)
-      }
-      fn = this[_using].get(fn)
-    }
-
-    this[_promise].then(async () => {
-      let prev = current
-      fxCount = 0
-      current = fn
-      // FIXME: there can be a better way to handle errors than keeping as is
-      try {
-        fn.destructor = await fn(px)
-      } catch (e) {
-        console.error(e)
-      }
-      current = prev
-      return px
-    })
-
-    return px
-  }
-
-  [_dispose](fn) {
-    let px = this[_proxy]
-
-    if (!fn.fn) {
-      if (!this[_using].has(fn)) return px
-      fn = this[_using].get(fn)
-    }
-
-    // call planned effect destructors
-    for (let key in fn.destroy) {
-      let destroy = fn.destroy[key]
-      destroy && destroy.call && destroy()
-    }
-
-    // destruct all child aspects
-    for (let childfn of fn.children) {
-      childfn.target[_dispose](childfn)
-    }
-    fn.children.clear()
-
-    // call destructor
-    if (fn.destructor) fn.destructor.call(px)
-
-    fn.children = null
-    fn.destructor = null
-    fn.destroy = null
-    fn.deps = null
-    fn.target = null
-    fn.fn = null
-
-    // clear subscriptions
-    for (let key in this[_subscription]) {
-      this[_subscription][key].clear()
-    }
-    this[_subscription] = null
-
-    // clean bound fns
-    this[_using].clear()
-
-    // FIXME: revoke proxy
-
-    // remove arg from cache, if no aspects left
-    cache.delete(this[_target])
-
-    return px
-  }
-
-  // subscribe target aspect to updates of the indicated path
-  [_subscribe](name, aspect = current) {
-    if (!aspect) return this[_proxy]
-    let subscriptions = this[_subscription]
-    if (!subscriptions[name]) subscriptions[name] = new Set()
-    subscriptions[name].add(aspect)
-    return this[_proxy]
-  }
-
-  // update effect observers
-  [_publish](name) {
-    let subscriptions = this[_subscription]
-    if (!subscriptions[name]) return
-    let subscribers = subscriptions[name]
-    for (let aspect of subscribers) aspect.target[_update](aspect)
-    return this[_proxy]
-  }
-
-  // check if deps changed, call destroy
-  [_deps](deps, destroy) {
-    if (!current) return true
-
-    let key = this[_fxkey]()
-
-    if (deps == null) {
-      let prevDestroy = current.destroy[key]
-      if (prevDestroy && prevDestroy.call) prevDestroy()
-      current.destroy[key] = destroy
-      return true
-    }
-
-    let prevDeps = current.deps[key]
-    if (deps === prevDeps) return false
-    if (!isPrimitive(deps)) {
-      if (equal(deps, prevDeps)) return false
-    }
-    current.deps[key] = deps
-
-    // enter false state - ignore effect
-    if (prevDeps === undefined && deps === false) return false
-
-    let prevDestroy = current.destroy[key]
-    if (prevDestroy && prevDestroy.call) prevDestroy()
-
-    // toggle/fsm case
-    if (deps === false) {
-      current.destroy[key] = null
-      return false
-    }
-
-    current.destroy[key] = destroy
-    return true
-  }
-
-  // get unique key for current fx
-  [_fxkey]() {
-    let key
-    if (isStacktraceAvailable) {
-      // FIXME: parsing callstack is unreliable, but taking it as a whole is fine
-      // the only thing that varies is line number
-      // let [coresite, effectsite, callsite, ...trace] = parseStack((new Error).stack)
-      // let callsiteurl = callsite.file + ':' + callsite.lineNumber + ':' + callsite.column
-      // key = callsiteurl
-      key = (new Error).stack + ''
-    }
-    // fallback to react order-based key
-    else {
-      key = fxCount++
-    }
-    return key
-  }
-
-  then(fn) {
-    this[_promise].then(fn)
-    return this[_proxy]
-  }
-}
-
-spect.fn = function registerEffect(...fxs) {
-  fxs.forEach(fx => {
-    const name = fx.name
-    if (!name || name in Spect.prototype) return
-    const cache = new WeakMap
-
-    Object.defineProperty(Spect.prototype, name, {
-      get() {
-        let boundFn = cache.get(this[_proxy])
-        if (!boundFn) {
-          cache.set(this[_proxy], boundFn = fx.bind(this[_proxy]))
-          boundFn.target = this[_proxy]
-        }
-        return boundFn
-      },
-      set() { }
-    })
+  if (result && result.then) return result.then(result => {
+    current = prev
+    return result
   })
+
+  current = prev
+  return result
 }
 
-/*
-Object.defineProperty(Spect.prototype, 'then', {
-  get() {
-
-    let [protogetsite, proxygetsite, anonsite, queuesite, ...stack] = parseStack((new Error).stack)
-    // FIXME: heuristic criteria to enable returning thenable from await
-    if (!queuesite) return null
-
-    if (
-      // /anonymous function/.test(anonsite.methodName) &&
-      // /Tick/.test(queuesite.methodName) &&
-      /^internal/.test(queuesite.file) &&
-      // /anonymous/.test(stack[stack.length - 1].methodName)
-    ) {
-      // console.log(parseStack((new Error).stack))
-      return null
-    }
-
-    return (fn) => {
-      // this[_promise].then(() => fn(this[_proxy]))
-      this[_promise].then(() => fn())
-      return this[_proxy]
-    }
+const subscriptions = new WeakMap
+export function subscribe(key, fn = current) {
+  key = key.length ? tuple(...key) : key
+  if (!fn) return
+  if (!subscriptions.has(key)) {
+    subscriptions.set(key, new Set())
   }
-})
-*/
+  subscriptions.get(key).add(fn)
+}
+export function publish(key) {
+  key = key.length ? tuple(...key) : key
+  if (!subscriptions.has(key)) return
+  let subscribers = subscriptions.get(key)
+  for (let fn of subscribers) queue(fn)
+}
 
-// core effects
-spect.fn(function use(fns, deps) {
-    if (!this[_deps](deps)) return this
-
-    if (!Array.isArray(fns)) fns = [fns]
-
-    fns.forEach(fn => this[_use](fn))
-
-    return this
-  },
-
-  function update(fns, deps) {
-    if (!this[_deps](deps)) return this
-
-    if (!Array.isArray(fns)) {
-      if (!fns) fns = [...this[_using].keys()]
-      else fns = [fns]
-    }
-
-    fns.forEach(fn => this[_update](fn))
-
-    return this
-  },
-
-  function dispose(fns, deps) {
-    if (!this[_deps](deps)) return this
-
-    if (!Array.isArray(fns)) {
-      if (!fns) fns = [...this[_using].keys()]
-      else fns = [fns]
-    }
-
-    fns.forEach(fn => this[_dispose](fn))
-
-    return this
+let planned
+export function queue(fn) {
+  if (!planned) {
+    planned = new Set()
+    Promise.resolve().then(() => {
+      let fns = planned
+      planned = null
+      for (let fn of fns) run(fn)
+    })
   }
-)
-
+  planned.add(fn)
+}
