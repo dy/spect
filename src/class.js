@@ -1,4 +1,5 @@
 import { createEffect } from './util'
+import { publish } from './core'
 
 const cache = new WeakMap
 function get(el) {
@@ -17,7 +18,8 @@ function get(el) {
           state[cl] = true
           publish([el, 'class', cl])
         }
-        for (let cl of state) {
+        for (let cl in state) {
+          if (state[cl] === false) delete state[cl]
           if (!el.classList.contains(cl)) {
             delete state[cl]
             publish([el, 'class', cl])

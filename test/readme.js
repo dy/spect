@@ -1,5 +1,5 @@
 import t from 'tst'
-import { $, fx, prop, html, on, off, use, state } from '..'
+import { $, fx, prop, html, on, use, state, cls } from '..'
 
 t('readme: A simple aspect', async t => {
   let el = document.body.appendChild(document.createElement('div'))
@@ -27,11 +27,11 @@ t('readme: A simple aspect', async t => {
   document.body.removeChild(el)
 })
 
-t.todo('readme: A stateful aspect via await', async t => {
+t('readme: A stateful aspect via await', async t => {
   let el = document.body.appendChild(document.createElement('div'))
   el.id = 'timer-example'
 
-  await use('#timer-example', async el => {
+  await use('#timer-example1', async el => {
     state(el, { seconds: 0 })
 
     await on(el, 'connected')
@@ -43,9 +43,11 @@ t.todo('readme: A stateful aspect via await', async t => {
       html`<${el}>Seconds: ${state(el).seconds}</>`
     })
 
-    await on('disconnected')
+    await on(el, 'disconnected')
     clearInterval(i)
   })
+
+  await Promise.resolve().then()
 
   t.is(el.innerHTML, 'Seconds: 0')
   document.body.removeChild(el)
@@ -58,21 +60,20 @@ t('readme: A stateful aspect via event sequence', async t => {
   await use('#timer-example', async el => {
     state(el, { seconds: 0 })
 
-    on(el, 'connected', e => {
+    on(el, 'connected > disconnected', e => {
       let i = setInterval(() => {
         state(el).seconds++
       }, 1000)
 
-      on(el, 'disconnected', e => {
-        clearInterval(i)
-        off(el, 'disconnected')
-      })
+      return () => clearInterval(i)
     })
 
     fx(() => {
       html`<${el}>Seconds: ${state(el).seconds}</>`
     })
   })
+
+  await Promise.resolve().then()
 
   t.is(el.innerHTML, 'Seconds: 0')
   document.body.removeChild(el)
@@ -125,7 +126,6 @@ t('readme: An application', t => {
 
   use('#todo-list', el => {
     fx(() => {
-      console.log('rerender', el)
       html`<${el}><ul>${prop(el).items.map(item => html`<li>${item.text}</li>`)}</ul></>`
     })
   })
@@ -133,32 +133,34 @@ t('readme: An application', t => {
   document.body.removeChild(el)
 })
 
-t.todo('readme: A component with external plugin', async t => {
+t('readme: A component with external plugin', async t => {
   const {Remarkable} = await import('remarkable')
 
   let el = document.body.appendChild(document.createElement('div'))
   el.id = 'markdown-example'
 
   // MarkdownEditor is created as web-component
-  $('#markdown-example').use($el => $el.html`<${MarkdownEditor} content='Hello, **world**!'/>`)
+  use('#markdown-example', el => html`<${el}><${MarkdownEditor} content='Hello, **world**!'/></el>`)
 
-  function MarkdownEditor($el) {
-    $el.state({ value: $el.prop('content') }, [$el.prop('content')])
+  function MarkdownEditor(el, { content }) {
+    state(el, { value: content })
 
-    $el.class`markdown-editor`
+    cls(el).markdownEditor = true
 
-    $el.html`
-      <h3>Input</h3>
-      <label for="markdown-content">
-        Enter some markdown
-      </label>
-      <textarea#markdown-content
-        onchange=${e => $el.state({ value: e.target.value })}
-      >${ $el.state('value') }</textarea>
+    fx(() => {
+      html`<${el}>
+        <h3>Input</h3>
+        <label for="markdown-content">
+          Enter some markdown
+        </label>
+        <textarea#markdown-content
+          onchange=${e => state(el, { value: e.target.value })}
+        >${ state(el).value }</textarea>
 
-      <h3>Output</h3>
-      <div.content html=${ getRawMarkup($el.state('value')) }/>
-    `
+        <h3>Output</h3>
+        <div.content innerHTML=${ getRawMarkup(state(el).value) }/>
+      </>`
+    })
   }
 
   let getRawMarkup = content => {
@@ -167,8 +169,7 @@ t.todo('readme: A component with external plugin', async t => {
   }
 
   await Promise.resolve().then().then()
-
-  t.is($('.content', el)[0].innerHTML, `<p>Hello, <strong>world</strong>!</p>`)
+  t.is($('.content', el)[0].innerHTML.trim(), `<p>Hello, <strong>world</strong>!</p>`)
 
   document.body.removeChild(el)
 })

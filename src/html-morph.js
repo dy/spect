@@ -1,6 +1,6 @@
 // domdiff html implementation
 import htm from 'htm'
-import { isElement, paramCase } from './util'
+import { isElement, paramCase, isPrimitive } from './util'
 import morph from 'morphdom'
 import clsx from 'clsx'
 import { publish } from './core'
@@ -46,7 +46,7 @@ function used (el) {
       if (!(attr.name in props)) props[attr.name] = attr.value
     }
     result = fn(el, props)
-    if (result !== undefined) {
+    if (result !== undefined && result !== el) {
       let repl = isElement(result) ? result : html`<>${result}</>`
       el.replaceWith(repl)
       el = repl
@@ -57,12 +57,6 @@ function used (el) {
 
 
 function h(tag, props, ...children) {
-  children = children.flat()
-    .filter(child => typeof child === 'number' || child)
-    .map(child =>
-      isElement(child) ? child
-      : document.createTextNode(child)
-    )
   if (!props) props = {}
 
   // html`<.sel></>`
@@ -93,7 +87,6 @@ function h(tag, props, ...children) {
         if (!props[attr.name]) props[attr.name] = attr.value
       }
     }
-
     let newTag = createElement(tag.tagName, props, children)
     morph(tag, newTag, {
       getNodeKey: (el) => {
@@ -119,6 +112,7 @@ function h(tag, props, ...children) {
         return true
       }
     })
+
     return tag
   }
 
@@ -139,12 +133,29 @@ function h(tag, props, ...children) {
   if (classes.length) props.class = [props.class || '', ...classes].filter(Boolean).join(' ')
 
   let el = createElement(tagName, props, children)
+
   return el
 }
 
 function createElement(el, props, children) {
   if (!el) el = document.createDocumentFragment()
   else if (typeof el === 'string') el = document.createElement(el, {is: props.is})
+
+  if (children) {
+    children = children.flat()
+      .filter(child => typeof child === 'number' || child)
+      .map(child => {
+        if (isPrimitive(child)) return document.createTextNode(child)
+        if (child.then) {
+          child.then(el => {
+            holder.replaceWith(el)
+          })
+          let holder = isElement(child) ? child : document.createTextNode('')
+          return holder
+        }
+        return child
+      })
+  }
 
   if (props) applyProps(el, props)
   if (children) el.append(...children)

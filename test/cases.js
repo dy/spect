@@ -1,7 +1,9 @@
 import t from 'tst'
-import $, {h} from '..'
+import { $, use, on, html } from '..'
 
-t('html: should destroy replaced new internal nodes', async t => {
+
+
+t.todo('html: should destroy replaced new internal nodes', async t => {
   let log = []
 
   let $app = $`<div#content/>`

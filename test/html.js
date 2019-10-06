@@ -107,6 +107,23 @@ t('html: wrapping', async t => {
   t.is(wrapped.firstChild.x, 1)
 })
 
+t('html: promises', async t => {
+  let p = new Promise(ok => setTimeout(async () => {
+    ok('123')
+    await Promise.resolve().then()
+    t.is(el.outerHTML, '<div>123</div>')
+    el.remove()
+  }, 50))
+
+  let el = document.createElement('div')
+  document.body.appendChild(el)
+
+  html`<${el}>${p}</>`
+  t.is(el.outerHTML, '<div></div>')
+
+  return p
+})
+
 t('html: selector elements', t => {
   let el = document.createElement('div')
   el.classList.add('sel')

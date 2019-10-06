@@ -1,18 +1,16 @@
 import t from 'tst'
 import { use, html } from '..'
 
+
 t('use: observe selector', async t => {
   let log = []
 
-  use('.item', el => {
+  let unuse = use('.x', el => {
     log.push(el)
-    // return () => {
-    //   log.push(el)
-    // }
   })
 
   let el = document.createElement('a')
-  el.classList.add('item')
+  el.classList.add('x')
   document.body.appendChild(el)
 
   await ''
@@ -23,20 +21,26 @@ t('use: observe selector', async t => {
 
   await ''
 
-  // t.is(log, [el, el])
+  unuse()
 })
 
 t('use: returned result replaces the target', async t => {
   let container = document.createElement('div')
-  container.innerHTML = '<div class="item"></div>'
+  container.innerHTML = '<div class="foo"></div>'
   document.body.appendChild(container)
 
-  let el = await use('.item', el => {
+  let unuse = use('.foo', el => {
     return [html`<foo/>`, 'bar']
   })
+  let els = await unuse
 
   t.is(container.innerHTML, '<foo></foo>bar')
+
+  els.forEach(el => el.remove())
+  unuse()
 })
+
+
 
 t.todo('use: aspects, assigned through parent wrapper', async t => {
   // some wrappers over same elements can be created in different ways

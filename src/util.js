@@ -32,6 +32,11 @@ export function isElement (arg) {
   return typeof arg === 'object' && arg && 'ownerDocument' in arg
 }
 
+export function isRenderable (arg) {
+  if (arg === undefined) return false
+  return arg === null || isPrimitive(arg) || Array.isArray(arg) || isElement(arg)
+}
+
 const storeCache = new WeakMap()
 export function createEffect(name, get, set) {
   let _ = {

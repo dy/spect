@@ -2,12 +2,13 @@
 import { observe } from 'selector-observer'
 import { fire } from './on-delegated'
 import { html } from '.'
+import { isRenderable } from './util'
 
 export default function use(selector, fn) {
   let resolve
   let p = new Promise(ok => { resolve = ok })
 
-  let { abort } = observe(selector, {
+  let observer = observe(selector, {
     initialize(el) {
       fire(el, 'init', {selector})
 
@@ -19,8 +20,11 @@ export default function use(selector, fn) {
       let result = fn(el, props)
 
       // non-zero results are treated as mappers
-      if (result !== undefined) {
-        el.replaceWith(html`<>${result}</>`)
+      if (result !== undefined && result !== el && isRenderable(result)) {
+        let frag = html`<>${ result }</>`
+        result = frag.childNodes.length > 1 ? [...frag.childNodes] : frag.firstChild
+        el.replaceWith(frag)
+        el = result
       }
       resolve(el)
       p = new Promise(ok => { resolve = ok })
@@ -34,7 +38,7 @@ export default function use(selector, fn) {
     }
   })
 
-  function destroy() { abort() }
+  function destroy() { observer.abort() }
   destroy.then = p.then.bind(p)
   return destroy
 }

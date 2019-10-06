@@ -104,6 +104,7 @@
     "dom-lite": "^0.5.1",
     "dotprop": "^1.2.0",
     "esm": "^3.2.25",
+    "jsdom": "^15.1.1",
     "lerna": "^3.16.4",
     "parcel": "^1.12.3",
     "pika-plugin-bundle-umd": "^0.1.1",
