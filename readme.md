@@ -4,7 +4,7 @@ _Spect_ is [aspect-oriented](https://en.wikipedia.org/wiki/Aspect-oriented_progr
 
 #### 🎡 Concept
 
-_Spect_ introduces _reactive aspects_ and collection of _side-effects_ to manipulate data domains: `attr`, `html`, `css`, `state`, `data`, `prop`, `on` etc.
+_Spect_ introduces _element aspects_, _reactive effects_ data domain accessors: `attr`, `html`, `css`, `state`, `data`, `prop`, `on` etc.
 
 #### 🏛️ Principles
 
@@ -42,17 +42,17 @@ import { html, attr, state, fx, route } from 'spect'
 import ky from 'ky'
 import { t, useLocale } from 'ttag'
 
-// main app aspect - load data aspect
+// main app aspect
 use('#app', async (el) => {
-  // load data aspect
-  fx(() => {
+  // loading data effect
+  fx(async () => {
     let { id } = route('users/:id')
     attr(el).loading = true
     state(el).user = await ky.get`./api/user/${ id }`
     attr(el).loading = false
   })
 
-  // render data aspect
+  // rendering effect
   fx(() => {
     let user = state(el).user, loading = attr(el).loading
     html`<${el}.preloadable>
@@ -61,11 +61,11 @@ use('#app', async (el) => {
   })
 }
 
-// preloader aspect - append/remove spinner if loading state changes
+// preloadable aspect - shows spinner when `loading` attribute changes
 use('.preloadable', async el => {
   let progress = html`<progress.progress-circle />`
   let content = [...el.childNodes]
-  fx((loading) => html`<${el}>${ attr(el).loading ? progress : content }</>`)
+  fx(() => html`<${el}>${ attr(el).loading ? progress : content }</>`)
 })
 
 // i18n aspect - translates content when `lang` attribute changes
@@ -97,7 +97,7 @@ import { fx, on } from 'spect'
 
 ```html
 <script type="module">
-import { fx, on } from 'https://unpkg.com/spect@latest?module'
+import { use, fx, on } from 'https://unpkg.com/spect@latest?module'
 
 // ...UI code
 </script>
@@ -117,7 +117,6 @@ import { fx, on } from 'https://unpkg.com/spect@latest?module'
 
 ## Getting started
 
-
 🎬 Let's build [basic examples](https://reactjs.org/).
 
 ### A Simple Aspect
@@ -128,7 +127,7 @@ This example assigns `hello` aspect to `#hello-example` element and renders sing
 <div id="hello-example" name="Cyril"></div>
 
 <script type="module">
-import { html, $, fx } from 'spect'
+import { html, fx } from 'spect'
 
 use('#hello-example', el => {
   html`<${el}>
@@ -145,24 +144,26 @@ use('#hello-example', el => {
 
 ### A Stateful Aspect
 
-_Spect_ introduces `.state`, `.mount`, `.fx` and other effects, similar to `useState` and `useEffect` hooks and jQuery utils. Effects may accept `deps` argument for conditional triggering.
-
 ```js
 import { state, on, fx } from 'spect'
 
-
-use('#timer-example', el => {
-  let el = e.target
+use('#timer-example', async el => {
+  // init state
   state(el, { seconds: 0 })
 
-  let i = setInterval( () => state(el).seconds++, 1000 )
+  // init timer
+  on(el, 'connected > disconnected', e => {
+    let i = setInterval(() => {
+      state(el).seconds++
+    }, 1000)
 
-  fx(() => {
-    html`<${el}>Seconds: ${ state(el).seconds }</>`
-    console.log( state(el).seconds )
+    return () => clearInterval(i)
   })
 
-  return () => clearInterval(i)
+  // rerender when seconds change
+  fx(() => {
+    html`<${el}>Seconds: ${state(el).seconds}</>`
+  })
 })
 ```
 
@@ -174,13 +175,15 @@ use('#timer-example', el => {
 Events are provided by `.on` effect, decoupling callbacks from markup and enabling event delegation. They can be used along with direct `on*` attributes.
 
 ```js
-import { $, use, on, delegate, html, state, h } from 'spect'
+import { $, use, on, html, state } from 'spect'
 
 use('#todos-example', el => {
-  let {items = [], text = ''} = state(el)
+  state(el, { items: [], text: '' })
 
   on(el, 'submit', e => {
     e.preventDefault()
+
+    let { text, items } = state(el)
 
     if (!text.length) return
 
@@ -190,30 +193,35 @@ use('#todos-example', el => {
     };
 
     state(el, {
-      items: [...state.items, newItem],
+      items: [...items, newItem],
       text: ''
     })
   })
 
-  html`<${el}>
-    <h3>TODO</h3>
-    <main.todo-list items=${ items }/>
-    <form>
-      <label for=new-todo>
-        What needs to be done?
-      </label>
-      <br/>
-      <input#new-todo onchange=${ e => state(el).text = e.target.value } value=${ state(el).text }/>
-      <button>
-        Add #${ items.length + 1 }
-      </button>
-    </form>
-  </>`
+  fx(() => {
+    let s = state(el)
+
+    html`<${el}>
+      <h3>TODO</h3>
+      <main#todo-list items=${ s.items }/>
+      <form>
+        <label for=new-todo>
+          What needs to be done?
+        </label>
+        <br/>
+        <input#new-todo onchange=${ e => s.text = e.target.value}/>
+        <button>
+          Add #${ s.items.length + 1}
+        </button>
+      </form>
+    </>`
+  })
 })
 
-use('.todo-list', e => {
-  let el = e.target
-  fx(() => html`<${el}><ul>${ prop(el).items.map(item => html`<li>${ item.text }</li>`) }</ul></>`)
+use('#todo-list', el => {
+  fx(() => {
+    html`<${el}><ul>${prop(el).items.map(item => html`<li>${item.text}</li>`)}</ul></>`
+  })
 })
 ```
 
@@ -226,11 +234,11 @@ _Spect_ is able to create components via native web-components mechanism, as see
 
 ```js
 // index.js
-import { h, html } from 'spect'
+import { html, use } from 'spect'
 import MarkdownEditor from './editor.js'
 
 // MarkdownEditor is created as web-component
-on('#markdown-example', 'connected', e => html`<${MarkdownEditor} content='Hello, **world**!'/>`)
+use('#markdown-example', el => html`<${el}><${MarkdownEditor} content='Hello, **world**!'/></el>`)
 ```
 
 ```js
@@ -238,21 +246,23 @@ on('#markdown-example', 'connected', e => html`<${MarkdownEditor} content='Hello
 import { prop, state, html } from 'spect'
 import { Remarkable } from 'remarkable'
 
-export default function MarkdownEditor (el) {
-  state(el).value = el.content
+function MarkdownEditor(el, { content }) {
+  state(el, { value: content })
+
+  cls(el).markdownEditor = true
 
   fx(() => {
-    html`<${el}.markdown-editor>
+    html`<${el}>
       <h3>Input</h3>
       <label for="markdown-content">
         Enter some markdown
       </label>
       <textarea#markdown-content
-        onchange=${ e => state(el).value = e.target.value ) }
+        onchange=${e => state(el, { value: e.target.value })}
       >${ state(el).value }</textarea>
 
       <h3>Output</h3>
-      <div.content innerHTML=${ getRawMarkup( state(el).value ) }/>
+      <div.content innerHTML=${ getRawMarkup(state(el).value) }/>
     </>`
   })
 }
@@ -275,7 +285,7 @@ let getRawMarkup = content => {
 
 ## API
 
-[**`.use`**](#use-el--destroy--deps---generic-side-effect)&nbsp;&nbsp; [**`.fx`**](#fx-el--destroy--deps---generic-side-effect)&nbsp;&nbsp; [**`.on`**](#on-evt-fn---events-provider)&nbsp;&nbsp; [**`.state`**](#state-name--val-deps---state-provider)&nbsp;&nbsp; [**`.prop`**](#prop-name--val-deps---properties-provider)&nbsp;&nbsp; [**`.attr`**](#attr-name--val-deps---attributes-provider)&nbsp;&nbsp; [**`.html`**](#htmlmarkup---html-side-effect)&nbsp;&nbsp; [**`.cls`**](#class-classes-deps---classes-side-effect)&nbsp;&nbsp; [**`.css`**](#css-styles-deps---css-side-effect)&nbsp;&nbsp;
+[**`.use`**](#use-el--destroy--deps---generic-side-effect)&nbsp;&nbsp; [**`.fx`**](#fx-el--destroy--deps---generic-side-effect)&nbsp;&nbsp; [**`.on`**](#on-evt-fn---events-provider)&nbsp;&nbsp; [**`.state`**](#state-name--val-deps---state-provider)&nbsp;&nbsp; [**`.prop`**](#prop-name--val-deps---properties-provider)&nbsp;&nbsp; [**`.attr`**](#attr-name--val-deps---attributes-provider)&nbsp;&nbsp; [**`.html`**](#htmlmarkup---html-side-effect)&nbsp;&nbsp; [**`.cls`**](#class-classes-deps---classes-side-effect)&nbsp;&nbsp; [**`.css`**](#css-styles-deps---css-side-effect)&nbsp;&nbsp; [**`.$`**](#css-styles-deps---css-side-effect)&nbsp;&nbsp;
 
 ##
 
@@ -464,6 +474,22 @@ cls(el, clsx => clsx.foo = false)
 // read classes
 cls(el).foo
 cls(el)
+```
+
+### `$( selector, container? )` − select nodes
+
+Simple query selector.
+
+```js
+// query single
+$('#foo') // fooEl
+
+// query multiple
+$('.bar') // [barEl, barEl]
+$('baz') // [bazEl, bazEl]
+
+// query within
+$('qux', $('#foo')) // [qux]
 ```
 
 
