@@ -38,7 +38,7 @@ Other approaches include:
 
 
 ```js
-import { html, attr, state, fx, route } from 'spect'
+import { use, fx, html, attr, state, route } from 'spect'
 import ky from 'ky'
 import { t, useLocale } from 'ttag'
 
@@ -79,7 +79,6 @@ use('.i18n', el => {
   })
 })
 ```
--->
 
 ## Installation
 
@@ -144,6 +143,8 @@ use('#hello-example', el => {
 
 ### A Stateful Aspect
 
+HTML is rendered `html`, event sequences are handled via `on`, side-effects are handled via `fx`.
+
 ```js
 import { state, on, fx } from 'spect'
 
@@ -183,19 +184,10 @@ use('#todos-example', el => {
   on(el, 'submit', e => {
     e.preventDefault()
 
-    let { text, items } = state(el)
+    if (!state(el).text.length) return
 
-    if (!text.length) return
-
-    const newItem = {
-      text,
-      id: Date.now()
-    };
-
-    state(el, {
-      items: [...items, newItem],
-      text: ''
-    })
+    state(el).items = [...items, { text: state(el).text, id: Date.now()}]
+    state(el).text = ''
   })
 
   fx(() => {
@@ -211,7 +203,7 @@ use('#todos-example', el => {
         <br/>
         <input#new-todo onchange=${ e => s.text = e.target.value}/>
         <button>
-          Add #${ s.items.length + 1}
+          Add #${ s.items.length + 1 }
         </button>
       </form>
     </>`
@@ -219,9 +211,7 @@ use('#todos-example', el => {
 })
 
 use('#todo-list', el => {
-  fx(() => {
-    html`<${el}><ul>${prop(el).items.map(item => html`<li>${item.text}</li>`)}</ul></>`
-  })
+  fx(() => html`<${el}><ul>${ prop(el).items.map(item => html`<li>${ item.text }</li>`)}</ul></>`)
 })
 ```
 
