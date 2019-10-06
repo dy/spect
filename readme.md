@@ -275,7 +275,7 @@ let getRawMarkup = content => {
 
 ## API
 
-[**`.use`**](#use-el--destroy--deps---generic-side-effect)&nbsp;&nbsp; [**`.fx`**](#fx-el--destroy--deps---generic-side-effect)&nbsp;&nbsp; [**`.on`**](#on-evt-fn---events-provider)&nbsp;&nbsp; [**`.state`**](#state-name--val-deps---state-provider)&nbsp;&nbsp; [**`.prop`**](#prop-name--val-deps---properties-provider)&nbsp;&nbsp; [**`.attr`**](#attr-name--val-deps---attributes-provider)&nbsp;&nbsp; [**`.html`**](#htmlmarkup---html-side-effect)&nbsp;&nbsp; [**`.cls`**](#class-classes-deps---classes-side-effect)&nbsp;&nbsp; [**`.css`**](#css-styles-deps---css-side-effect)&nbsp;&nbsp; [**`.$`**](#css-styles-deps---css-side-effect)&nbsp;&nbsp;
+[**`use`**](#use-el--destroy--deps---generic-side-effect)&nbsp;&nbsp; [**`fx`**](#fx-el--destroy--deps---generic-side-effect)&nbsp;&nbsp; [**`on`**](#on-evt-fn---events-provider)&nbsp;&nbsp; [**`html`**](#htmlmarkup---html-side-effect)&nbsp;&nbsp; [**`state`**](#state-name--val-deps---state-provider)&nbsp;&nbsp; [**`prop`**](#prop-name--val-deps---properties-provider)&nbsp;&nbsp; [**`attr`**](#attr-name--val-deps---attributes-provider)&nbsp;&nbsp; [**`cls`**](#class-classes-deps---classes-side-effect)&nbsp;&nbsp; [**`css`**](#css-styles-deps---css-side-effect)&nbsp;&nbsp; [**`$`**](#css-styles-deps---css-side-effect)&nbsp;&nbsp;
 
 ##
 
@@ -339,6 +339,48 @@ await use('.foo', el => {
 attr(bar, { y: 1 })
 ```
 
+### `on( element | selector, evt, fn )` − events provider
+
+Register event listeners for elements / selector.
+
+```js
+// direct
+let off = on(el, 'foo', e => {})
+
+// delegate
+on('.target', 'foo', e => {})
+
+// multiple events
+on('.target', 'foo bar', e => {})
+
+// event sequence
+on('.target', 'connected > disconnected', e => {
+  // connected
+
+  return () => {
+    // disconnected
+  }
+})
+```
+
+### ``.html`...markup` `` − patch html
+
+Render html. Uses [`htm`](https://ghub.io/htm) syntax.
+
+
+```js
+// create element
+let foo = html`<div#foo/>`
+
+// render to target
+html`<${fooEl}><div.bar/><${baz}/></>`
+
+function baz(props) {
+  return html`<div.baz>baz</div>`
+}
+```
+
+
 ### `prop( target, obj | fn ? )` − read / write properties
 
 Read or write target properties. Reading subscribes current effect to changes of that prop, writing triggers subscribed effects.
@@ -379,46 +421,6 @@ state(target, s => s.foo = 1)
 state(target, s => {...s, foo: 1})
 ```
 
-### ``.html`...markup` `` − patch html
-
-Render html. Uses [`htm`](https://ghub.io/htm) syntax.
-
-
-```js
-// create element
-let foo = html`<div#foo/>`
-
-// render to target
-html`<${fooEl}><div.bar/><${baz}/></>`
-
-function baz(props) {
-  return html`<div.baz>baz</div>`
-}
-```
-
-### `on( element, evt, fn )` − events provider
-
-Register event listeners for elements in collection.
-
-```js
-// direct
-let off = on(el, 'foo', e => {})
-
-// delegate
-on('.target', 'foo', e => {})
-
-// multiple events
-on('.target', 'foo bar', e => {})
-
-// event sequence
-on('.target', 'connected > disconnected', e => {
-  // connected
-
-  return () => {
-    // disconnected
-  }
-})
-```
 
 ### `attr( element, obj | fn ? )` − read / write attributes
 
