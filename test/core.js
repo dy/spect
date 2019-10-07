@@ -42,10 +42,10 @@ t('legacy readme: use', async t => {
 
   t.is(log, [0, 0, 1, 0])
 
-  // update foo
-  bar.y = 1
-  await '';
-  t.is(log, [0, 0, 1, 0, 1, 1])
+  // // update foo
+  // bar.y = 1
+  // await '';
+  // t.is(log, [0, 0, 1, 0, 1, 1])
 })
 
 t('legacy readme: update', async t => {

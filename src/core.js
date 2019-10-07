@@ -1,5 +1,3 @@
-import tuple from 'immutable-tuple'
-
 // run aspect
 export let current = null
 export function run(fn) {
@@ -17,4 +15,17 @@ export function run(fn) {
 
   current = prev
   return result
+}
+
+let planned
+export function queue(fn) {
+  if (!planned) {
+    planned = new Set()
+    Promise.resolve().then(() => {
+      let fns = planned
+      planned = null
+      for (let fn of fns) fn()
+    })
+  }
+  planned.add(fn)
 }

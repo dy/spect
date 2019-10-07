@@ -2,7 +2,7 @@ import kebab from 'kebab-case'
 import equal from 'fast-deep-equal'
 import on, { fire } from './on'
 import tuple from 'immutable-tuple'
-import { current } from './core'
+import { current, queue } from './core'
 
 export const SPECT_CLASS = '👁'
 
@@ -49,7 +49,10 @@ export function createEffect(name, get, set) {
 
         store = new Proxy(curr, {
           get(store, prop, receiver) {
-            on(target, name + ':' + prop, current)
+            let f = current
+            if (f) {
+              on(target, name + ':' + prop, () => queue(f))
+            }
             return Reflect.get(store, prop, receiver)
           },
           set(store, prop, value, receiver) {
