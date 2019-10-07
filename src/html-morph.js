@@ -6,6 +6,7 @@ import clsx from 'clsx'
 import { fire } from './on'
 import equal from 'fast-deep-equal'
 import 'array-flat-polyfill'
+import { apply as applyUse } from './use'
 
 const propsCache = new WeakMap()
 
@@ -29,7 +30,9 @@ export default function html (...args) {
   else result = used(result)
 
   // run `use`, `is`
-  for (let el of currentUseCache) used(el)
+  for (let el of currentUseCache) {
+    used(el)
+  }
   currentUseCache = prevUseCache
   return result
 }
@@ -37,23 +40,9 @@ export default function html (...args) {
 function used (el) {
   if (!currentUseCache.has(el)) return el
   currentUseCache.delete(el)
-
-  let uselist = [el.is, el.use].flat().filter(Boolean)
-
-  let fn, result, props = propsCache.get(el) || {}
-  while (fn = uselist.shift()) {
-    for (let attr of el.attributes) {
-      if (!(attr.name in props)) props[attr.name] = attr.value
-    }
-    result = fn(el, props)
-    if (result !== undefined && result !== el) {
-      let repl = isElement(result) ? result : html`<>${result}</>`
-      el.replaceWith(repl)
-      el = repl
-    }
-  }
-  return el
+  return applyUse(el)
 }
+
 
 
 function h(tag, props, ...children) {

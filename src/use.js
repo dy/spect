@@ -1,4 +1,4 @@
-import use from './use-selector-observer'
+import use, { apply } from './use-selector-observer'
 
 export default use
-export { use }
+export { use, apply }

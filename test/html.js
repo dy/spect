@@ -1,5 +1,5 @@
 import t from 'tst'
-import { html, state, cls, $ } from '..'
+import { html, state, cls, $, use } from '..'
 
 Object.defineProperty(DocumentFragment.prototype, 'outerHTML', {
   get() {
@@ -291,6 +291,34 @@ t('html: use assigned via prop', t => {
   }}/>`
   t.is(log, ['a'])
   t.is(el.tagName.toLowerCase(), 'b')
+})
+
+t('html: is=string works fine', t => {
+  let a = html`<a is=superA />`
+})
+
+t('html: props passed to use are actual object', t => {
+  let a = html`<foo use=${bar} x=${1}/>`
+
+  function bar(el, props) {
+    t.is(props, {x: 1, use: bar})
+  }
+})
+
+t('html: must not replace self', t => {
+  let el = html`<x is=${x} />`
+  function x (el) {
+    return html`<${el}/>`
+  }
+})
+
+t('html: externally assigned props must be collected', async t => {
+  let el = html`<x x=${1}/>`
+  document.body.appendChild(el)
+  await Promise.resolve().then()
+  use('x', (el, props) => {
+    t.is(props, {x: 1})
+  })
 })
 
 t.todo('legacy html: rerendering extended component should not register anonymous function')
