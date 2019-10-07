@@ -305,6 +305,16 @@ t('html: props passed to use are actual object', t => {
   }
 })
 
+t('html: assigned id must be accessible', async t => {
+  let el = html`<x id=x1 />`
+  t.is(el.id, 'x1')
+
+  await use(el, (el, props) => {
+    t.is(el.id, 'x1')
+    t.is(props.id, 'x1')
+  })
+})
+
 t('html: must not replace self', t => {
   let el = html`<x is=${x} />`
   function x (el) {

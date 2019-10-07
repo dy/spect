@@ -6,28 +6,36 @@ import { isRenderable, isElement } from './util'
 
 export default function use(selector, fn) {
   let resolve
-  let p = new Promise(ok => { resolve = ok })
+  if (isElement(selector)) {
+    init(selector)
+    return () => {}
+  }
 
+  let destroy, p = new Promise(ok => { resolve = ok })
   let observer = observe(selector, {
-    initialize(el) {
-      fire(el, 'init', {selector})
+      initialize(el) {
+        init(el)
+      },
+      add(el) {
+        fire(el, 'connected', {selector})
+      },
+      remove(el) {
+        fire(el, 'disconnected', {selector})
+      }
+    })
+  destroy = () => observer.abort()
+  destroy.then = p.then.bind(p)
 
-      el = apply(el, [fn])
-
+  function init (el) {
+    fire(el, 'init', { selector })
+    el = apply(el, [fn])
+    if (resolve) {
       resolve(el)
       p = new Promise(ok => { resolve = ok })
       destroy.then = p.then.bind(p)
-    },
-    add(el) {
-      fire(el, 'connected', {selector})
-    },
-    remove(el) {
-      fire(el, 'disconnected', {selector})
     }
-  })
+  }
 
-  function destroy() { observer.abort() }
-  destroy.then = p.then.bind(p)
   return destroy
 }
 

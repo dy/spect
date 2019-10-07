@@ -53,12 +53,15 @@ export function createEffect(name, get, set) {
             if (f) {
               on(target, name + ':' + prop, () => queue(f))
             }
+            return store[prop]
             return Reflect.get(store, prop, receiver)
           },
           set(store, prop, value, receiver) {
             set(target, { [prop]: value })
             fire(target, name + ':' + prop)
-            return Reflect.set(store, prop, value, receiver)
+            store[prop] = value
+            return true
+            // return Reflect.set(store, prop, value, receiver)
           }
         })
 
