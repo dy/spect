@@ -29,11 +29,10 @@ t('readme: A simple aspect', async t => {
 
 t('readme: A stateful aspect via await', async t => {
   let el = document.body.appendChild(document.createElement('div'))
-  el.id = 'timer-example'
+  el.id = 'timer-example-1'
 
-  await use('#timer-example1', async el => {
+  await use('#timer-example-1', async el => {
     state(el, { seconds: 0 })
-
     await on(el, 'connected')
     let i = setInterval(() => {
       state(el).seconds++

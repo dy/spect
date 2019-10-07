@@ -66,7 +66,7 @@ export default function on (target, evt, fn=()=>{}) {
   // not intended to be used directly, just as common event bus
   else {
     let gatedCb = (e) => {
-      if (e.details.target !== target) return
+      if (e.detail.target !== target) return
       cb(e)
     }
     document.addEventListener(evt, gatedCb)
@@ -113,10 +113,10 @@ export function onSequence(target, seq, fn) {
 }
 
 
-export function fire(target, evt, o) {
+export function fire(target, evt, detail={}) {
   // redirect target
   if (!target.dispatchEvent) {
-    o.target = target
+    detail.target = target
     target = document
   }
 
@@ -124,7 +124,18 @@ export function fire(target, evt, o) {
     target.dispatchEvent(evt)
   }
   else {
-    evt.split(/\s+/).forEach(evt => delegate.fire(target, evt, o))
+    evt.split(/\s+/).forEach(evt => {
+      if (target.dispatchEvent) {
+        target.dispatchEvent(new CustomEvent(evt, {
+          bubbles: true,
+          cancelable: true,
+          detail
+        }))
+      }
+      else {
+        delegate.fire(target, evt, detail)
+      }
+    })
   }
 
   return this

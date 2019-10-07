@@ -8,5 +8,6 @@ export default function fx(fn) {
     destroy = fn()
   })
 
-  return () => unsubscribe(fn)
+  // TODO
+  // return () => unsubscribe(fn)
 }

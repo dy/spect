@@ -1,7 +1,7 @@
 import tuple from 'immutable-tuple'
 
 // run aspect
-let current = null
+export let current = null
 export function run(fn) {
   let prev = current
 
@@ -17,38 +17,4 @@ export function run(fn) {
 
   current = prev
   return result
-}
-
-const subscriptions = new WeakMap
-// key is [target, effectStr, pathStr]
-export function subscribe(key, fn = current) {
-  key = key.length ? tuple(...key) : key
-  if (!fn) return
-  if (!subscriptions.has(key)) {
-    subscriptions.set(key, new Set())
-  }
-  subscriptions.get(key).add(fn)
-}
-export function unsubscribe(fn) {
-  if (!subscriptions.has(key)) return
-  subscriptions.delete(key)
-}
-export function publish(key) {
-  key = key.length ? tuple(...key) : key
-  if (!subscriptions.has(key)) return
-  let subscribers = subscriptions.get(key)
-  for (let fn of subscribers) queue(fn)
-}
-
-let planned
-export function queue(fn) {
-  if (!planned) {
-    planned = new Set()
-    Promise.resolve().then(() => {
-      let fns = planned
-      planned = null
-      for (let fn of fns) run(fn)
-    })
-  }
-  planned.add(fn)
 }
