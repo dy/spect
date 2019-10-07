@@ -124,6 +124,19 @@ t('html: promises', async t => {
   return p
 })
 
+t.todo('html: thenable', async t => {
+  let thenable = html`Loading...`
+  thenable.then(e => new Promise(ok => setTimeout(() => ok(html`Loaded!`), 1000)))
+
+  html`<${el}>${thenable}</>`
+})
+
+t.todo('html: generator')
+
+t.todo('html: react-component compatible', t => {
+
+})
+
 t('html: selector elements', t => {
   let el = document.createElement('div')
   el.classList.add('sel')

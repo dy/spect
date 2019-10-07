@@ -20,6 +20,7 @@ export function run(fn) {
 }
 
 const subscriptions = new WeakMap
+// key is [target, effectStr, pathStr]
 export function subscribe(key, fn = current) {
   key = key.length ? tuple(...key) : key
   if (!fn) return
@@ -27,6 +28,10 @@ export function subscribe(key, fn = current) {
     subscriptions.set(key, new Set())
   }
   subscriptions.get(key).add(fn)
+}
+export function unsubscribe(fn) {
+  if (!subscriptions.has(key)) return
+  subscriptions.delete(key)
 }
 export function publish(key) {
   key = key.length ? tuple(...key) : key

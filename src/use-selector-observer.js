@@ -1,7 +1,7 @@
 // selector-observer based impl
 import { observe } from 'selector-observer'
-import { fire } from './on-delegated'
-import { html } from '.'
+import { fire } from './on'
+import html from './html'
 import { isRenderable } from './util'
 
 export default function use(selector, fn) {

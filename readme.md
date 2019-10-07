@@ -320,23 +320,19 @@ await use('#qux', el => {})
 Creates reactive effect function - it re-runs whenever any of internal dependencies change.
 
 ```js
-let bar = $('.bar')
+let state = store({ y : 0})
 
 await use('.foo', el => {
-  // subscribe to attribute updates
-  fx(() => {
-    let x = attr( el ).x
-    let y = attr( bar ).y
-
+  let disable = fx(() => {
     // rerender after 1s
-    let i = setTimeout(() => attr( el ).x++, 1000)
+    let i = setTimeout(() => el.x++, 1000)
 
     return () => clearTimeout(i)
   })
 })
 
 // triggers rerendering of `.foo` fx
-attr(bar, { y: 1 })
+state.y = 1
 ```
 
 ### `on( element | selector, evt, fn )` − events provider
@@ -380,7 +376,22 @@ function baz(props) {
 }
 ```
 
+### `store( obj )` − provide state
 
+Storage provider. Reading subscribes current effect to changes of that prop, writing triggers subscribed effects.
+
+```js
+// create
+let s = store({ foo: null })
+
+// read
+s.foo
+
+// write
+s.foo = 'bar'
+```
+
+<!--
 ### `prop( target, obj | fn ? )` − read / write properties
 
 Read or write target properties. Reading subscribes current effect to changes of that prop, writing triggers subscribed effects.
@@ -440,6 +451,7 @@ attr(element, { foo: 'bar' })
 attr(element, a => a.foo = 1)
 attr(element, a => {...a, foo: 1})
 ```
+-->
 
 <!--
 ### `css( element, styles )` − CSS side-effect

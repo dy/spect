@@ -3,7 +3,7 @@ import htm from 'htm'
 import { isElement, paramCase, isPrimitive } from './util'
 import morph from 'morphdom'
 import clsx from 'clsx'
-import { publish } from './core'
+import { fire } from './on'
 import equal from 'fast-deep-equal'
 import 'array-flat-polyfill'
 
@@ -103,7 +103,7 @@ function h(tag, props, ...children) {
           for (let prop of changedProps) {
             if (!equal(fromEl[prop], toEl[prop])) {
               fromEl[prop] = toEl[prop]
-              publish([fromEl, 'prop', prop])
+              fire(fromEl, 'prop:' + prop)
             }
             // propsCache.delete(prop)
           }

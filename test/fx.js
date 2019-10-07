@@ -1,11 +1,35 @@
 import t from 'tst'
-import $ from '..'
-import fx from '../src/fx'
+import { $, fx, store } from '..'
 import 'setimmediate'
 
-$.fn(fx)
 
-t('fx: global effect is triggered after current callstack', async t => {
+t.only('fx: basic API', async t => {
+  let log = []
+  let state = store()
+  let state2 = store()
+  t.is(state === state2, false)
+
+  let disable = fx(() => {
+    log.push('in')
+    state.x
+    return () => log.push('out')
+  })
+
+  t.is(log, ['in'])
+
+  state.x = 1
+  state2.y = 1
+
+  await Promise.resolve().then()
+  t.is(log, ['in', 'out', 'in'])
+
+  disable()
+  state.x = 2
+  await Promise.resolve().then()
+  t.is(log, ['in', 'out', 'in'])
+})
+
+t.todo('fx: global effect is triggered after current callstack', async t => {
   let log = []
   $(document.createElement('a')).fx(() => log.push('a'))
 
@@ -16,7 +40,7 @@ t('fx: global effect is triggered after current callstack', async t => {
   t.is(log, ['a'])
 })
 
-t('fx: runs destructor', async t => {
+t.todo('fx: runs destructor', async t => {
   let log = []
   let $a = $(document.createElement('a'))
 
@@ -53,7 +77,7 @@ t('fx: runs destructor', async t => {
   t.is(log, ['destroy 1', 'destroy 3', 'init 1', 'init 3'])
 })
 
-t('fx: toggle deps', async t => {
+t.todo('fx: toggle deps', async t => {
   let log = []
   let $a = $`<a/>`
 
@@ -161,7 +185,7 @@ t.todo('fx: sync fx', t => {
 
 })
 
-t('fx: async fx', async t => {
+t.todo('fx: async fx', async t => {
   let log = []
 
   await $(document.createElement('div')).use(el => {
@@ -187,21 +211,21 @@ t('fx: async fx', async t => {
   // t.deepEqual(log, ['before', 'between', 'after', 'foo', 'bar'], 'correct sequence of calls')
 })
 
-t('fx: generator fx')
+t.todo('fx: generator fx')
 
-t('fx: promise')
+t.todo('fx: promise')
 
-t('fx: dep cases')
+t.todo('fx: dep cases')
 
-t('fx: no-deps call')
+t.todo('fx: no-deps call')
 
-t('fx: varying number of effects')
+t.todo('fx: varying number of effects')
 
-t('fx: removes all effects on aspect removal')
+t.todo('fx: removes all effects on aspect removal')
 
 
 
-t('fx: runs destructor', async t => {
+t.todo('fx: runs destructor', async t => {
   let log = []
   let $a = spect({})
 
@@ -241,7 +265,7 @@ t('fx: runs destructor', async t => {
   t.is(log, ['destroy 1', 'destroy 3', 'init 1', 'init 3'])
 })
 
-t('fx: toggle deps', async t => {
+t.todo('fx: toggle deps', async t => {
   let log = []
   let $a = spect()
 
@@ -288,7 +312,7 @@ t('fx: toggle deps', async t => {
   t.is(log, ['on', 'off', 'on', 'off'])
 })
 
-t('fx: async fx chain', async t => {
+t.todo('fx: async fx chain', async t => {
   let log = []
   let a = spect().fx(() => log.push(1)).fx(() => log.push(2))
   t.is(log, [])
@@ -296,7 +320,7 @@ t('fx: async fx chain', async t => {
   t.is(log, [1, 2, 3])
 })
 
-t('fx: async fx', async t => {
+t.todo('fx: async fx', async t => {
   let log = []
 
   let el = spect().use(async () => {

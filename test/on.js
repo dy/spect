@@ -131,9 +131,7 @@ t('on: sequences handled as return result', async t => {
   t.is(log, ['in', 'out', 'in', 'out', 'in'])
 })
 
-t.todo('on: awaits for events', t => {
-
-})
+t.todo('on: nodelist/htmlcollection as target')
 
 t.skip('on: sequences unbind themselves', t => {
   let log = []

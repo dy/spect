@@ -1,4 +1,4 @@
-import { html } from '.'
+import html from './html'
 import { isIterable, isElement } from './util'
 
 export default function $(selector, within=document) {

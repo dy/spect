@@ -1,5 +1,5 @@
 import {createEffect} from './util'
-import {publish} from './core'
+import {fire} from './on'
 
 const cache = new WeakMap
 export default createEffect(

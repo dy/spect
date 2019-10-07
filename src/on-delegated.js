@@ -1,6 +1,7 @@
 // import delegate from 'delegate-it'
 import * as delegate from 'delegated-events'
 import tuple from 'immutable-tuple'
+import { isElement } from './util'
 
 const cache = new WeakMap()
 export default function on (target, evt, fn=()=>{}) {
@@ -53,7 +54,7 @@ export default function on (target, evt, fn=()=>{}) {
       if (idx >= 0) listeners.splice(idx, 1)
     }
   }
-  else {
+  else if (target.addEventListener) {
     target.addEventListener(evt, cb)
     off = () => {
       target.removeEventListener(evt, cb)
@@ -61,38 +62,22 @@ export default function on (target, evt, fn=()=>{}) {
       if (idx >= 0) listeners.splice(idx, 1)
     }
   }
+  // non-dom targets
+  // not intended to be used directly, just as common event bus
+  else {
+    let gatedCb = (e) => {
+      if (e.details.target !== target) return
+      cb(e)
+    }
+    document.addEventListener(evt, gatedCb)
+    off = () => {
+      document.removeEventListener(evt, gatedCb)
+    }
+  }
 
   off.then = p.then.bind(p)
   return off
 }
-
-
-// export function off(target, evts, fn) {
-//   let seq = evts.split(/\s*\>\s*/)
-//   if (seq.length > 1) return offSequence(target, seq, fn)
-
-//   let key = tuple(target, evts)
-
-//   evts.split(/\s+/).forEach(evt => {
-//     let listeners = cache.get(key)
-
-//     // unbind all
-//     if (!fn) {
-//       listeners.forEach(fn => off(target, evt, fn))
-//       listeners.length = 0
-//       return
-//     }
-
-//     let idx = listeners.indexOf(fn)
-//     if (typeof target === 'string') {
-//       delegate.off(evt, target, fn)
-//     }
-//     else {
-//       target.removeEventListener(evt, fn)
-//     }
-//     if (idx >= 0) listeners.splice(idx, 1)
-//   })
-// }
 
 // TODO: that can be a separate module
 export function onSequence(target, seq, fn) {
@@ -129,6 +114,12 @@ export function onSequence(target, seq, fn) {
 
 
 export function fire(target, evt, o) {
+  // redirect target
+  if (!target.dispatchEvent) {
+    o.target = target
+    target = document
+  }
+
   if (evt instanceof Event) {
     target.dispatchEvent(evt)
   }

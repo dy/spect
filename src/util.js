@@ -1,7 +1,8 @@
 import kebab from 'kebab-case'
 import equal from 'fast-deep-equal'
-import { subscribe, publish } from './core'
+import on, { fire } from './on'
 import tuple from 'immutable-tuple'
+import { current } from './core'
 
 export const SPECT_CLASS = '👁'
 
@@ -48,12 +49,12 @@ export function createEffect(name, get, set) {
 
         store = new Proxy(curr, {
           get(store, prop, receiver) {
-            subscribe([target, name, prop])
+            on(target, name + ':' + prop, current)
             return Reflect.get(store, prop, receiver)
           },
           set(store, prop, value, receiver) {
             set(target, { [prop]: value })
-            publish([target, name, prop])
+            fire(target, name + ':' + prop)
             return Reflect.set(store, prop, value, receiver)
           }
         })
@@ -87,7 +88,7 @@ export function createEffect(name, get, set) {
           for (let prop in obj) {
             let value = obj[prop]
             if (equal(store[prop], value)) continue
-            publish([target, name, prop])
+            fire(target, name + ':' + prop)
             store[prop] = value
             changed[prop] = obj[prop]
           }
