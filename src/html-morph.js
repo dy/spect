@@ -69,6 +69,9 @@ function h(tag, props, ...children) {
 
     // don't override initial tag id
     if (tag.id && !props.id) props.id = tag.id
+    if (tag.classList.length && props.class) {
+      props.class = [...tag.classList, props.class]
+    }
 
     // keep attributes
     if (tag.attributes) {
@@ -90,7 +93,7 @@ function h(tag, props, ...children) {
         if (propsCache.has(toEl)) {
           let changedProps = propsCache.get(toEl)
           for (let prop of changedProps) {
-            if (!equal(fromEl[prop], toEl[prop])) {
+            if (!Object.is(fromEl[prop], toEl[prop])) {
               fromEl[prop] = toEl[prop]
               fire(fromEl, 'prop:' + prop)
             }
@@ -169,6 +172,15 @@ function applyProps(el, props) {
       el.setAttribute(name, value)
     }
     else {
+      // FIXME: some attributes, like colspan, are not automatically exposed to elements
+      if (isPrimitive(value) && isElement(el) && el.setAttribute) {
+        if (value === false || value === null || value === undefined) {
+          el.removeAttribute(name)
+        }
+        else if (value === true) el.setAttribute(name, '')
+        el.setAttribute(name, value)
+      }
+
       el[name] = value
       // collect use/is patch rendered DOM
       if (value && (name === 'use' || name === 'is')) currentUseCache.add(el)

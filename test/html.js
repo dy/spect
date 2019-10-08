@@ -70,6 +70,22 @@ t('html: rerendering with props: must persist', async t => {
   t.is(el.firstChild.items, [])
 })
 
+t('html: must not lose attributes', async t => {
+  let a = html`<tr colspan=2/>`
+  t.is(a.getAttribute('colspan'), "2")
+})
+
+t('html: must not redefine class', async t => {
+  let el = html`<a.foo.bar/>`
+  t.is(el.className,'foo bar')
+  html`<${el}.baz/>`
+  t.is(el.className, 'foo bar baz')
+  await use(el, el => {
+    html`<${el}.qux/>`
+  })
+  t.is(el.className, 'foo bar baz qux')
+})
+
 t('html: fragments', async t => {
   let el = html`<foo/><bar/>`
   t.is(el.childNodes.length, 2)
@@ -187,7 +203,7 @@ t('html: preserve rendering target classes/ids/attribs', t => {
 
   html`<${el}#y.z.w w=2/>`
 
-  t.is(el.outerHTML, `<div class="z w" id="y"></div>`)
+  t.is(el.outerHTML, `<div x="1" class="x z w" id="y" w="2"></div>`)
   t.is(el.x, '1')
   t.is(el.w, '2')
 })
@@ -197,7 +213,7 @@ t('legacy html: readme default', async t => {
 
   html`<${div}><div#id.class foo=bar>baz</div></div>`
 
-  t.is(div.outerHTML, '<div><div id="id" class="class">baz</div></div>')
+  t.is(div.outerHTML, '<div><div foo="bar" id="id" class="class">baz</div></div>')
   t.is(div.firstChild.foo, 'bar')
   t.is(div.firstChild.id, 'id')
 })
@@ -206,7 +222,7 @@ t('legacy html: attributes', t => {
   let div = document.createElement('div')
 
   html`<${div}><a href='/' foo=bar>baz</a></>`
-  t.is(div.firstChild.outerHTML, '<a href="/">baz</a>')
+  t.is(div.firstChild.outerHTML, '<a href="/" foo="bar">baz</a>')
   t.is(div.firstChild.foo, 'bar')
 })
 
