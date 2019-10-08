@@ -1,18 +1,18 @@
 # Spect ![experimental](https://img.shields.io/badge/stability-experimental-yellow) [![Build Status](https://travis-ci.org/spectjs/spect.svg?branch=master)](https://travis-ci.org/spectjs/spect)
 
-_Spect_ is [aspect-oriented](https://en.wikipedia.org/wiki/Aspect-oriented_programming) web-framework.
+_Spect_ is [reactive aspect-oriented](https://en.wikipedia.org/wiki/Aspect-oriented_programming) web-framework.
 
 #### 🎡 Concept
 
-_Spect_ introduces _element aspects_, _reactive effects_ data domain accessors: `attr`, `html`, `css`, `state`, `data`, `prop`, `on` etc.
+_Spect_ introduces _reactive functional effects_ with domain accessors to declare dependencies: `$`, `attr`, `html`, `css`, `state`, `data`, `prop`, `on` etc. Less words, more business:
 
-#### 🏛️ Principles
+<!-- #### 🏛️ Principles
 
 1. Expressivity.
 2. No bundling.
 3. HTML first.
 3. Organic hydration.
-5. Max utility, min presentation.
+5. Max utility, min presentation. -->
 
 <!-- Spect is build with a set of modern practices in mind (proxies, symbols, tagged strings, virtual dom, incremental dom, htm, custom elements, hooks, observers, tuples, frp). It grounds on API design research, experiments and proofs. Current API is 4th iteration. -->
 
@@ -38,23 +38,21 @@ Other approaches include:
 
 
 ```js
-import { use, fx, html, attr, state, route } from 'spect'
+import { $, fx, html, attr, local, route } from 'spect'
 import ky from 'ky'
 import { t, useLocale } from 'ttag'
 
 // main app aspect
-use('#app', async (el) => {
+use('#app', el => {
   // loading data effect
-  fx(async () => {
-    let { id } = route('users/:id')
-    attr(el).loading = true
-    state(el).user = await ky.get`./api/user/${ id }`
-    attr(el).loading = false
+  fx([route('users/:id')], async (id) => {
+    el.setAttribute('loading', true)
+    localStorage.setItem('user', await ky.get`./api/user/${ id }`)
+    el.setAttribute('loading', false)
   })
 
   // rendering effect
-  fx(() => {
-    let user = state(el).user, loading = attr(el).loading
+  fx([local('user'), attr(el, 'loading')], (user, loading) => {
     html`<${el}.preloadable>
       <p.i18n>${ loading ? `Hello, ${ user.name }!` : `Thanks for patience...` }</p>
     </>`
@@ -62,20 +60,19 @@ use('#app', async (el) => {
 }
 
 // preloadable aspect - shows spinner when `loading` attribute changes
-use('.preloadable', async el => {
+use('.preloadable', el => {
   let progress = html`<progress.progress-circle />`
   let content = [...el.childNodes]
-  fx(() => html`<${el}>${ attr(el).loading ? progress : content }</>`)
+  fx(attr(el, 'loading'), loading => html`<${el}>${ loading ? progress : content }</>`)
 })
 
 // i18n aspect - translates content when `lang` attribute changes
 use('.i18n', el => {
   let str = text(el)
 
-  fx(() => {
-    let lang = attr(el).lang || attr(document.documentElement).lang
+  fx(defined(attr(el, 'lang'), attr(document.documentElement, 'lang')), lang => {
     useLocale(lang)
-    text(el, t(str))
+    el.textContent = t(str)
   })
 })
 ```
@@ -128,12 +125,17 @@ This example assigns `hello` aspect to `#hello-example` element and renders sing
 <script type="module">
 import { html, fx } from 'spect'
 
+// for each #hello-example
 use('#hello-example', el => {
-  html`<${el}>
-    <div.message>
-      Hello, ${ prop(el).name }!
-    </div>
-  </>`
+  // any time element's `name` property changes
+  fx(prop(el, 'name'), name => {
+    // render html as
+    html`<${el}>
+      <div.message>
+        Hello, ${ name }!
+      </div>
+    </>`
+  })
 })
 </script>
 ```
@@ -143,28 +145,23 @@ use('#hello-example', el => {
 
 ### A Stateful Aspect
 
-HTML is rendered `html`, event sequences are handled via `on`, side-effects are handled via `fx`.
-
 ```js
-import { state, on, fx } from 'spect'
+import { prop, on, fx } from 'spect'
 
-use('#timer-example', async el => {
-  // init state
-  state(el, { seconds: 0 })
+// for every #timer-example element
+use('#timer-example'), async el => {
+  let state = { seconds: 0 }
 
-  // init timer
-  on(el, 'connected > disconnected', e => {
+  // start timer when connected, end if disconnected
+  fx(on(el, 'connected disconnected'), e => {
     let i = setInterval(() => {
-      state(el).seconds++
+      state.seconds++
     }, 1000)
-
     return () => clearInterval(i)
   })
 
   // rerender when seconds change
-  fx(() => {
-    html`<${el}>Seconds: ${state(el).seconds}</>`
-  })
+  fx(prop(state, 'seconds'), seconds => html`<${el}>Seconds: ${seconds}</>`)
 })
 ```
 
@@ -173,37 +170,35 @@ use('#timer-example', async el => {
 
 ### An Application
 
-Events are provided by `.on` effect, decoupling callbacks from markup and enabling event delegation. They can be used along with direct `on*` attributes.
-
 ```js
-import { $, use, on, html, state } from 'spect'
+import { $, use, on, html, prop } from 'spect'
 
 use('#todos-example', el => {
-  state(el, { items: [], text: '' })
+  let state = { items: [], text: '' }
 
-  on(el, 'submit', e => {
+  // run effect by submit event
+  fx(on(el, 'submit'), e => {
     e.preventDefault()
 
-    if (!state(el).text.length) return
+    if (!state.text.length) return
 
-    state(el).items = [...items, { text: state(el).text, id: Date.now()}]
-    state(el).text = ''
+    state.items = [...items, { text: state.text, id: Date.now()}]
+    state.text = ''
   })
 
-  fx(() => {
-    let s = state(el)
-
+  // rerender html when state changes
+  fx(prop(state, 'items'), (items) => {
     html`<${el}>
       <h3>TODO</h3>
-      <main#todo-list items=${ s.items }/>
+      <main#todo-list items=${ items }/>
       <form>
         <label for=new-todo>
           What needs to be done?
         </label>
         <br/>
-        <input#new-todo onchange=${ e => s.text = e.target.value}/>
+        <input#new-todo onchange=${ e => state.text = e.target.value}/>
         <button>
-          Add #${ s.items.length + 1 }
+          Add #${ items.length + 1 }
         </button>
       </form>
     </>`
@@ -211,7 +206,7 @@ use('#todos-example', el => {
 })
 
 use('#todo-list', el => {
-  fx(() => html`<${el}><ul>${ prop(el).items.map(item => html`<li>${ item.text }</li>`)}</ul></>`)
+  fx(prop(el, 'items'), items => html`<${el}><ul>${ items.map(item => html`<li>${ item.text }</li>`)}</ul></>`)
 })
 ```
 
@@ -236,23 +231,21 @@ use('#markdown-example', el => html`<${el}><${MarkdownEditor} content='Hello, **
 import { prop, state, html } from 'spect'
 import { Remarkable } from 'remarkable'
 
-function MarkdownEditor(el, { content }) {
-  state(el, { value: content })
+function MarkdownEditor(el) {
+  let state = { value: el.content }
 
-  cls(el).markdownEditor = true
-
-  fx(() => {
-    html`<${el}>
+  fx(prop(state, 'value'), (value) => {
+    html`<${el}.markdown-editor>
       <h3>Input</h3>
       <label for="markdown-content">
         Enter some markdown
       </label>
       <textarea#markdown-content
-        onchange=${e => state(el, { value: e.target.value })}
-      >${ state(el).value }</textarea>
+        onchange=${e => state.value = e.target.value )}
+      >${ value }</textarea>
 
       <h3>Output</h3>
-      <div.content innerHTML=${ getRawMarkup(state(el).value) }/>
+      <div.content innerHTML=${ getRawMarkup(value) }/>
     </>`
   })
 }
@@ -309,13 +302,13 @@ let unuse = use('.foo', el => {
 unuse()
 
 // replace element with another element
-use('.bar', (el, props) => document.createElement('baz'))
+use('.bar', (el) => document.createElement('baz'))
 
 // awaits element in the DOM
 await use('#qux', el => {})
 ```
 
-### `fx( () => {} )` − reactive effect
+### `fx( deps, () => {} )` − reactive effect
 
 Creates reactive effect function - it re-runs whenever any of internal dependencies change.
 
@@ -335,7 +328,25 @@ await use('.foo', el => {
 state.y = 1
 ```
 
-### `on( element | selector, evt, fn )` − events provider
+### ``.html`...markup` `` − patch html
+
+Render html. Uses [`htm`](https://ghub.io/htm) syntax.
+
+
+```js
+// create element
+let foo = html`<div#foo/>`
+
+// render to target
+html`<${fooEl}><div.bar/><${baz}/></>`
+
+function baz(props) {
+  return html`<div.baz>baz</div>`
+}
+```
+
+
+<!-- ### `on( element | selector, evt, fn )` − events provider
 
 Register event listeners for elements / selector.
 
@@ -357,25 +368,9 @@ on('.target', 'connected > disconnected', e => {
     // disconnected
   }
 })
-```
+``` -->
 
-### ``.html`...markup` `` − patch html
-
-Render html. Uses [`htm`](https://ghub.io/htm) syntax.
-
-
-```js
-// create element
-let foo = html`<div#foo/>`
-
-// render to target
-html`<${fooEl}><div.bar/><${baz}/></>`
-
-function baz(props) {
-  return html`<div.baz>baz</div>`
-}
-```
-
+<!--
 ### `store( obj )` − provide state
 
 Storage provider. Reading subscribes current effect to changes of that prop, writing triggers subscribed effects.
@@ -389,7 +384,7 @@ s.foo
 
 // write
 s.foo = 'bar'
-```
+``` -->
 
 <!--
 ### `prop( target, obj | fn ? )` − read / write properties
@@ -465,7 +460,7 @@ $target.css` :host { width: 100%} `
 <p align="right">Ref: <a href="https://ghub.io/virtual-css">virtual-css</a></p> -->
 
 
-### `cls( ...classes )` − manipulate classes
+<!-- ### `cls( ...classes )` − manipulate classes
 
 Add/remove classes, update dependent aspects.
 
@@ -478,9 +473,9 @@ cls(el, clsx => clsx.foo = false)
 // read classes
 cls(el).foo
 cls(el)
-```
+``` -->
 
-### `$( selector, container? )` − select nodes
+<!-- ### `$( selector, container? )` − select nodes
 
 Simple query selector.
 
@@ -494,7 +489,7 @@ $('baz') // [bazEl, bazEl]
 
 // query within
 $('qux', $('#foo')) // [qux]
-```
+``` -->
 
 
 ## Changelog
