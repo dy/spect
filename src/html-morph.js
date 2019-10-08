@@ -1,6 +1,6 @@
 // domdiff html implementation
 import htm from 'htm'
-import { isElement, paramCase, isPrimitive } from './util'
+import { isElement, paramCase, isPrimitive, isIterable } from './util'
 import morph from 'morphdom'
 import clsx from 'clsx'
 import { fire } from './on'
@@ -36,7 +36,10 @@ export default function html (...args) {
     used(el)
   }
   currentUseCache = prevUseCache
+
+  // seal result
   result[_morph] = false
+
   return result
 }
 
@@ -227,6 +230,7 @@ function applyProps(el, props) {
 }
 
 function parseTag(str) {
+  if (typeof str !== 'string' && isIterable(str)) throw Error('Cannot handle iterables for now: ' + str)
   let tag, id, classes
   let [beforeId, afterId = ''] = str.split('#')
   let beforeClx = beforeId.split('.')

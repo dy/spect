@@ -239,6 +239,14 @@ t.skip('legacy html: component static props', async t => {
   t.is(log, ['C-0', 'x', 'y z'])
 })
 
+t.todo('html: newline nodes should have space in between', t => {
+  let el = html`
+    ${'a'}
+    ${'b'}
+  `
+  t.is(el.textContent, 'a b')
+})
+
 t('legacy html: direct component rerendering should not destroy state', async t => {
   let el = html`<div><${fn}/></div>`
   let abc = el.firstChild
