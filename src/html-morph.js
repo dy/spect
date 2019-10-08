@@ -80,6 +80,7 @@ function h(tag, props, ...children) {
       }
     }
     let newTag = createElement(tag.tagName, props, children)
+
     morph(tag, newTag, {
       getNodeKey: (el) => {
         return el.key || el.id
@@ -138,6 +139,9 @@ function createElement(el, props, children) {
       .filter(child => typeof child === 'number' || child)
       .map(child => {
         if (isPrimitive(child)) return document.createTextNode(child)
+        // clone textnodes to avoid morphing them
+        // FIXME: can be handled by
+        if (child.nodeType === 3) return child.cloneNode()
         if (child.then) {
           child.then(el => {
             holder.replaceWith(el)

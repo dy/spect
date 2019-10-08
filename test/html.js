@@ -331,6 +331,30 @@ t('html: assigned id must be accessible', async t => {
   })
 })
 
+t('html: must update text content', async t => {
+  const foo = html`foo`
+  const bar = html`bar`
+
+  let el = html`<div/>`
+
+  html`<${el}>${ foo }</>`
+  t.is(el.textContent, 'foo')
+  t.is(foo.textContent, 'foo')
+  t.is(bar.textContent, 'bar')
+  html`<${el}>${ bar }</>`
+  t.is(el.textContent, 'bar')
+  t.is(foo.textContent, 'foo')
+  t.is(bar.textContent, 'bar')
+  html`<${el}>${ foo }</>`
+  t.is(el.textContent, 'foo')
+  t.is(foo.textContent, 'foo')
+  t.is(bar.textContent, 'bar')
+  html`<${el}>${ bar }</>`
+  t.is(el.textContent, 'bar')
+  t.is(foo.textContent, 'foo')
+  t.is(bar.textContent, 'bar')
+})
+
 t('html: must not replace self', t => {
   let el = html`<x is=${x} />`
   function x (el) {
