@@ -1,5 +1,5 @@
 import t from 'tst'
-import { html, state, cls, $, use } from '..'
+import { html, state, cls, $, use, prop } from '..'
 
 Object.defineProperty(DocumentFragment.prototype, 'outerHTML', {
   get() {
@@ -353,6 +353,32 @@ t('html: must update text content', async t => {
   t.is(el.textContent, 'bar')
   t.is(foo.textContent, 'foo')
   t.is(bar.textContent, 'bar')
+})
+
+t('html: must not morph inserted nodes', async t => {
+  const foo = html`<p>foo</p>`
+  const bar = html`<p>bar</p>`
+
+  let el = html`<div/>`
+
+  html`<${el}>${foo}</>`
+  t.equal(el.firstChild, foo, 'keep child')
+  t.is(el.innerHTML, '<p>foo</p>')
+  t.is(foo.outerHTML, '<p>foo</p>')
+  t.is(bar.outerHTML, '<p>bar</p>')
+  html`<${el}>${bar}</>`
+  t.equal(el.firstChild, bar, 'keep child')
+  t.is(el.innerHTML, '<p>bar</p>')
+  t.is(foo.outerHTML, '<p>foo</p>')
+  t.is(bar.outerHTML, '<p>bar</p>')
+  html`<${el}>${foo}</>`
+  t.is(el.innerHTML, '<p>foo</p>')
+  t.is(foo.outerHTML, '<p>foo</p>')
+  t.is(bar.outerHTML, '<p>bar</p>')
+  html`<${el}>${bar}</>`
+  t.is(el.innerHTML, '<p>bar</p>')
+  t.is(foo.outerHTML, '<p>foo</p>')
+  t.is(bar.outerHTML, '<p>bar</p>')
 })
 
 t('html: must not replace self', t => {
