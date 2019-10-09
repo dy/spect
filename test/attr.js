@@ -1,10 +1,24 @@
 import t from 'tst'
-import $ from '..'
-import attr from '../src/attr'
+import { attr } from '..'
 
-$.fn(attr)
+t.only('attr: walk generator', async t => {
+  let el = document.createElement('div')
+  let p = attr(el, 'x')
+  ;(async () => {
+    for await (const item of p()) {
+      console.log('changed:', item)
+    }
+  })();
+  el.setAttribute('x', 1)
+  el.setAttribute('x', 2)
+  console.log('after')
+  await Promise.resolve().then()
+  el.setAttribute('x', 3)
+  el.setAttribute('x', 4)
+  el.setAttribute('x', 5)
+})
 
-t('attr: direct get/set', t => {
+t.todo('legacy attr: direct get/set', t => {
   $`<div.a/>`.use(el => {
     let $el = $(el)
 
@@ -13,7 +27,7 @@ t('attr: direct get/set', t => {
   })
 })
 
-t('attr: object set', t => {
+t.todo('legacy attr: object set', t => {
   $`<div.a/>`.use(el => {
     el.attr({ c: 1, d: 2 })
 
@@ -21,7 +35,7 @@ t('attr: object set', t => {
   })
 })
 
-t('attr: functional get/set', t => {
+t.todo('legacy attr: functional get/set', t => {
   let $a = $`<a/>`
 
   $a.attr(s => s.count = 0)
@@ -34,7 +48,7 @@ t('attr: functional get/set', t => {
   t.is($a.attr('count'), '1')
 })
 
-t('attr: boolean', t => {
+t.todo('legacy attr: boolean', t => {
   let $a = $`<a/>`
 
   t.is($a.attr('foo'), false)

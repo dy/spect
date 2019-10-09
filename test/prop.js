@@ -1,10 +1,33 @@
 import t from 'tst'
-import $ from '..'
-import prop from '../src/prop'
+import { prop } from '..'
 
-$(prop)
 
-t('prop: direct get/set', t => {
+t('prop: walk generator', async t => {
+  let o = {}
+  let p = prop(o, 'x')
+  ;(async () => {
+  for await (const item of p()) {
+    console.log('changed:', item)
+  }
+  })()
+  o.x = 1
+  o.x = 2
+  console.log('after')
+  await Promise.resolve().then()
+  o.x = 3
+  o.x = 4
+  o.x = 5
+})
+
+t('prop: should update on the latest value')
+t('prop: should ignore unchanged value')
+t('prop: reading should shortcut new value')
+t('prop: reconfigure descriptors')
+t('prop: ignore reconfiguring sealed objects')
+t('prop: keep initial property value')
+t('prop: does not initialize two times')
+
+t.todo('legacy prop: direct get/set', t => {
   $`<div.a/>`.use(el => {
     let $el = $(el)
 
@@ -13,7 +36,7 @@ t('prop: direct get/set', t => {
   })
 })
 
-t('prop: object set', t => {
+t.todo('legacy prop: object set', t => {
   $`<div.a/>`.use(el => {
     let $el = $(el)
 
@@ -23,7 +46,7 @@ t('prop: object set', t => {
   })
 })
 
-t('prop: functional get/set', t => {
+t.todo('legacy prop: functional get/set', t => {
   let $a = $`<a/>`
 
   $a.prop(s => s.count = 0)
@@ -36,7 +59,7 @@ t('prop: functional get/set', t => {
   t.is($a.prop`count`, 1)
 })
 
-t.skip('prop: counter', t => {
+t.todo('legacy prop: counter', t => {
   let stop = 0
   let $els = $`<div.a/>`.use(a => {
     let $a = $(a)
@@ -56,14 +79,14 @@ t.skip('prop: counter', t => {
   })
 })
 
-t('prop: direct get/set', t => {
+t.todo('legacy prop: direct get/set', t => {
   spect().use(el => {
     el.prop('c', 1)
     t.is(el.c, 1)
   })
 })
 
-t('prop: object set', t => {
+t.todo('legacy prop: object set', t => {
   spect().use(el => {
     el.prop({ c: 1, d: 2 })
 
@@ -71,7 +94,7 @@ t('prop: object set', t => {
   })
 })
 
-t('prop: functional get/set', t => {
+t.todo('legacy prop: functional get/set', t => {
   let $a = spect()
 
   $a.prop(s => s.count = 0)
@@ -84,7 +107,7 @@ t('prop: functional get/set', t => {
   t.is($a.count, 1)
 })
 
-t.skip('prop: counter', t => {
+t.todo('legacy prop: counter', t => {
   let stop = 0
   spect().use($a => {
     $a.prop({ count: 0 }, [])

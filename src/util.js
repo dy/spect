@@ -4,6 +4,20 @@ import on, { fire } from './on'
 import tuple from 'immutable-tuple'
 import { current, queue } from './core'
 
+const cancelled = {}
+export function setMicrotask (fn, ctx) {
+  let sym = Symbol('microtask')
+  Promise.resolve().then(() => {
+    if (cancelled[sym]) return
+    delete cancelled[sym]
+    fn()
+  })
+  return sym
+}
+export function clearMicrotask (sym) {
+  cancelled[sym] = true
+}
+
 export const SPECT_CLASS = '👁'
 
 export function isIterable(val) {

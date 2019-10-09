@@ -1,50 +1,35 @@
-import {createEffect} from './util'
-import {fire} from './on'
-
 const cache = new WeakMap
-export default createEffect(
-  'attr',
-  function get (el) {
-    let state = cache.get(el)
-    if (!state) {
-      let observer = new MutationObserver(records => {
-        for (let i = 0, length = records.length; i < length; i++) {
-          let { target, oldValue, attributeName } = records[i];
-          // publish([el, 'attr', attributeName])
-        }
-      })
-      observer.observe(el, { attributes: true })
-      cache.set(el, state = { observer, data:{} })
-    }
 
-    for (let attr of el.attributes) {
-      let value = attr.value
-      state.data[attr.name] = attr.value
-    }
+export default function attr(el, name) {
+  if (!name) throw Error('`attr` expects attribute name to observe')
 
-    return state.data
-  },
-  function set(el, obj) {
-    let state = cache.get(el)
-    if (!state) return false
-    for (let prop in obj) {
-      let value = obj[prop]
-      switch(value) {
-        case (false):
-          delete state.data[prop]
-          el.removeAttribute(prop)
-          break;
-        case (true):
-          state.data[prop] = true
-          el.setAttribute(prop, '')
-          break;
-        default:
-          state.data[prop] = value
-          el.setAttribute(prop, value)
+  let resolve, p = new Promise(ok => resolve = ok)
+
+  let observer = cache.get(el)
+  if (!observer) {
+    cache.set(el, observer = new MutationObserver(records => {
+      for (let i = 0, length = records.length; i < length; i++) {
+        let { target, attributeName, oldValue } = records[i];
+        let currentValue = target.getAttribute(attributeName)
+        if (Object.is(oldValue, currentValue)) continue
+
+        resolve(currentValue)
+        p = new Promise(ok => resolve = ok)
+      }
+    }))
+    observer.attributeNames = new Set()
+    observer.asyncGen = async function* () {
+      while (true) {
+        yield p
       }
     }
-
-    return true
   }
-)
+  if (!observer.attributeNames.has(name)) {
+    observer.attributeNames.add(name)
 
+    // observer is singleton, so this redefines previous command
+    observer.observe(el, { attributes: true, attributeFilter: [...observer.attributeNames], attributeOldValue: true })
+  }
+
+  return observer.asyncGen
+}
