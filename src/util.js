@@ -93,7 +93,7 @@ export function createEffect(name, get, set) {
           let changed = {}
           for (let prop in obj) {
             let value = obj[prop]
-            if (equal(store[prop], value)) continue
+            if (Object.is(store[prop], value)) continue
             fire(target, name + ':' + prop)
             store[prop] = value
             changed[prop] = obj[prop]

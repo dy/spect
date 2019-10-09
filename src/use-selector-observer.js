@@ -4,6 +4,7 @@ import { fire } from './on'
 import html from './html'
 import { isRenderable, isElement } from './util'
 
+
 export default function use(selector, fn) {
   let resolve
   if (isElement(selector)) {
@@ -43,7 +44,25 @@ export default function use(selector, fn) {
 export function apply(el, uselist) {
   if (!uselist) uselist = [el.is, el.use].flat().filter(Boolean).filter(f => typeof f === 'function')
 
-  let fn, result, props = {}
+  let fn, result
+
+  let props = collectProps(el)
+
+  while (fn = uselist.shift()) {
+    result = fn(el, props)
+    if (result !== undefined && result !== el && isRenderable(result)) {
+      let frag = html`<>${ result }</>`
+      result = frag.childNodes.length > 1 ? [...frag.childNodes] : frag.firstChild
+      if (el.replaceWith) el.replaceWith(frag)
+      el = result
+    }
+  }
+
+  return el
+}
+
+export function collectProps(el) {
+  let props = {}
   let proto = el.constructor.prototype
 
   // custom non-prototype props
@@ -54,21 +73,15 @@ export function apply(el, uselist) {
   }
 
   // attributes
-  for (let attr of el.attributes) {
-    if (!(attr.name in props)) props[attr.name] = attr.value
-  }
-
-  // FIXME: there can also be just prototype props modified
-
-  while (fn = uselist.shift()) {
-    result = fn(el, props)
-    if (result !== undefined && result !== el && isRenderable(result)) {
-      let frag = html`<>${ result }</>`
-      result = frag.childNodes.length > 1 ? [...frag.childNodes] : frag.firstChild
-      el.replaceWith(frag)
-      el = result
+  if (el.attributes) {
+    for (let attr of el.attributes) {
+      if (!(attr.name in props)) props[attr.name] = attr.value
     }
   }
 
-  return el
+  // FIXME: collect from propsCache as well
+
+  // FIXME: there can also be just prototype props modified
+
+  return props
 }

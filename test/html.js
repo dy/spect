@@ -1,5 +1,5 @@
 import t from 'tst'
-import { html, state, cls, $, use } from '..'
+import { html, state, cls, $, use, prop } from '..'
 
 Object.defineProperty(DocumentFragment.prototype, 'outerHTML', {
   get() {
@@ -68,6 +68,22 @@ t('html: rerendering with props: must persist', async t => {
   t.equal(el.childNodes.length, 2)
   t.equal(el.firstChild.className, 'foo')
   t.is(el.firstChild.items, [])
+})
+
+t('html: must not lose attributes', async t => {
+  let a = html`<tr colspan=2/>`
+  t.is(a.getAttribute('colspan'), "2")
+})
+
+t('html: must not redefine class', async t => {
+  let el = html`<a.foo.bar/>`
+  t.is(el.className,'foo bar')
+  html`<${el}.baz/>`
+  t.is(el.className, 'foo bar baz')
+  await use(el, el => {
+    html`<${el}.qux/>`
+  })
+  t.is(el.className, 'foo bar baz qux')
 })
 
 t('html: fragments', async t => {
@@ -187,7 +203,7 @@ t('html: preserve rendering target classes/ids/attribs', t => {
 
   html`<${el}#y.z.w w=2/>`
 
-  t.is(el.outerHTML, `<div class="z w" id="y"></div>`)
+  t.is(el.outerHTML, `<div x="1" class="x z w" id="y" w="2"></div>`)
   t.is(el.x, '1')
   t.is(el.w, '2')
 })
@@ -197,7 +213,7 @@ t('legacy html: readme default', async t => {
 
   html`<${div}><div#id.class foo=bar>baz</div></div>`
 
-  t.is(div.outerHTML, '<div><div id="id" class="class">baz</div></div>')
+  t.is(div.outerHTML, '<div><div foo="bar" id="id" class="class">baz</div></div>')
   t.is(div.firstChild.foo, 'bar')
   t.is(div.firstChild.id, 'id')
 })
@@ -206,7 +222,7 @@ t('legacy html: attributes', t => {
   let div = document.createElement('div')
 
   html`<${div}><a href='/' foo=bar>baz</a></>`
-  t.is(div.firstChild.outerHTML, '<a href="/">baz</a>')
+  t.is(div.firstChild.outerHTML, '<a href="/" foo="bar">baz</a>')
   t.is(div.firstChild.foo, 'bar')
 })
 
@@ -221,6 +237,14 @@ t.skip('legacy html: component static props', async t => {
 
   await Promise.resolve()
   t.is(log, ['C-0', 'x', 'y z'])
+})
+
+t.todo('html: newline nodes should have space in between', t => {
+  let el = html`
+    ${'a'}
+    ${'b'}
+  `
+  t.is(el.textContent, 'a b')
 })
 
 t('legacy html: direct component rerendering should not destroy state', async t => {
@@ -313,6 +337,56 @@ t('html: assigned id must be accessible', async t => {
     t.is(el.id, 'x1')
     t.is(props.id, 'x1')
   })
+})
+
+t('html: must update text content', async t => {
+  const foo = html`foo`
+  const bar = html`bar`
+
+  let el = html`<div/>`
+
+  html`<${el}>${ foo }</>`
+  t.is(el.textContent, 'foo')
+  t.is(foo.textContent, 'foo')
+  t.is(bar.textContent, 'bar')
+  html`<${el}>${ bar }</>`
+  t.is(el.textContent, 'bar')
+  t.is(foo.textContent, 'foo')
+  t.is(bar.textContent, 'bar')
+  html`<${el}>${ foo }</>`
+  t.is(el.textContent, 'foo')
+  t.is(foo.textContent, 'foo')
+  t.is(bar.textContent, 'bar')
+  html`<${el}>${ bar }</>`
+  t.is(el.textContent, 'bar')
+  t.is(foo.textContent, 'foo')
+  t.is(bar.textContent, 'bar')
+})
+
+t('html: must not morph inserted nodes', async t => {
+  const foo = html`<p>foo</p>`
+  const bar = html`<p>bar</p>`
+
+  let el = html`<div/>`
+
+  html`<${el}>${foo}</>`
+  t.equal(el.firstChild, foo, 'keep child')
+  t.is(el.innerHTML, '<p>foo</p>')
+  t.is(foo.outerHTML, '<p>foo</p>')
+  t.is(bar.outerHTML, '<p>bar</p>')
+  html`<${el}>${bar}</>`
+  t.equal(el.firstChild, bar, 'keep child')
+  t.is(el.innerHTML, '<p>bar</p>')
+  t.is(foo.outerHTML, '<p>foo</p>')
+  t.is(bar.outerHTML, '<p>bar</p>')
+  html`<${el}>${foo}</>`
+  t.is(el.innerHTML, '<p>foo</p>')
+  t.is(foo.outerHTML, '<p>foo</p>')
+  t.is(bar.outerHTML, '<p>bar</p>')
+  html`<${el}>${bar}</>`
+  t.is(el.innerHTML, '<p>bar</p>')
+  t.is(foo.outerHTML, '<p>foo</p>')
+  t.is(bar.outerHTML, '<p>bar</p>')
 })
 
 t('html: must not replace self', t => {
