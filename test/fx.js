@@ -1,9 +1,9 @@
 import t from 'tst'
 import { $, fx, store } from '..'
-import 'setimmediate'
 
 
-t('fx: basic API', async t => {
+
+t.todo('fx: basic API', async t => {
   let log = []
   let state = store()
   let state2 = store()

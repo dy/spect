@@ -1,6 +1,18 @@
 import t from 'tst'
 import { run, state, fx, prop } from '..'
 
+t.only('core: all', async t => {
+  fx(all(prop(el, 'x'), prop(el, 'y')), ([x, y]) => {
+
+  })
+})
+
+t.only('core: any', async t => {
+  fx(any(prop(el, 'x'), prop(el, 'y')), ([x, y]) => {
+
+  })
+})
+
 
 t.skip('counter', t => {
   state(t).count = 0
