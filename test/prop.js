@@ -21,11 +21,12 @@ t('prop: walk generator', async t => {
 
 t('prop: should update on the latest value')
 t('prop: should ignore unchanged value')
-t('prop: reading should shortcut new value')
+t('prop: reading should shortcut new value and clear microtask')
 t('prop: reconfigure descriptors')
 t('prop: ignore reconfiguring sealed objects')
 t('prop: keep initial property value')
 t('prop: does not initialize two times')
+t('prop: awaitable - waits the next update')
 
 t.todo('legacy prop: direct get/set', t => {
   $`<div.a/>`.use(el => {

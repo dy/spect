@@ -3,10 +3,10 @@ const cache = new WeakMap
 export default function attr(el, name) {
   if (!name) throw Error('`attr` expects attribute name to observe')
 
-  let resolve, p = new Promise(ok => resolve = ok)
 
   let observer = cache.get(el)
   if (!observer) {
+    let resolve, p = new Promise(ok => resolve = ok)
     cache.set(el, observer = new MutationObserver(records => {
       for (let i = 0, length = records.length; i < length; i++) {
         let { target, attributeName, oldValue } = records[i];
@@ -15,6 +15,7 @@ export default function attr(el, name) {
 
         resolve(currentValue)
         p = new Promise(ok => resolve = ok)
+        observer.asyncGen.then = p.then.bind(p)
       }
     }))
     observer.attributeNames = new Set()
@@ -23,7 +24,9 @@ export default function attr(el, name) {
         yield p
       }
     }
+    observer.asyncGen.then = p.then.bind(p)
   }
+
   if (!observer.attributeNames.has(name)) {
     observer.attributeNames.add(name)
 

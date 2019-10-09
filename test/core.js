@@ -13,6 +13,8 @@ t.only('core: any', async t => {
   })
 })
 
+t.todo('core: microtask')
+
 
 t.skip('counter', t => {
   state(t).count = 0
