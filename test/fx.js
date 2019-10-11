@@ -1,7 +1,23 @@
 import t from 'tst'
-import { $, fx, store } from '..'
+import { $, fx, store, prop } from '..'
 
 
+t.only('fx: basic', async t => {
+  let log = [], obj = {x: 0, y: 0}
+
+  fx(prop(obj, 'x'), prop(obj, 'y'), (x, y) => {
+    log.push([x, y])
+  })
+  obj.x = 1
+  await Promise.resolve().then()
+  t.is(log, [[1,undefined]])
+  obj.y = 2
+  await Promise.resolve().then()
+  t.is(log, [[1, undefined], [1,2]])
+})
+
+t('fx: pass constants')
+t('fx: returned result is async generator too')
 
 t.todo('fx: basic API', async t => {
   let log = []

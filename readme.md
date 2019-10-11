@@ -268,7 +268,21 @@ let getRawMarkup = content => {
 
 ## API
 
-[**`use`**](#use-el--destroy--deps---generic-side-effect)&nbsp;&nbsp; [**`fx`**](#fx-el--destroy--deps---generic-side-effect)&nbsp;&nbsp; [**`on`**](#on-evt-fn---events-provider)&nbsp;&nbsp; [**`html`**](#htmlmarkup---html-side-effect)&nbsp;&nbsp; [**`state`**](#state-name--val-deps---state-provider)&nbsp;&nbsp; [**`prop`**](#prop-name--val-deps---properties-provider)&nbsp;&nbsp; [**`attr`**](#attr-name--val-deps---attributes-provider)&nbsp;&nbsp; [**`cls`**](#class-classes-deps---classes-side-effect)&nbsp;&nbsp; [**`css`**](#css-styles-deps---css-side-effect)&nbsp;&nbsp; [**`$`**](#css-styles-deps---css-side-effect)&nbsp;&nbsp;
+#### Readable
+
+[**`prop`**](#prop-name--val-deps---properties-provider)&nbsp;&nbsp;
+[**`store`**](#state-name--val-deps---state-provider)&nbsp;&nbsp;
+[**`use`**](#use-el--destroy--deps---generic-side-effect)&nbsp;&nbsp;
+[**`fx`**](#fx-el--destroy--deps---generic-side-effect)&nbsp;&nbsp;
+[**`on`**](#on-evt-fn---events-provider)&nbsp;&nbsp;
+[**`attr`**](#attr-name--val-deps---attributes-provider)&nbsp;&nbsp;
+[**`cls`**](#class-classes-deps---classes-side-effect)&nbsp;&nbsp;
+
+#### Writable
+
+[**`html`**](#htmlmarkup---html-side-effect)&nbsp;&nbsp;
+[**`css`**](#css-styles-deps---css-side-effect)&nbsp;&nbsp;
+[**`$`**](#css-styles-deps---css-side-effect)&nbsp;&nbsp;
 
 ##
 
@@ -292,7 +306,7 @@ $`foo <bar.baz/>`
 
 ### `use( selector | element, el => {} )`
 
-Initializes aspect on elements.
+Observes selector in the dom, invokes callback when the element appears.
 
 ```js
 let unuse = use('.foo', el => {
@@ -308,9 +322,9 @@ use('.bar', (el) => document.createElement('baz'))
 await use('#qux', el => {})
 ```
 
-### `fx( deps, () => {} )` − reactive effect
+### `fx( ...deps, (...deps) => {} )` − reactive effect
 
-Creates reactive effect function - it re-runs whenever any of internal dependencies change.
+Generic reactive effect for any input streams. Takes input asyncIterables, invokes callback whenever any of inputs gets new value.
 
 ```js
 let state = store({ y : 0})

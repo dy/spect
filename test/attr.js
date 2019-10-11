@@ -1,136 +1,37 @@
 import t from 'tst'
 import { attr } from '..'
 
-t.only('attr: walk generator', async t => {
+
+
+t('attr: walk generator', async t => {
   let el = document.createElement('div')
-  let p = attr(el, 'x')
-  ;(async () => {
-    for await (const item of p()) {
-      console.log('changed:', item)
-    }
-  })();
-  el.setAttribute('x', 1)
-  el.setAttribute('x', 2)
-  console.log('after')
-  await Promise.resolve().then()
-  el.setAttribute('x', 3)
-  el.setAttribute('x', 4)
-  el.setAttribute('x', 5)
-})
-
-t.todo('legacy attr: direct get/set', t => {
-  $`<div.a/>`.use(el => {
-    let $el = $(el)
-
-    $el.attr('c', 1)
-    t.is($el.attr`c`, '1')
-  })
-})
-
-t.todo('legacy attr: object set', t => {
-  $`<div.a/>`.use(el => {
-    el.attr({ c: 1, d: 2 })
-
-    t.is(el.attr('c'), '1')
-  })
-})
-
-t.todo('legacy attr: functional get/set', t => {
-  let $a = $`<a/>`
-
-  $a.attr(s => s.count = 0)
-
-  t.is($a.attr(), { count: '0' })
-
-  $a.attr(s => {
-    s.count++
-  })
-  t.is($a.attr('count'), '1')
-})
-
-t.todo('legacy attr: boolean', t => {
-  let $a = $`<a/>`
-
-  t.is($a.attr('foo'), false)
-
-  $a.attr('foo', true)
-  t.is($a[0].hasAttribute('foo'), true)
-  t.is($a[0].getAttribute('foo'), '')
-  t.is($a.attr('foo'), true)
-
-  $a.attr('foo', false)
-  t.is($a.attr('foo'), false)
-  t.is($a[0].hasAttribute('foo'), false)
-})
-
-t.skip('attr: counter', t => {
-  let stop = 0
-  let $els = $`<div.a/>`.use(a => {
-    let $a = $(a)
-    $a.init(() => {
-      $a.attr({ count: 0 })
-    })
-
-    console.log($a.attr`count`)
-    $a.fx(s => {
-      if (stop < 6) {
-        setTimeout(() => {
-          $a.attr(s => s.count++)
-          stop++
-        }, 1000)
+  let end = attr(el, 'x')
+  let log = []
+    ; (async () => {
+      for await (const value of end) {
+        log.push(value)
       }
-    }, [$a.attr`count`])
-  })
+    })()
+  el.setAttribute('x', '1')
+  el.setAttribute('x', '2')
+  await Promise.resolve().then()
+  t.is(log, ['2'], 'basic')
+  el.setAttribute('x', '3')
+  el.setAttribute('x', '4')
+  el.setAttribute('x', '5')
+  await Promise.resolve().then()
+  t.is(log, ['2', '5'], 'updates to latest value')
+  el.setAttribute('x', '5')
+  el.setAttribute('x', '5')
+  await Promise.resolve().then()
+  t.is(log, ['2', '5'], 'ignores unchanged value')
+  el.setAttribute('x', '6')
+  t.is(el.getAttribute('x'), '6', 'reading applies value')
+  await Promise.resolve().then()
+  t.is(log, ['2', '5', '6'], 'reading applies value')
+  end()
+  el.setAttribute('x', '7')
+  await Promise.resolve().then()
+  t.is(el.getAttribute('x'), '7', 'end destructures property')
+  t.is(log, ['2', '5', '6'], 'end destructures property')
 })
-
-t.todo('attr: native element attributes', async t => {
-  // let $els = $`<a.a href='a'/>`
-  // let $els = $`<${b} class=b href='a'/>`
-  let $els = $`<a.a href='a'/><${b} class=b href='a'/><a.c is=${c} href='a'/>`
-
-  $els.use(a => {
-    let $a = $(a)
-    $a.fx(() => {
-      if ($a[0].classList.contains('a')) $a.attr.count = 0
-      else if ($a[0].classList.contains('b')) $a.attr.count = 1
-      else $a.attr.count = 2
-    }, [])
-
-    $a.fx(() => {
-      setTimeout(() => {
-        if ($a[0].classList.contains('a')) $a.attr.count++
-        else if ($a[0].classList.contains('b')) $a.attr.count++
-        else $a.attr.count++
-      });
-    }, [])
-
-    // console.log($a[0].getAttribute('count'))
-    // if (!$a[0].classList.contains('c')) return
-    // $a.fx(() => {
-    //   let id = setTimeout(() => {
-    //     $a.attr.count++
-    //   }, 1000)
-
-    //   return () => clearTimeout(id)
-    // }, Number($a.attr.count || 0))
-  })
-
-  function b () {}
-  function c () {}
-
-  t.is($($els[0]).attr.count, '0')
-  t.is($($els[1]).attr.count, '1')
-  t.is($($els[2]).attr.count, '2')
-
-  await new Promise(ok => setTimeout(() => {
-    t.is($($els[0]).attr.count, '1')
-    t.is($($els[1]).attr.count, '2')
-    t.is($($els[2]).attr.count, '3')
-    ok()
-  }, 10));
-})
-
-t.todo('attr: multiple attr listeners shouldnt cause multiple updates')
-
-t.todo('attr: setting attribute directly on class')
-t.todo('attr: setting attribute directly on element')
