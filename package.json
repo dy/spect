@@ -1,7 +1,7 @@
 {
   "name": "spect",
   "version": "8.1.0",
-  "description": "Reactive UI layer",
+  "description": "Tiny reactive UI layer",
   "main": "./src/index.js",
   "@pika/pack": {
     "pipeline": [
