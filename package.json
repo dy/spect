@@ -1,7 +1,7 @@
 {
   "name": "spect",
   "version": "8.1.0",
-  "description": "Aspect-oriented DOM framework",
+  "description": "Reactive UI layer",
   "main": "./src/index.js",
   "@pika/pack": {
     "pipeline": [
@@ -90,7 +90,8 @@
     "primitive-pool": "^1.1.0",
     "regular-elements": "^0.5.0",
     "scope-css": "^1.2.1",
-    "selector-observer": "^2.1.6"
+    "selector-observer": "^2.1.6",
+    "wicked-elements": "^0.9.0"
   },
   "devDependencies": {
     "@pika/pack": "^0.5.0",

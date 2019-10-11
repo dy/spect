@@ -1,8 +1,55 @@
 import t from 'tst'
-import { use, html } from '..'
+import { use } from '..'
 
 
-t('use: pass props', async t => {
+t('use: elements stream', async t => {
+  let ellog = []
+  let proplog = []
+  let container = document.body.appendChild(document.createElement('div'))
+
+  use('x', el => {
+    ellog.push(el.tagName.toLowerCase())
+  })
+
+  container.appendChild(document.createElement('x'))
+  await Promise.resolve().then()
+  t.is(ellog, ['x'], 'simple creation')
+
+  container.appendChild(document.createElement('x'))
+  container.appendChild(document.createElement('x'))
+  await Promise.resolve().then()
+  t.is(ellog, ['x', 'x', 'x'], 'create multiple')
+
+  use('x', el => {
+    proplog.push(1)
+  })
+  container.appendChild(document.createElement('x'))
+  await Promise.resolve().then()
+  t.is(ellog, ['x', 'x', 'x', 'x'], 'additional aspect')
+  t.is(proplog, [1], 'additional aspect')
+
+  document.body.removeChild(container)
+})
+
+t('use: pre-existing els', async t => {
+  let log = []
+  let container = document.body.appendChild(document.createElement('div'))
+  container.appendChild(document.createElement('x'))
+  container.appendChild(document.createElement('x'))
+
+  use('x', el => {
+    log.push(el.tagName.toLowerCase())
+  })
+
+  await Promise.resolve()
+  t.is(log, ['x', 'x'], 'simple creation')
+
+  document.body.removeChild(container)
+})
+
+
+
+t.todo('use: pass props', async t => {
   let log = []
 
   let el = document.createElement('div')
@@ -13,7 +60,7 @@ t('use: pass props', async t => {
   t.is(log, [1])
 })
 
-t('use: observe selector', async t => {
+t.todo('use: observe selector', async t => {
   let log = []
 
   let unuse = use('.x', el => {
@@ -35,7 +82,7 @@ t('use: observe selector', async t => {
   unuse()
 })
 
-t('use: returned result replaces the target', async t => {
+t.todo('use: returned result replaces the target', async t => {
   let container = document.createElement('div')
   container.innerHTML = '<div class="foo"></div>'
   document.body.appendChild(container)

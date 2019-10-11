@@ -1,10 +1,12 @@
 # Spect ![experimental](https://img.shields.io/badge/stability-experimental-yellow) [![Build Status](https://travis-ci.org/spectjs/spect.svg?branch=master)](https://travis-ci.org/spectjs/spect)
 
-_Spect_ is [reactive aspect-oriented](https://en.wikipedia.org/wiki/Aspect-oriented_programming) web-framework.
+_Spect_ is micro reactive layer for expressive UI.
 
-#### 🎡 Concept
+It is based on principles of [aspect-oriented programming](https://en.wikipedia.org/wiki/Aspect-oriented_programming), FRP and streams.
 
-_Spect_ introduces _reactive functional effects_ with domain accessors to declare dependencies: `$`, `attr`, `html`, `css`, `state`, `data`, `prop`, `on` etc. Less words, more business:
+<!-- #### 🎡 Concept
+
+_Spect_ introduces _reactive functional effects_ with domain accessors to declare dependencies: `$`, `attr`, `html`, `css`, `state`, `data`, `prop`, `on` etc. Less words, more business: -->
 
 <!-- #### 🏛️ Principles
 
@@ -39,19 +41,18 @@ Other approaches include:
 
 ```js
 import { $, fx, html, attr, local, route } from 'spect'
-import ky from 'ky'
 import { t, useLocale } from 'ttag'
 
 // main app aspect
 use('#app', el => {
-  // loading data effect
-  fx([route('users/:id')], async (id) => {
+  // loading data when location changes
+  fx(route('users/:id'), async ({ id }) => {
     el.setAttribute('loading', true)
-    localStorage.setItem('user', await ky.get`./api/user/${ id }`)
+    localStorage.user = await fetch`./api/user/${ id }`
     el.setAttribute('loading', false)
   })
 
-  // rendering effect
+  // rerender whenever local storage or loading changes
   fx([local('user'), attr(el, 'loading')], (user, loading) => {
     html`<${el}.preloadable>
       <p.i18n>${ loading ? `Hello, ${ user.name }!` : `Thanks for patience...` }</p>
@@ -59,18 +60,18 @@ use('#app', el => {
   })
 }
 
-// preloadable aspect - shows spinner when `loading` attribute changes
+// preloader aspect
 use('.preloadable', el => {
   let progress = html`<progress.progress-circle />`
   let content = [...el.childNodes]
   fx(attr(el, 'loading'), loading => html`<${el}>${ loading ? progress : content }</>`)
 })
 
-// i18n aspect - translates content when `lang` attribute changes
+// i18n aspect
 use('.i18n', el => {
   let str = text(el)
 
-  fx(defined(attr(el, 'lang'), attr(document.documentElement, 'lang')), lang => {
+  fx(first(attr(el, 'lang'), attr(document.documentElement, 'lang')), lang => {
     useLocale(lang)
     el.textContent = t(str)
   })
@@ -146,22 +147,23 @@ use('#hello-example', el => {
 ### A Stateful Aspect
 
 ```js
-import { prop, on, fx } from 'spect'
+import { prop, on, fx, html } from 'spect'
 
 // for every #timer-example element
-use('#timer-example'), async el => {
+use('#timer-example', async el => {
   let state = { seconds: 0 }
 
-  // start timer when connected, end if disconnected
-  fx(on(el, 'connected disconnected'), e => {
+  // start timer when connected, end when disconnected
+  on(el, 'connected', e => {
     let i = setInterval(() => {
       state.seconds++
     }, 1000)
-    return () => clearInterval(i)
+
+    on(el, 'disconnected', () => clearInterval(i))
   })
 
   // rerender when seconds change
-  fx(prop(state, 'seconds'), seconds => html`<${el}>Seconds: ${seconds}</>`)
+  prop(state, 'seconds', seconds => html`<${el}>Seconds: ${seconds}</>`)
 })
 ```
 
@@ -177,7 +179,7 @@ use('#todos-example', el => {
   let state = { items: [], text: '' }
 
   // run effect by submit event
-  fx(on(el, 'submit'), e => {
+  on(el, 'submit', e => {
     e.preventDefault()
 
     if (!state.text.length) return
@@ -187,7 +189,7 @@ use('#todos-example', el => {
   })
 
   // rerender html when state changes
-  fx(prop(state, 'items'), (items) => {
+  prop(state, 'items', items => {
     html`<${el}>
       <h3>TODO</h3>
       <main#todo-list items=${ items }/>
@@ -206,7 +208,7 @@ use('#todos-example', el => {
 })
 
 use('#todo-list', el => {
-  fx(prop(el, 'items'), items => html`<${el}><ul>${ items.map(item => html`<li>${ item.text }</li>`)}</ul></>`)
+  prop(el, 'items', items => html`<${el}><ul>${ items.map(item => html`<li>${ item.text }</li>`)}</ul></>`)
 })
 ```
 
@@ -234,7 +236,7 @@ import { Remarkable } from 'remarkable'
 function MarkdownEditor(el) {
   let state = { value: el.content }
 
-  fx(prop(state, 'value'), (value) => {
+  prop(state, 'value', (value) => {
     html`<${el}.markdown-editor>
       <h3>Input</h3>
       <label for="markdown-content">
@@ -266,25 +268,23 @@ let getRawMarkup = content => {
 
 
 
-## API
+## Documentation
 
-#### Readable
-
+[**`use`**](#use-el--destroy--deps---generic-side-effect)&nbsp;&nbsp;
 [**`prop`**](#prop-name--val-deps---properties-provider)&nbsp;&nbsp;
 [**`store`**](#state-name--val-deps---state-provider)&nbsp;&nbsp;
-[**`use`**](#use-el--destroy--deps---generic-side-effect)&nbsp;&nbsp;
 [**`fx`**](#fx-el--destroy--deps---generic-side-effect)&nbsp;&nbsp;
 [**`on`**](#on-evt-fn---events-provider)&nbsp;&nbsp;
 [**`attr`**](#attr-name--val-deps---attributes-provider)&nbsp;&nbsp;
 [**`cls`**](#class-classes-deps---classes-side-effect)&nbsp;&nbsp;
-
-#### Writable
-
 [**`html`**](#htmlmarkup---html-side-effect)&nbsp;&nbsp;
 [**`css`**](#css-styles-deps---css-side-effect)&nbsp;&nbsp;
 [**`$`**](#css-styles-deps---css-side-effect)&nbsp;&nbsp;
 
 ##
+
+Each function in `spect` constructs asynchronous iterator, which represent streams in language level. They can be thought of as array data, distributed in time.
+They bring very fine design, allowing natural composability and really short notation.
 
 <!-- ### `$( selector | els | markup )` − create collection
 
@@ -304,9 +304,9 @@ $`foo <bar.baz/>`
 <p align="right">Ref: <a href="https://jquery.com">jquery</a>, etc.</p> -->
 
 
-### `use( selector | element, el => {} )`
+### `use( selector | element, el => {} )` - elements stream
 
-Observes selector in the dom, invokes callback when the element appears.
+Observes selector, invokes callback when matching element appears in the DOM.
 
 ```js
 let unuse = use('.foo', el => {
