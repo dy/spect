@@ -2,7 +2,7 @@ import t from 'tst'
 import { use } from '..'
 
 
-t('use: elements stream', async t => {
+t('use: elements callback', async t => {
   let ellog = []
   let proplog = []
   let container = document.body.appendChild(document.createElement('div'))
@@ -12,19 +12,19 @@ t('use: elements stream', async t => {
   })
 
   container.appendChild(document.createElement('x'))
-  await Promise.resolve().then()
+  await Promise.resolve()
   t.is(ellog, ['x'], 'simple creation')
 
   container.appendChild(document.createElement('x'))
   container.appendChild(document.createElement('x'))
-  await Promise.resolve().then()
+  await Promise.resolve()
   t.is(ellog, ['x', 'x', 'x'], 'create multiple')
 
   use('x', el => {
     proplog.push(1)
   })
   container.appendChild(document.createElement('x'))
-  await Promise.resolve().then()
+  await Promise.resolve()
   t.is(ellog, ['x', 'x', 'x', 'x'], 'additional aspect')
   t.is(proplog, [1], 'additional aspect')
 
@@ -47,6 +47,37 @@ t('use: pre-existing els', async t => {
   document.body.removeChild(container)
 })
 
+
+t('use: elements async gen', async t => {
+  let log = []
+  let container = document.body.appendChild(document.createElement('div'))
+
+  ;(async () => {
+    for await (const el of use('x')) {
+      log.push(el.tagName.toLowerCase())
+    }
+  })()
+
+  container.appendChild(document.createElement('x'))
+  await Promise.resolve().then()
+  t.is(log, ['x'], 'simple creation')
+
+  container.appendChild(document.createElement('x'))
+  container.appendChild(document.createElement('x'))
+  await Promise.resolve().then().then()
+  t.is(log, ['x', 'x', 'x'], 'create multiple')
+
+  const log2 = []
+  use('x', el => {
+    log2.push(1)
+  })
+  container.appendChild(document.createElement('x'))
+  await Promise.resolve().then()
+  t.is(log, ['x', 'x', 'x', 'x'], 'additional aspect')
+  t.is(log2, [1], 'additional aspect')
+
+  document.body.removeChild(container)
+})
 
 
 t.todo('use: pass props', async t => {
