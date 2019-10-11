@@ -28,6 +28,10 @@ t('prop: basics', async t => {
   t.is(o.x, 6, 'reading applies value')
   await Promise.resolve()
   t.is(log, [2, 5, 6], 'reading applies value')
+  o.x = 7
+  o.x = 6
+  await Promise.resolve()
+  t.is(log, [2, 5, 6], 'changing and back does not cause trigger')
   xs.end()
   o.x = 7
   await Promise.resolve().then()

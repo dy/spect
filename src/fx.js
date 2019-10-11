@@ -1,5 +1,3 @@
-import { run } from './core'
-
 export default function fx(...args) {
   let callback = args.pop()
   let resolve, p = new Promise(ok => resolve = ok)
@@ -12,27 +10,29 @@ export default function fx(...args) {
       callback && callback(...values)
       resolve({ value: values })
       p = new Promise(ok => resolve = ok)
-      end.then = p.then.bind(p)
+      handle.then = p.then.bind(p)
     }
   })
 
-  function end() {
-    end.done = true
-  }
-  end[Symbol.asyncIterator] = () => {
-    return {
-      i: 0,
-      next() {
-        if (end.done) return { done: true }
-        this.i++
-        return p
-      },
-      return() {
-        end()
+  let handle = {
+    end() {
+      end.done = true
+    },
+    [Symbol.asyncIterator]() {
+      return {
+        i: 0,
+        next() {
+          if (end.done) return { done: true }
+          this.i++
+          return p
+        },
+        return() {
+          handle.end()
+        }
       }
-    }
+    },
+    then: p.then.bind(p)
   }
-  end.then = p.then.bind(p)
 
-  return end
+  return handle
 }

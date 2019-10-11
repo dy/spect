@@ -1,7 +1,7 @@
 import { setMicrotask, clearMicrotask } from './util'
 
-// async generator, returning props of an object
 // TODO: all-sets mode (no diff check)
+// TODO: make all-events mode (no changes skipped)
 
 const cache = new WeakMap
 
@@ -12,7 +12,7 @@ export default function prop(target, name, callback) {
   let initialDesc = Object.getOwnPropertyDescriptor(target, name)
   if (cache.has(initialDesc)) return cache.get(initialDesc)
 
-  let currentValue = initialDesc && ('value' in initialDesc) ? initialDesc.value : target[name],
+  let value = initialDesc && ('value' in initialDesc) ? initialDesc.value : target[name],
       plannedValue, planned
   let resolve, p = new Promise(ok => resolve = ok)
 
@@ -21,23 +21,24 @@ export default function prop(target, name, callback) {
     get() {
       // shortcut planned call
       if (planned) applyValue()
-      return currentValue
+      return value
     },
-    set(value) {
-      if (Object.is(value, currentValue)) {
+    set(newValue) {
+      if (Object.is(newValue, value)) {
         if (planned) clearMicrotask(planned)
         return
       }
 
       if (!planned) planned = setMicrotask(applyValue)
-      plannedValue = value
+      plannedValue = newValue
     }
   }
 
   function applyValue() {
     planned = null
-    currentValue = plannedValue
-    resolve({ value: plannedValue })
+    value = plannedValue
+    callback && callback(value)
+    resolve({ value: value })
     p = new Promise(ok => resolve = ok)
     handle.then = p.then.bind(p)
   }
@@ -48,11 +49,11 @@ export default function prop(target, name, callback) {
 
       Object.defineProperty(target, name, initialDesc || {
         configurable: true,
-        value: currentValue,
+        value: value,
         writable: true,
         enumerable: true
       })
-      if (initialDesc) target[name] = currentValue
+      if (initialDesc) target[name] = value
     },
     [Symbol.asyncIterator]() {
       return {

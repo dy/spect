@@ -1,39 +1,39 @@
 import t from 'tst'
 import { $, on, fire, html } from '..'
 
-t.only('on: async gen', async t => {
+t('on: async gen', async t => {
   let el = document.createElement('div')
-  let clicks = on(el, 'click', e => {
-    log.push(e.type)
-  })
+  let clicks = on(el, 'click', e => cblog.push(e.type))
   let log = []
+  let cblog = []
   ;(async () => {
     for await (const e of clicks) {
       log.push(e.type)
     }
   })()
   el.click()
+  await Promise.resolve()
+  t.is(log, ['click'], 'basic')
+  t.is(cblog, ['click'], 'basic')
+  el.click()
+  el.click()
   await Promise.resolve().then()
-  // t.is(log, [2], 'basic')
-  // emit.x = 3
-  // emit.x = 4
-  // emit.x = 5
-  // await Promise.resolve().then()
-  // t.is(log, [2, 5], 'updates to latest value')
-  // emit.x = 5
-  // emit.x = 5
-  // await Promise.resolve().then()
-  // t.is(log, [2, 5], 'ignores unchanged value')
-  // emit.x = 6
-  // t.is(emit.x, 6, 'reading applies value')
-  // await Promise.resolve()
-  // t.is(log, [2, 5, 6], 'reading applies value')
-  // p()
-  // emit.x = 7
-  // await Promise.resolve().then()
-  // t.is(emit.x, 7, 'end destructures property')
-  // t.is(log, [2, 5, 6], 'end destructures property')
+  t.is(log, ['click', 'click', 'click'], 'does not skip events')
+  t.is(cblog, ['click', 'click', 'click'], 'does not skip events')
+  el.click()
+  el.click()
+  el.click()
+  await Promise.resolve().then().then() // unfortunately-ish needs an extra await step for every missed event
+  t.is(log, ['click', 'click', 'click', 'click', 'click', 'click'], 'updates to latest value')
+  t.is(cblog, ['click', 'click', 'click', 'click', 'click', 'click'], 'updates to latest value')
+  clicks.end()
+  el.click()
+  el.click()
+  await Promise.resolve().then().then()
+  t.is(log, ['click', 'click', 'click', 'click', 'click', 'click'], 'end stops event stream')
+  t.is(cblog, ['click', 'click', 'click', 'click', 'click', 'click'], 'end stops event stream')
 })
+t('on: awaits for the event')
 
 t.todo('on: oldschool', async t => {
   let log = []

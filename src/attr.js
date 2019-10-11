@@ -12,6 +12,7 @@ export default function attr(el, name, callback) {
         let { target, attributeName, oldValue } = records[i];
         let value = target.getAttribute(attributeName)
         if (Object.is(oldValue, value)) continue
+        callback && callback(value)
         resolve({ value })
         p = new Promise(ok => resolve = ok)
         handle.then = p.then.bind(p)
@@ -43,7 +44,7 @@ export default function attr(el, name, callback) {
           return p
         },
         return() {
-          handle()
+          handle.end()
         }
       }
     },
