@@ -52,5 +52,14 @@ export default function attr(el, name, callback) {
     then: p.then.bind(p)
   }
 
+  // initial value
+  Promise.resolve().then(() => {
+    let value = el.getAttribute(name)
+    callback && callback(value)
+    resolve({ value })
+    p = new Promise(ok => resolve = ok)
+    handle.then = p.then.bind(p)
+  })
+
   return handle
 }

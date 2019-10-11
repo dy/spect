@@ -16,13 +16,13 @@ export default function fx(...args) {
 
   let handle = {
     end() {
-      end.done = true
+      handle.done = true
     },
     [Symbol.asyncIterator]() {
       return {
         i: 0,
         next() {
-          if (end.done) return { done: true }
+          if (handle.done) return { done: true }
           this.i++
           return p
         },

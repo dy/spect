@@ -1,7 +1,7 @@
 import t from 'tst'
 import { $, fx, prop, html, on, use, state, cls } from '..'
 
-t('readme: A simple aspect', async t => {
+t.todo('readme: A simple aspect', async t => {
   let el = document.body.appendChild(document.createElement('div'))
   el.id = 'hello-example'
   el.name = 'xyz'
@@ -27,7 +27,7 @@ t('readme: A simple aspect', async t => {
   document.body.removeChild(el)
 })
 
-t('readme: A stateful aspect via await', async t => {
+t.todo('readme: A stateful aspect via await', async t => {
   let el = document.body.appendChild(document.createElement('div'))
   el.id = 'timer-example-1'
 
@@ -52,7 +52,7 @@ t('readme: A stateful aspect via await', async t => {
   document.body.removeChild(el)
 })
 
-t('readme: A stateful aspect via event sequence', async t => {
+t.todo('readme: A stateful aspect via event sequence', async t => {
   let el = document.body.appendChild(document.createElement('div'))
   el.id = 'timer-example'
 
@@ -78,7 +78,7 @@ t('readme: A stateful aspect via event sequence', async t => {
   document.body.removeChild(el)
 })
 
-t('readme: An application', t => {
+t.todo('readme: An application', t => {
   let el = document.body.appendChild(document.createElement('div'))
   el.id = 'todos-example'
 
@@ -132,7 +132,7 @@ t('readme: An application', t => {
   document.body.removeChild(el)
 })
 
-t('readme: A component with external plugin', async t => {
+t.todo('readme: A component with external plugin', async t => {
   const {Remarkable} = await import('remarkable')
 
   let el = document.body.appendChild(document.createElement('div'))

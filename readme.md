@@ -283,8 +283,11 @@ let getRawMarkup = content => {
 
 ##
 
-Each function in `spect` constructs asynchronous iterator, which represent streams in language level. They can be thought of as array data, distributed in time.
-They bring very fine design, allowing natural composability and really short notation.
+Each function in `spect` creates asynchronous iterator, which represents streams in language level. It can be thought of as array data, distributed in time. Each async iterator has following properties:
+
+- `.end()` method tears down stream and all internal streams
+- `thenable` - stream can be awaited for the next value
+- `effect(...args, callback)` - the callback is the last argument for all streams
 
 <!-- ### `$( selector | els | markup )` − create collection
 
@@ -304,9 +307,9 @@ $`foo <bar.baz/>`
 <p align="right">Ref: <a href="https://jquery.com">jquery</a>, etc.</p> -->
 
 
-### `use( selector | element, el => {} )` - elements stream
+### `use( selector | element[s], el => {} )` - elements stream
 
-Observes selector, invokes callback when matching element appears in the DOM.
+Observe selector, invoke callback whenever matching element is added to the DOM. The callback is invoked once per element.
 
 ```js
 let unuse = use('.foo', el => {
@@ -510,6 +513,7 @@ $('qux', $('#foo')) // [qux]
 
 Version | Changes
 ---|---
+9.0.0 | Asynchronous generator streams based.
 8.0.0 | Atomize: split core to multiple effects.
 7.0.0 | Deatomize; single core approach; final ref-based approach.
 6.0.0 | DOM-less core. Pluggable effects.

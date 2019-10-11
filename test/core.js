@@ -1,13 +1,13 @@
 import t from 'tst'
-import { run, state, fx, prop } from '..'
+import { fx, prop } from '..'
 
-t.only('core: all', async t => {
+t.todo('core: all', async t => {
   fx(all(prop(el, 'x'), prop(el, 'y')), ([x, y]) => {
 
   })
 })
 
-t.only('core: any', async t => {
+t.todo('core: any', async t => {
   fx(any(prop(el, 'x'), prop(el, 'y')), ([x, y]) => {
 
   })
@@ -17,16 +17,24 @@ t.todo('core: microtask')
 
 
 t.skip('counter', t => {
-  state(t).count = 0
-  run(() => {
-    console.log(state(t).count)
+  let state = { count: 0 }
+
+  // prop(state, 'count', (count) => {
+  //   console.log(count)
+  //   setTimeout(() => {
+  //     state.count++
+  //   }, 1000)
+  // })
+
+  fx(prop(state, 'count'), (count) => {
+    console.log(count)
     setTimeout(() => {
-      state(t).count++
+      state.count++
     }, 1000)
   })
 })
 
-t('legacy readme: use', async t => {
+t.todo('legacy readme: use', async t => {
   let log = []
 
   let foo = state('foo', {})
@@ -62,7 +70,7 @@ t('legacy readme: use', async t => {
   // t.is(log, [0, 0, 1, 0, 1, 1])
 })
 
-t('legacy readme: update', async t => {
+t.todo('legacy readme: update', async t => {
   let log = []
 
   let foo = state(null, {})
@@ -111,7 +119,7 @@ t.todo('legacy readme: fx', async t => {
   t.is(log, [1, 2, 3, 5, 1, 4, 3, 6, 5])
 })
 
-t('legacy readme: standalone effects', async t => {
+t.todo('legacy readme: standalone effects', async t => {
   let foo = { x: 1 }
 
   state(foo).y = 2
@@ -124,7 +132,7 @@ t('legacy readme: standalone effects', async t => {
 })
 
 
-t('core: awaiting doesn\'t cause recursion', async t => {
+t.todo('core: awaiting doesn\'t cause recursion', async t => {
   let log = []
 
   run(async () => {await ''; log.push(2)})

@@ -13,7 +13,7 @@ export default function prop(target, name, callback) {
   if (cache.has(initialDesc)) return cache.get(initialDesc)
 
   let value = initialDesc && ('value' in initialDesc) ? initialDesc.value : target[name],
-      plannedValue, planned
+    plannedValue, planned
   let resolve, p = new Promise(ok => resolve = ok)
 
   let desc = {
@@ -34,11 +34,11 @@ export default function prop(target, name, callback) {
     }
   }
 
-  function applyValue() {
+  function applyValue(val) {
     planned = null
-    value = plannedValue
+    value = arguments.length ? val : plannedValue
     callback && callback(value)
-    resolve({ value: value })
+    resolve({ value })
     p = new Promise(ok => resolve = ok)
     handle.then = p.then.bind(p)
   }
@@ -49,7 +49,7 @@ export default function prop(target, name, callback) {
 
       Object.defineProperty(target, name, initialDesc || {
         configurable: true,
-        value: value,
+        value,
         writable: true,
         enumerable: true
       })
@@ -76,6 +76,8 @@ export default function prop(target, name, callback) {
 
   Object.defineProperty(target, name, desc)
   cache.set(desc, handle)
+
+  Promise.resolve().then(() => applyValue(value))
 
   return handle
 }

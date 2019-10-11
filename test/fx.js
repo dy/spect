@@ -6,16 +6,19 @@ t('fx: basic', async t => {
   let log = [], obj = {x: 0, y: 0}
 
   fx(prop(obj, 'x'), prop(obj, 'y'), (x, y) => {
-    log.push([x, y])
+    log.push(x, y)
   })
+  await Promise.resolve().then().then()
+  t.is(log, [0, undefined, 0, 0])
   obj.x = 1
-  await Promise.resolve().then()
-  t.is(log, [[1,undefined]])
+  await Promise.resolve().then().then()
+  t.is(log, [0, undefined, 0, 0, 1, 0])
   obj.y = 2
   await Promise.resolve().then()
-  t.is(log, [[1, undefined], [1,2]])
+  t.is(log, [0, undefined, 0, 0, 1, 0, 1,2])
 })
 
+t('fx: should run initial value')
 t('fx: pass constants')
 t('fx: returned result is async generator too')
 
