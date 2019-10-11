@@ -14,7 +14,7 @@ export default function attr(el, name, callback) {
         if (Object.is(oldValue, value)) continue
         resolve({ value })
         p = new Promise(ok => resolve = ok)
-        end.then = p.then.bind(p)
+        handle.then = p.then.bind(p)
       }
     }))
     observer.attributeNames = new Set()
@@ -28,26 +28,28 @@ export default function attr(el, name, callback) {
   }
 
 
-  function end() {
-    end.done = true
-    observer.attributeNames.delete(name)
-    observer.observe(el, { attributes: true, attributeFilter: [...observer.attributeNames], attributeOldValue: true })
-  }
-  end[Symbol.asyncIterator] = () => {
-    return {
-      i: 0,
-      next() {
-        if (end.done) return { done: true }
-        this.i++
-        return p
-      },
-      return() {
-        end()
+  let handle = {
+    end() {
+      handle.done = true
+      observer.attributeNames.delete(name)
+      observer.observe(el, { attributes: true, attributeFilter: [...observer.attributeNames], attributeOldValue: true })
+    },
+    [Symbol.asyncIterator]() {
+      return {
+        i: 0,
+        next() {
+          if (handle.done) return { done: true }
+          this.i++
+          return p
+        },
+        return() {
+          handle()
+        }
       }
-    }
+    },
+    done: false,
+    then: p.then.bind(p)
   }
-  end.then = p.then.bind(p)
 
-
-  return end
+  return handle
 }

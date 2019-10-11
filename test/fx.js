@@ -2,7 +2,7 @@ import t from 'tst'
 import { $, fx, store, prop } from '..'
 
 
-t.only('fx: basic', async t => {
+t('fx: basic', async t => {
   let log = [], obj = {x: 0, y: 0}
 
   fx(prop(obj, 'x'), prop(obj, 'y'), (x, y) => {

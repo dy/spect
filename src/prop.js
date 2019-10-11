@@ -39,39 +39,42 @@ export default function prop(target, name, callback) {
     currentValue = plannedValue
     resolve({ value: plannedValue })
     p = new Promise(ok => resolve = ok)
-    end.then = p.then.bind(p)
+    handle.then = p.then.bind(p)
   }
 
-  function end () {
-    end.done = true
+  let handle = {
+    end () {
+      handle.done = true
 
-    Object.defineProperty(target, name, initialDesc || {
-      configurable: true,
-      value: currentValue,
-      writable: true,
-      enumerable: true
-    })
-    if (initialDesc) target[name] = currentValue
-  }
-
-  end[Symbol.asyncIterator] = () => {
-    return {
-      i: 0,
-      next() {
-        if (end.done) return {done: true}
-        this.i++
-        return p
-      },
-      // FIXME: find out good pattern with ending generator
-      return() {
-        end()
+      Object.defineProperty(target, name, initialDesc || {
+        configurable: true,
+        value: currentValue,
+        writable: true,
+        enumerable: true
+      })
+      if (initialDesc) target[name] = currentValue
+    },
+    [Symbol.asyncIterator]() {
+      return {
+        i: 0,
+        next() {
+          if (handle.done) return {done: true}
+          this.i++
+          return p
+        },
+        // FIXME: find out good pattern with ending generator
+        return() {
+          handle.done = true
+          handle.end()
+        }
       }
-    }
+    },
+    done: false,
+    then: p.then.bind(p)
   }
-  end.then = p.then.bind(p)
 
   Object.defineProperty(target, name, desc)
-  cache.set(desc, end)
+  cache.set(desc, handle)
 
-  return end
+  return handle
 }

@@ -2,12 +2,12 @@ import t from 'tst'
 import { prop } from '..'
 
 
-t.only('prop: basics', async t => {
+t('prop: basics', async t => {
   let o = {}
-  let p = prop(o, 'x')
+  let xs = prop(o, 'x')
   let log = []
   ;(async () => {
-  for await (const item of p) {
+  for await (const item of xs) {
     log.push(item)
   }
   })()
@@ -28,7 +28,7 @@ t.only('prop: basics', async t => {
   t.is(o.x, 6, 'reading applies value')
   await Promise.resolve()
   t.is(log, [2, 5, 6], 'reading applies value')
-  p()
+  xs.end()
   o.x = 7
   await Promise.resolve().then()
   t.is(o.x, 7, 'end destructures property')

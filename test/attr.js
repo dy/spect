@@ -5,10 +5,10 @@ import { attr } from '..'
 
 t('attr: walk generator', async t => {
   let el = document.createElement('div')
-  let end = attr(el, 'x')
+  let xattrs = attr(el, 'x')
   let log = []
     ; (async () => {
-      for await (const value of end) {
+      for await (const value of xattrs) {
         log.push(value)
       }
     })()
@@ -29,7 +29,7 @@ t('attr: walk generator', async t => {
   t.is(el.getAttribute('x'), '6', 'reading applies value')
   await Promise.resolve().then()
   t.is(log, ['2', '5', '6'], 'reading applies value')
-  end()
+  xattrs.end()
   el.setAttribute('x', '7')
   await Promise.resolve().then()
   t.is(el.getAttribute('x'), '7', 'end destructures property')

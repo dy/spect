@@ -1,7 +1,41 @@
 import t from 'tst'
 import { $, on, fire, html } from '..'
 
-t('on: oldschool', async t => {
+t.only('on: async gen', async t => {
+  let el = document.createElement('div')
+  let clicks = on(el, 'click', e => {
+    log.push(e.type)
+  })
+  let log = []
+  ;(async () => {
+    for await (const e of clicks) {
+      log.push(e.type)
+    }
+  })()
+  el.click()
+  await Promise.resolve().then()
+  // t.is(log, [2], 'basic')
+  // emit.x = 3
+  // emit.x = 4
+  // emit.x = 5
+  // await Promise.resolve().then()
+  // t.is(log, [2, 5], 'updates to latest value')
+  // emit.x = 5
+  // emit.x = 5
+  // await Promise.resolve().then()
+  // t.is(log, [2, 5], 'ignores unchanged value')
+  // emit.x = 6
+  // t.is(emit.x, 6, 'reading applies value')
+  // await Promise.resolve()
+  // t.is(log, [2, 5, 6], 'reading applies value')
+  // p()
+  // emit.x = 7
+  // await Promise.resolve().then()
+  // t.is(emit.x, 7, 'end destructures property')
+  // t.is(log, [2, 5, 6], 'end destructures property')
+})
+
+t.todo('on: oldschool', async t => {
   let log = []
   let el = html`<a.foo/>`
 
@@ -20,7 +54,7 @@ t('on: oldschool', async t => {
   // })
 })
 
-t('on: await', async t => {
+t.todo('on: await', async t => {
   let log = []
   let el = html`<div/>`
 
@@ -48,7 +82,7 @@ t('on: await', async t => {
   t.is(log, ['click'])
 })
 
-t('on: multiple events', t => {
+t.todo('on: multiple events', t => {
   let log = []
   let el = document.createElement('div')
   let off = on(el, 'touchstart click', e => log.push(e.type))
@@ -68,7 +102,7 @@ t('on: multiple events', t => {
   t.is(log, ['click', 'touchstart', 'click'])
 })
 
-t('on: await multiple', async t => {
+t.todo('on: await multiple', async t => {
   let log = []
   let el = document.createElement('div')
   document.body.appendChild(el)
@@ -102,7 +136,7 @@ t('on: await multiple', async t => {
   document.body.removeChild(el)
 })
 
-t('on: sequences handled as return result', async t => {
+t.todo('on: sequences handled as return result', async t => {
   let log = []
   let el = html`<div/>`
 
