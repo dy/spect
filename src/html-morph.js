@@ -200,6 +200,10 @@ function applyProps(el, props) {
       }
     }
     else if (name === 'class') {
+      // FIXME: htm workaround to replace wrongly serialized falsey classes
+      if (typeof value === 'string') {
+        value = value.split(/\s+/).filter(cl => !/null|undefined|false/.test(cl))
+      }
       el.className = clsx(value)
     }
     // html class props remnants
@@ -219,7 +223,12 @@ function applyProps(el, props) {
         el.setAttribute(name, value)
       }
 
-      el[name] = value
+      // FIXME: some names, like hidden, clear up attributes (wrongly)
+      if (name === 'hidden') {
+        el[name] = value !== false
+      } else {
+        el[name] = value
+      }
       // collect use/is patch rendered DOM
       if (value && (name === 'use' || name === 'is')) currentUseCache.add(el)
       if (!propsCache.has(el)) propsCache.set(el, new Set)

@@ -5,7 +5,7 @@ import html from './html'
 import { isRenderable, isElement } from './util'
 
 
-export default function use(selector, fn) {
+export default function use(selector, fn, props) {
   let resolve
   if (isElement(selector)) {
     init(selector)
@@ -29,7 +29,7 @@ export default function use(selector, fn) {
 
   function init (el) {
     fire(el, 'init', { selector })
-    el = apply(el, [fn])
+    el = apply(el, [fn], props)
     if (resolve) {
       resolve(el)
       p = new Promise(ok => { resolve = ok })
@@ -41,12 +41,12 @@ export default function use(selector, fn) {
 }
 
 // run use
-export function apply(el, uselist) {
+export function apply(el, uselist, props) {
   if (!uselist) uselist = [el.is, el.use].flat().filter(Boolean).filter(f => typeof f === 'function')
 
   let fn, result
 
-  let props = collectProps(el)
+  if (!props) props = collectProps(el)
 
   while (fn = uselist.shift()) {
     result = fn(el, props)
