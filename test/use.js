@@ -2,6 +2,17 @@ import t from 'tst'
 import { use, html } from '..'
 
 
+t('use: pass props', async t => {
+  let log = []
+
+  let el = document.createElement('div')
+  use(el, (el, props) => {
+    log.push(props.x)
+  }, {x: 1})
+
+  t.is(log, [1])
+})
+
 t('use: observe selector', async t => {
   let log = []
 

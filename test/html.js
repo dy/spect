@@ -239,6 +239,39 @@ t.skip('legacy html: component static props', async t => {
   t.is(log, ['C-0', 'x', 'y z'])
 })
 
+t('html: classes must recognize false props', t => {
+  let el = html`<div class="${false} ${null} ${undefined} ${'foo'} ${false}"/>`
+  t.is(el.outerHTML, `<div class="foo"></div>`)
+})
+
+t('html: preserves hidden attribute', t => {
+  let el = document.createElement('div')
+  el.innerHTML = '<div hidden></div>'
+
+  html`<${el.firstChild}.foo/>`
+
+  t.is(el.innerHTML, '<div hidden="" class="foo"></div>')
+})
+
+t('html: initial content should be morphed', t => {
+  let el = document.createElement('div')
+  el.innerHTML = '<foo></foo><bar></bar>'
+  let foo = el.firstChild
+  let bar = el.lastChild
+
+  html`<${el}><foo/><bar/></>`
+
+  t.equal(el.firstChild, foo)
+  t.equal(el.lastChild, bar)
+
+  let foo1 = html`<foo/>`
+  html`<${el}>${foo1}<bar/></>`
+
+  t.notEqual(el.firstChild, foo)
+  t.equal(el.firstChild, foo1)
+  t.equal(el.lastChild, bar)
+})
+
 t.todo('html: newline nodes should have space in between', t => {
   let el = html`
     ${'a'}
