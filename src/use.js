@@ -1,4 +1,5 @@
 import wickedElements from 'wicked-elements'
+import { isIterable } from './util'
 
 const cache = new Map
 
@@ -15,20 +16,14 @@ export default function use (selector, callback) {
     queue.push(p)
   }
 
+  let isFirst = false
   if (!observers) {
-    cache.set(selector, observers = [])
-
-    let els = document.querySelectorAll(selector)
-    els.forEach(el => wickedElements.define(el, { init(e) { Promise.resolve().then(() => init(el)) } }))
-    wickedElements.define(selector, { init(e) { init(e.currentTarget) } })
-
-    function init (el) {
-      observers.forEach(fn => fn(el))
-    }
+    isFirst = true
+    cache.set(selector, observers = [fn])
   }
-
-  observers.push(fn)
-
+  else {
+    observers.push(fn)
+  }
 
   let handle = {
     end() {
@@ -51,6 +46,23 @@ export default function use (selector, callback) {
     },
     done: false,
     then: queue[0].then.bind(queue[0])
+  }
+
+  if (isFirst) {
+    if (isIterable(selector)) {
+      selector.forEach(el => wickedElements.define(el, { init(e) { Promise.resolve().then(() => init(el)) } }))
+    }
+    else {
+      wickedElements.define(selector, {
+        init(e) {
+          init(e.currentTarget)
+        }
+      })
+    }
+
+    function init(el) {
+      observers.forEach(fn => fn(el))
+    }
   }
 
   return handle

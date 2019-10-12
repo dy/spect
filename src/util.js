@@ -21,6 +21,7 @@ export function clearMicrotask (sym) {
 export const SPECT_CLASS = '👁'
 
 export function isIterable(val) {
+  if (isPrimitive(val)) return false
   if (val instanceof Node) return false
   return (val != null && typeof val[Symbol.iterator] === 'function');
 }
