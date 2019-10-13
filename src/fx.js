@@ -3,16 +3,26 @@ export default function fx(...args) {
   let resolve, p = new Promise(ok => resolve = ok)
 
   let values = Array(args.length)
-  args.forEach(async (dep, i) => {
-    // FIXME: think of batch updating values
-    for await (const value of dep) {
-      values[i] = value
-      callback && callback(...values)
-      resolve({ value: values })
+  if (args.length) {
+    args.forEach(async (dep, i) => {
+      // FIXME: think of batch updating values
+      for await (const value of dep) {
+        values[i] = value
+        callback && callback(...values)
+        resolve({ value: values })
+        p = new Promise(ok => resolve = ok)
+        handle.then = p.then.bind(p)
+      }
+    })
+  }
+  else {
+    Promise.resolve().then(() => {
+      callback && callback()
+      resolve({ value: [] })
       p = new Promise(ok => resolve = ok)
       handle.then = p.then.bind(p)
-    }
-  })
+    })
+  }
 
   let handle = {
     end() {

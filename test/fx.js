@@ -22,6 +22,16 @@ t('fx: should run initial value')
 t('fx: pass constants')
 t('fx: returned result is async generator too')
 
+t('fx: shoult run empty effect', async t => {
+  let log = []
+  fx(() => {
+    log.push(1)
+  })
+  t.is(log, [], 'must be async (to easier init)')
+  await Promise.resolve().then()
+  t.is(log, [1])
+})
+
 t.todo('fx: basic API', async t => {
   let log = []
   let state = store()

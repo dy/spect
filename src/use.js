@@ -49,16 +49,19 @@ export default function use (selector, callback) {
   }
 
   if (isFirst) {
-    if (isIterable(selector)) {
-      selector.forEach(el => wickedElements.define(el, { init(e) { Promise.resolve().then(() => init(el)) } }))
-    }
-    else {
-      wickedElements.define(selector, {
-        init(e) {
-          init(e.currentTarget)
-        }
-      })
-    }
+    Promise.resolve().then(() => {
+      if (isIterable(selector)) {
+        selector.forEach(el => wickedElements.define(el, { init(e) { init(el) } }))
+      }
+      else {
+        wickedElements.define(selector, {
+          // we have to async-init in order to make initial await non-blocking
+          init(e) { init(e.currentTarget); e.currentTarget.dispatchEvent(new CustomEvent(e.type)) },
+          onconnected(e) {},
+          ondisconnected(e) {}
+        })
+      }
+    })
 
     function init(el) {
       observers.forEach(fn => fn(el))

@@ -63,3 +63,17 @@ t('prop: ignore reconfiguring sealed objects')
 t('prop: keep initial property value')
 t('prop: does not initialize two times')
 t('prop: awaitable - waits the next update')
+t.only('prop: observe array methods', async t => {
+  let obj = {arr: []}
+  let log = []
+
+  await prop(obj, 'arr', arr => {
+    log.push(...arr)
+  })
+
+  obj.arr.push(1)
+
+  await Promise.resolve()
+
+  t.is(log, [1])
+})

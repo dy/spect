@@ -21,6 +21,15 @@ export default function prop(target, name, callback) {
     get() {
       // shortcut planned call
       if (planned) applyValue()
+
+      // hook array: update on mutations
+      if (Array.isArray(value) && !(value instanceof ArrayProp)) {
+        return new ArrayProp(value, () => {
+          if (!planned) planned = setMicrotask(applyValue)
+          plannedValue = value
+        })
+      }
+
       return value
     },
     set(newValue) {
@@ -80,4 +89,19 @@ export default function prop(target, name, callback) {
   Promise.resolve().then(() => applyValue(value))
 
   return handle
+}
+
+let _change = Symbol('change')
+let _value = Symbol('value')
+class ArrayProp extends Array {
+  constructor (value, callback) {
+    super(...value)
+    this[_value] = value
+    this[_change] = callback
+  }
+  push(...args) {
+    super.push(...args)
+    this[_value].push(...args)
+    this[_change]()
+  }
 }

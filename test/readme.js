@@ -1,78 +1,79 @@
 import t from 'tst'
 import { $, fx, prop, html, on, use, state, cls } from '..'
+import morphdom from 'morphdom'
 
-t.todo('readme: A simple aspect', async t => {
+t('readme: A simple aspect', async t => {
   let el = document.body.appendChild(document.createElement('div'))
   el.id = 'hello-example'
   el.name = 'xyz'
 
-  fx(() => {
+  fx(prop(el, 'name'), name => {
     html`<${el}>
       <div.message>
-        Hello, ${ prop(el).name }!
+        Hello, ${ name }!
       </div>
     </>`
   })
 
-  await ''
+  await Promise.resolve().then()
 
   t.is(el.outerHTML, '<div id="hello-example"><div class="message">Hello, xyz!</div></div>')
 
-  prop(el).name = 'Taylor'
+  el.name = 'Taylor'
 
-  await ''
+  await Promise.resolve().then()
 
   t.is(el.outerHTML, '<div id="hello-example"><div class="message">Hello, Taylor!</div></div>')
 
   document.body.removeChild(el)
 })
 
-t.todo('readme: A stateful aspect via await', async t => {
+t('readme: A stateful aspect via await', async t => {
   let el = document.body.appendChild(document.createElement('div'))
   el.id = 'timer-example-1'
 
+
   await use('#timer-example-1', async el => {
-    state(el, { seconds: 0 })
-    await on(el, 'connected')
+    let state = { seconds: 0 }
+
     let i = setInterval(() => {
-      state(el).seconds++
+      state.seconds++
     }, 1000)
 
-    fx(() => {
-      html`<${el}>Seconds: ${state(el).seconds}</>`
+    fx(prop(state, 'seconds'), seconds => {
+      html`<${el}>Seconds: ${seconds}</>`
     })
 
     await on(el, 'disconnected')
     clearInterval(i)
   })
 
-  await Promise.resolve().then()
-
   t.is(el.innerHTML, 'Seconds: 0')
   document.body.removeChild(el)
 })
 
-t.todo('readme: A stateful aspect via event sequence', async t => {
+t.only('readme: A stateful aspect via event sequence', async t => {
+  let frag = document.createDocumentFragment()
+  morphdom(frag, document.createElement('div'))
+
   let el = document.body.appendChild(document.createElement('div'))
   el.id = 'timer-example'
 
+  // for every #timer-example element
   await use('#timer-example', async el => {
-    state(el, { seconds: 0 })
-
-    on(el, 'connected > disconnected', e => {
+    let state = { seconds: 0 }
+    // start timer when connected, end when disconnected
+    on(el, 'connected', e => {
       let i = setInterval(() => {
-        state(el).seconds++
+        state.seconds++
       }, 1000)
 
-      return () => clearInterval(i)
+      on(el, 'disconnected', () => clearInterval(i))
     })
 
-    fx(() => {
-      html`<${el}>Seconds: ${state(el).seconds}</>`
-    })
+    // rerender when seconds change
+    prop(state, 'seconds', seconds => html`<${el}>Seconds: ${seconds}</>`)
   })
-
-  await Promise.resolve().then()
 
   t.is(el.innerHTML, 'Seconds: 0')
   document.body.removeChild(el)
@@ -83,53 +84,42 @@ t.todo('readme: An application', t => {
   el.id = 'todos-example'
 
   use('#todos-example', el => {
-    state(el, { items: [], text: '' })
+    let state = { items: [], text: '' }
 
+    // run effect by submit event
     on(el, 'submit', e => {
       e.preventDefault()
 
-      let { text, items } = state(el)
+      if (!state.text.length) return
 
-      if (!text.length) return
-
-      const newItem = {
-        text,
-        id: Date.now()
-      };
-
-      state(el, {
-        items: [...items, newItem],
-        text: ''
-      })
+      state.items.push({ text: state.text, id: Date.now() })
+      state.text = ''
     })
 
-    fx(() => {
-      let s = state(el)
-
+    // rerender html when state changes
+    prop(state, 'items', items => {
       html`<${el}>
-        <h3>TODO</h3>
-        <main#todo-list items=${ s.items }/>
-        <form>
-          <label for=new-todo>
-            What needs to be done?
-          </label>
-          <br/>
-          <input#new-todo onchange=${ e => s.text = e.target.value}/>
-          <button>
-            Add #${ s.items.length + 1}
-          </button>
-        </form>
-      </>`
+      <h3>TODO</h3>
+      <main#todo-list items=${ items }/>
+      <form>
+        <label for=new-todo>
+          What needs to be done?
+        </label>
+        <br/>
+        <input#new-todo onchange=${ e => state.text = e.target.value}/>
+        <button>
+          Add #${ items.length + 1}
+        </button>
+      </form>
+    </>`
     })
   })
 
   use('#todo-list', el => {
-    fx(() => {
-      html`<${el}><ul>${prop(el).items.map(item => html`<li>${item.text}</li>`)}</ul></>`
-    })
+    prop(el, 'items', items => html`<${el}><ul>${items.map(item => html`<li>${item.text}</li>`)}</ul></>`)
   })
 
-  document.body.removeChild(el)
+  // document.body.removeChild(el)
 })
 
 t.todo('readme: A component with external plugin', async t => {
