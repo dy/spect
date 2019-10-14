@@ -1,5 +1,5 @@
 import t from 'tst'
-import { html, state, cls, $, use, prop } from '..'
+import { html, $, use, prop } from '..'
 
 Object.defineProperty(DocumentFragment.prototype, 'outerHTML', {
   get() {

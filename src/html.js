@@ -1,12 +1,9 @@
 // domdiff html implementation
 import htm from 'htm'
-import { isElement, paramCase, isPrimitive, isIterable } from './util'
+import { isElement, isRenderable, paramCase, isPrimitive, isIterable } from './util'
 import morph from 'morphdom'
 import clsx from 'clsx'
-import { fire } from './on'
-import equal from 'fast-deep-equal'
 import 'array-flat-polyfill'
-import { apply as applyUse } from './use'
 
 const propsCache = new WeakMap()
 
@@ -123,7 +120,7 @@ function h(tag, props, ...children) {
           for (let prop of changedProps) {
             if (!Object.is(fromEl[prop], toEl[prop])) {
               fromEl[prop] = toEl[prop]
-              fire(fromEl, 'prop:' + prop)
+              fromEl.dispatchEvent(new CustomEvent('prop:' + prop))
             }
             // propsCache.delete(prop)
           }
@@ -248,4 +245,49 @@ function parseTag(str) {
   id = afterClx.shift()
   classes = [...beforeClx, ...afterClx]
   return [tag, id, classes]
+}
+
+
+// run use
+export function applyUse(el, uselist, props) {
+  let fn, result
+
+  if (!props) props = collectProps(el)
+
+  while (fn = uselist.shift()) {
+    result = fn(el, props)
+    if (result !== undefined && result !== el && isRenderable(result)) {
+      let frag = html`<>${result}</>`
+      result = frag.childNodes.length > 1 ? [...frag.childNodes] : frag.firstChild
+      if (el.replaceWith) el.replaceWith(frag)
+      el = result
+    }
+  }
+
+  return el
+}
+
+export function collectProps(el) {
+  let props = {}
+  let proto = el.constructor.prototype
+
+  // custom non-prototype props
+  for (let prop in el) {
+    if (prop in proto) continue
+    if (prop[0] === '_') continue
+    props[prop] = el[prop]
+  }
+
+  // attributes
+  if (el.attributes) {
+    for (let attr of el.attributes) {
+      if (!(attr.name in props)) props[attr.name] = attr.value
+    }
+  }
+
+  // FIXME: collect from propsCache as well
+
+  // FIXME: there can also be just prototype props modified
+
+  return props
 }

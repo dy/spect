@@ -1,5 +1,5 @@
 import t from 'tst'
-import { $, fx, store, prop } from '..'
+import { $, fx, prop } from '..'
 
 
 t('fx: basic', async t => {
@@ -21,6 +21,7 @@ t('fx: basic', async t => {
 t('fx: should run initial value')
 t('fx: pass constants')
 t('fx: returned result is async generator too')
+t('fx: tears down internal effects')
 
 t('fx: shoult run empty effect', async t => {
   let log = []

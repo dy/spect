@@ -1,6 +1,6 @@
 # Spect ![experimental](https://img.shields.io/badge/stability-experimental-yellow) [![Build Status](https://travis-ci.org/spectjs/spect.svg?branch=master)](https://travis-ci.org/spectjs/spect)
 
-_Spect_ is micro reactive layer for expressive UI.
+_Spect_ is reactive layer for creating web UIs.
 
 It is based on principles of [aspect-oriented programming](https://en.wikipedia.org/wiki/Aspect-oriented_programming), FRP and streams.
 
@@ -114,22 +114,24 @@ import { use, fx, on } from 'https://unpkg.com/spect@latest?module'
 
 ## Getting started
 
-🎬 Let's build [basic examples](https://reactjs.org/).
+At core of _spect_ is concept of streams, implemented on language level as [async iterators](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Symbol/asyncIterator), which be thought of as array, distributed in time. Spect provides streams for various data sources, such as object props, element attributes, selector observer, DOM events, local storage, location and others. Async iterators can be combined, connected, passed through, assigned side-effects etc.
+
+🎬 Let's build [react examples](https://reactjs.org/).
 
 ### A Simple Aspect
 
-This example assigns `hello` aspect to `#hello-example` element and renders single `div` with welcoming.
+This example assigns handler to `#hello-example` element and registers side-effect, rendering `div` with welcoming when `name` property changes.
 
 ```html
 <div id="hello-example" name="Cyril"></div>
 
 <script type="module">
-import { html, fx } from 'spect'
+import { html, prop } from 'spect'
 
 // for each #hello-example
 use('#hello-example', el => {
-  // any time element's `name` property changes
-  fx(prop(el, 'name'), name => {
+  // when element's `name` property changes
+  prop(el, 'name', name => {
     // render html as
     html`<${el}>
       <div.message>
@@ -145,6 +147,8 @@ use('#hello-example', el => {
 
 
 ### A Stateful Aspect
+
+Basic streams include: `prop` for observing property changes, `on` for observing events, `fx` for reacting on changes of any input (reminding `useEffect`).
 
 ```js
 import { prop, on, fx, html } from 'spect'
@@ -163,7 +167,7 @@ use('#timer-example', async el => {
   })
 
   // rerender when seconds change
-  prop(state, 'seconds', seconds => html`<${el}>Seconds: ${seconds}</>`)
+  fx(prop(state, 'seconds'), seconds => html`<${el}>Seconds: ${seconds}</>`)
 })
 ```
 
@@ -172,8 +176,10 @@ use('#timer-example', async el => {
 
 ### An Application
 
+Aspects are assigned to elements with `use`, which registers selector observer via [wicked-elements](https://ghub.io/wicked-elements).
+
 ```js
-import { $, use, on, html, prop } from 'spect'
+import { use, on, html, prop } from 'spect'
 
 use('#todos-example', el => {
   let state = { items: [], text: '' }
@@ -184,32 +190,33 @@ use('#todos-example', el => {
 
     if (!state.text.length) return
 
-    state.items = [...items, { text: state.text, id: Date.now()}]
+    state.items = [...state.items, { text: state.text, id: Date.now() }]
     state.text = ''
   })
 
   // rerender html when state changes
   prop(state, 'items', items => {
     html`<${el}>
-      <h3>TODO</h3>
-      <main#todo-list items=${ items }/>
-      <form>
-        <label for=new-todo>
-          What needs to be done?
-        </label>
-        <br/>
-        <input#new-todo onchange=${ e => state.text = e.target.value}/>
-        <button>
-          Add #${ items.length + 1 }
-        </button>
-      </form>
-    </>`
+    <h3>TODO</h3>
+    <main#todo-list items=${ items }/>
+    <form>
+      <label for=new-todo>
+        What needs to be done?
+      </label>
+      <br/>
+      <input#new-todo onchange=${ e => state.text = e.target.value}/>
+      <button>
+        Add #${ items.length + 1}
+      </button>
+    </form>
+  </>`
   })
 })
 
 use('#todo-list', el => {
-  prop(el, 'items', items => html`<${el}><ul>${ items.map(item => html`<li>${ item.text }</li>`)}</ul></>`)
+  prop(el, 'items', items => html`<${el}><ul>${items.map(item => html`<li>${item.text}</li>`)}</ul></>`)
 })
+
 ```
 
 <p align='right'><a href="https://codesandbox.io/s/an-application-uiv4v">Open in sandbox</a></p>
@@ -217,7 +224,7 @@ use('#todo-list', el => {
 
 ### A Component Using External Plugins
 
-_Spect_ is able to create components via native web-components mechanism, as seen in previous example. Let's see how that can be used in composition.
+The _html_ syntax is extension of [htm](https://ghub.io/htm), enabling rendering / creating / patching real DOM.
 
 ```js
 // index.js
@@ -238,16 +245,14 @@ function MarkdownEditor(el) {
 
   prop(state, 'value', (value) => {
     html`<${el}.markdown-editor>
-      <h3>Input</h3>
-      <label for="markdown-content">
-        Enter some markdown
-      </label>
-      <textarea#markdown-content
-        onchange=${e => state.value = e.target.value )}
-      >${ value }</textarea>
+    <h3>Input</h3>
+    <label for="markdown-content">
+      Enter some markdown
+    </label>
+    <textarea#markdown-content onchange=${e => state.value = e.target.value }>${ value }</textarea>
 
-      <h3>Output</h3>
-      <div.content innerHTML=${ getRawMarkup(value) }/>
+    <h3>Output</h3>
+    <div.content innerHTML=${ getRawMarkup(value)} />
     </>`
   })
 }
@@ -272,7 +277,6 @@ let getRawMarkup = content => {
 
 [**`use`**](#use-el--destroy--deps---generic-side-effect)&nbsp;&nbsp;
 [**`prop`**](#prop-name--val-deps---properties-provider)&nbsp;&nbsp;
-[**`store`**](#state-name--val-deps---state-provider)&nbsp;&nbsp;
 [**`fx`**](#fx-el--destroy--deps---generic-side-effect)&nbsp;&nbsp;
 [**`on`**](#on-evt-fn---events-provider)&nbsp;&nbsp;
 [**`attr`**](#attr-name--val-deps---attributes-provider)&nbsp;&nbsp;
@@ -283,66 +287,94 @@ let getRawMarkup = content => {
 
 ##
 
-Each function in `spect` creates asynchronous iterator, which represents streams in language level. It can be thought of as array data, distributed in time. Each async iterator has following properties:
+Each function in `spect` creates asynchronous iterator with the following properties:
 
-- `.end()` method tears down stream and all internal streams
-- `thenable` - stream can be awaited for the next value
-- `effect(...args, callback)` - the callback is the last argument for all streams
-
-<!-- ### `$( selector | els | markup )` − create collection
-
-Create collection of elements, wrapped into [spect](https://ghub.io/spect). Effects broadcast to all items in collection.
-
-```js
-// select nodes
-$('#id.class > div')
-$(elements)
-$('> div', container)
-
-// create html
-$('<div.foo/>')
-$`foo <bar.baz/>`
-```
-
-<p align="right">Ref: <a href="https://jquery.com">jquery</a>, etc.</p> -->
+- `.end()` - tears down stream and all internal streams
+- `.then` - makes stream awaitable for the next value
+- `<effect>(...args, callback)` - the callback is the last argument for all streams
+- `.push(value?)` - puts new data value into stream
+- returned from callback value is called as destructor of previous value
 
 
-### `use( selector | element[s], el => {} )` - elements stream
+### `use( selector | element[s], el => {}? )` - selector observer
 
-Observe selector, invoke callback whenever matching element is added to the DOM. The callback is invoked once per element.
+Observe selector, invoke callback when matching element is appeared in the DOM. The callback is invoked once per element.
 
 ```js
-let unuse = use('.foo', el => {
+let foos = use('.foo', el => {
   // init
 })
 // destroy
-unuse()
+foos.end()
 
-// replace element with another element
-use('.bar', (el) => document.createElement('baz'))
+let bars = use('.bar')
+for await (const bar of bars) {
+  // ...handle elements
+}
 
 // awaits element in the DOM
-await use('#qux', el => {})
+let el = await use('#qux', el => {})
 ```
 
-### `fx( ...deps, (...deps) => {} )` − reactive effect
+### `prop(target, prop, value => {}? )` − property observer
 
-Generic reactive effect for any input streams. Takes input asyncIterables, invokes callback whenever any of inputs gets new value.
+Create property observer stream.
 
 ```js
-let state = store({ y : 0})
+let target = { foo: null }
 
-await use('.foo', el => {
-  let disable = fx(() => {
-    // rerender after 1s
-    let i = setTimeout(() => el.x++, 1000)
+let foos = prop(target, 'foo')
 
+for await (const value of foos) {
+  console.log(value)
+}
+```
+
+### `attr(target, name, value => {}? )` − attribute observer
+
+Create attribute observer stream.
+
+```js
+attr(el, 'hidden', isHidden => {
+  console.log(isHidden)
+})
+```
+
+### `fx( ...deps, (...deps) => {} )` − effect
+
+Assign effect for multiple input streams. Takes input asyncIterables, invokes callback whenever any of inputs gets new value.
+
+```js
+let state = { count : 0 }
+
+use('.counter', el => {
+  fx(prop(state, 'count'), (count) => {
+    console.log(count)
+
+    let i = setTimeout(() => state.count++, 1000)
     return () => clearTimeout(i)
   })
 })
+```
 
-// triggers rerendering of `.foo` fx
-state.y = 1
+### `on( element | selector, evt, fn )` − event stream
+
+Stream for specific event.
+
+```js
+// direct
+let off = on(el, 'foo', e => {})
+
+// delegate
+on('.target', 'foo', e => {})
+
+// multiple events
+on(element, 'connected disconnected', e => {})
+
+// event sequence
+for await (const e of on('.target', 'connected disconnected')) {
+
+}
 ```
 
 ### ``.html`...markup` `` − patch html
@@ -363,107 +395,7 @@ function baz(props) {
 ```
 
 
-<!-- ### `on( element | selector, evt, fn )` − events provider
 
-Register event listeners for elements / selector.
-
-```js
-// direct
-let off = on(el, 'foo', e => {})
-
-// delegate
-on('.target', 'foo', e => {})
-
-// multiple events
-on('.target', 'foo bar', e => {})
-
-// event sequence
-on('.target', 'connected > disconnected', e => {
-  // connected
-
-  return () => {
-    // disconnected
-  }
-})
-``` -->
-
-<!--
-### `store( obj )` − provide state
-
-Storage provider. Reading subscribes current effect to changes of that prop, writing triggers subscribed effects.
-
-```js
-// create
-let s = store({ foo: null })
-
-// read
-s.foo
-
-// write
-s.foo = 'bar'
-``` -->
-
-<!--
-### `prop( target, obj | fn ? )` − read / write properties
-
-Read or write target properties. Reading subscribes current effect to changes of that prop, writing triggers subscribed effects.
-
-```js
-// get props
-let p = prop(target)
-
-// read
-p.foo
-
-// write
-p.foo = 'bar'
-
-// batch update / reduce
-prop(target, { foo: 'bar' })
-prop(target, p => p.foo = 1)
-prop(target, p => {...p, foo: 1})
-```
-
-### `state( target, obj | fn ? )` − read / write state
-
-Read or write state associated with target. Same as `prop`, but provides state, associated with target.
-
-```js
-// get state
-let s = state(target)
-
-// read
-s.foo
-
-// write
-s.foo = 'bar'
-
-// update / reduce
-state(target, { foo: 'bar' })
-state(target, s => s.foo = 1)
-state(target, s => {...s, foo: 1})
-```
-
-
-### `attr( element, obj | fn ? )` − read / write attributes
-
-Read or write attributes of an element. Same as `.state` or `.prop`, but works with attributes, therefore values are strings. Reading creates observer for external attribute changes. For boolean values, it sets/unsets attribute, rather than stringifies value.
-
-```js
-let a = attr(element)
-
-// get
-a.foo
-
-// set
-a.foo = 'bar'
-
-// update / reduce
-attr(element, { foo: 'bar' })
-attr(element, a => a.foo = 1)
-attr(element, a => {...a, foo: 1})
-```
--->
 
 <!--
 ### `css( element, styles )` − CSS side-effect

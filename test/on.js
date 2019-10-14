@@ -1,5 +1,5 @@
 import t from 'tst'
-import { $, on, fire, html } from '..'
+import { $, on, html } from '..'
 
 t('on: async gen', async t => {
   let el = document.createElement('div')
