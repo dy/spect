@@ -26,7 +26,7 @@ t('on: async gen', async t => {
   await Promise.resolve().then().then() // unfortunately-ish needs an extra await step for every missed event
   t.is(log, ['click', 'click', 'click', 'click', 'click', 'click'], 'updates to latest value')
   t.is(cblog, ['click', 'click', 'click', 'click', 'click', 'click'], 'updates to latest value')
-  clicks.end()
+  clicks.cancel()
   el.click()
   el.click()
   await Promise.resolve().then().then()

@@ -1,5 +1,5 @@
 import t from 'tst'
-import { $, fx, prop, html, on, use } from '..'
+import { $, fx, prop, html, on } from '..'
 import morphdom from 'morphdom'
 
 t('readme: A simple aspect', async t => {
@@ -33,7 +33,7 @@ t('readme: A stateful aspect via await', async t => {
   el.id = 'timer-example-1'
 
 
-  await use('#timer-example-1', async el => {
+  await $('#timer-example-1', async el => {
     let state = { seconds: 0 }
 
     let i = setInterval(() => {
@@ -57,7 +57,7 @@ t('readme: A stateful aspect via events', async t => {
   el.id = 'timer-example'
 
   // for every #timer-example element
-  await use('#timer-example', async el => {
+  await $('#timer-example', async el => {
     let state = { seconds: 0 }
     // start timer when connected, end when disconnected
     on(el, 'connected', e => {
@@ -80,7 +80,7 @@ t('readme: An application', t => {
   let el = document.body.appendChild(document.createElement('div'))
   el.id = 'todos-example'
 
-  use('#todos-example', el => {
+  $('#todos-example', el => {
     let state = { items: [], text: '' }
 
     // run effect by submit event
@@ -112,7 +112,7 @@ t('readme: An application', t => {
     })
   })
 
-  use('#todo-list', el => {
+  $('#todo-list', el => {
     prop(el, 'items', items => html`<${el}><ul>${items.map(item => html`<li>${item.text}</li>`)}</ul></>`)
   })
 
@@ -126,7 +126,7 @@ t('readme: A component with external plugin', async t => {
   el.id = 'markdown-example'
 
   // MarkdownEditor is created as web-component
-  use('#markdown-example', el => html`<${el}><${MarkdownEditor} content='Hello, **world**!'/></el>`)
+  $('#markdown-example', el => html`<${el}><${MarkdownEditor} content='Hello, **world**!'/></el>`)
 
   function MarkdownEditor(el) {
     let state = { value: el.content }
@@ -151,7 +151,7 @@ t('readme: A component with external plugin', async t => {
   }
 
   await Promise.resolve().then()
-  t.is($('.content', el)[0].innerHTML.trim(), `<p>Hello, <strong>world</strong>!</p>`)
+  t.is(el.querySelector('.content').innerHTML.trim(), `<p>Hello, <strong>world</strong>!</p>`)
 
   document.body.removeChild(el)
 })

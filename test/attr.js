@@ -31,7 +31,7 @@ t('attr: walk generator', async t => {
   t.is(el.getAttribute('x'), '6', 'reading applies value')
   await Promise.resolve().then()
   t.is(log, [null, '2', '5', '6'], 'reading applies value')
-  xattrs.end()
+  xattrs.cancel()
   el.setAttribute('x', '7')
   await Promise.resolve().then()
   t.is(el.getAttribute('x'), '7', 'end destructures property')

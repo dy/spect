@@ -11,7 +11,7 @@ export default function fx(...args) {
         callback && callback(...values)
         resolve({ value: values })
         p = new Promise(ok => resolve = ok)
-        handle.then = p.then.bind(p)
+        stream.then = p.then.bind(p)
       }
     })
   }
@@ -20,29 +20,29 @@ export default function fx(...args) {
       callback && callback()
       resolve({ value: [] })
       p = new Promise(ok => resolve = ok)
-      handle.then = p.then.bind(p)
+      stream.then = p.then.bind(p)
     })
   }
 
-  let handle = {
-    end() {
-      handle.done = true
+  let stream = {
+    cancel() {
+      stream.done = true
     },
     [Symbol.asyncIterator]() {
       return {
         i: 0,
         next() {
-          if (handle.done) return { done: true }
+          if (stream.done) return { done: true }
           this.i++
           return p
         },
         return() {
-          handle.end()
+          stream.cancel()
         }
       }
     },
     then: p.then.bind(p)
   }
 
-  return handle
+  return stream
 }

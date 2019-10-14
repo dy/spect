@@ -7,26 +7,26 @@ export default function on (target, event, callback) {
     callback && callback(e)
     resolve({ value: e })
     let p = new Promise(ok => resolve = ok)
-    handle.then = p.then.bind(p)
+    stream.then = p.then.bind(p)
     queue.push(p)
   })
 
-  let handle = {
-    end() {
+  let stream = {
+    cancel() {
       off(target, event)
-      handle.done = true
+      stream.done = true
     },
     [Symbol.asyncIterator]() {
       return {
         i: 0,
         next() {
-          if (handle.done) return { done: true }
+          if (stream.done) return { done: true }
           this.i++
           let p = queue.shift()
           return p
         },
         return() {
-          handle.end()
+          stream.cancel()
         }
       }
     },
@@ -34,5 +34,5 @@ export default function on (target, event, callback) {
     then: queue[0].then.bind(queue[0])
   }
 
-  return handle
+  return stream
 }

@@ -40,12 +40,12 @@ export default function prop(target, name, callback) {
     callback && callback(value)
     resolve({ value })
     p = new Promise(ok => resolve = ok)
-    handle.then = p.then.bind(p)
+    stream.then = p.then.bind(p)
   }
 
-  let handle = {
-    end () {
-      handle.done = true
+  let stream = {
+    cancel() {
+      stream.done = true
 
       Object.defineProperty(target, name, initialDesc || {
         configurable: true,
@@ -59,14 +59,14 @@ export default function prop(target, name, callback) {
       return {
         i: 0,
         next() {
-          if (handle.done) return {done: true}
+          if (stream.done) return {done: true}
           this.i++
           return p
         },
-        // FIXME: find out good pattern with ending generator
+        // FIXME: find out good pattern with closeing generator
         return() {
-          handle.done = true
-          handle.end()
+          stream.done = true
+          stream.cancel()
         }
       }
     },
@@ -75,9 +75,9 @@ export default function prop(target, name, callback) {
   }
 
   Object.defineProperty(target, name, desc)
-  cache.set(desc, handle)
+  cache.set(desc, stream)
 
   Promise.resolve().then(() => applyValue(value))
 
-  return handle
+  return stream
 }

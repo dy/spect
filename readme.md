@@ -428,7 +428,8 @@ cls(el)
 
 Version | Changes
 ---|---
-9.0.0 | Asynchronous generator streams based.
+10.0.0 | Web-streams based implementation.
+9.0.0 | Asynchronous iterator based implementation.
 8.0.0 | Atomize: split core to multiple effects.
 7.0.0 | Deatomize; single core approach; final ref-based approach.
 6.0.0 | DOM-less core. Pluggable effects.

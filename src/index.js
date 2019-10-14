@@ -1,4 +1,3 @@
-import use from './use'
 import on from './on'
 import fx from './fx'
 import $ from './$'
@@ -16,12 +15,11 @@ export {
   // local,
   // data,
   // query,
-  use,
+  $,
   on,
   // state,
   fx,
   prop,
-  $,
   html,
   // cls
 }

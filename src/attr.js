@@ -15,7 +15,7 @@ export default function attr(el, name, callback) {
         callback && callback(value)
         resolve({ value })
         p = new Promise(ok => resolve = ok)
-        handle.then = p.then.bind(p)
+        stream.then = p.then.bind(p)
       }
     }))
     observer.attributeNames = new Set()
@@ -29,22 +29,25 @@ export default function attr(el, name, callback) {
   }
 
 
-  let handle = {
-    end() {
-      handle.done = true
+  let stream = {
+    cancel() {
+      stream.done = true
       observer.attributeNames.delete(name)
       observer.observe(el, { attributes: true, attributeFilter: [...observer.attributeNames], attributeOldValue: true })
+    },
+    getIterator() {
+      return this[Symbol.asyncIterator]()
     },
     [Symbol.asyncIterator]() {
       return {
         i: 0,
         next() {
-          if (handle.done) return { done: true }
+          if (stream.done) return { done: true }
           this.i++
           return p
         },
         return() {
-          handle.end()
+          stream.cancel()
         }
       }
     },
@@ -58,8 +61,8 @@ export default function attr(el, name, callback) {
     callback && callback(value)
     resolve({ value })
     p = new Promise(ok => resolve = ok)
-    handle.then = p.then.bind(p)
+    stream.then = p.then.bind(p)
   })
 
-  return handle
+  return stream
 }
