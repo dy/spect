@@ -44,7 +44,7 @@ import { $, fx, html, attr, local, route } from 'spect'
 import { t, useLocale } from 'ttag'
 
 // main app aspect
-use('#app', el => {
+$('#app', el => {
   // loading data when location changes
   fx(route('users/:id'), async ({ id }) => {
     el.setAttribute('loading', true)
@@ -61,14 +61,14 @@ use('#app', el => {
 }
 
 // preloader aspect
-use('.preloadable', el => {
+$('.preloadable', el => {
   let progress = html`<progress.progress-circle />`
   let content = [...el.childNodes]
   fx(attr(el, 'loading'), loading => html`<${el}>${ loading ? progress : content }</>`)
 })
 
 // i18n aspect
-use('.i18n', el => {
+$('.i18n', el => {
   let str = text(el)
 
   fx(first(attr(el, 'lang'), attr(document.documentElement, 'lang')), lang => {
@@ -129,7 +129,7 @@ This example assigns handler to `#hello-example` element and registers side-effe
 import { html, prop } from 'spect'
 
 // for each #hello-example
-use('#hello-example', el => {
+$('#hello-example', el => {
   // when element's `name` property changes
   prop(el, 'name', name => {
     // render html as
@@ -151,10 +151,10 @@ use('#hello-example', el => {
 Basic streams include: `prop` for observing property changes, `on` for observing events, `fx` for reacting on changes of any input (reminding `useEffect`).
 
 ```js
-import { prop, on, fx, html } from 'spect'
+import { $, prop, on, fx, html } from 'spect'
 
 // for every #timer-example element
-use('#timer-example', async el => {
+$('#timer-example', async el => {
   let state = { seconds: 0 }
 
   // start timer when connected, end when disconnected
@@ -179,9 +179,9 @@ use('#timer-example', async el => {
 Aspects are assigned to elements with `use`, which registers selector observer via [wicked-elements](https://ghub.io/wicked-elements).
 
 ```js
-import { use, on, html, prop } from 'spect'
+import { $, on, html, prop } from 'spect'
 
-use('#todos-example', el => {
+$('#todos-example', el => {
   let state = { items: [], text: '' }
 
   // run effect by submit event
@@ -213,7 +213,7 @@ use('#todos-example', el => {
   })
 })
 
-use('#todo-list', el => {
+$('#todo-list', el => {
   prop(el, 'items', items => html`<${el}><ul>${items.map(item => html`<li>${item.text}</li>`)}</ul></>`)
 })
 
@@ -228,11 +228,11 @@ The _html_ syntax is extension of [htm](https://ghub.io/htm), enabling rendering
 
 ```js
 // index.js
-import { html, use } from 'spect'
+import { html, $ } from 'spect'
 import MarkdownEditor from './editor.js'
 
 // MarkdownEditor is created as web-component
-use('#markdown-example', el => html`<${el}><${MarkdownEditor} content='Hello, **world**!'/></el>`)
+$('#markdown-example', el => html`<${el}><${MarkdownEditor} content='Hello, **world**!'/></el>`)
 ```
 
 ```js
@@ -275,7 +275,7 @@ let getRawMarkup = content => {
 
 ## Documentation
 
-[**`use`**](#use-el--destroy--deps---generic-side-effect)&nbsp;&nbsp;
+[**`$`**](#use-el--destroy--deps---generic-side-effect)&nbsp;&nbsp;
 [**`prop`**](#prop-name--val-deps---properties-provider)&nbsp;&nbsp;
 [**`fx`**](#fx-el--destroy--deps---generic-side-effect)&nbsp;&nbsp;
 [**`on`**](#on-evt-fn---events-provider)&nbsp;&nbsp;
@@ -283,7 +283,6 @@ let getRawMarkup = content => {
 [**`cls`**](#class-classes-deps---classes-side-effect)&nbsp;&nbsp;
 [**`html`**](#htmlmarkup---html-side-effect)&nbsp;&nbsp;
 [**`css`**](#css-styles-deps---css-side-effect)&nbsp;&nbsp;
-[**`$`**](#css-styles-deps---css-side-effect)&nbsp;&nbsp;
 
 ##
 
@@ -296,24 +295,24 @@ Each function in `spect` creates asynchronous iterator with the following proper
 - returned from callback value is called as destructor of previous value
 
 
-### `use( selector | element[s], el => {}? )` - selector observer
+### `$( selector | element[s], el => {}? )` - selector observer
 
 Observe selector, invoke callback when matching element is appeared in the DOM. The callback is invoked once per element.
 
 ```js
-let foos = use('.foo', el => {
+let foos = $('.foo', el => {
   // init
 })
 // destroy
 foos.end()
 
-let bars = use('.bar')
+let bars = $('.bar')
 for await (const bar of bars) {
   // ...handle elements
 }
 
 // awaits element in the DOM
-let el = await use('#qux', el => {})
+let el = await $('#qux', el => {})
 ```
 
 ### `prop(target, prop, value => {}? )` − property observer
@@ -424,22 +423,6 @@ cls(el).foo
 cls(el)
 ``` -->
 
-<!-- ### `$( selector, container? )` − select nodes
-
-Simple query selector.
-
-```js
-// query single
-$('#foo') // fooEl
-
-// query multiple
-$('.bar') // [barEl, barEl]
-$('baz') // [bazEl, bazEl]
-
-// query within
-$('qux', $('#foo')) // [qux]
-``` -->
-
 
 ## Changelog
 
@@ -457,6 +440,3 @@ Version | Changes
 0.0.1 | [jsxify](https://github.com/scrapjs/jsxify) R&D.
 0.0.0 | Mod framework (Modifiers for DOM).
 
-##
-
-<p align="center">HK</p>
