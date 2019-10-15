@@ -137,8 +137,26 @@ function createElement(el, props, children) {
       .filter(child => typeof child === 'number' || child)
       .map(child => {
         if (isPrimitive(child)) return document.createTextNode(child)
+
         // clone textnodes to avoid morphing them
         if (child.nodeType === 3) return child.cloneNode()
+
+        // async iterator is like continuous suspense
+        if (child[Symbol.asyncIterator]) {
+          let holder = isElement(child) ? child : document.createTextNode('')
+          let iterator = child[Symbol.asyncIterator]()
+          ;(async () => {
+            for await (el of iterator) {
+              if (!el) el = document.createTextNode('')
+              holder.replaceWith(el)
+              holder = el
+            }
+            // FIXME: there's a possible mem leak
+          })()
+          return holder
+        }
+
+        // suspense is promise
         if (child.then) {
           child.then(el => {
             holder.replaceWith(el)
@@ -146,6 +164,7 @@ function createElement(el, props, children) {
           let holder = isElement(child) ? child : document.createTextNode('')
           return holder
         }
+
         return child
       })
   }

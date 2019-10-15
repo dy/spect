@@ -79,13 +79,14 @@ t('$: elements async gen', async t => {
 })
 
 
-t.todo('$: pass props', async t => {
+t('$: defined props must be available', async t => {
   let log = []
 
   let el = document.createElement('div')
-  $(el, (el, props) => {
-    log.push(props.x)
-  }, { x: 1 })
+  el.setAttribute('x', 1)
+  $(el, (el) => {
+    log.push(el.x)
+  })
 
   t.is(log, [1])
 })

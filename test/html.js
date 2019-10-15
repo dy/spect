@@ -401,14 +401,16 @@ t('html: must not replace self', t => {
   }
 })
 
-t.skip('html: externally assigned props must be collected', async t => {
+t('html: externally assigned props must be available', async t => {
   let el = html`<x x=${1}/>`
   document.body.appendChild(el)
   await Promise.resolve().then()
-  $('x', (el, props) => {
-    t.is(props, {x: 1})
+  $('x', (el) => {
+    t.is(el.x, 1)
   })
 })
+
+t.only('html: streams must update values dynamically')
 
 t.todo('legacy html: rerendering extended component should not register anonymous function')
 

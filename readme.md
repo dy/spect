@@ -292,8 +292,8 @@ Each function in `spect` creates asynchronous iterator with the following proper
 - `.end()` - tears down stream and all internal streams
 - `.then` - makes stream awaitable for the next value
 - `<effect>(...args, callback)` - the callback is the last argument for all streams
-- `.push(value?)` - puts new data value into stream
-- returned from callback value is called as destructor of previous value
+<!-- - returned from callback value is called as destructor of previous value -->
+<!-- - `.push(value?)` - puts new data value into stream -->
 
 
 ### `$( selector | element[s], el => {}? )` - selector observer
@@ -318,7 +318,7 @@ let el = await $('#qux', el => {})
 
 ### `prop(target, prop, value => {}? )` − property observer
 
-Create property observer stream.
+Create property change stream.
 
 ```js
 let target = { foo: null }
@@ -332,7 +332,7 @@ for await (const value of foos) {
 
 ### `attr(target, name, value => {}? )` − attribute observer
 
-Create attribute observer stream.
+Create attribute change stream.
 
 ```js
 attr(el, 'hidden', isHidden => {
@@ -386,15 +386,18 @@ Render html. Uses [`htm`](https://ghub.io/htm) syntax.
 // create element
 let foo = html`<div#foo/>`
 
-// render to target
-html`<${fooEl}><div.bar/><${baz}/></>`
+// patch element
+html`<${foo}><div.bar/></>`
 
+// create component
+html`<${baz} foo=bar/>`
 function baz(props) {
   return html`<div.baz>baz</div>`
 }
+
+// render stream into html
+html`<.status>${ attr(target, 'status') }</>`
 ```
-
-
 
 
 <!--

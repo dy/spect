@@ -1,23 +1,17 @@
 import wickedElements from 'wicked-elements'
 import { isIterable } from './util'
-
-// export default function $(selector, within = document) {
-//   if (isElement(selector)) return selector
-//   if (isIterable(within)) within = within[0]
-//   if (selector[0] === '#') return within.querySelector(selector)
-
-//   return within.querySelectorAll(selector)
-// }
+import { collectProps } from './html'
 
 const cache = new Map
 
-export default function $ (selector, callback) {
+export default function $(selector, callback) {
   let observers = cache.get(selector)
 
   let resolve, queue = [new Promise(ok => resolve = ok)]
 
   let fn = el => {
-    callback && callback(el)
+    let props = collectProps(el)
+    callback && callback(el, props)
     resolve({ value: el })
     let p = new Promise(ok => resolve = ok)
     stream.then = p.then.bind(p)
