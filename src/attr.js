@@ -3,19 +3,19 @@ const cache = new WeakMap
 export default function attr(el, name, callback) {
   if (!name) throw Error('`attr` expects attribute name to observe')
 
-  let resolve, p = new Promise(ok => resolve = ok)
-
+  let controllers = {}
   let observer = cache.get(el)
   if (!observer) {
     cache.set(el, observer = new MutationObserver(records => {
+      let enqueued = {}
       for (let i = 0, length = records.length; i < length; i++) {
         let { target, attributeName, oldValue } = records[i];
         let value = target.getAttribute(attributeName)
+        if (!controllers[name]) continue
+        if (enqueued[name] === value) continue
         if (Object.is(oldValue, value)) continue
-        callback && callback(value)
-        resolve({ value })
-        p = new Promise(ok => resolve = ok)
-        stream.then = p.then.bind(p)
+        enqueued[name] = value
+        controllers[name].forEach(controller => controller.enqueue(value))
       }
     }))
     observer.attributeNames = new Set()
@@ -28,41 +28,21 @@ export default function attr(el, name, callback) {
     observer.observe(el, { attributes: true, attributeFilter: [...observer.attributeNames], attributeOldValue: true })
   }
 
+  let streamController
 
-  let stream = {
-    cancel() {
-      stream.done = true
+  return new ReadableStream({
+    start(controller) {
+      (controllers[name] || (controllers[name] = [])).push(controller)
+      controller.enqueue(el.getAttribute(name))
+      streamController = controller
+    },
+    pull(controller) {
+    },
+    cancel(reason) {
+      this.done = true
       observer.attributeNames.delete(name)
       observer.observe(el, { attributes: true, attributeFilter: [...observer.attributeNames], attributeOldValue: true })
-    },
-    getIterator() {
-      return this[Symbol.asyncIterator]()
-    },
-    [Symbol.asyncIterator]() {
-      return {
-        i: 0,
-        next() {
-          if (stream.done) return { done: true }
-          this.i++
-          return p
-        },
-        return() {
-          stream.cancel()
-        }
-      }
-    },
-    done: false,
-    then: p.then.bind(p)
-  }
-
-  // initial value
-  Promise.resolve().then(() => {
-    let value = el.getAttribute(name)
-    callback && callback(value)
-    resolve({ value })
-    p = new Promise(ok => resolve = ok)
-    stream.then = p.then.bind(p)
+      controllers[name].splice(controllers[name].indexOf(streamController), 1)
+    }
   })
-
-  return stream
 }

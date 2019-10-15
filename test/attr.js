@@ -7,11 +7,11 @@ t('attr: walk generator', async t => {
   let el = document.createElement('div')
   let xattrs = attr(el, 'x')
   let log = []
-    ; (async () => {
-      for await (const value of xattrs) {
-        log.push(value)
-      }
-    })()
+  ;(async () => {
+    for await (const value of xattrs) {
+      log.push(value)
+    }
+  })()
   await Promise.resolve().then()
   t.is(log, [null], 'init')
   el.setAttribute('x', '1')
