@@ -17,13 +17,13 @@ t('on: async gen', async t => {
   t.is(cblog, ['click'], 'basic')
   el.click()
   el.click()
-  await Promise.resolve().then()
+  await Promise.resolve().then().then().then().then()
   t.is(log, ['click', 'click', 'click'], 'does not skip events')
   t.is(cblog, ['click', 'click', 'click'], 'does not skip events')
   el.click()
   el.click()
   el.click()
-  await Promise.resolve().then().then() // unfortunately-ish needs an extra await step for every missed event
+  await Promise.resolve().then().then().then().then().then().then().then().then() // unfortunately-ish needs an extra await step for every missed event
   t.is(log, ['click', 'click', 'click', 'click', 'click', 'click'], 'updates to latest value')
   t.is(cblog, ['click', 'click', 'click', 'click', 'click', 'click'], 'updates to latest value')
   clicks.cancel()

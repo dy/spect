@@ -63,7 +63,7 @@ t('$: elements async gen', async t => {
 
   container.appendChild(document.createElement('x'))
   container.appendChild(document.createElement('x'))
-  await Promise.resolve().then().then()
+  await Promise.resolve().then().then().then().then().then()
   t.is(log, ['x', 'x', 'x'], 'create multiple')
 
   const log2 = []

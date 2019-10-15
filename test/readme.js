@@ -48,6 +48,8 @@ t('readme: A stateful aspect via await', async t => {
     clearInterval(i)
   })
 
+  await Promise.resolve().then().then().then()
+
   t.is(el.innerHTML, 'Seconds: 0')
   document.body.removeChild(el)
 })
