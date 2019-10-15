@@ -1,20 +1,19 @@
-import { on as addEventListener, off } from 'emmy'
+import { on as addEventListener } from 'emmy'
 
-export default function on (target, event, callback) {
-  let fn
+export default function on (target, event, callback, o) {
+  let off
   return new ReadableStream({
     start(controller) {
-      fn = (e) => {
+      off = addEventListener(target, event, (e) => {
         controller.enqueue(e)
         callback && callback(e)
-      }
-      addEventListener(target, event, fn)
+      }, o)
     },
     pull(controller) {
     },
     cancel(reason) {
       this.done = true
-      off(target, event, fn)
+      off()
     }
   })
 }

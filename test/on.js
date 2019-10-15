@@ -35,6 +35,17 @@ t('on: async gen', async t => {
 })
 t('on: awaits for the event')
 
+t('on: delegate', async t => {
+  let el = document.createElement('x')
+  document.body.appendChild(el)
+  let log = []
+  on('x', 'click', e => {
+    log.push(e.type)
+  })
+  el.click()
+  t.is(log, ['click'])
+})
+
 t.todo('on: oldschool', async t => {
   let log = []
   let el = html`<a.foo/>`
