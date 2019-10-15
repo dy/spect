@@ -1,8 +1,8 @@
 # Spect ![experimental](https://img.shields.io/badge/stability-experimental-yellow) [![Build Status](https://travis-ci.org/spectjs/spect.svg?branch=master)](https://travis-ci.org/spectjs/spect)
 
-_Spect_ is reactive layer for creating web UIs.
+_Spect_ is library for building streams-based reactive UIs in aspect-oriented fasion.
 
-It is based on principles of [aspect-oriented programming](https://en.wikipedia.org/wiki/Aspect-oriented_programming), FRP and streams.
+<!-- Incorporates  [aspect-oriented programming](https://en.wikipedia.org/wiki/Aspect-oriented_programming), FRP and streams. -->
 
 <!-- #### 🎡 Concept
 
@@ -46,14 +46,14 @@ import { t, useLocale } from 'ttag'
 // main app aspect
 $('#app', el => {
   // loading data when location changes
-  fx(route('users/:id'), async ({ id }) => {
+  route('users/:id', async ({ id }) => {
     el.setAttribute('loading', true)
     localStorage.user = await fetch`./api/user/${ id }`
     el.setAttribute('loading', false)
   })
 
-  // rerender whenever local storage or loading changes
-  fx([local('user'), attr(el, 'loading')], (user, loading) => {
+  // rerender when local storage or loading changes
+  any(local('user'), attr(el, 'loading'), (user, loading) => {
     html`<${el}.preloadable>
       <p.i18n>${ loading ? `Hello, ${ user.name }!` : `Thanks for patience...` }</p>
     </>`
@@ -62,16 +62,17 @@ $('#app', el => {
 
 // preloader aspect
 $('.preloadable', el => {
-  let progress = html`<progress.progress-circle />`
-  let content = [...el.childNodes]
-  fx(attr(el, 'loading'), loading => html`<${el}>${ loading ? progress : content }</>`)
+  let content, progress = html`<progress.progress-circle />`
+  attr(el, 'loading', loading => {
+    if (loading) content = [...el.childNodes]
+    html`<${el}>${ loading ? progress : content }</>`
+  })
 })
 
 // i18n aspect
 $('.i18n', el => {
   let str = text(el)
-
-  fx(first(attr(el, 'lang'), attr(document.documentElement, 'lang')), lang => {
+  attr(document.documentElement, 'lang', lang => {
     useLocale(lang)
     el.textContent = t(str)
   })

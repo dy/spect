@@ -16,6 +16,7 @@ export default function attr(el, name, callback) {
         if (Object.is(oldValue, value)) continue
         enqueued[name] = value
         controllers[name].forEach(controller => controller.enqueue(value))
+        callback && callback(value)
       }
     }))
     observer.attributeNames = new Set()
