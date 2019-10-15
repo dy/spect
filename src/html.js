@@ -144,9 +144,8 @@ function createElement(el, props, children) {
         // async iterator is like continuous suspense
         if (child[Symbol.asyncIterator]) {
           let holder = isElement(child) ? child : document.createTextNode('')
-          let iterator = child[Symbol.asyncIterator]()
           ;(async () => {
-            for await (el of iterator) {
+            for await (el of child) {
               if (!el) el = document.createTextNode('')
               holder.replaceWith(el)
               holder = el
