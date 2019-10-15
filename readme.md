@@ -1,6 +1,6 @@
 # Spect ![experimental](https://img.shields.io/badge/stability-experimental-yellow) [![Build Status](https://travis-ci.org/spectjs/spect.svg?branch=master)](https://travis-ci.org/spectjs/spect)
 
-_Spect_ is library for building streams-based reactive UIs in aspect-oriented fasion.
+Stream-based reactive UIs with aspect-oriented flavor.
 
 <!-- Incorporates  [aspect-oriented programming](https://en.wikipedia.org/wiki/Aspect-oriented_programming), FRP and streams. -->
 
@@ -53,7 +53,7 @@ $('#app', el => {
   })
 
   // rerender when local storage or loading changes
-  any(local('user'), attr(el, 'loading'), (user, loading) => {
+  fx(local('user'), attr(el, 'loading'), (user, loading) => {
     html`<${el}.preloadable>
       <p.i18n>${ loading ? `Hello, ${ user.name }!` : `Thanks for patience...` }</p>
     </>`
