@@ -97,3 +97,25 @@ t('prop: observe element props', async t => {
 
   document.body.removeChild(el)
 })
+
+t('prop: multiple listeners', async t => {
+  let log1 = []
+  let log2 = []
+  let obj = {items: []}
+  await Promise.resolve().then().then()
+  prop(obj, 'items', list => {
+    log1.push(list)
+  })
+  prop(obj, 'items', list => {
+    log2.push(list)
+  })
+  await Promise.resolve().then().then()
+  obj.items = [1,2,3]
+  await Promise.resolve().then().then()
+  t.is(log1, [[], [1,2,3]])
+  t.is(log2, [[], [1,2,3]])
+})
+
+t('prop: must return stream', t => {
+  t.is(!!prop({}, 'x'), true)
+})
