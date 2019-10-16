@@ -251,6 +251,13 @@ t('html: preserves hidden attribute', t => {
   t.is(el.innerHTML, '<div hidden="" class="foo"></div>')
 })
 
+t('html: falsey prev attrs', t => {
+  let el = html`<div hidden=${true}/>`
+  t.is(el.hidden, true)
+  html`<${el} hidden=${false}/>`
+  t.is(el.hidden, false)
+})
+
 t('html: initial content should be morphed', t => {
   let el = document.createElement('div')
   el.innerHTML = '<foo></foo><bar></bar>'

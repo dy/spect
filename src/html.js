@@ -63,9 +63,10 @@ function h(tag, props, ...children) {
     // keep attributes
     if (tag.attributes) {
       for (let attr of tag.attributes) {
-        if (!props[attr.name]) props[attr.name] = attr.value
+        if (!(attr.name in props)) props[attr.name] = attr.value
       }
     }
+
     let newTag = createElement(tag.tagName, props, children)
 
     morph(tag, newTag, {
@@ -215,10 +216,11 @@ function applyProps(el, props) {
       }
 
       // FIXME: some names, like hidden, clear up attributes (wrongly)
-      if (name === 'hidden') {
-        el[name] = value !== false
-      } else {
+      if (name !== 'hidden') {
         el[name] = value
+      }
+      else {
+        el[name] = value !== false
       }
       // collect use/is patch rendered DOM
       // FIXME: that should be a stream
