@@ -1,4 +1,5 @@
 import { setMicrotask, clearMicrotask } from './util'
+import { on } from '.'
 
 // TODO: all-sets mode (no diff check)
 // TODO: make all-events mode (no changes skipped)
@@ -77,7 +78,24 @@ export default function prop(target, name, callback) {
   Object.defineProperty(target, name, desc)
   cache.set(desc, stream)
 
-  Promise.resolve().then(() => applyValue(value))
+
+  Promise.resolve().then(() => {
+    applyValue(value)
+
+    // inputs mustn't have defined property for the time of input
+    if ('onchange' in target) {
+      let desc = Object.getOwnPropertyDescriptor(target, name)
+      on(target, 'focus', e => {
+        delete target[name]
+      })
+      on(target, 'blur', e => {
+        Object.defineProperty(target, name, desc)
+      })
+      on(target, 'change input', e => {
+        applyValue(target[name])
+      })
+    }
+  })
 
   return stream
 }

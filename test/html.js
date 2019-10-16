@@ -410,7 +410,22 @@ t('html: externally assigned props must be available', async t => {
   })
 })
 
-t.only('html: streams must update values dynamically')
+t('html: streams must update values dynamically', async t => {
+  let obj = { x: 1 }
+  let el = html`<div>${ prop(obj, 'x') }</div>`
+
+  await Promise.resolve().then()
+  t.is(el.outerHTML, '<div>1</div>')
+
+  obj.x = 2
+  await Promise.resolve().then().then()
+  t.is(el.outerHTML, '<div>2</div>')
+})
+
+t('html: direct value', async t => {
+  let x = html`${1}`
+  t.is(x.nodeType, 3)
+})
 
 t.todo('legacy html: rerendering extended component should not register anonymous function')
 

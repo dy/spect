@@ -78,3 +78,22 @@ t.skip('prop: observe array methods', async t => {
 
   t.is(log, [1])
 })
+
+t('prop: observe element props', async t => {
+  let log = []
+  let el = document.createElement('input')
+  prop(el, 'value', v => {
+    log.push(v)
+  })
+  document.body.appendChild(el)
+  el.focus()
+  el.value = '1'
+  el.dispatchEvent(new Event('change'))
+  el.blur()
+
+  await Promise.resolve().then().then().then()
+
+  t.is(log, ['', '1'])
+
+  document.body.removeChild(el)
+})

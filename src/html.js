@@ -19,7 +19,7 @@ export default function html(...args) {
   let result = htm.call(h, ...args)
 
   // non-DOM htm result to DOM
-  if (typeof result === 'string') result = document.createTextNode(result)
+  if (isPrimitive(result)) result = document.createTextNode(result)
   else if (Array.isArray(result)) {
     let frag = document.createDocumentFragment()
     frag.append(...result)
@@ -146,7 +146,7 @@ function createElement(el, props, children) {
           let holder = isElement(child) ? child : document.createTextNode('')
           ;(async () => {
             for await (el of child) {
-              if (!el) el = document.createTextNode('')
+              el = html`${el}`
               holder.replaceWith(el)
               holder = el
             }

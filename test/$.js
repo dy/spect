@@ -79,7 +79,7 @@ t('$: elements async gen', async t => {
 })
 
 
-t('$: defined props must be available', async t => {
+t.skip('$: defined props must be available', async t => {
   let log = []
 
   let el = document.createElement('div')
