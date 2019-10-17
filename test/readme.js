@@ -129,7 +129,7 @@ t('readme: A component with external plugin', async t => {
   // MarkdownEditor is created as web-component
   $('#markdown-example', el => html`<${el}><${MarkdownEditor} content='Hello, **world**!'/></el>`)
 
-  function MarkdownEditor(el) {
+  function MarkdownEditor({ element: el }) {
     let state = { value: el.content }
 
     prop(state, 'value', (value) => {

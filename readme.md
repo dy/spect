@@ -241,11 +241,11 @@ $('#markdown-example', el => html`<${el}><${MarkdownEditor} content='Hello, **wo
 import { prop, state, html } from 'spect'
 import { Remarkable } from 'remarkable'
 
-function MarkdownEditor(el) {
-  let state = { value: el.content }
+function MarkdownEditor({ element, content }) {
+  let state = { value: content }
 
   prop(state, 'value', (value) => {
-    html`<${el}.markdown-editor>
+    html`<${element}.markdown-editor>
     <h3>Input</h3>
     <label for="markdown-content">
       Enter some markdown
@@ -347,7 +347,7 @@ Assign effect for multiple input streams. Takes input asyncIterables, invokes ca
 ```js
 let state = { count : 0 }
 
-use('.counter', el => {
+$('.counter', el => {
   fx(prop(state, 'count'), (count) => {
     console.log(count)
 
@@ -389,9 +389,9 @@ let foo = html`<div#foo/>`
 // patch element
 html`<${foo}><div.bar/></>`
 
-// create component
-html`<${baz} foo=bar/>`
-function baz(props) {
+// component
+html`<${Baz} foo=bar/>`
+function Baz(props) {
   return html`<div.baz>baz</div>`
 }
 
@@ -432,10 +432,10 @@ cls(el)
 
 Version | Changes
 ---|---
-10.0.0 | Web-streams based implementation.
-9.0.0 | Asynchronous iterator based implementation.
-8.0.0 | Atomize: split core to multiple effects.
-7.0.0 | Deatomize; single core approach; final ref-based approach.
+10.0.0 | Web-streams.
+9.0.0 | Effects as asynchronous iterators.
+8.0.0 | Atomize: split core $ to multiple effects.
+7.0.0 | Deatomize; single core approach; ref-based approach.
 6.0.0 | DOM-less core. Pluggable effects.
 5.0.0 | Wrapper as aspect argument, along with props for react-compatible API. Effect queues.
 4.0.0 | Functional effects API design.

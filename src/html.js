@@ -123,7 +123,9 @@ function h(tag, props, ...children) {
 
 function createElement(el, props, children) {
   if (!el) el = document.createDocumentFragment()
-  else if (typeof el === 'string') el = document.createElement(el, props && props.is && { is: props.is })
+  else if (typeof el === 'string') {
+    el = document.createElement(el, props && isPrimitive(props.is) ? { is: props.is } : undefined)
+  }
 
   if (props) applyProps(el, props)
 
@@ -221,6 +223,7 @@ function applyProps(el, props) {
       else {
         el[name] = value !== false
       }
+
       // collect use/is patch rendered DOM
       // FIXME: that should be a stream
       if (!propsCache.has(el)) propsCache.set(el, new Set)
@@ -270,8 +273,9 @@ export function collectProps(el) {
 
 function initComponent(el, fn) {
   let props = collectProps(el)
+  props.element = el
 
-  let result = fn(el, props)
+  let result = fn(props)
   if (result !== undefined && result !== el && isRenderable(result)) {
     let frag = html`<>${result}</>`
     result = frag.childNodes.length > 1 ? [...frag.childNodes] : frag.firstChild

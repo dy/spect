@@ -448,11 +448,23 @@ t('html: must not morph inserted nodes', async t => {
   t.is(bar.outerHTML, '<p>bar</p>')
 })
 
+t.skip('html: render to props', t => {
+  let el = html`<${X} x=1/>`
+
+  function X (props) {
+    html`<${props}>${props.x}</>`
+  }
+
+  t.is(el.outerHTML, '<x x="1">1</x>')
+})
+
 t('html: must not replace self', t => {
   let el = html`<x is=${x} />`
-  function x (el) {
-    return html`<${el}/>`
+  t.is(el.outerHTML, '<x></x>')
+  function x ({element}) {
+    return html`<${element}/>`
   }
+  t.is(el.outerHTML, '<x></x>')
 })
 
 t('html: externally assigned props must be available', async t => {
