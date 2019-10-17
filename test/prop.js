@@ -11,32 +11,34 @@ t('prop: basics', async t => {
     log.push(item)
   }
   })()
-  await Promise.resolve().then()
+  await Promise.resolve().then().then()
   t.is(log, [0], 'basic')
   o.x = 1
   o.x = 2
-  await Promise.resolve().then()
+  await Promise.resolve().then().then().then().then().then().then().then()
   t.is(log, [0, 2], 'basic')
   o.x = 3
   o.x = 4
   o.x = 5
-  await Promise.resolve().then()
+  await Promise.resolve().then().then()
   t.is(log, [0, 2, 5], 'updates to latest value')
   o.x = 5
   o.x = 5
-  await Promise.resolve().then()
+  await Promise.resolve().then().then()
   t.is(log, [0, 2, 5], 'ignores unchanged value')
   o.x = 6
-  t.is(o.x, 6, 'reading applies value')
+  t.is(o.x, 6, 'reading value')
   await Promise.resolve()
   t.is(log, [0, 2, 5, 6], 'reading applies value')
+  await Promise.resolve().then()
+  t.is(log, [0, 2, 5, 6], 'reading has no side-effects')
   o.x = 7
   o.x = 6
-  await Promise.resolve()
+  await Promise.resolve().then().then()
   t.is(log, [0, 2, 5, 6], 'changing and back does not cause trigger')
   xs.cancel()
   o.x = 7
-  await Promise.resolve().then()
+  await Promise.resolve().then().then()
   t.is(o.x, 7, 'end destructures property')
   t.is(log, [0, 2, 5, 6], 'end destructures property')
 })
@@ -106,10 +108,14 @@ t('prop: multiple listeners', async t => {
   prop(obj, 'items', list => {
     log1.push(list)
   })
+  await Promise.resolve().then().then()
+  t.is(log1, [[]])
   prop(obj, 'items', list => {
     log2.push(list)
   })
   await Promise.resolve().then().then()
+  t.is(log1, [[]])
+  t.is(log2, [[]])
   obj.items = [1,2,3]
   await Promise.resolve().then().then()
   t.is(log1, [[], [1,2,3]])
@@ -118,4 +124,18 @@ t('prop: multiple listeners', async t => {
 
 t('prop: must return stream', t => {
   t.is(!!prop({}, 'x'), true)
+})
+
+t('prop: separate props', async t => {
+  let log = []
+  let obj = {x: 0, y: 0}
+  prop(obj, 'x', x => log.push('x' + x))
+  prop(obj, 'y', y => log.push('y' + y))
+
+  await Promise.resolve().then().then()
+  t.is(log, ['x0', 'y0'])
+
+  obj.x = 1
+  await Promise.resolve().then().then()
+  t.is(log, ['x0', 'y0', 'x1'])
 })

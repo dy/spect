@@ -13,9 +13,9 @@ t('fx: basic', async t => {
   obj.x = 1
   await Promise.resolve().then().then()
   t.is(log, [0, undefined, 0, 0, 1, 0])
-  obj.y = 2
-  await Promise.resolve().then()
-  t.is(log, [0, undefined, 0, 0, 1, 0, 1,2])
+  // obj.y = 2
+  // await Promise.resolve().then()
+  // t.is(log, [0, undefined, 0, 0, 1, 0, 1,2])
 })
 
 t('fx: should run initial value')

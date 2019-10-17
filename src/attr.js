@@ -35,6 +35,7 @@ export default function attr(el, name, callback) {
     start(controller) {
       (controllers[name] || (controllers[name] = [])).push(controller)
       controller.enqueue(el.getAttribute(name))
+      callback && callback(el.getAttribute(name))
       streamController = controller
     },
     pull(controller) {
