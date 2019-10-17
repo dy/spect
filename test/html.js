@@ -166,6 +166,8 @@ t('html: generator', async t => {
   t.is(el.outerHTML, `<div>1</div>`)
   await Promise.resolve().then()
   t.is(el.outerHTML, `<div>2</div>`)
+  // await Promise.resolve().then()
+  // t.is(el.outerHTML, `<div>3</div>`)
 })
 
 t('html: async generator', async t => {
@@ -175,11 +177,14 @@ t('html: async generator', async t => {
     await Promise.resolve().then()
     yield 2
     await Promise.resolve().then()
+    // return 3
   }}</div>`
   await Promise.resolve().then().then().then().then()
   t.is(el.outerHTML, `<div>1</div>`)
   await Promise.resolve().then().then().then().then()
   t.is(el.outerHTML, `<div>2</div>`)
+  // await Promise.resolve().then().then().then().then()
+  // t.is(el.outerHTML, `<div>3</div>`)
 })
 
 t.todo('html: react-component compatible', t => {
@@ -239,6 +244,13 @@ t('html: preserve rendering target classes/ids/attribs', t => {
   t.is(el.outerHTML, `<div x="1" class="x z w" id="y" w="2"></div>`)
   t.is(el.x, '1')
   t.is(el.w, '2')
+})
+
+t('html: does not duplicate classes for container', t => {
+  let el = document.createElement('div')
+  el.classList.add('x')
+  html`<${el}.x/>`
+  t.is(el.outerHTML, '<div class="x"></div>')
 })
 
 t('legacy html: readme default', async t => {
@@ -762,6 +774,11 @@ t('html: null-like insertions', t => {
   let a = html`<a>foo ${ null } ${ undefined } ${ false } ${0}</a>`
 
   t.is(a.innerHTML, 'foo    0')
+
+  let b = html`${ null } ${ undefined } ${ false } ${0}`
+  t.is(b.textContent, '   0')
+  let c = html``
+  t.is(c.textContent, '')
 })
 
 t.todo('legacy html: parent props must rerender nested components', async t => {

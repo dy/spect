@@ -16,14 +16,15 @@ export default function html(...args) {
   plannedComponentInit = new Set()
 
   // render DOM
-  let result = htm.call(h, ...args)
+  let result = htm.call(h, ...args) || document.createTextNode('')
 
   // non-DOM htm result to DOM
   if (isPrimitive(result)) result = document.createTextNode(result)
   else if (Array.isArray(result)) {
-    let frag = document.createDocumentFragment()
-    frag.append(...result)
-    result = frag
+    // let frag = document.createDocumentFragment()
+    // frag.append(...result)
+    // result = frag
+    result = html`<>${result}</>`
   }
 
   // seal result
@@ -57,7 +58,7 @@ function h(tag, props, ...children) {
     // don't override initial tag id
     if (tag.id && !props.id) props.id = tag.id
     if (tag.classList.length && props.class) {
-      props.class = [...tag.classList, props.class]
+      props.class = [...new Set([...tag.classList, props.class])]
     }
 
     // keep attributes
@@ -73,20 +74,11 @@ function h(tag, props, ...children) {
       getNodeKey: (el) => {
         return el.key || el.id
       },
-      onBeforeElChildrenUpdated: (fromEl, toEl) => {
-        // text-only case is special
-        // if ([...fromEl.childNodes].every(node => node.nodeType === 3) && [...toEl.childNodes].every(node => node.nodeType === 3)) {
-        //   console.log(fromEl.innerHTML, toEl.innerHTML)
-        //   // fromEl.textContent = toEl.textContent
-        //   // return false
-        // }
-      },
       onBeforeElUpdated: (fromEl, toEl) => {
         // FIXME: this blocks updating
         // if (fromEl.isEqualNode(toEl)) {
         //   return false
         // }
-        //   console.log(fromEl.innerHTML, toEl.innerHTML)
         if (!toEl[_morph]) {
           fromEl.replaceWith(toEl)
           return false
