@@ -1,6 +1,5 @@
 import t from 'tst'
 import { $, fx, prop, html, on } from '..'
-import morphdom from 'morphdom'
 
 t('readme: A simple aspect', async t => {
   let el = document.body.appendChild(document.createElement('div'))
@@ -15,13 +14,13 @@ t('readme: A simple aspect', async t => {
     </>`
   })
 
-  await Promise.resolve().then()
+  await Promise.resolve().then().then()
 
   t.is(el.outerHTML, '<div id="hello-example"><div class="message">Hello, xyz!</div></div>')
 
   el.name = 'Taylor'
 
-  await Promise.resolve().then()
+  await Promise.resolve().then().then()
 
   t.is(el.outerHTML, '<div id="hello-example"><div class="message">Hello, Taylor!</div></div>')
 
