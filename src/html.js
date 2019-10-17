@@ -133,6 +133,8 @@ function createElement(el, props, children) {
   if (!el) el = document.createDocumentFragment()
   else if (typeof el === 'string') el = document.createElement(el, props && props.is && { is: props.is })
 
+  if (props) applyProps(el, props)
+
   if (children) {
     children = children.flat()
       .filter(child => typeof child === 'number' || child)
@@ -142,8 +144,14 @@ function createElement(el, props, children) {
         // clone textnodes to avoid morphing them
         if (child.nodeType === 3) return child.cloneNode()
 
+        // functions
+        if (typeof child === 'function') {
+          child = child(el, props)
+          if (isRenderable(child)) return child
+        }
+
         // async iterator is like continuous suspense
-        if (child[Symbol.asyncIterator]) {
+        if (child[Symbol.asyncIterator] || child[Symbol.iterator]) {
           let holder = isElement(child) ? child : document.createTextNode('')
           ;(async () => {
             for await (el of child) {
@@ -169,7 +177,6 @@ function createElement(el, props, children) {
       })
   }
 
-  if (props) applyProps(el, props)
   if (children) el.append(...children)
 
   // internal nodes can be morphed

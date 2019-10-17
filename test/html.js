@@ -145,7 +145,42 @@ t.todo('html: thenable', async t => {
   html`<${el}>${thenable}</>`
 })
 
-t.todo('html: generator')
+t('html: function', t => {
+  let el = html`<div x=1>${function (el) {
+    return el.x
+  }}</div>`
+  t.is(el.outerHTML, `<div x="1">1</div>`)
+
+  let el2 = html`<div x=2>${function (el) {
+    return el.x
+  }}</div>`
+  t.is(el2.outerHTML, `<div x="2">2</div>`)
+})
+
+t('html: generator', async t => {
+  let el = html`<div>${ function* () {
+    yield 1
+    yield 2
+  }}</div>`
+  await Promise.resolve().then()
+  t.is(el.outerHTML, `<div>1</div>`)
+  await Promise.resolve().then()
+  t.is(el.outerHTML, `<div>2</div>`)
+})
+
+t('html: async generator', async t => {
+  let el = html`<div>${async function* () {
+    await Promise.resolve().then()
+    yield 1
+    await Promise.resolve().then()
+    yield 2
+    await Promise.resolve().then()
+  }}</div>`
+  await Promise.resolve().then().then().then().then()
+  t.is(el.outerHTML, `<div>1</div>`)
+  await Promise.resolve().then().then().then().then()
+  t.is(el.outerHTML, `<div>2</div>`)
+})
 
 t.todo('html: react-component compatible', t => {
 
