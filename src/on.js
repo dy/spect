@@ -1,4 +1,5 @@
 import { on as addEventListener } from 'emmy'
+import { ReadableStream } from './util'
 
 export default function on (target, event, callback, o) {
   let off

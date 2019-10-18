@@ -130,9 +130,16 @@ function createElement(el, props, children) {
   if (props) applyProps(el, props)
 
   if (children) {
-    children = children.flat()
+    children = children
+      .flat()
       .filter(child => typeof child === 'number' || child)
       .map(child => {
+        if (isIterable(child)) {
+          let frag = document.createDocumentFragment()
+          frag.append(...child)
+          return frag
+        }
+
         if (isPrimitive(child)) return document.createTextNode(child)
 
         // clone textnodes to avoid morphing them

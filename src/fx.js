@@ -1,4 +1,4 @@
-import { setMicrotask } from "./util"
+import { setMicrotask, ReadableStream } from "./util"
 
 export default function fx(...args) {
   let callback = args.pop()
@@ -18,6 +18,7 @@ export default function fx(...args) {
 
       args.forEach(async (dep, i) => {
         for await (const value of dep) {
+          if (this.done) return
           values[i] = value
 
           if (!planned) planned = setMicrotask(() => {

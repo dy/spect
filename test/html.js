@@ -448,6 +448,12 @@ t('html: must not morph inserted nodes', async t => {
   t.is(bar.outerHTML, '<p>bar</p>')
 })
 
+t('html: update own children', t => {
+  let el = html`<div>123</div>`
+  html`<${el}>${ el.childNodes }</>`
+  t.is(el.outerHTML, '<div>123</div>')
+})
+
 t.skip('html: render to props', t => {
   let el = html`<${X} x=1/>`
 

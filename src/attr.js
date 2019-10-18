@@ -1,3 +1,5 @@
+import { ReadableStream } from './util'
+
 const cache = new WeakMap
 
 export default function attr(el, name, callback) {

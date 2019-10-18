@@ -1,4 +1,4 @@
-import { setMicrotask, clearMicrotask, isElement } from './util'
+import { setMicrotask, clearMicrotask, isElement, ReadableStream } from './util'
 import { on, emit, off } from 'emmy'
 import tuple from 'immutable-tuple'
 

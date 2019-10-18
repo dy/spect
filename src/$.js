@@ -1,5 +1,5 @@
 import wickedElements from 'wicked-elements'
-import { isIterable } from './util'
+import { isIterable, ReadableStream } from './util'
 import { collectProps } from './html'
 
 const cache = new Map

@@ -1,5 +1,5 @@
 import t from 'tst'
-import { $ } from '..'
+import { $, fx } from '..'
 
 t('$: elements callback', async t => {
   let ellog = []
@@ -74,6 +74,21 @@ t('$: elements async gen', async t => {
   await Promise.resolve().then()
   t.is(log, ['x', 'x', 'x', 'x'], 'additional aspect')
   t.is(log2, [1], 'additional aspect')
+
+  document.body.removeChild(container)
+})
+
+t.skip('$: removing $ disables internal effects', async t => {
+  let container = document.createElement('div')
+  document.body.appendChild(container)
+
+  let obj = {}
+
+  $('x', e => {
+    fx(props(), x => {
+
+    })
+  })
 
   document.body.removeChild(container)
 })

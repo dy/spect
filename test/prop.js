@@ -38,7 +38,7 @@ t('prop: basics', async t => {
   t.is(log, [0, 2, 5, 6], 'changing and back does not cause trigger')
   xs.cancel()
   o.x = 7
-  await Promise.resolve().then().then()
+  await Promise.resolve().then().then().then()
   t.is(o.x, 7, 'end destructures property')
   t.is(log, [0, 2, 5, 6], 'end destructures property')
 })
