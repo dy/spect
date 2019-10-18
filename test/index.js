@@ -15,3 +15,13 @@ import './html.js'
 // import './css.js'
 
 
+
+Object.defineProperty(DocumentFragment.prototype, 'outerHTML', {
+  get() {
+    let str = '<>'
+    this.childNodes.forEach(el => str += el.nodeType === 3 ? el.textContent : el.outerHTML)
+    str += '</>'
+    return str
+  }
+})
+

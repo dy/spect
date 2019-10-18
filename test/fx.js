@@ -23,7 +23,8 @@ t('fx: basic', async t => {
   props.cancel()
 
   obj.x = 5
-  await Promise.resolve().then().then()
+  obj.y = 6
+  await Promise.resolve().then().then().then().then()
   t.is(log, [0, 0, 1, 0, 1, 2, 3, 4])
 })
 

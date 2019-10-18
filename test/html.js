@@ -1,14 +1,6 @@
 import t from 'tst'
 import { html, $, prop } from '..'
 
-Object.defineProperty(DocumentFragment.prototype, 'outerHTML', {
-  get() {
-    let str = '<>'
-    this.childNodes.forEach(el => str += el.outerHTML)
-    str += '</>'
-    return str
-  }
-})
 
 t('html: apply direct props', async t => {
   let a = document.createElement('a')
@@ -145,20 +137,27 @@ t.todo('html: thenable', async t => {
   html`<${el}>${thenable}</>`
 })
 
+t('html: render to fragment', t => {
+  let frag = document.createDocumentFragment()
+  html`<${frag}>1</>`
+  t.is(frag.outerHTML, '<>1</>')
+})
+
 t('html: function', t => {
-  let el = html`<div x=1>${function (el) {
-    return el.x
+  let el = html`<div x=1>${function ({ element }) {
+    html`<${element}>1</>`
+    return element
   }}</div>`
   t.is(el.outerHTML, `<div x="1">1</div>`)
 
-  let el2 = html`<div x=2>${function (el) {
-    return el.x
+  let el2 = html`<div x=2>${function ({ element }) {
+    return 2
   }}</div>`
   t.is(el2.outerHTML, `<div x="2">2</div>`)
 })
 
 t('html: generator', async t => {
-  let el = html`<div>${ function* () {
+  let el = html`<div>${ function* ({}) {
     yield 1
     yield 2
   }}</div>`

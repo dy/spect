@@ -57,7 +57,7 @@ function h(tag, props, ...children) {
 
     // don't override initial tag id
     if (tag.id && !props.id) props.id = tag.id
-    if (tag.classList.length && props.class) {
+    if (tag.classList && tag.classList.length && props.class) {
       props.class = [...new Set([...tag.classList, props.class])]
     }
 
@@ -68,7 +68,7 @@ function h(tag, props, ...children) {
       }
     }
 
-    let newTag = createElement(tag.tagName, props, children)
+    let newTag = createElement(tag.tagName || '', props, children)
 
     morph(tag, newTag, {
       getNodeKey: (el) => {
@@ -147,7 +147,7 @@ function createElement(el, props, children) {
 
         // functions
         if (typeof child === 'function') {
-          child = child(el, props)
+          child = child({ element: document.createDocumentFragment() })
           if (isRenderable(child)) return child
         }
 
@@ -160,7 +160,7 @@ function createElement(el, props, children) {
               holder.replaceWith(el)
               holder = el
             }
-            // FIXME: there's a possible mem leak
+            // FIXME: there's possible mem leak
           })()
           return holder
         }
@@ -168,6 +168,7 @@ function createElement(el, props, children) {
         // suspense is promise
         if (child.then) {
           child.then(el => {
+            // FIXME: if holder is array, it can waste the position
             holder.replaceWith(el)
           })
           let holder = isElement(child) ? child : document.createTextNode('')
