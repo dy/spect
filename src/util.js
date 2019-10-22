@@ -49,6 +49,11 @@ export function isRenderable (arg) {
   return arg === null || isPrimitive(arg) || Array.isArray(arg) || isElement(arg)
 }
 
+export function flat (arg) {
+  let result = [...arg]
+  return result.map(el => isIterable(arg) ? flat(arg) : arg).flat()
+}
+
 
 // polyfill readable stream iterator
 export const ReadableStream = window.ReadableStream && window.ReadableStream.prototype[Symbol.asyncIterator] ?

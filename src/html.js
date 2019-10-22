@@ -67,6 +67,7 @@ function h(tag, props, ...children) {
         if (!(attr.name in props)) props[attr.name] = attr.value
       }
     }
+    children = children.flat()
 
     let newTag = createElement(tag.tagName || '', props, children)
 
@@ -152,7 +153,7 @@ function createElement(el, props, children) {
         }
 
         // async iterator is like continuous suspense
-        if (child[Symbol.asyncIterator] || child[Symbol.iterator]) {
+        if (!isElement(child) && (child[Symbol.asyncIterator] || child[Symbol.iterator])) {
           let holder = isElement(child) ? child : document.createTextNode('')
           ;(async () => {
             for await (el of child) {

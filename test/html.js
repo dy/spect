@@ -39,15 +39,15 @@ t('html: rerendering with props: must persist', async t => {
   let div = document.createElement('div')
 
   html`<${el}>${div}<x/></>`
-  // t.equal(el.firstChild, div)
+  t.equal(el.firstChild, div)
   t.equal(el.childNodes.length, 2)
 
   html`<${el}><${div}/><x/></>`
-  // t.equal(el.firstChild, div)
+  t.equal(el.firstChild, div)
   t.equal(el.childNodes.length, 2)
 
   html`<${el}><${div}/><x/></>`
-  // t.equal(el.firstChild, div)
+  t.equal(el.firstChild, div)
   t.equal(el.childNodes.length, 2)
 
   html`<${el}><div/><x/></>`
@@ -111,6 +111,33 @@ t('html: wrapping', async t => {
   t.is(wrapped.outerHTML, '<div><foo class="foo"><bar></bar></foo></div>')
   t.is(wrapped.firstChild, foo)
   t.is(wrapped.firstChild.x, 1)
+})
+
+t('html: wrapping with children', async t => {
+  let root = document.createElement('div')
+  root.innerHTML = '<foo><bar></bar><baz></baz></foo>'
+  let foo = root.firstChild
+  foo.x = 1
+
+  let wrapped = html`<div>
+    <${foo}.foo>${ [...foo.childNodes] }</>
+  </div>`
+
+  t.is(wrapped.outerHTML, '<div><foo class="foo"><bar></bar><baz></baz></foo></div>')
+  t.is(wrapped.firstChild, foo)
+  t.is(wrapped.firstChild.x, 1)
+})
+
+t('html: select case', async t => {
+  let w = html`
+    <>
+    <select>
+      <option value="a"></option>
+    </select>
+  </>
+  `
+  await Promise.resolve().then()
+  t.is(w.outerHTML, `<><select><option value="a"></option></select></>`)
 })
 
 t('html: promises', async t => {
