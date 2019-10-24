@@ -1,7 +1,7 @@
 {
   "name": "spect",
   "version": "8.1.0",
-  "description": "web-streams for UI",
+  "description": "Web-streams for UI",
   "main": "./src/index.js",
   "@pika/pack": {
     "pipeline": [
