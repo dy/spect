@@ -456,3 +456,4 @@ Version | Changes
 0.0.1 | [jsxify](https://github.com/scrapjs/jsxify) R&D.
 0.0.0 | Mod framework (Modifiers for DOM).
 
+<p align="right">HK</p>
