@@ -1,6 +1,6 @@
 {
   "name": "spect",
-  "version": "9.0.0",
+  "version": "10.0.0",
   "description": "Web-streams for UI",
   "main": "./src/index.js",
   "@pika/pack": {
