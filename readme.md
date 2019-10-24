@@ -1,6 +1,6 @@
 # Spect ![experimental](https://img.shields.io/badge/stability-experimental-yellow) [![Build Status](https://travis-ci.org/spectjs/spect.svg?branch=master)](https://travis-ci.org/spectjs/spect)
 
-Stream-based reactive UIs with aspect-oriented flavor.
+UI streams.
 
 <!-- Incorporates  [aspect-oriented programming](https://en.wikipedia.org/wiki/Aspect-oriented_programming), FRP and streams. -->
 
@@ -81,17 +81,17 @@ $('.i18n', el => {
 
 ## Installation
 
-**A.** As _npm_ package:
+<!-- **A.** As _npm_ package: -->
 
 [![npm i spect](https://nodei.co/npm/spect.png?mini=true)](https://npmjs.org/package/spect/)
 
 ```js
-import { fx, on } from 'spect'
+import { $, fx, on, prop } from 'spect'
 
 // ...UI code
 ```
 
-**B.** As module<sup><a href="#principle-2">2</a></sup>:
+<!-- **B.** As module<sup><a href="#principle-2">2</a></sup>:
 
 ```html
 <script type="module">
@@ -110,24 +110,24 @@ import { use, fx, on } from 'https://unpkg.com/spect@latest?module'
 
   // ...UI code
 </script>
-```
+``` -->
 
 
 ## Getting started
 
-At core of _spect_ is concept of streams, implemented on language level as [async iterators](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Symbol/asyncIterator), which be thought of as array, distributed in time. Spect provides streams for various data sources, such as object props, element attributes, selector observer, DOM events, local storage, location and others. Async iterators can be combined, connected, passed through, assigned side-effects etc.
+_Spect_ provides collection of [_ReadableStreams_](https://developer.mozilla.org/en-US/docs/Web/API/ReadableStream), useful for building UIs.
 
 🎬 Let's build [react examples](https://reactjs.org/).
 
-### A Simple Aspect
+### A Simple Selector Stream
 
-This example assigns handler to `#hello-example` element and registers side-effect, rendering `div` with welcoming when `name` property changes.
+This example assigns handler to `#hello-example` element and observes its `name` property, rerendering content.
 
 ```html
 <div id="hello-example" name="Cyril"></div>
 
 <script type="module">
-import { html, prop } from 'spect'
+import { $, html, prop } from 'spect'
 
 // for each #hello-example
 $('#hello-example', el => {
@@ -147,9 +147,9 @@ $('#hello-example', el => {
 <p align='right'><a href="https://codesandbox.io/s/a-simple-aspect-xz22f">Open in sandbox</a></p>
 
 
-### A Stateful Aspect
+### A Stateful Stream
 
-Basic streams include: `prop` for observing property changes, `on` for observing events, `fx` for reacting on changes of any input (reminding `useEffect`).
+This is example of simpel timer: it handles `connected` and `disconnected` event streams, as well as runs side-effect via `fx`, that is triggered whenever any input stream (`prop`) emits new value.
 
 ```js
 import { $, prop, on, fx, html } from 'spect'
@@ -177,7 +177,7 @@ $('#timer-example', async el => {
 
 ### An Application
 
-Aspects are assigned to elements with `use`, which registers selector observer via [wicked-elements](https://ghub.io/wicked-elements).
+Selector streams allow easily assign aspects to elements.
 
 ```js
 import { $, on, html, prop } from 'spect'
@@ -226,6 +226,7 @@ $('#todo-list', el => {
 ### A Component Using External Plugins
 
 The _html_ syntax is extension of [htm](https://ghub.io/htm), enabling rendering / creating / patching real DOM.
+Can be replaced with [lit-html](https://ghub.io/lit-html).
 
 ```js
 // index.js
@@ -276,7 +277,7 @@ let getRawMarkup = content => {
 
 ## Documentation
 
-[**`$`**](#use-el--destroy--deps---generic-side-effect)&nbsp;&nbsp;
+<!-- [**`$`**](#use-el--destroy--deps---generic-side-effect)&nbsp;&nbsp;
 [**`prop`**](#prop-name--val-deps---properties-provider)&nbsp;&nbsp;
 [**`fx`**](#fx-el--destroy--deps---generic-side-effect)&nbsp;&nbsp;
 [**`on`**](#on-evt-fn---events-provider)&nbsp;&nbsp;
@@ -291,14 +292,14 @@ Each function in `spect` creates asynchronous iterator with the following proper
 
 - `.end()` - tears down stream and all internal streams
 - `.then` - makes stream awaitable for the next value
-- `<effect>(...args, callback)` - the callback is the last argument for all streams
+- `<effect>(...args, callback)` - the callback is the last argument for all streams -->
 <!-- - returned from callback value is called as destructor of previous value -->
 <!-- - `.push(value?)` - puts new data value into stream -->
 
 
-### `$( selector | element[s], el => {}? )` - selector observer
+### `$( selector | element[s], el => {}? )` - selector observer stream
 
-Observe selector, invoke callback when matching element is appeared in the DOM. The callback is invoked once per element.
+Emit elements, appended to dom, matching selector.
 
 ```js
 let foos = $('.foo', el => {
@@ -316,9 +317,11 @@ for await (const bar of bars) {
 let el = await $('#qux', el => {})
 ```
 
-### `prop(target, prop, value => {}? )` − property observer
+---
 
-Create property change stream.
+### `prop(target, prop, value => {}? )` − property stream
+
+Emit changed property values.
 
 ```js
 let target = { foo: null }
@@ -330,9 +333,11 @@ for await (const value of foos) {
 }
 ```
 
-### `attr(target, name, value => {}? )` − attribute observer
+---
 
-Create attribute change stream.
+### `attr(target, name, value => {}? )` − attribute stream
+
+Observe element attribute, emit changed values.
 
 ```js
 attr(el, 'hidden', isHidden => {
@@ -340,9 +345,11 @@ attr(el, 'hidden', isHidden => {
 })
 ```
 
-### `fx( ...deps, (...deps) => {} )` − effect
+---
 
-Assign effect for multiple input streams. Takes input asyncIterables, invokes callback whenever any of inputs gets new value.
+### `fx( ...inputs, (...values) => {} )` − stream effect
+
+Trigger side-effect whenever any input stream/asyncIterable, emits new value.
 
 ```js
 let state = { count : 0 }
@@ -357,9 +364,11 @@ $('.counter', el => {
 })
 ```
 
+---
+
 ### `on( element | selector, evt, fn )` − event stream
 
-Stream for specific event.
+Observe for element/selector event.
 
 ```js
 // direct
@@ -376,6 +385,8 @@ for await (const e of on('.target', 'connected disconnected')) {
 
 }
 ```
+
+---
 
 ### ``.html`...markup` `` − patch html
 
