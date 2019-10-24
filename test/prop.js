@@ -91,7 +91,8 @@ t('prop: observe element props', async t => {
   el.focus()
   el.value = '1'
   el.dispatchEvent(new Event('change'))
-  el.blur()
+  el.dispatchEvent(new Event('blur'))
+  // el.blur()
 
   await Promise.resolve().then().then().then()
 

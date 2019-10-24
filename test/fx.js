@@ -8,23 +8,23 @@ t('fx: basic', async t => {
   let props = fx(prop(obj, 'x'), prop(obj, 'y'), (x, y) => {
     log.push(x, y)
   })
-  await Promise.resolve().then()
+  await Promise.resolve().then().then().then()
   t.is(log, [0, 0])
   obj.x = 1
-  await Promise.resolve().then().then()
+  await Promise.resolve().then().then().then().then()
   t.is(log, [0, 0, 1, 0])
   obj.y = 2
-  await Promise.resolve().then().then()
+  await Promise.resolve().then().then().then().then()
   t.is(log, [0, 0, 1, 0, 1, 2])
   obj.x = 3
   obj.y = 4
-  await Promise.resolve().then().then()
+  await Promise.resolve().then().then().then().then()
   t.is(log, [0, 0, 1, 0, 1, 2, 3, 4])
   props.cancel()
 
   obj.x = 5
   obj.y = 6
-  await Promise.resolve().then().then().then().then()
+  await Promise.resolve().then().then().then().then().then().then()
   t.is(log, [0, 0, 1, 0, 1, 2, 3, 4])
 })
 
