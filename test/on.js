@@ -33,7 +33,10 @@ t('on: async gen', async t => {
   t.is(log, ['click', 'click', 'click', 'click', 'click', 'click'], 'end stops event stream')
   t.is(cblog, ['click', 'click', 'click', 'click', 'click', 'click'], 'end stops event stream')
 })
-t('on: awaits for the event')
+t.skip('on: awaits for the event', async t => {
+  let el = document.createElement('x')
+  await on(el, 'disconnected')
+})
 
 t('on: delegate', async t => {
   let el = document.createElement('x')
