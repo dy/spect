@@ -1,9 +1,49 @@
 import t from 'tst'
-import { $, fx, store } from '..'
-import 'setimmediate'
+import { $, fx, prop } from '..'
 
 
-t('fx: basic API', async t => {
+t('fx: basic', async t => {
+  let log = [], obj = {x: 0, y: 0}
+
+  let props = fx(prop(obj, 'x'), prop(obj, 'y'), (x, y) => {
+    log.push(x, y)
+  })
+  await Promise.resolve().then().then().then()
+  t.is(log, [0, 0])
+  obj.x = 1
+  await Promise.resolve().then().then().then().then()
+  t.is(log, [0, 0, 1, 0])
+  obj.y = 2
+  await Promise.resolve().then().then().then().then()
+  t.is(log, [0, 0, 1, 0, 1, 2])
+  obj.x = 3
+  obj.y = 4
+  await Promise.resolve().then().then().then().then()
+  t.is(log, [0, 0, 1, 0, 1, 2, 3, 4])
+  props.cancel()
+
+  obj.x = 5
+  obj.y = 6
+  await Promise.resolve().then().then().then().then().then().then()
+  t.is(log, [0, 0, 1, 0, 1, 2, 3, 4])
+})
+
+t('fx: should run initial value')
+t('fx: pass constants')
+t('fx: returned result is async generator too')
+t('fx: tears down internal effects')
+
+t('fx: shoult run empty effect', async t => {
+  let log = []
+  fx(() => {
+    log.push(1)
+  })
+  t.is(log, [], 'must be async (to easier init)')
+  await Promise.resolve().then()
+  t.is(log, [1])
+})
+
+t.todo('fx: basic API', async t => {
   let log = []
   let state = store()
   let state2 = store()

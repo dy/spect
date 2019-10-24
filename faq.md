@@ -1,29 +1,18 @@
-
 ## FAQ
 
-### What's the purpose of aspects?
+### Suspense?
 
-Aspects are already a conceptual part of HTML:
+Any target with `then` method is considered a suspense.
 
-* CSS - visual aspect, separated from structure (selectors act as pointcuts, rules act as as advice);
-* Attributes - `hidden`, `contenteditable`, `title`, `autocapitalize` etc.
+```js
+html`<${target} then=${e => html`Result!`}>Loading...</>`
+```
 
-That concept is taken a step forward, enabling separation of [cross-cutting concerns](https://en.wikipedia.org/wiki/Cross-cutting_concern): _authorization_, _localization_, _accessibility_, _microformats_, _logging_, _sound_, _formatting_, _analytics_ and others. Any business-logic or domain-related concern can be separated into own aspect.
+More to that, target can be streams:
 
-<!-- The API is based on known patterns/practices, such as selectors (jQuery), rendering functions (React functional components), side-effects (React hooks). It's proven that other approaches, such as pure hooks, while maintaining similar level of expressivity, provide less robustness for intercom -->
-
-Aspects gracefully solve many common standard frontend tasks, such as portals, code splitting, hydration etc.
-
-The main purpose of aspect is providing a reaction to some changes. For that purpose, mechanism of subscriptions/updates is implicitly geared up, via reading/writing collections with effects.
-
-
-### What's the purpose of effects?
-
-Effects enable subscription of aspects to updates. If some effect is read, that automatically subscribes active aspect to updates of that effect. This way, effects act in remote way like `useState`.
-
-Effects also take optional `deps` as the last argument, which makes them act similar to `useEffect`, defining filtering strategy. But unlike `useEffect`, deps can be non-array value for simple toggles. Also `deps` have less limitations due to different strategy of detecting callsite.
-
-Also effects provide unified and handy API for common domains, such as `attr`, `dataset`, `dom`, `css`, `events` etc - possible domains areas are limitless. That is akin to jQuery methods.
+```js
+html`<${target}>${ fx(store('items'), item => html`<li.item>${item}</li>`) }</>`
+```
 
 
 ### Portals?
@@ -31,16 +20,13 @@ Also effects provide unified and handy API for common domains, such as `attr`, `
 Portals come out of the box:
 
 ```js
-$`#app`.use(el => {
-  $(el).html`Current content`
-
-  $`#external-container`.html`Portal content`
-})
+html`<#portal-container>Portal content</>`
+html`<${portalContainer}>Portal content</>`
 ```
 
 ### JSX?
 
-Spect is hyperscript compatible and is able to create vdom or real dom, depending on current effect context. To use JSX - provide babel pragma:
+`html` is hyperscript compatible and is able to create vdom or real dom, depending on current effect context. To use JSX - provide babel pragma:
 
 ```js
 /* @jsx $ */
@@ -90,22 +76,10 @@ UI can be analyzed and decomposed from aspects perspective, work delegated to mu
 Hydration in _Spect_ is just a matter of applying HTML effect to any wrapped element:
 
 ```js
-$`#app`.html`<div#app-conent>...markup</>`
+html`<${app}><div#app-conent>...markup</></>`
 ```
 
 It comes out of the box and is applicable to any website, not only built with specially crafted backend, that can be just regular PHP.
-
-
-<!--
-### `use`, `fx` - what's the difference?
-
-`is` provides single main aspect for an element via mechanism of web-components, if that's available. `is` aspect is always called first when element is updated.
-
-`use` provides multiple secondary aspects for an element, called in order after the main one. `use` doesn't use custom elements for rendering themselves.
-
-Both `is` and `use` are rendered in current animation frame, planning rerendering schedules update for the next frame.
-
-`fx` provides a function, called after current aspect call. It is called synchronously in sense of processor ticks, but _after_ current renering aspect. Ie. aspect-less `fx` calls will trigger themselves instantly. -->
 
 
 ### Microfrontends?
@@ -250,7 +224,7 @@ $(['a', 'b', 'c']).use(str => {
 })
 ```
 
-### Replace document context?
+### JSDOM / Custom document?
 
 _Spect_ can be assigned to another document context, like [jsdom](https://ghub.io/jsdom):
 

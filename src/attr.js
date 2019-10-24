@@ -1,50 +1,52 @@
-import {createEffect} from './util'
-import {fire} from './on'
+import { ReadableStream } from './util'
 
 const cache = new WeakMap
-export default createEffect(
-  'attr',
-  function get (el) {
-    let state = cache.get(el)
-    if (!state) {
-      let observer = new MutationObserver(records => {
-        for (let i = 0, length = records.length; i < length; i++) {
-          let { target, oldValue, attributeName } = records[i];
-          // publish([el, 'attr', attributeName])
-        }
-      })
-      observer.observe(el, { attributes: true })
-      cache.set(el, state = { observer, data:{} })
-    }
 
-    for (let attr of el.attributes) {
-      let value = attr.value
-      state.data[attr.name] = attr.value
-    }
+export default function attr(el, name, callback) {
+  if (!name) throw Error('`attr` expects attribute name to observe')
 
-    return state.data
-  },
-  function set(el, obj) {
-    let state = cache.get(el)
-    if (!state) return false
-    for (let prop in obj) {
-      let value = obj[prop]
-      switch(value) {
-        case (false):
-          delete state.data[prop]
-          el.removeAttribute(prop)
-          break;
-        case (true):
-          state.data[prop] = true
-          el.setAttribute(prop, '')
-          break;
-        default:
-          state.data[prop] = value
-          el.setAttribute(prop, value)
+  let controllers = {}
+  let observer = cache.get(el)
+  if (!observer) {
+    cache.set(el, observer = new MutationObserver(records => {
+      let enqueued = {}
+      for (let i = 0, length = records.length; i < length; i++) {
+        let { target, attributeName, oldValue } = records[i];
+        let value = target.getAttribute(attributeName)
+        if (!controllers[name]) continue
+        if (enqueued[name] === value) continue
+        if (Object.is(oldValue, value)) continue
+        enqueued[name] = value
+        controllers[name].forEach(controller => controller.enqueue(value))
+        callback && callback(value)
       }
-    }
-
-    return true
+    }))
+    observer.attributeNames = new Set()
   }
-)
 
+  if (!observer.attributeNames.has(name)) {
+    observer.attributeNames.add(name)
+
+    // observer is singleton, so this redefines previous command
+    observer.observe(el, { attributes: true, attributeFilter: [...observer.attributeNames], attributeOldValue: true })
+  }
+
+  let streamController
+
+  return new ReadableStream({
+    start(controller) {
+      (controllers[name] || (controllers[name] = [])).push(controller)
+      controller.enqueue(el.getAttribute(name))
+      callback && callback(el.getAttribute(name))
+      streamController = controller
+    },
+    pull(controller) {
+    },
+    cancel(reason) {
+      this.done = true
+      observer.attributeNames.delete(name)
+      observer.observe(el, { attributes: true, attributeFilter: [...observer.attributeNames], attributeOldValue: true })
+      controllers[name].splice(controllers[name].indexOf(streamController), 1)
+    }
+  })
+}

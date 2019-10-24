@@ -1,7 +1,55 @@
 import t from 'tst'
-import { $, on, fire, html } from '..'
+import { $, on, html } from '..'
 
-t('on: oldschool', async t => {
+t('on: async gen', async t => {
+  let el = document.createElement('div')
+  let clicks = on(el, 'click', e => cblog.push(e.type))
+  let log = []
+  let cblog = []
+  ;(async () => {
+    for await (const e of clicks) {
+      log.push(e.type)
+    }
+  })()
+  el.click()
+  await Promise.resolve()
+  t.is(log, ['click'], 'basic')
+  t.is(cblog, ['click'], 'basic')
+  el.click()
+  el.click()
+  await Promise.resolve().then().then().then().then()
+  t.is(log, ['click', 'click', 'click'], 'does not skip events')
+  t.is(cblog, ['click', 'click', 'click'], 'does not skip events')
+  el.click()
+  el.click()
+  el.click()
+  await Promise.resolve().then().then().then().then().then().then().then().then() // unfortunately-ish needs an extra await step for every missed event
+  t.is(log, ['click', 'click', 'click', 'click', 'click', 'click'], 'updates to latest value')
+  t.is(cblog, ['click', 'click', 'click', 'click', 'click', 'click'], 'updates to latest value')
+  clicks.cancel()
+  el.click()
+  el.click()
+  await Promise.resolve().then().then()
+  t.is(log, ['click', 'click', 'click', 'click', 'click', 'click'], 'end stops event stream')
+  t.is(cblog, ['click', 'click', 'click', 'click', 'click', 'click'], 'end stops event stream')
+})
+t.skip('on: awaits for the event', async t => {
+  let el = document.createElement('x')
+  await on(el, 'disconnected')
+})
+
+t('on: delegate', async t => {
+  let el = document.createElement('x')
+  document.body.appendChild(el)
+  let log = []
+  on('x', 'click', e => {
+    log.push(e.type)
+  })
+  el.click()
+  t.is(log, ['click'])
+})
+
+t.todo('on: oldschool', async t => {
   let log = []
   let el = html`<a.foo/>`
 
@@ -20,7 +68,7 @@ t('on: oldschool', async t => {
   // })
 })
 
-t('on: await', async t => {
+t.todo('on: await', async t => {
   let log = []
   let el = html`<div/>`
 
@@ -48,7 +96,7 @@ t('on: await', async t => {
   t.is(log, ['click'])
 })
 
-t('on: multiple events', t => {
+t.todo('on: multiple events', t => {
   let log = []
   let el = document.createElement('div')
   let off = on(el, 'touchstart click', e => log.push(e.type))
@@ -68,7 +116,7 @@ t('on: multiple events', t => {
   t.is(log, ['click', 'touchstart', 'click'])
 })
 
-t('on: await multiple', async t => {
+t.todo('on: await multiple', async t => {
   let log = []
   let el = document.createElement('div')
   document.body.appendChild(el)
@@ -102,7 +150,7 @@ t('on: await multiple', async t => {
   document.body.removeChild(el)
 })
 
-t('on: sequences handled as return result', async t => {
+t.todo('on: sequences handled as return result', async t => {
   let log = []
   let el = html`<div/>`
 

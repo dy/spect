@@ -1,12 +1,23 @@
 import kebab from 'kebab-case'
-import equal from 'fast-deep-equal'
-import on, { fire } from './on'
-import tuple from 'immutable-tuple'
-import { current, queue } from './core'
+
+const cancelled = {}
+export function setMicrotask (fn, ctx) {
+  let sym = Symbol('microtask')
+  Promise.resolve().then(() => {
+    if (cancelled[sym]) return
+    delete cancelled[sym]
+    fn()
+  })
+  return sym
+}
+export function clearMicrotask (sym) {
+  cancelled[sym] = true
+}
 
 export const SPECT_CLASS = '👁'
 
 export function isIterable(val) {
+  if (isPrimitive(val)) return false
   if (val instanceof Node) return false
   return (val != null && typeof val[Symbol.iterator] === 'function');
 }
@@ -38,71 +49,54 @@ export function isRenderable (arg) {
   return arg === null || isPrimitive(arg) || Array.isArray(arg) || isElement(arg)
 }
 
-const storeCache = new WeakMap()
-export function createEffect(name, get, set) {
-  let _ = {
-    [name]: (target, ...args) => {
-      let store = storeCache.get(tuple(name, target))
+export function flat (arg) {
+  let result = [...arg]
+  return result.map(el => isIterable(arg) ? flat(arg) : arg).flat()
+}
 
-      if (!store) {
-        let curr = get(target)
 
-        store = new Proxy(curr, {
-          get(store, prop, receiver) {
-            let f = current
-            if (f) {
-              on(target, name + ':' + prop, () => queue(f))
-            }
-            return store[prop]
-            return Reflect.get(store, prop, receiver)
-          },
-          set(store, prop, value, receiver) {
-            set(target, { [prop]: value })
-            fire(target, name + ':' + prop)
-            store[prop] = value
-            return true
-            // return Reflect.set(store, prop, value, receiver)
-          }
-        })
+// polyfill readable stream iterator
+export const ReadableStream = window.ReadableStream && window.ReadableStream.prototype[Symbol.asyncIterator] ?
+  window.ReadableStream : (() => {
+  function ReadableStream (...args) {
+    let readers = []
+    let obj = args[0]
 
-        storeCache.set(tuple(name, target), store)
-      }
+    let stream = new window.ReadableStream(...args)
 
-      switch(true) {
-        // effect(target)
-        case (!args.length):
-          return store
-
-        // effect`...`
-        // case (args[0].raw):
-        //   return template.call(target, target, ...args)
-        //
-
-        // effect(target, s => {...})
-        case (typeof args[0] === 'function'):
-          let fn = args[0]
-          let result = fn(store)
-          if (result !== store && typeof result === typeof store) {
-            _[name](target, result)
-          }
-          return store
-
-        // effect(target, obj)
-        case (typeof args[0] === 'object'):
-          let obj = args[0]
-          let changed = {}
-          for (let prop in obj) {
-            let value = obj[prop]
-            if (Object.is(store[prop], value)) continue
-            fire(target, name + ':' + prop)
-            store[prop] = value
-            changed[prop] = obj[prop]
-          }
-          set(target, changed)
-          return store
-      }
+    // patch cancel to release lock
+    let _cancel = stream.cancel
+    stream.cancel = function cancel(...args) {
+      readers.forEach(reader => {
+        reader.cancel()
+        reader.releaseLock()
+      })
+      readers.length = 0
+      _cancel.call(this, ...args)
     }
+
+    stream[Symbol.asyncIterator] =
+    stream.getIterator = function () {
+      const reader = stream.getReader()
+      readers.push(reader)
+
+      return {
+        next() {
+          return reader.read()
+        },
+        return() {
+          readers.splice(readers.indexOf(reader), 1)
+          reader.releaseLock()
+          return {}
+        },
+        [Symbol.asyncIterator]() {
+          return this
+        }
+      };
+    }
+    return stream
   }
 
-  return _[name]
-}
+  return ReadableStream
+})()
+

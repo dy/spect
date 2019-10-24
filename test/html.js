@@ -1,14 +1,6 @@
 import t from 'tst'
-import { html, state, cls, $, use, prop } from '..'
+import { html, $, prop } from '..'
 
-Object.defineProperty(DocumentFragment.prototype, 'outerHTML', {
-  get() {
-    let str = '<>'
-    this.childNodes.forEach(el => str += el.outerHTML)
-    str += '</>'
-    return str
-  }
-})
 
 t('html: apply direct props', async t => {
   let a = document.createElement('a')
@@ -47,15 +39,15 @@ t('html: rerendering with props: must persist', async t => {
   let div = document.createElement('div')
 
   html`<${el}>${div}<x/></>`
-  // t.equal(el.firstChild, div)
+  t.equal(el.firstChild, div)
   t.equal(el.childNodes.length, 2)
 
   html`<${el}><${div}/><x/></>`
-  // t.equal(el.firstChild, div)
+  t.equal(el.firstChild, div)
   t.equal(el.childNodes.length, 2)
 
   html`<${el}><${div}/><x/></>`
-  // t.equal(el.firstChild, div)
+  t.equal(el.firstChild, div)
   t.equal(el.childNodes.length, 2)
 
   html`<${el}><div/><x/></>`
@@ -80,9 +72,7 @@ t('html: must not redefine class', async t => {
   t.is(el.className,'foo bar')
   html`<${el}.baz/>`
   t.is(el.className, 'foo bar baz')
-  await use(el, el => {
-    html`<${el}.qux/>`
-  })
+  html`<${el}.qux/>`
   t.is(el.className, 'foo bar baz qux')
 })
 
@@ -123,6 +113,33 @@ t('html: wrapping', async t => {
   t.is(wrapped.firstChild.x, 1)
 })
 
+t('html: wrapping with children', async t => {
+  let root = document.createElement('div')
+  root.innerHTML = '<foo><bar></bar><baz></baz></foo>'
+  let foo = root.firstChild
+  foo.x = 1
+
+  let wrapped = html`<div>
+    <${foo}.foo>${ [...foo.childNodes] }</>
+  </div>`
+
+  t.is(wrapped.outerHTML, '<div><foo class="foo"><bar></bar><baz></baz></foo></div>')
+  t.is(wrapped.firstChild, foo)
+  t.is(wrapped.firstChild.x, 1)
+})
+
+t('html: select case', async t => {
+  let w = html`
+    <>
+    <select>
+      <option value="a"></option>
+    </select>
+  </>
+  `
+  await Promise.resolve().then()
+  t.is(w.outerHTML, `<><select><option value="a"></option></select></>`)
+})
+
 t('html: promises', async t => {
   let p = new Promise(ok => setTimeout(async () => {
     ok('123')
@@ -147,7 +164,54 @@ t.todo('html: thenable', async t => {
   html`<${el}>${thenable}</>`
 })
 
-t.todo('html: generator')
+t('html: render to fragment', t => {
+  let frag = document.createDocumentFragment()
+  html`<${frag}>1</>`
+  t.is(frag.outerHTML, '<>1</>')
+})
+
+t('html: function', t => {
+  let el = html`<div x=1>${function ({ element }) {
+    html`<${element}>1</>`
+    return element
+  }}</div>`
+  t.is(el.outerHTML, `<div x="1">1</div>`)
+
+  let el2 = html`<div x=2>${function ({ element }) {
+    return 2
+  }}</div>`
+  t.is(el2.outerHTML, `<div x="2">2</div>`)
+})
+
+t('html: generator', async t => {
+  let el = html`<div>${ function* ({}) {
+    yield 1
+    yield 2
+  }}</div>`
+  await Promise.resolve().then()
+  t.is(el.outerHTML, `<div>1</div>`)
+  await Promise.resolve().then()
+  t.is(el.outerHTML, `<div>2</div>`)
+  // await Promise.resolve().then()
+  // t.is(el.outerHTML, `<div>3</div>`)
+})
+
+t('html: async generator', async t => {
+  let el = html`<div>${async function* () {
+    await Promise.resolve().then()
+    yield 1
+    await Promise.resolve().then()
+    yield 2
+    await Promise.resolve().then()
+    // return 3
+  }}</div>`
+  await Promise.resolve().then().then().then().then()
+  t.is(el.outerHTML, `<div>1</div>`)
+  await Promise.resolve().then().then().then().then()
+  t.is(el.outerHTML, `<div>2</div>`)
+  // await Promise.resolve().then().then().then().then()
+  // t.is(el.outerHTML, `<div>3</div>`)
+})
 
 t.todo('html: react-component compatible', t => {
 
@@ -208,6 +272,13 @@ t('html: preserve rendering target classes/ids/attribs', t => {
   t.is(el.w, '2')
 })
 
+t('html: does not duplicate classes for container', t => {
+  let el = document.createElement('div')
+  el.classList.add('x')
+  html`<${el}.x/>`
+  t.is(el.outerHTML, '<div class="x"></div>')
+})
+
 t('legacy html: readme default', async t => {
   let div = document.createElement('div')
 
@@ -253,6 +324,13 @@ t('html: preserves hidden attribute', t => {
   t.is(el.innerHTML, '<div hidden="" class="foo"></div>')
 })
 
+t('html: falsey prev attrs', t => {
+  let el = html`<div hidden=${true}/>`
+  t.is(el.hidden, true)
+  html`<${el} hidden=${false}/>`
+  t.is(el.hidden, false)
+})
+
 t('html: initial content should be morphed', t => {
   let el = document.createElement('div')
   el.innerHTML = '<foo></foo><bar></bar>'
@@ -280,52 +358,26 @@ t.todo('html: newline nodes should have space in between', t => {
   t.is(el.textContent, 'a b')
 })
 
-t('legacy html: direct component rerendering should not destroy state', async t => {
+t('legacy html: direct component rerendering should keep children', async t => {
   let el = html`<div><${fn}/></div>`
   let abc = el.firstChild
-  state(abc, { x: 1 })
 
-  t.is(state(abc).x, 1)
   t.is(el.outerHTML, '<div><abc></abc></div>')
 
   html`<${el}><${fn}.foo/></>`
   t.is(el.outerHTML, '<div><abc></abc></div>')
   let abc1 = el.firstChild
-  t.is(state(abc1).x, 1)
   t.equal(abc1, abc)
 
   function fn () { return html`<abc/>` }
 })
 
-t('legacy html: rerendered component state should persist', async t => {
-  let el = html`<div><span.foo/></div>`
-  let c = el.firstChild
-  state(c, { x: 1 })
-
-  t.is(state(c).x, 1)
-
-  html`<${el}><span.foo.bar/></>`
-
-  let c1 = el.firstChild
-  t.is(state(c1).x, 1)
-  t.is(c1, c)
-  t.is(cls(c1).foo, true)
-})
-
-t('legacy html: extended component rerendering should not destroy state', async t => {
+t('legacy html: extended component rerendering should not destroy instance', async t => {
   let el = html`<div><div is=${fn}/></div>`
-  let child = $(el.firstChild)
-  state(child, { x: 1 })
-
-  await child
-  t.is(state(child).x, 1)
-
+  let child = el.firstChild
   html`<${el}><div.foo is=${fn}/></>`
-
-  let child1 = $(el.firstChild)
+  let child1 = el.firstChild
   t.equal(child1, child)
-  t.is(state(child1).x, 1)
-
   function fn(el) { }
 })
 
@@ -339,7 +391,7 @@ t('html: functional components create element', t => {
   t.is(log, [el])
 })
 
-t('html: use assigned via prop', t => {
+t.skip('html: use assigned via prop', t => {
   let log = []
   let el = html`<a use=${el => {
     log.push(el.tagName.toLowerCase())
@@ -350,7 +402,7 @@ t('html: use assigned via prop', t => {
   t.is(el.tagName.toLowerCase(), 'b')
 })
 
-t('html: is=string works fine', t => {
+t.todo('html: is=string works fine', t => {
   let a = html`<a is=superA />`
 })
 
@@ -366,9 +418,9 @@ t('html: assigned id must be accessible', async t => {
   let el = html`<x id=x1 />`
   t.is(el.id, 'x1')
 
-  await use(el, (el, props) => {
+  $(el, (el, props) => {
     t.is(el.id, 'x1')
-    t.is(props.id, 'x1')
+    // t.is(props.id, 'x1')
   })
 })
 
@@ -422,20 +474,55 @@ t('html: must not morph inserted nodes', async t => {
   t.is(bar.outerHTML, '<p>bar</p>')
 })
 
-t('html: must not replace self', t => {
-  let el = html`<x is=${x} />`
-  function x (el) {
-    return html`<${el}/>`
-  }
+t('html: update own children', t => {
+  let el = html`<div>123</div>`
+  html`<${el}>${ el.childNodes }</>`
+  t.is(el.outerHTML, '<div>123</div>')
 })
 
-t('html: externally assigned props must be collected', async t => {
+t.skip('html: render to props', t => {
+  let el = html`<${X} x=1/>`
+
+  function X (props) {
+    html`<${props}>${props.x}</>`
+  }
+
+  t.is(el.outerHTML, '<x x="1">1</x>')
+})
+
+t('html: must not replace self', t => {
+  let el = html`<x is=${x} />`
+  t.is(el.outerHTML, '<x></x>')
+  function x ({element}) {
+    return html`<${element}/>`
+  }
+  t.is(el.outerHTML, '<x></x>')
+})
+
+t('html: externally assigned props must be available', async t => {
   let el = html`<x x=${1}/>`
   document.body.appendChild(el)
   await Promise.resolve().then()
-  use('x', (el, props) => {
-    t.is(props, {x: 1})
+  $('x', (el) => {
+    t.is(el.x, 1)
   })
+})
+
+t('html: streams must update values dynamically', async t => {
+  let obj = { x: 1 }
+  let el = html`<div>${ prop(obj, 'x') }</div>`
+
+  await Promise.resolve().then()
+  t.is(el.outerHTML, '<div>1</div>')
+
+  obj.x = 2
+  await Promise.resolve().then().then()
+  t.is(el.outerHTML, '<div>2</div>')
+})
+
+t('html: direct value', async t => {
+  let x = html`${1}`
+  t.is(x.nodeType, 3)
 })
 
 t.todo('legacy html: rerendering extended component should not register anonymous function')
@@ -521,7 +608,7 @@ t.todo('legacy html: child function as reducer', async t => {
   let log = []
   let target = document.createElement('div')
 
-  $(target).use(el => {
+  $(target).$(el => {
     $(el).html`<a foo=bar>${a}</a>`
     t.is(log, ['a'])
   })
@@ -731,12 +818,17 @@ t('html: null-like insertions', t => {
   let a = html`<a>foo ${ null } ${ undefined } ${ false } ${0}</a>`
 
   t.is(a.innerHTML, 'foo    0')
+
+  let b = html`${ null } ${ undefined } ${ false } ${0}`
+  t.is(b.textContent, '   0')
+  let c = html``
+  t.is(c.textContent, '')
 })
 
 t.todo('legacy html: parent props must rerender nested components', async t => {
   let $x = html`<div x=0/>`
 
-  $x.use(x => {
+  $x.$(x => {
     $x.html`<div is=${y} value=${ $x.prop('x') }/>`
   })
   function y ({ value }) {
