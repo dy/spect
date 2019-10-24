@@ -39,11 +39,11 @@ Other approaches include:
 -->
 
 
-```js
+<!-- ```js
 import { $, fx, html, attr, local, route } from 'spect'
 import { t, useLocale } from 'ttag'
 
-// main app aspect
+// main app
 $('#app', el => {
   // loading data when location changes
   route('users/:id', async ({ id }) => {
@@ -60,7 +60,7 @@ $('#app', el => {
   })
 }
 
-// preloader aspect
+// preloader aspect stream
 $('.preloadable', el => {
   let content, progress = html`<progress.progress-circle />`
   attr(el, 'loading', loading => {
@@ -69,7 +69,7 @@ $('.preloadable', el => {
   })
 })
 
-// i18n aspect
+// i18n aspect stream
 $('.i18n', el => {
   let str = text(el)
   attr(document.documentElement, 'lang', lang => {
@@ -77,7 +77,7 @@ $('.i18n', el => {
     el.textContent = t(str)
   })
 })
-```
+``` -->
 
 ## Installation
 
@@ -113,7 +113,7 @@ import { use, fx, on } from 'https://unpkg.com/spect@latest?module'
 ``` -->
 
 
-## Getting started
+<!-- ## Getting started
 
 _Spect_ provides collection of [_ReadableStreams_](https://developer.mozilla.org/en-US/docs/Web/API/ReadableStream), useful for building UIs.
 
@@ -265,7 +265,7 @@ let getRawMarkup = content => {
 }
 ```
 
-<p align='right'><a href="https://codesandbox.io/s/a-component-tnwdm">Open in sandbox</a></p>
+<p align='right'><a href="https://codesandbox.io/s/a-component-tnwdm">Open in sandbox</a></p> -->
 
 <!--
 ### More examples
@@ -299,7 +299,7 @@ Each function in `spect` creates asynchronous iterator with the following proper
 
 ### `$( selector | element[s], el => {}? )` - selector observer stream
 
-Emit elements, appended to dom, matching selector.
+Emit elements, appended to DOM, matching selector.
 
 ```js
 let foos = $('.foo', el => {
