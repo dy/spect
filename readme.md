@@ -306,7 +306,7 @@ let foos = $('.foo', el => {
   // init
 })
 // destroy
-foos.end()
+foos.cancel()
 
 let bars = $('.bar')
 for await (const bar of bars) {
@@ -331,6 +331,8 @@ let foos = prop(target, 'foo')
 for await (const value of foos) {
   console.log(value)
 }
+
+foos.cancel()
 ```
 
 ---
@@ -349,7 +351,7 @@ attr(el, 'hidden', isHidden => {
 
 ### `fx( ...inputs, (...values) => {} )` − stream effect
 
-Trigger side-effect whenever any input stream/asyncIterable, emits new value.
+Trigger side-effect whenever any input stream/asyncIterable emits new value.
 
 ```js
 let state = { count : 0 }
@@ -382,12 +384,12 @@ on(element, 'connected disconnected', e => {})
 
 // event sequence
 for await (const e of on('.target', 'connected disconnected')) {
-
+  // ...
 }
 ```
 
+<!--
 ---
-
 ### ``.html`...markup` `` − patch html
 
 Render html. Uses [`htm`](https://ghub.io/htm) syntax.
@@ -408,7 +410,7 @@ function Baz(props) {
 
 // render stream into html
 html`<.status>${ attr(target, 'status') }</>`
-```
+``` -->
 
 
 <!--
