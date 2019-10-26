@@ -39,45 +39,52 @@ Other approaches include:
 -->
 
 
-<!-- ```js
+```js
 import { $, fx, html, attr, local, route } from 'spect'
 import { t, useLocale } from 'ttag'
 
 // main app
-$('#app', el => {
-  // loading data when location changes
-  route('users/:id', async ({ id }) => {
-    el.setAttribute('loading', true)
-    localStorage.user = await fetch`./api/user/${ id }`
-    el.setAttribute('loading', false)
+@spect('#app')
+class App extends HTMLElement {
+  @action()
+  @route('users/:id')
+  async load ({ id }) => {
+    this.loading = true
+    this.user = await fetch`./api/user/${ id }`
+    this.loading = false
   })
 
-  // rerender when local storage or loading changes
-  fx(local('user'), attr(el, 'loading'), (user, loading) => {
-    html`<${el}.preloadable>
-      <p.i18n>${ loading ? `Hello, ${ user.name }!` : `Thanks for patience...` }</p>
+  @prop() user = null
+  @prop({ attr: true, type: Boolean }) loading = false
+
+  @effect() render () {
+    html`<${this}.preloadable>
+      <p.i18n>${ !this.loading ? `Hello, ${ this.user.name }!` : `Thanks for patience...` }</p>
     </>`
-  })
+  }
 }
 
 // preloader aspect stream
-$('.preloadable', el => {
-  let content, progress = html`<progress.progress-circle />`
-  attr(el, 'loading', loading => {
-    if (loading) content = [...el.childNodes]
-    html`<${el}>${ loading ? progress : content }</>`
-  })
-})
+@spect('.preloadable') class {
+  content = [...this.childNodes]
+  progress = html`<progress.progress-circle />`
+  @on('attributechanged') preloader () {
+    html`<${this}>${ this.loading ? this.progress : this.content }</>`
+  }
+}
 
 // i18n aspect stream
-$('.i18n', el => {
-  let str = text(el)
-  attr(document.documentElement, 'lang', lang => {
+@spect('.i18n') class {
+  @observe(document.documentElement, 'lang')
+  @effect() render (lang) {
     useLocale(lang)
-    el.textContent = t(str)
-  })
+    this.textContent = t(this.str)
+  }
+  constructor() {
+    this.str = this.textContent
+  }
 })
-``` -->
+```
 
 ## Installation
 
@@ -113,7 +120,7 @@ import { use, fx, on } from 'https://unpkg.com/spect@latest?module'
 ``` -->
 
 
-<!-- ## Getting started
+## Getting started
 
 _Spect_ provides collection of [_ReadableStreams_](https://developer.mozilla.org/en-US/docs/Web/API/ReadableStream), useful for building UIs.
 
@@ -130,17 +137,17 @@ This example assigns handler to `#hello-example` element and observes its `name`
 import { $, html, prop } from 'spect'
 
 // for each #hello-example
-$('#hello-example', el => {
-  // when element's `name` property changes
-  prop(el, 'name', name => {
-    // render html as
+@spect('#hello-example')
+class HelloExample extends HTMLElement {
+  @prop() name = 'World'
+  @effect() render () {
     html`<${el}>
       <div.message>
         Hello, ${ name }!
       </div>
     </>`
-  })
-})
+  }
+}
 </script>
 ```
 
@@ -155,21 +162,23 @@ This is example of simpel timer: it handles `connected` and `disconnected` event
 import { $, prop, on, fx, html } from 'spect'
 
 // for every #timer-example element
-$('#timer-example', async el => {
-  let state = { seconds: 0 }
+@spect('#timer-example')
+class TimerExample extends HTMLElement {
+  @prop() seconds = 0
 
-  // start timer when connected, end when disconnected
-  on(el, 'connected', e => {
-    let i = setInterval(() => {
-      state.seconds++
+  connectedCallback() {
+    this._interval = setInterval(() => {
+      this.seconds++
     }, 1000)
+  }
+  disconnectedCallback() {
+    clearInterval(this._interval)
+  }
 
-    on(el, 'disconnected', () => clearInterval(i))
-  })
-
-  // rerender when seconds change
-  fx(prop(state, 'seconds'), seconds => html`<${el}>Seconds: ${seconds}</>`)
-})
+  @effect() {
+    html`<${el}>Seconds: ${ this.seconds }</>`
+  }
+}
 ```
 
 <p align='right'><a href="https://codesandbox.io/s/a-stateful-aspect-9pbji">Open in sandbox</a></p>
@@ -182,41 +191,39 @@ Selector streams allow easily assign aspects to elements.
 ```js
 import { $, on, html, prop } from 'spect'
 
-$('#todos-example', el => {
-  let state = { items: [], text: '' }
+@spect('#todos-example')
+class TodoExample extends HTMLElement {
+  @prop() items = []
+  @prop() text = ''
 
-  // run effect by submit event
-  on(el, 'submit', e => {
-    e.preventDefault()
+  @action() add() {
+    if (!this.text.length) return
+    this.items = [...this.items, { text: this.text, id: Date.now() }]
+    this.text = ''
+  }
 
-    if (!state.text.length) return
-
-    state.items = [...state.items, { text: state.text, id: Date.now() }]
-    state.text = ''
-  })
-
-  // rerender html when state changes
-  prop(state, 'items', items => {
+  @effect() render () {
     html`<${el}>
-    <h3>TODO</h3>
-    <main#todo-list items=${ items }/>
-    <form>
-      <label for=new-todo>
-        What needs to be done?
-      </label>
-      <br/>
-      <input#new-todo onchange=${ e => state.text = e.target.value}/>
-      <button>
-        Add #${ items.length + 1}
-      </button>
-    </form>
-  </>`
-  })
-})
+      <h3>TODO</h3>
+      <main#todo-list items=${ items }/>
+      <form onsubmit=${ e => this.submit(e) }>
+        <label for=new-todo>
+          What needs to be done?
+        </label>
+        <br/>
+        <input#new-todo onchange=${ e => state.text = e.target.value }/>
+        <button>
+          Add #${ items.length + 1}
+        </button>
+      </form>
+    </>`
+  }
+}
 
-$('#todo-list', el => {
-  prop(el, 'items', items => html`<${el}><ul>${items.map(item => html`<li>${item.text}</li>`)}</ul></>`)
-})
+@spect('#todo-list') class {
+  @prop() items
+  @effect() render () { html`<${el}><ul>${ this.items.map(item => html`<li>${item.text}</li>`)}</ul></>` }
+}
 
 ```
 
