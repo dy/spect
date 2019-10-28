@@ -83,6 +83,8 @@ t('prop: keeps prev setter/getter', async t => {
     log.push('changed', value)
   })
 
+  t.is(log, ['get', 0, 'changed', 0])
+
   obj.x
   await Promise.resolve().then()
   t.is(log, ['get', 0, 'changed', 0, 'get', 0])
