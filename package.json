@@ -70,6 +70,7 @@
   "homepage": "https://github.com/dy/spect#readme",
   "type": "module",
   "dependencies": {
+    "dom-lite": "^0.5.1",
     "emmy": "^7.0.0",
     "fast-deep-equal": "^2.0.1",
     "immutable-tuple": "^0.4.10",

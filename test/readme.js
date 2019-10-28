@@ -20,7 +20,7 @@ t('readme: A simple aspect', async t => {
 
   el.name = 'Taylor'
 
-  await Promise.resolve().then().then()
+  await Promise.resolve().then().then().then()
 
   t.is(el.outerHTML, '<div id="hello-example"><div class="message">Hello, Taylor!</div></div>')
 

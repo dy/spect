@@ -28,7 +28,7 @@ t('prop: basics', async t => {
   t.is(log, [0, 2, 5], 'ignores unchanged value')
   o.x = 6
   t.is(o.x, 6, 'reading value')
-  await Promise.resolve()
+  await Promise.resolve().then()
   t.is(log, [0, 2, 5, 6], 'reading applies value')
   await Promise.resolve().then()
   t.is(log, [0, 2, 5, 6], 'reading has no side-effects')
@@ -66,6 +66,42 @@ t('prop: keep initial property value')
 t('prop: does not initialize two times')
 t('prop: awaitable - waits the next update')
 t('prop: multiple props to observe as array')
+t('prop: keeps prev setter/getter', async t => {
+  let log = []
+  let obj = {
+    _x: 0,
+    get x() {
+      log.push('get', this._x); return this._x
+    },
+    set x(x) {
+      log.push('set', x);
+      this._x = x
+    }
+  }
+
+  let xs = prop(obj, 'x', value => {
+    log.push('changed', value)
+  })
+
+  obj.x
+  await Promise.resolve().then()
+  t.is(log, ['get', 0, 'changed', 0, 'get', 0])
+
+  obj.x = 1
+  await Promise.resolve().then().then().then().then()
+  t.is(log, ['get', 0, 'changed', 0, 'get', 0, 'set', 1, 'changed', 1])
+
+  log = []
+  xs.cancel()
+  t.is(log, [])
+
+  obj.x
+  t.is(log, ['get', 1])
+
+  obj.x = 0
+  await Promise.resolve().then().then()
+  t.is(log, ['get', 1, 'set', 0])
+})
 t.skip('prop: observe array methods', async t => {
   let obj = {arr: []}
   let log = []

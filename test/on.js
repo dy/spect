@@ -12,7 +12,7 @@ t('on: async gen', async t => {
     }
   })()
   el.click()
-  await Promise.resolve()
+  await Promise.resolve().then()
   t.is(log, ['click'], 'basic')
   t.is(cblog, ['click'], 'basic')
   el.click()
