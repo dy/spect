@@ -12,9 +12,10 @@ export default function prop(target, name, callback) {
 
   let key = tuple(target, name)
   let currentValue, plannedValue, planned
+  let cached = cache.get(key)
 
   // init observer if the first time
-  if (!cache.has(key)) {
+  if (!cached) {
     // check if prop is configurable
     let initialDesc = Object.getOwnPropertyDescriptor(target, name)
 
@@ -28,7 +29,7 @@ export default function prop(target, name, callback) {
           clearMicrotask(planned)
           applyValue()
         }
-        return currentValue
+        return initialDesc && initialDesc.get ? initialDesc.get.call(target) : currentValue
       },
       set(newValue) {
         if (Object.is(newValue, currentValue)) {
@@ -43,7 +44,10 @@ export default function prop(target, name, callback) {
 
     function applyValue(val) {
       planned = null
-      currentValue = arguments.length ? val : plannedValue
+
+      cached.value = currentValue = arguments.length ? val : plannedValue
+      if (initialDesc && initialDesc.set) initialDesc.set.call(target, currentValue)
+
       emit(target, 'prop:change:' + name, currentValue)
     }
 
@@ -66,13 +70,16 @@ export default function prop(target, name, callback) {
       }
     }
 
-    cache.set(key, { initialDesc, count: 0})
+    cache.set(key, cached = { initialDesc, count: 0, value: currentValue })
+  }
+  else {
+    currentValue = cached.value
   }
 
   let off
   return new ReadableStream({
     start(controller) {
-      cache.get(key).count++
+      cached.count++
 
       off = on(target, 'prop:change:' + name, (e) => {
         if (isElement(target)) {
@@ -86,31 +93,34 @@ export default function prop(target, name, callback) {
       })
 
       // initial value
-      callback && callback(target[name])
-      controller.enqueue(target[name])
+      callback && callback(currentValue)
+      controller.enqueue(currentValue)
     },
     pull(controller) {
     },
     cancel(reason) {
       this.done = true
 
-      cache.get(key).count--
+      cached.count--
 
       // undefine descriptor
-      if (cache.get(key).count === 0) {
-        let initialDesc = cache.get(key).initialDesc
+      if (cached.count === 0) {
+        let initialDesc = cached.initialDesc
         if (initialDesc) {
+          if (initialDesc.value) {
+            initialDesc.value = currentValue
+          }
           Object.defineProperty(target, name, initialDesc)
         }
         else {
           delete target[name]
+          target[name] = currentValue
         }
-        target[name] = currentValue
-
         off(target, '.prop')
       }
 
       off()
+      cache.delete(key)
     }
   })
 }

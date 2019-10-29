@@ -51,14 +51,14 @@ t('$: elements async gen', async t => {
   let log = []
   let container = document.body.appendChild(document.createElement('div'))
 
-    ; (async () => {
+    ;(async () => {
       for await (const el of $('x')) {
         log.push(el.tagName.toLowerCase())
       }
     })()
 
   container.appendChild(document.createElement('x'))
-  await Promise.resolve().then()
+  await Promise.resolve().then().then()
   t.is(log, ['x'], 'simple creation')
 
   container.appendChild(document.createElement('x'))
@@ -71,7 +71,7 @@ t('$: elements async gen', async t => {
     log2.push(1)
   })
   container.appendChild(document.createElement('x'))
-  await Promise.resolve().then()
+  await Promise.resolve().then().then()
   t.is(log, ['x', 'x', 'x', 'x'], 'additional aspect')
   t.is(log2, [1], 'additional aspect')
 
