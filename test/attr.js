@@ -37,3 +37,14 @@ t('attr: walk generator', async t => {
   t.is(el.getAttribute('x'), '7', 'end destructures property')
   t.is(log, [null, '2', '5', '6'], 'end destructures property')
 })
+
+t('attr: wrapped with fx', async t => {
+  let log = []
+  let el = document.createElement('div')
+  attr(el, 'x', x => {
+    log.push(x)
+  })
+  el.setAttribute('x', 123)
+  await Promise.resolve().then().then()
+  t.is(log, [null, "123"])
+})
