@@ -1,6 +1,6 @@
 # Spect ![experimental](https://img.shields.io/badge/stability-experimental-yellow) [![Build Status](https://travis-ci.org/spectjs/spect.svg?branch=master)](https://travis-ci.org/spectjs/spect)
 
-UI streams.
+Aspect-oriented DOM.
 
 <!-- Incorporates  [aspect-oriented programming](https://en.wikipedia.org/wiki/Aspect-oriented_programming), FRP and streams. -->
 
@@ -39,45 +39,46 @@ Other approaches include:
 -->
 
 
-<!-- ```js
-import { $, fx, html, attr, local, route } from 'spect'
+```js
+import { $, fx, html, attr, local } from 'spect'
 import { t, useLocale } from 'ttag'
 
 // main app
-$('#app', el => {
+spect('#app', props => {
   // loading data when location changes
-  route('users/:id', async ({ id }) => {
-    el.setAttribute('loading', true)
-    localStorage.user = await fetch`./api/user/${ id }`
-    el.setAttribute('loading', false)
-  })
+  let [match, { id } ] = useRoute('users/:id')
+  let [loading, setLoading] = useAttr(this, 'loading')
+  let [user, setUser] = useStore('user')
+
+  useEffect(() => {
+    setLoading(true)
+    setUser(await fetch`./api/user/${ id }`)
+    setLoading(false)
+  }, [id])
 
   // rerender when local storage or loading changes
-  fx(local('user'), attr(el, 'loading'), (user, loading) => {
-    html`<${el}.preloadable>
-      <p.i18n>${ loading ? `Hello, ${ user.name }!` : `Thanks for patience...` }</p>
-    </>`
-  })
+  return <this class="loading">
+    <p class="i18n">{ loading ? `Hello, ${ user.name }!` : `Thanks for patience...` }</p>
+  </this>
 }
 
 // preloader aspect stream
-$('.preloadable', el => {
-  let content, progress = html`<progress.progress-circle />`
-  attr(el, 'loading', loading => {
-    if (loading) content = [...el.childNodes]
-    html`<${el}>${ loading ? progress : content }</>`
-  })
+spect('.preloadable', props => {
+  let content = useMemo(() => [...this.childNodes]),
+      progress = <progress class="progress-circle" />
+  let [loading] = useAttr(this, 'loading')
+
+  return <this>{ loading ? content : progress }</this>
 })
 
 // i18n aspect stream
-$('.i18n', el => {
-  let str = text(el)
-  attr(document.documentElement, 'lang', lang => {
-    useLocale(lang)
-    el.textContent = t(str)
-  })
+spect('.i18n', props => {
+  let str = useMemo(() => this.textContent)
+  let [lang, setLang] = useAttr('lang', document.documentElement)
+  useLocale(lang)
+  return <this>{ t(str) }</this>
 })
-``` -->
+```
 
 ## Installation
 
@@ -113,7 +114,7 @@ import { use, fx, on } from 'https://unpkg.com/spect@latest?module'
 ``` -->
 
 
-<!-- ## Getting started
+## Getting started
 
 _Spect_ provides collection of [_ReadableStreams_](https://developer.mozilla.org/en-US/docs/Web/API/ReadableStream), useful for building UIs.
 
@@ -127,19 +128,14 @@ This example assigns handler to `#hello-example` element and observes its `name`
 <div id="hello-example" name="Cyril"></div>
 
 <script type="module">
-import { $, html, prop } from 'spect'
+import { $ } from 'spect'
 
-// for each #hello-example
-$('#hello-example', el => {
-  // when element's `name` property changes
-  prop(el, 'name', name => {
-    // render html as
-    html`<${el}>
-      <div.message>
-        Hello, ${ name }!
-      </div>
-    </>`
-  })
+spect('#hello-example', props => {
+  return <this>
+    <div class="message">
+      Hello, { props.name }!
+    </div>
+  </this>
 })
 </script>
 ```
