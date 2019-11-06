@@ -1,6 +1,6 @@
 # Spect ![experimental](https://img.shields.io/badge/stability-experimental-yellow) [![Build Status](https://travis-ci.org/spectjs/spect.svg?branch=master)](https://travis-ci.org/spectjs/spect)
 
-Aspect-oriented DOM.
+Reactive aspects.
 
 <!-- Incorporates  [aspect-oriented programming](https://en.wikipedia.org/wiki/Aspect-oriented_programming), FRP and streams. -->
 
@@ -40,15 +40,16 @@ Other approaches include:
 
 
 ```js
-import { $, fx, html, attr, local } from 'spect'
+import spect, { useAttr, useState } from 'spect'
+import { useRoute } from 'wouter'
 import { t, useLocale } from 'ttag'
 
 // main app
-spect('#app', props => {
+spect('#app', element => {
   // loading data when location changes
-  let [match, { id } ] = useRoute('users/:id')
-  let [loading, setLoading] = useAttr(this, 'loading')
-  let [user, setUser] = useStore('user')
+  let [match, { id }] = useRoute('users/:id')
+  let [loading, setLoading] = useAttr(element, 'loading')
+  let [user, setUser] = useState('user')
 
   useEffect(() => {
     setLoading(true)
@@ -56,27 +57,25 @@ spect('#app', props => {
     setLoading(false)
   }, [id])
 
-  // rerender when local storage or loading changes
-  return <this class="loading">
+  return <host class="loading">
     <p class="i18n">{ loading ? `Hello, ${ user.name }!` : `Thanks for patience...` }</p>
-  </this>
-}
+  </host>
+})
 
 // preloader aspect stream
-spect('.preloadable', props => {
+spect('.preloadable', element => {
   let content = useMemo(() => [...this.childNodes]),
       progress = <progress class="progress-circle" />
   let [loading] = useAttr(this, 'loading')
 
-  return <this>{ loading ? content : progress }</this>
+  return <host>{ loading ? content : progress }</host>
 })
 
 // i18n aspect stream
 spect('.i18n', props => {
   let str = useMemo(() => this.textContent)
   let [lang, setLang] = useAttr('lang', document.documentElement)
-  useLocale(lang)
-  return <this>{ t(str) }</this>
+  return <host>{ translate(str, lang) }</host>
 })
 ```
 
@@ -130,12 +129,13 @@ This example assigns handler to `#hello-example` element and observes its `name`
 <script type="module">
 import { $ } from 'spect'
 
-spect('#hello-example', props => {
-  return <this>
+spect('#hello-example', element => {
+  let [name] = useProp(element, 'name')
+  return <host>
     <div class="message">
-      Hello, { props.name }!
+      Hello, { name }!
     </div>
-  </this>
+  </host>
 })
 </script>
 ```
@@ -151,20 +151,18 @@ This is example of simpel timer: it handles `connected` and `disconnected` event
 import { $, prop, on, fx, html } from 'spect'
 
 // for every #timer-example element
-$('#timer-example', async el => {
-  let state = { seconds: 0 }
+spect('#timer-example', async el => {
+  let [seconds, setState] = useSeconds()
 
-  // start timer when connected, end when disconnected
-  on(el, 'connected', e => {
+  useEffect(() => {
     let i = setInterval(() => {
       state.seconds++
     }, 1000)
 
-    on(el, 'disconnected', () => clearInterval(i))
-  })
+    return () => clearInterval(i)
+  }, [])
 
-  // rerender when seconds change
-  fx(prop(state, 'seconds'), seconds => html`<${el}>Seconds: ${seconds}</>`)
+  return <host>Seconds: {seconds}</host>
 })
 ```
 
@@ -178,11 +176,11 @@ Selector streams allow easily assign aspects to elements.
 ```js
 import { $, on, html, prop } from 'spect'
 
-$('#todos-example', el => {
+spect('#todos-example', el => {
   let state = { items: [], text: '' }
 
   // run effect by submit event
-  on(el, 'submit', e => {
+  useEvent('submit', e => {
     e.preventDefault()
 
     if (!state.text.length) return
@@ -435,6 +433,12 @@ cls(el, clsx => clsx.foo = false)
 cls(el).foo
 cls(el)
 ``` -->
+
+## Similar
+
+* atomico
+* haunted
+* enhook
 
 
 ## Changelog
