@@ -3,7 +3,49 @@
 Spect provides aspect-oriented approach to building UIs.
 
 ```js
+import { $, fx, html, attr, local, route } from 'spect'
+import { useRoute, useEffect } from 'unihook'
+import { t, useLocale } from 'ttag'
+
+// main app element aspect
+element('#app', (app) => {
+  let [ params ] = useRoute('users/:id')
+  let [ user, , loading ] = useAction('load-user', [params.id])
+  useAttribute(app, 'loading', () => loading, [loading])
+
+  return <p id='app' class='i18n preloadable'>{ !loading ? `Hello, ${ user.name }!` : `Thanks for patience...` }</p>
+})
+
+// loading data action
+action('load-user', ({ id }) => {
+  let [app] = useElement('#app')
+  let [setLoading] = useAttribute()
+  return await fetch`./api/user/${ id }`
+})
+
+// preloader aspect stream
+element('.preloadable', el => {
+  content = [...this.childNodes]
+  progress = <progress.progress-circle />
+  html`<${this}>${ this.loading ? this.progress : this.content }</>`
+})
+
+// i18n aspect stream
+element('.i18n', el => {
+  let [lang] = useAttribute(document.documentElement, 'lang')
+  let textContent = t(this.str)
+
+  this.str = this.textContent
+})
 ```
+
+At the core of spect is actionable reactive aspects with streamy hooks as dependencies. Every aspect has corresponding hook.
+
+* `effect` - generic aspect, takes a function and turns it into hookable aspect.
+* `element` enables aspect defined on elements, with result, updating the content of some element.
+* `action` describes some page/app action, available in the app.
+* `store` aspect defines store(model), identifiable by some target or id.
+* `event` - describes aspect of interaction, from event source to side-effects.
 
 ## Changelog
 
