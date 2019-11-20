@@ -141,13 +141,6 @@ spect('#hello-example', props => {
     </div>
   </this>
 })
-</script>
-```
-
-<p align='right'><a href="https://codesandbox.io/s/a-simple-aspect-xz22f">Open in sandbox</a></p>
-
-
-### A Stateful Stream
 
 This is example of simpel timer: it handles `connected` and `disconnected` event streams, as well as runs side-effect via `fx`, that is triggered whenever any input stream (`prop`) emits new value.
 
@@ -346,24 +339,13 @@ Observe element attribute, emit changed values.
 attr(el, 'hidden', isHidden => {
   console.log(isHidden)
 })
-```
 
----
+// i18n aspect stream
+element('.i18n', el => {
+  let [lang] = useAttribute(document.documentElement, 'lang')
+  let textContent = t(this.str)
 
-### `fx( ...inputs, (...values) => {} )` − stream effect
-
-Trigger side-effect whenever any input stream/asyncIterable emits new value.
-
-```js
-let state = { count : 0 }
-
-$('.counter', el => {
-  fx(prop(state, 'count'), (count) => {
-    console.log(count)
-
-    let i = setTimeout(() => state.count++, 1000)
-    return () => clearTimeout(i)
-  })
+  this.str = this.textContent
 })
 ```
 
@@ -442,6 +424,11 @@ cls(el).foo
 cls(el)
 ``` -->
 
+* `effect` - generic aspect, takes a function and turns it into hookable aspect.
+* `element` enables aspect defined on elements, with result, updating the content of some element.
+* `action` describes some page/app action, available in the app.
+* `store` aspect defines store(model), identifiable by some target or id.
+* `event` - describes aspect of interaction, from event source to side-effects.
 
 ## Changelog
 
