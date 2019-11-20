@@ -1,6 +1,6 @@
 {
   "name": "spect",
-  "version": "10.0.4",
+  "version": "11.0.0",
   "description": "Aspect-oriented ",
   "main": "./src/index.js",
   "@pika/pack": {
