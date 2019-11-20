@@ -1,5 +1,5 @@
 import t from 'tst'
-import { $, fx } from '..'
+import $ from '..'
 
 t('$: elements callback', async t => {
   let ellog = []

@@ -1,3 +1,4 @@
+/*
 const cache = new WeakMap
 
 export default function any(...args) {
@@ -21,3 +22,4 @@ export default function any(...args) {
 
   return observer.asyncGen
 }
+*/

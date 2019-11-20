@@ -1,6 +1,6 @@
 # Spect ![experimental](https://img.shields.io/badge/stability-experimental-yellow) [![Build Status](https://travis-ci.org/spectjs/spect.svg?branch=master)](https://travis-ci.org/spectjs/spect)
 
-Aspect-oriented DOM.
+Spect is aspec-oriented web framework. It provides simplest minimal abstraction to organize web-apps in aspect-oriented fashion.
 
 <!-- Incorporates  [aspect-oriented programming](https://en.wikipedia.org/wiki/Aspect-oriented_programming), FRP and streams. -->
 
@@ -40,43 +40,47 @@ Other approaches include:
 
 
 ```js
-import { $, fx, html, attr, local } from 'spect'
+import spect from 'spect'
+import { useAttribute, useRoute, useStore, useEffect } from 'unihooks'
 import { t, useLocale } from 'ttag'
+
+action('load-user', async (id) => {
+  return await fetch`./api/user/${ id }`
+})
 
 // main app
 spect('#app', props => {
   // loading data when location changes
   let [match, { id } ] = useRoute('users/:id')
-  let [loading, setLoading] = useAttr(this, 'loading')
-  let [user, setUser] = useStore('user')
-
+  let [user, setUser] = useStore('user', { id: null, name: null, })
+  let [loading, setLoading] = useState(false)
   useEffect(() => {
     setLoading(true)
-    setUser(await fetch`./api/user/${ id }`)
+    setUser(await fetch(`user/${id}`))
     setLoading(false)
   }, [id])
 
   // rerender when local storage or loading changes
-  return <this class="loading">
-    <p class="i18n">{ loading ? `Hello, ${ user.name }!` : `Thanks for patience...` }</p>
-  </this>
+  return html`<${this} class="${loading && 'loading'} i18n">
+    <p>${ !loading ? `Hello, ${ user.name }!` : `Thanks for patience...` }</p>
+  </>`
 }
 
 // preloader aspect stream
 spect('.preloadable', props => {
   let content = useMemo(() => [...this.childNodes]),
       progress = <progress class="progress-circle" />
-  let [loading] = useAttr(this, 'loading')
+  let [loading] = useAttribute(this, 'loading')
 
-  return <this>{ loading ? content : progress }</this>
+  return html`<${this}>${ loading ? content : progress }</>`
 })
 
 // i18n aspect stream
 spect('.i18n', props => {
   let str = useMemo(() => this.textContent)
-  let [lang, setLang] = useAttr('lang', document.documentElement)
+  let [lang, setLang] = useAttribute(document.documentElement, 'lang')
   useLocale(lang)
-  return <this>{ t(str) }</this>
+  return html`<${this}>${ t(str) }</this>`
 })
 ```
 
@@ -128,7 +132,7 @@ This example assigns handler to `#hello-example` element and observes its `name`
 <div id="hello-example" name="Cyril"></div>
 
 <script type="module">
-import { $ } from 'spect'
+import spect from 'spect'
 
 spect('#hello-example', props => {
   return <this>
@@ -148,10 +152,10 @@ spect('#hello-example', props => {
 This is example of simpel timer: it handles `connected` and `disconnected` event streams, as well as runs side-effect via `fx`, that is triggered whenever any input stream (`prop`) emits new value.
 
 ```js
-import { $, prop, on, fx, html } from 'spect'
+import spect from 'spect'
 
 // for every #timer-example element
-$('#timer-example', async el => {
+spect('#timer-example', async el => {
   let state = { seconds: 0 }
 
   // start timer when connected, end when disconnected
@@ -176,9 +180,9 @@ $('#timer-example', async el => {
 Selector streams allow easily assign aspects to elements.
 
 ```js
-import { $, on, html, prop } from 'spect'
+import spect from 'spect'
 
-$('#todos-example', el => {
+spect('#todos-example', el => {
   let state = { items: [], text: '' }
 
   // run effect by submit event
@@ -210,7 +214,7 @@ $('#todos-example', el => {
   })
 })
 
-$('#todo-list', el => {
+spect('#todo-list', el => {
   prop(el, 'items', items => html`<${el}><ul>${items.map(item => html`<li>${item.text}</li>`)}</ul></>`)
 })
 
@@ -226,11 +230,11 @@ Can be replaced with [lit-html](https://ghub.io/lit-html).
 
 ```js
 // index.js
-import { html, $ } from 'spect'
+import spect from 'spect'
 import MarkdownEditor from './editor.js'
 
 // MarkdownEditor is created as web-component
-$('#markdown-example', el => html`<${el}><${MarkdownEditor} content='Hello, **world**!'/></el>`)
+spect('#markdown-example', el => html`<${el}><${MarkdownEditor} content='Hello, **world**!'/></el>`)
 ```
 
 ```js
@@ -293,7 +297,7 @@ Each function in `spect` creates asynchronous iterator with the following proper
 <!-- - `.push(value?)` - puts new data value into stream -->
 
 
-### `$( selector | element[s], el => {}? )` - selector observer stream
+### `spect( selector | element[s], el => {}? )` - selector observer stream
 
 Emit elements, appended to DOM, matching selector.
 
@@ -313,6 +317,7 @@ for await (const bar of bars) {
 let el = await $('#qux', el => {})
 ```
 
+<!--
 ---
 
 ### `prop(target, prop, value => {}? )` − property stream
@@ -383,6 +388,7 @@ for await (const e of on('.target', 'connected disconnected')) {
   // ...
 }
 ```
+-->
 
 <!--
 ---
@@ -441,6 +447,7 @@ cls(el)
 
 Version | Changes
 ---|---
+11.0.0 | Aspects-only observer.
 10.0.0 | Web-streams.
 9.0.0 | Effects as asynchronous iterators.
 8.0.0 | Atomize: split core $ to multiple effects.

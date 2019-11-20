@@ -1,26 +1,28 @@
-import on from './on'
-import fx from './fx'
+// import on from './on'
+// import fx from './fx'
 import $ from './$'
-import attr from './attr'
-import prop from './prop'
-import html from './html'
+// import attr from './attr'
+// import prop from './prop'
+// import html from './html'
 // import state from './state'
 // import cls from './class'
 // import local from './local'
 // import data from './data'
 // import query from './query'
 
-export {
-  attr,
+// export {
+//   attr,
   // local,
   // data,
   // query,
-  $,
-  on,
+  // $,
+  // on,
   // state,
-  fx,
-  prop,
-  html,
+  // fx,
+  // prop,
+  // html,
   // cls
-}
+// }
+
+export default $
 

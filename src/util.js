@@ -1,18 +1,4 @@
-import kebab from 'kebab-case'
-
-const cancelled = {}
-export function setMicrotask (fn, ctx) {
-  let sym = Symbol('microtask')
-  Promise.resolve().then(() => {
-    if (cancelled[sym]) return
-    delete cancelled[sym]
-    fn()
-  })
-  return sym
-}
-export function clearMicrotask (sym) {
-  cancelled[sym] = true
-}
+// import kebab from 'kebab-case'
 
 export const SPECT_CLASS = '👁'
 
@@ -22,12 +8,12 @@ export function isIterable(val) {
   return (val != null && typeof val[Symbol.iterator] === 'function');
 }
 
-export function paramCase(str) {
-  str = kebab(str)
+// export function paramCase(str) {
+//   str = kebab(str)
 
-  if (str[0] === '-') return str.slice(1)
-  return str
-}
+//   if (str[0] === '-') return str.slice(1)
+//   return str
+// }
 
 export function noop() { }
 
