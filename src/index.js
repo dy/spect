@@ -1,4 +1,5 @@
-import regularElements from 'regular-elements'
+// import regularElements from 'regular-elements'
+import { observe } from 'selector-observer'
 import enhook from 'enhook'
 import globalCache from 'global-cache'
 import tuple from 'immutable-tuple'
@@ -51,17 +52,17 @@ export function $(selector, fn) {
 
   if (isFirst) {
     let observers = selectors.get(selector)
-    regularElements.define(selector, {
-      onconnected(e) {
+    observe(selector, {
+      initialize(el) {
         observers.forEach(fn => {
-          let key = tuple(this, fn)
+          let key = tuple(el, fn)
           if (instances.has(key)) return
 
           instances.add(key)
-          enhook(fn)(this)
+          enhook(fn)(el)
 
           // duplicate event since it's not emitted
-          this.dispatchEvent(new CustomEvent(e.type))
+          el.dispatchEvent(new CustomEvent('connected'))
         })
       }
     })

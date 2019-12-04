@@ -39,6 +39,7 @@ Other approaches include:
 -->
 
 
+<!--
 ```js
 import spect from 'spect'
 import { useAttribute, useRoute, useStore, useEffect } from 'unihooks'
@@ -81,6 +82,7 @@ spect('.i18n', el => {
   render(t(str), el)
 })
 ```
+-->
 
 ## Installation
 

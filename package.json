@@ -44,7 +44,7 @@
     "enhook": "^1.6.4",
     "global-cache": "^1.2.1",
     "immutable-tuple": "^0.4.10",
-    "regular-elements": "^0.5.1"
+    "selector-observer": "^2.1.6"
   },
   "devDependencies": {
     "@babel/core": "^7.7.4",

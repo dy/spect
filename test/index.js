@@ -1,9 +1,9 @@
 import $ from '../src/index.js'
 import t from 'tst'
-import { tick } from 'wait-please'
+import { tick, frame, idle, time } from 'wait-please'
 
 
-t('$: elements callback', async t => {
+t('tag selector', async t => {
   let ellog = []
   let proplog = []
   let container = document.body.appendChild(document.createElement('div'))
@@ -32,7 +32,7 @@ t('$: elements callback', async t => {
   document.body.removeChild(container)
 })
 
-t('$: pre-existing els', async t => {
+t('init existing elements', async t => {
   let log = []
   let container = document.body.appendChild(document.createElement('div'))
   container.appendChild(document.createElement('x'))
@@ -76,26 +76,25 @@ t.skip('$: defined props must be available', async t => {
   t.is(log, [1])
 })
 
-t.todo('$: observe selector', async t => {
+t('dynamically assigned selector', async t => {
   let log = []
 
-  let unuse = use('.x', el => {
+  $('.x', el => {
     log.push(el)
   })
 
-  let el = document.createElement('a')
-  el.classList.add('x')
+  let el = document.createElement('div')
   document.body.appendChild(el)
 
-  await ''
+  await idle()
+  t.is(log, [])
+
+  el.classList.add('x')
+  await tick()
 
   t.is(log, [el])
 
   document.body.removeChild(el)
-
-  await ''
-
-  unuse()
 })
 
 t.todo('$: returned result replaces the target', async t => {
