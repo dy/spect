@@ -1,6 +1,6 @@
 # Spect ![experimental](https://img.shields.io/badge/stability-experimental-yellow) [![Build Status](https://travis-ci.org/spectjs/spect.svg?branch=master)](https://travis-ci.org/spectjs/spect)
 
-Spect is aspec-oriented web framework. It provides simplest minimal abstraction to organize web-apps in aspect-oriented fashion.
+Aspect-oriented UI libary. _Spect_ provides minimal abstraction to organize web-apps in aspect-oriented fashion.
 
 <!-- Incorporates  [aspect-oriented programming](https://en.wikipedia.org/wiki/Aspect-oriented_programming), FRP and streams. -->
 
@@ -43,44 +43,42 @@ Other approaches include:
 import spect from 'spect'
 import { useAttribute, useRoute, useStore, useEffect } from 'unihooks'
 import { t, useLocale } from 'ttag'
-
-action('load-user', async (id) => {
-  return await fetch`./api/user/${ id }`
-})
+import { html, render } from 'lit-html'
 
 // main app
-spect('#app', props => {
+spect('#app', element => {
   // loading data when location changes
-  let [match, { id } ] = useRoute('users/:id')
+  let [{ id }] = useRoute('users/:id')
   let [user, setUser] = useStore('user', { id: null, name: null, })
   let [loading, setLoading] = useState(false)
+
   useEffect(() => {
     setLoading(true)
     setUser(await fetch(`user/${id}`))
     setLoading(false)
   }, [id])
 
-  // rerender when local storage or loading changes
-  return html`<${this} class="${loading && 'loading'} i18n">
+  render(html`
     <p>${ !loading ? `Hello, ${ user.name }!` : `Thanks for patience...` }</p>
-  </>`
+  `, element)
 }
 
 // preloader aspect stream
-spect('.preloadable', props => {
-  let content = useMemo(() => [...this.childNodes]),
-      progress = <progress class="progress-circle" />
-  let [loading] = useAttribute(this, 'loading')
+spect('.preloadable', el => {
+  let content = useMemo(() => [...el.childNodes]),
+      progress = html`<progress class="progress-circle" />`
+  let [loading] = useAttribute(el, 'loading')
 
-  return html`<${this}>${ loading ? content : progress }</>`
+  render(loading ? content : progress, el)
 })
 
 // i18n aspect stream
-spect('.i18n', props => {
+spect('.i18n', el => {
   let str = useMemo(() => this.textContent)
   let [lang, setLang] = useAttribute(document.documentElement, 'lang')
   useLocale(lang)
-  return html`<${this}>${ t(str) }</this>`
+
+  render(t(str), el)
 })
 ```
 
@@ -117,10 +115,8 @@ import { use, fx, on } from 'https://unpkg.com/spect@latest?module'
 </script>
 ``` -->
 
-
+<!--
 ## Getting started
-
-_Spect_ provides collection of [_ReadableStreams_](https://developer.mozilla.org/en-US/docs/Web/API/ReadableStream), useful for building UIs.
 
 🎬 Let's build [react examples](https://reactjs.org/).
 
@@ -141,8 +137,9 @@ spect('#hello-example', props => {
     </div>
   </this>
 })
+```
 
-This is example of simpel timer: it handles `connected` and `disconnected` event streams, as well as runs side-effect via `fx`, that is triggered whenever any input stream (`prop`) emits new value.
+This is example of simple timer: it handles `connected` and `disconnected` event streams, as well as runs side-effect via `fx`, that is triggered whenever any input stream (`prop`) emits new value.
 
 ```js
 import spect from 'spect'
@@ -258,7 +255,9 @@ let getRawMarkup = content => {
 }
 ```
 
-<p align='right'><a href="https://codesandbox.io/s/a-component-tnwdm">Open in sandbox</a></p> -->
+<p align='right'><a href="https://codesandbox.io/s/a-component-tnwdm">Open in sandbox</a></p>
+
+-->
 
 <!--
 ### More examples
@@ -290,25 +289,9 @@ Each function in `spect` creates asynchronous iterator with the following proper
 <!-- - `.push(value?)` - puts new data value into stream -->
 
 
-### `spect( selector | element[s], el => {}? )` - selector observer stream
+### `spect( selector | element[s], el => {}? )`
 
-Emit elements, appended to DOM, matching selector.
-
-```js
-let foos = $('.foo', el => {
-  // init
-})
-// destroy
-foos.cancel()
-
-let bars = $('.bar')
-for await (const bar of bars) {
-  // ...handle elements
-}
-
-// awaits element in the DOM
-let el = await $('#qux', el => {})
-```
+Assign aspect to elements matching selector.
 
 <!--
 ---

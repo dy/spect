@@ -1,51 +1,69 @@
 import regularElements from 'regular-elements'
-import { isIterable, ReadableStream } from './util'
+import enhook from 'enhook'
+import globalCache from 'global-cache'
+import tuple from 'immutable-tuple'
 
-const selectors = new Map
-const instances = new WeakSet
+let cache = globalCache.get('__spect__')
+if (!cache) globalCache.set('__spect__', cache = { selectors: new Map, instances: new WeakSet })
 
-export default function $(selector, callback) {
-  return new ReadableStream({
-    start(controller) {
-      if (isIterable(selector)) {
-        selector.forEach(init)
-      }
-      else {
-        init(selector)
-      }
+const { selectors, instances } = cache
 
-      function init(selector) {
-        let isFirst = false
-        if (!selectors.has(selector)) {
-          selectors.set(selector, [])
-          isFirst = true
-        }
+export default function spect(target, fn) {
+  if (Array.isArray(fn)) {
+    fn.forEach(fn => spect(target, fn))
+    return
+  }
 
-        selectors.get(selector).push((el) => {
-          controller.enqueue(el)
-          callback && callback(el)
+  if (typeof target === 'string') {
+    return $(target, fn)
+  }
+
+  if (target.forEach) {
+    target.forEach(target => spect(target, fn))
+    return
+  }
+
+  let key = tuple(target, fn)
+
+  if (!instances.has(key)) {
+    instances.add(key)
+    enhook(fn)(target)
+  }
+}
+
+
+export function $(selector, fn) {
+  if (Array.isArray(fn)) {
+    fn.forEach(fn => spect(selector, fn))
+    return
+  }
+
+  fn = enhook(fn)
+
+  let isFirst = false
+
+  if (!selectors.has(selector)) {
+    selectors.set(selector, [])
+    isFirst = true
+  }
+
+  selectors.get(selector).push(fn)
+
+  if (isFirst) {
+    let observers = selectors.get(selector)
+    regularElements.define(selector, {
+      onconnected(e) {
+        observers.forEach(fn => {
+          let key = tuple(this, fn)
+          if (instances.has(key)) return
+
+          instances.add(key)
+          enhook(fn)(this)
+
+          // duplicate event since it's not emitted
+          this.dispatchEvent(new CustomEvent(e.type))
         })
-
-        if (isFirst) {
-          let observers = selectors.get(selector)
-          regularElements.define(selector, {
-            onconnected(e) {
-              if (instances.has(this)) return
-              instances.add(this)
-
-              observers.forEach(fn => fn(this))
-
-              // duplicate event since it's not emitted
-              e.currentTarget.dispatchEvent(new CustomEvent(e.type))
-            }
-          })
-        }
-
       }
-    },
-    cancel(reason) {
-      observers.splice(observers.indexOf(fn), 1)
-      stream.done = true
-    }
-  })
+    })
+  }
 }

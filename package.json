@@ -1,44 +1,15 @@
 {
   "name": "spect",
   "version": "11.0.0",
-  "description": "Aspect-oriented ",
+  "description": "Reactive DOM aspects with hooks",
   "main": "./src/index.js",
-  "@pika/pack": {
-    "pipeline": [
-      [
-        "@pika/plugin-standard-pkg"
-      ],
-      [
-        "@pika/plugin-build-umd",
-        {
-          "name": "spect"
-        }
-      ],
-      [
-        "pika-plugin-bundle-umd",
-        {
-          "name": "spect"
-        }
-      ],
-      [
-        "@pika/plugin-build-web"
-      ],
-      [
-        "@pika/plugin-bundle-web"
-      ],
-      [
-        "pika-plugin-unpkg-field"
-      ]
-    ]
-  },
   "scripts": {
-    "build": "pika build",
     "start": "parcel serve --no-hmr test/index.html",
-    "test": "node -r esm -r ./test/register.js test/index.js"
+    "test": "node -r esm -r browser-env/register test/index.js"
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/dy/spect.git"
+    "url": "git+https://github.com/spectjs/spect.git"
   },
   "browserslist": [
     "last 1 Chrome versions"
@@ -65,41 +36,23 @@
   "author": "dy <df.creative@gmail.com>",
   "license": "MIT",
   "bugs": {
-    "url": "https://github.com/dy/spect/issues"
+    "url": "https://github.com/spectjs/spect/issues"
   },
-  "homepage": "https://github.com/dy/spect#readme",
-  "type": "module",
+  "homepage": "https://github.com/spectjs/spect#readme",
   "dependencies": {
-    "dom-lite": "^0.5.1",
-    "emmy": "^7.0.0",
-    "fast-deep-equal": "^2.0.1",
+    "augmentor": "^2.1.1",
+    "enhook": "^1.6.4",
+    "global-cache": "^1.2.1",
     "immutable-tuple": "^0.4.10",
-    "regular-elements": "^0.5.0"
+    "regular-elements": "^0.5.1"
   },
   "devDependencies": {
-    "@babel/core": "^7.6.4",
-    "@babel/plugin-proposal-async-generator-functions": "^7.2.0",
-    "@babel/plugin-syntax-async-generators": "^7.2.0",
-    "@pika/pack": "^0.5.0",
-    "@pika/plugin-build-node": "^0.6.1",
-    "@pika/plugin-build-types": "^0.6.0",
-    "@pika/plugin-build-umd": "^0.6.0",
-    "@pika/plugin-build-web": "^0.6.0",
-    "@pika/plugin-bundle-web": "^0.6.0",
-    "@pika/plugin-standard-pkg": "^0.6.1",
-    "array-flat-polyfill": "^1.0.1",
-    "browser-env": "^3.2.6",
-    "clsx": "^1.0.4",
+    "@babel/core": "^7.7.4",
+    "@babel/plugin-proposal-async-generator-functions": "^7.7.4",
+    "browser-env": "^3.3.0",
+    "dom-lite": "^0.5.1",
     "esm": "^3.2.25",
-    "htm": "^2.2.1",
-    "jsdom": "^15.1.1",
-    "kebab-case": "^1.0.0",
-    "morphdom": "^2.5.10",
-    "parcel": "^1.12.3",
-    "pika-plugin-bundle-umd": "^0.1.1",
-    "pika-plugin-unpkg-field": "^1.1.0",
-    "remarkable": "^2.0.0",
-    "tst": "^3.4.1",
-    "web-streams-ponyfill": "^1.4.2"
+    "tst": "^3.4.2",
+    "wait-please": "^2.0.1"
   }
 }
