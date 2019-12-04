@@ -4,7 +4,7 @@ Aspect-oriented UI libary. _Spect_ provides minimal abstraction to organize web-
 
 
 <p align="center">
-  <img src="https://rawcdn.githack.com/spectjs/assets/6f84f83548f113cd73d4af71c2b472273aeaa72e/carbon.png" alt="Spect Demo">
+  <img src="https://raw.githack.com/spectjs/assets/master/carbon.png" alt="Spect Demo">
 </p>
 
 <!-- Incorporates  [aspect-oriented programming](https://en.wikipedia.org/wiki/Aspect-oriented_programming), FRP and streams. -->
