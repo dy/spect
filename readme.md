@@ -2,6 +2,9 @@
 
 UI streams.
 
+To be factored out into some library via [event-iterator](https://www.npmjs.com/package/event-iterator).
+
+
 <!-- Incorporates  [aspect-oriented programming](https://en.wikipedia.org/wiki/Aspect-oriented_programming), FRP and streams. -->
 
 <!-- #### 🎡 Concept
