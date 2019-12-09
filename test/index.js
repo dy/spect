@@ -1,6 +1,7 @@
 import $ from '../src/index.js'
 import t from 'tst'
 import { tick, frame, idle, time } from 'wait-please'
+import { useState, useEffect } from 'unihooks'
 
 
 t('tag selector', async t => {
@@ -113,6 +114,21 @@ t.todo('$: returned result replaces the target', async t => {
   unuse()
 })
 
+t('simple hooks', async t => {
+  let el = document.createElement('div')
+
+  $(el, el => {
+    let [count, setCount] = useState(0)
+    el.count = count
+    useEffect(() => {
+      setCount(1)
+    }, [])
+  })
+
+  t.is(el.count, 0)
+  await tick()
+  t.is(el.count, 1)
+})
 
 
 t.todo('$: aspects, assigned through parent wrapper', async t => {

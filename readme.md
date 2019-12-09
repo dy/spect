@@ -48,15 +48,13 @@ Other approaches include:
 ```js
 import spect from 'spect'
 import { useAttribute, useRoute, useStore, useEffect } from 'unihooks'
-import { t, useLocale } from 'ttag'
 import { html, render } from 'lit-html'
 
-// main app
-spect('#app', element => {
-  // loading data when location changes
+// main app aspect
+spect('#app', el => {
   let [{ id }] = useRoute('users/:id')
   let [user, setUser] = useStore('user', { id: null, name: null, })
-  let [loading, setLoading] = useState(false)
+  let [loading, setLoading] = useAttribute(el, 'loading')
 
   useEffect(() => {
     setLoading(true)
@@ -65,26 +63,20 @@ spect('#app', element => {
   }, [id])
 
   render(html`
-    <p>${ !loading ? `Hello, ${ user.name }!` : `Thanks for patience...` }</p>
-  `, element)
+    <p>${
+      !loading ? `Hello, ${ user.name }!`
+      : `Thanks for patience...`
+    }</p>
+  `, el)
 }
 
-// preloader aspect stream
-spect('.preloadable', el => {
+// preloader aspect
+spect('[loading]', el => {
   let content = useMemo(() => [...el.childNodes]),
       progress = html`<progress class="progress-circle" />`
   let [loading] = useAttribute(el, 'loading')
 
   render(loading ? content : progress, el)
-})
-
-// i18n aspect stream
-spect('.i18n', el => {
-  let str = useMemo(() => this.textContent)
-  let [lang, setLang] = useAttribute(document.documentElement, 'lang')
-  useLocale(lang)
-
-  render(t(str), el)
 })
 ```
 -->
@@ -414,11 +406,16 @@ cls(el).foo
 cls(el)
 ``` -->
 
-* `effect` - generic aspect, takes a function and turns it into hookable aspect.
-* `element` enables aspect defined on elements, with result, updating the content of some element.
-* `action` describes some page/app action, available in the app.
-* `store` aspect defines store(model), identifiable by some target or id.
+
+<!--
+* `createAction`, `useAction` describes some page/app action, available in the app.
+* `createStore`, `useStore` aspect defines store(model), identifiable by some target or id.
 * `event` - describes aspect of interaction, from event source to side-effects.
+
+-->
+
+
+
 
 ## Changelog
 
