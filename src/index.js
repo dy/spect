@@ -1,4 +1,3 @@
-// import regularElements from 'regular-elements'
 import { observe } from 'selector-observer'
 import enhook from 'enhook'
 import globalCache from 'global-cache'
@@ -59,7 +58,7 @@ export function $(selector, fn) {
           if (instances.has(key)) return
 
           instances.add(key)
-          enhook(fn)(el)
+          fn(el)
 
           // duplicate event since it's not emitted
           el.dispatchEvent(new CustomEvent('connected'))
