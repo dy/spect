@@ -75,10 +75,11 @@ spect('[loading]', el => {
 
 ## 🏛️ Concepts
 
-* Aspect is reactive function with data/effect react-compatible hooks, see [unihooks](https://ghub.io/unihooks).
-* Aspects are assigned to DOM in CSS fashion, allowing combinations (multiple aspects).
-* Aspect defines behavior, logic part, that way _separation of concerns_ and _progressive enhancement_ is achievable without wrappers, HOCs, contexts etc.
+* Aspect is reactive function with react-compatible data/effect hooks, see [unihooks](https://ghub.io/unihooks).
+* Aspects are assigned to DOM in CSS fashion, allowing multiple aspects and declarative sheets.
+* Aspect defines behavior, or component logic - that way _separation of concerns_ and _progressive enhancement_ are achievable without wrappers, HOCs, contexts etc.
 * Rendering is a side-effect, not the main effect. That allows render-less aspect, and enables any rendering lib as a base, eg. [lit-html](https://ghub.io/lit-html), [htl](https://ghub.io/htl) or [morphdom](https://ghub.io/morphdom).
+* 🥚 spect works with any installed hooks framework - [react](https://ghub.io/react), [preact](https://ghub.io/preact), [haunted](https://ghub.io/haunted) etc., with default fall back to [augmentor](https://ghub.io/augmentor).
 
 <!--
 ## Getting started
@@ -236,7 +237,7 @@ let getRawMarkup = content => {
 
 ### `unspect = spect( selector | element[s], aspectFn )`
 
-Assign aspect to elements matching selector or direct elements.
+Assign aspect to elements matching selector or direct elements. Returned `unspect` function destroys created aspect, cleaning up all `useEffect` calls.
 
 
 <!--
