@@ -1,50 +1,43 @@
 # Spect ![experimental](https://img.shields.io/badge/stability-experimental-yellow) [![Build Status](https://travis-ci.org/spectjs/spect.svg?branch=master)](https://travis-ci.org/spectjs/spect)
 
-Aspect-oriented UI libary. _Spect_ provides minimal abstraction to organize web-apps in aspect-oriented fashion.
+_Spect_ provides minimal abstraction to build web-apps in [aspect-oriented](https://en.wikipedia.org/wiki/Aspect-oriented_programming) fashion.
+
+## Installation
+
+<details open>
+<summary>A. As NPM package</summary>
+
+[![npm i spect](https://nodei.co/npm/spect.png?mini=true)](https://npmjs.org/package/spect/)
+</details>
+
+<details>
+<summary>B. As ES module</summary>
+
+```html
+<script type="module">
+import { use, fx, on } from 'https://unpkg.com/spect@latest?module'
+
+// ...UI code
+</script>
+```
+</details>
+
+<details>
+<summary>C. As standalone bundle</summary>
+
+```html
+<script src="https://unpkg.com/spect/dist-umd/index.bundled.js"></script>
+<script>
+  let { fx, on } = window.spect
+
+  // ...UI code
+</script>
+```
+</details>
 
 
-<p align="center">
-  <img src="https://raw.githack.com/spectjs/assets/master/carbon.png" alt="Spect Demo">
-</p>
+## Usage
 
-<!-- Incorporates  [aspect-oriented programming](https://en.wikipedia.org/wiki/Aspect-oriented_programming), FRP and streams. -->
-
-<!-- #### 🎡 Concept
-
-_Spect_ introduces _reactive functional effects_ with domain accessors to declare dependencies: `$`, `attr`, `html`, `css`, `state`, `data`, `prop`, `on` etc. Less words, more business: -->
-
-<!-- #### 🏛️ Principles
-
-1. Expressivity.
-2. No bundling.
-3. HTML first.
-3. Organic hydration.
-5. Max utility, min presentation. -->
-
-<!-- Spect is build with a set of modern practices in mind (proxies, symbols, tagged strings, virtual dom, incremental dom, htm, custom elements, hooks, observers, tuples, frp). It grounds on API design research, experiments and proofs. Current API is 4th iteration. -->
-
-<!--
-Conceptually, app is a set of _reactions_ to changes in some _domain_.
-
-_Reaction_ may have various side-_effects_, like changing html, css, page title, sound volume, displaying dialog etc. _React_ components provide main html side-effect per component, to provide other side-effects, the mechanism of hooks is introduced. In _jQuery_, any element may have an effect on any other element, but lack of component composition is 🍝.
-
-_State_ can be any structure, representing some domain. In web, main domains are - data storage and DOM tree (besides navigation, web-audio, localstorage, webgl etc.). Reactions can be triggered by changes in these domains.
-
-`$` function wraps any group of DOM nodes, providing connections to different domains - html, css, navigation, storage, events etc. The `fx` method serves as aspect for group, it works as `useEffect` merged with component renderer (component renderer conceptually _is_ effect too).
-
-Other approaches include:
-
-* Decomposition algorithm, aspects (CSS is aspect).
-* streamlined html (fragment is container, attributes reflect domains, tagname is main domain indicator, children are implicit prop of syntax).
-* streamlined effects (global is effect holder, effect scope is indicated in ref, effect corresponds to domain).
-* streamlined subscription (autosubscribe to domain by reading it, sources of rerendering(target, subscriptions, direct gate call), soft/hard effects).
-* optimization API equation (contextual effects → effect constructors → hooks namespace → html wrappers → events middleware).
-* streamlined updates (batch updates after fx tick, clean up required diffs).
-* streamlized html (orig holder, vdom, attaching fx, API, carrying over DOM nodes)
--->
-
-
-<!--
 ```js
 import spect from 'spect'
 import { useAttribute, useRoute, useStore, useEffect } from 'unihooks'
@@ -79,40 +72,13 @@ spect('[loading]', el => {
   render(loading ? content : progress, el)
 })
 ```
--->
 
-## Installation
+## 🏛️ Concepts
 
-<!-- **A.** As _npm_ package: -->
-
-[![npm i spect](https://nodei.co/npm/spect.png?mini=true)](https://npmjs.org/package/spect/)
-
-```js
-import { $, fx, on, prop } from 'spect'
-
-// ...UI code
-```
-
-<!-- **B.** As module<sup><a href="#principle-2">2</a></sup>:
-
-```html
-<script type="module">
-import { use, fx, on } from 'https://unpkg.com/spect@latest?module'
-
-// ...UI code
-</script>
-```
-
-**C.** As standalone bundle:
-
-```html
-<script src="https://unpkg.com/spect/dist-umd/index.bundled.js"></script>
-<script>
-  let { fx, on } = window.spect
-
-  // ...UI code
-</script>
-``` -->
+* Aspect is reactive function with data/effect react-compatible hooks, see [unihooks](https://ghub.io/unihooks).
+* Aspects are assigned to DOM in CSS fashion, allowing combinations (multiple aspects).
+* Aspect defines behavior, logic part, that way _separation of concerns_ and _progressive enhancement_ is achievable without wrappers, HOCs, contexts etc.
+* Rendering is a side-effect, not the main effect. That allows render-less aspect, and enables any rendering lib as a base, eg. [lit-html](https://ghub.io/lit-html), [htl](https://ghub.io/htl) or [morphdom](https://ghub.io/morphdom).
 
 <!--
 ## Getting started
@@ -266,145 +232,11 @@ let getRawMarkup = content => {
 
 
 
-## Documentation
+## API
 
-<!-- [**`$`**](#use-el--destroy--deps---generic-side-effect)&nbsp;&nbsp;
-[**`prop`**](#prop-name--val-deps---properties-provider)&nbsp;&nbsp;
-[**`fx`**](#fx-el--destroy--deps---generic-side-effect)&nbsp;&nbsp;
-[**`on`**](#on-evt-fn---events-provider)&nbsp;&nbsp;
-[**`attr`**](#attr-name--val-deps---attributes-provider)&nbsp;&nbsp;
-[**`cls`**](#class-classes-deps---classes-side-effect)&nbsp;&nbsp;
-[**`html`**](#htmlmarkup---html-side-effect)&nbsp;&nbsp;
-[**`css`**](#css-styles-deps---css-side-effect)&nbsp;&nbsp;
+### `unspect = spect( selector | element[s], aspectFn )`
 
-##
-
-Each function in `spect` creates asynchronous iterator with the following properties:
-
-- `.end()` - tears down stream and all internal streams
-- `.then` - makes stream awaitable for the next value
-- `<effect>(...args, callback)` - the callback is the last argument for all streams -->
-<!-- - returned from callback value is called as destructor of previous value -->
-<!-- - `.push(value?)` - puts new data value into stream -->
-
-
-### `spect( selector | element[s], el => {}? )`
-
-Assign aspect to elements matching selector.
-
-<!--
----
-
-### `prop(target, prop, value => {}? )` − property stream
-
-Emit changed property values.
-
-```js
-let target = { foo: null }
-
-let foos = prop(target, 'foo')
-
-for await (const value of foos) {
-  console.log(value)
-}
-
-foos.cancel()
-```
-
----
-
-### `attr(target, name, value => {}? )` − attribute stream
-
-Observe element attribute, emit changed values.
-
-```js
-attr(el, 'hidden', isHidden => {
-  console.log(isHidden)
-})
-
-// i18n aspect stream
-element('.i18n', el => {
-  let [lang] = useAttribute(document.documentElement, 'lang')
-  let textContent = t(this.str)
-
-  this.str = this.textContent
-})
-```
-
----
-
-### `on( element | selector, evt, fn )` − event stream
-
-Observe for element/selector event.
-
-```js
-// direct
-let off = on(el, 'foo', e => {})
-
-// delegate
-on('.target', 'foo', e => {})
-
-// multiple events
-on(element, 'connected disconnected', e => {})
-
-// event sequence
-for await (const e of on('.target', 'connected disconnected')) {
-  // ...
-}
-```
--->
-
-<!--
----
-### ``.html`...markup` `` − patch html
-
-Render html. Uses [`htm`](https://ghub.io/htm) syntax.
-
-
-```js
-// create element
-let foo = html`<div#foo/>`
-
-// patch element
-html`<${foo}><div.bar/></>`
-
-// component
-html`<${Baz} foo=bar/>`
-function Baz(props) {
-  return html`<div.baz>baz</div>`
-}
-
-// render stream into html
-html`<.status>${ attr(target, 'status') }</>`
-``` -->
-
-
-<!--
-### `css( element, styles )` − CSS side-effect
-
-Provide scoped CSS styles for collection.
-
-```js
-// write css
-$target.css` :host { width: 100%} `
-```
-<p align="right">Ref: <a href="https://ghub.io/virtual-css">virtual-css</a></p> -->
-
-
-<!-- ### `cls( ...classes )` − manipulate classes
-
-Add/remove classes, update dependent aspects.
-
-```js
-// write classes
-cls(el).foo = true
-cls(el, { foo: true, bar: false, bas: isTrue() })
-cls(el, clsx => clsx.foo = false)
-
-// read classes
-cls(el).foo
-cls(el)
-``` -->
+Assign aspect to elements matching selector or direct elements.
 
 
 <!--

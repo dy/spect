@@ -8,6 +8,7 @@ if (!cache) globalCache.set('__spect__', cache = { selectors: new Map, instances
 
 const { selectors, instances } = cache
 
+// element-based aspect
 export default function spect(target, fn) {
   if (Array.isArray(fn)) {
     fn.forEach(fn => spect(target, fn))
@@ -23,22 +24,15 @@ export default function spect(target, fn) {
     return
   }
 
-  let key = tuple(target, fn)
-
-  if (!instances.has(key)) {
-    instances.add(key)
-    enhook(fn)(target)
-  }
+  return run(target, fn)
 }
 
-
+// selector-based aspect
 export function $(selector, fn) {
   if (Array.isArray(fn)) {
     fn.forEach(fn => spect(selector, fn))
     return
   }
-
-  fn = enhook(fn)
 
   let isFirst = false
 
@@ -52,18 +46,33 @@ export function $(selector, fn) {
   if (isFirst) {
     let observers = selectors.get(selector)
     observe(selector, {
-      initialize(el) {
+      add(el) {
         observers.forEach(fn => {
-          let key = tuple(el, fn)
-          if (instances.has(key)) return
-
-          instances.add(key)
-          fn(el)
+          run(el, fn)
 
           // duplicate event since it's not emitted
           el.dispatchEvent(new CustomEvent('connected'))
         })
+      },
+      remove(el) {
+        observers.forEach(fn => {
+
+        })
       }
     })
+  }
+}
+
+export function run(el, fn) {
+  let key = tuple(el, fn)
+
+  if (!instances.has(key)) {
+    instances.set(key, enhook(fn)(el))
+  }
+
+  return () => {
+    let dispose = instances.get(key)
+    if (dispose && dispose.call) dispose()
+    instances.delete(key)
   }
 }

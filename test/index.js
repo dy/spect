@@ -114,7 +114,7 @@ t.todo('$: returned result replaces the target', async t => {
   unuse()
 })
 
-t('simple hooks', async t => {
+t('$: simple hooks', async t => {
   let el = document.createElement('div')
 
   $(el, el => {
@@ -169,6 +169,32 @@ t('$: aspects must be called in order', async t => {
   await tick()
 
   t.deepEqual(log, [1, 2, 3])
+})
+
+t('$: each aspect must have own hooks scope', async t => {
+  let log = []
+
+  let a1 = document.createElement('a')
+  a1.x = 1
+  document.documentElement.appendChild(a1)
+
+  let off = $('a', (el) => {
+    useEffect(() => {
+      log.push(el.x)
+    }, [])
+  })
+
+  let a2 = document.createElement('a')
+  a2.x = 2
+  document.documentElement.appendChild(a2)
+
+  await tick(2)
+
+  t.deepEqual(log, [1, 2])
+
+  document.documentElement.removeChild(a1)
+  document.documentElement.removeChild(a2)
+  off()
 })
 
 t.todo('$: duplicates are ignored', async t => {
