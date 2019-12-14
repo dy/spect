@@ -2,14 +2,7 @@
 
 _Spect_ provides minimal abstraction to build web-apps in [aspect-oriented](https://en.wikipedia.org/wiki/Aspect-oriented_programming) fashion.
 
-## Installation
-
-<details open>
-<summary>A. As NPM package</summary>
-
-[![npm i spect](https://nodei.co/npm/spect.png?mini=true)](https://npmjs.org/package/spect/)
-</details>
-
+<!--
 <details>
 <summary>B. As ES module</summary>
 
@@ -34,9 +27,9 @@ import { use, fx, on } from 'https://unpkg.com/spect@latest?module'
 </script>
 ```
 </details>
+-->
 
-
-## Usage
+[![npm i spect](https://nodei.co/npm/spect.png?mini=true)](https://npmjs.org/package/spect/)
 
 ```js
 import spect from 'spect'
@@ -79,7 +72,7 @@ spect('[loading]', el => {
 * Aspects are assigned to DOM in CSS fashion, allowing multiple aspects and declarative sheets.
 * Aspect defines behavior, or component logic - that way _separation of concerns_ and _progressive enhancement_ are achievable without wrappers, HOCs, contexts etc.
 * Rendering is a side-effect, not the main effect. That allows render-less aspect, and enables any rendering lib as a base, eg. [lit-html](https://ghub.io/lit-html), [htl](https://ghub.io/htl) or [morphdom](https://ghub.io/morphdom).
-* 🥚 spect works with any installed hooks framework - [react](https://ghub.io/react), [preact](https://ghub.io/preact), [haunted](https://ghub.io/haunted) etc., with default fall back to [augmentor](https://ghub.io/augmentor).
+* Easter Egg: _spect_ works with any installed hooks framework - [react](https://ghub.io/react), [preact](https://ghub.io/preact), [haunted](https://ghub.io/haunted) etc., with default fallback to [augmentor](https://ghub.io/augmentor).
 
 <!--
 ## Getting started
@@ -244,7 +237,6 @@ Assign aspect to elements matching selector or direct elements. Returned `unspec
 * `createAction`, `useAction` describes some page/app action, available in the app.
 * `createStore`, `useStore` aspect defines store(model), identifiable by some target or id.
 * `event` - describes aspect of interaction, from event source to side-effects.
-
 -->
 
 
