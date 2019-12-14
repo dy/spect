@@ -1,7 +1,7 @@
 {
   "name": "spect",
   "version": "11.2.1",
-  "description": "Aspect-Oriented Reactive DOM framework (+hooks)",
+  "description": "Aspect-Oriented Reactive DOM framework",
   "main": "./src/index.js",
   "scripts": {
     "start": "parcel serve --no-hmr test/index.html",

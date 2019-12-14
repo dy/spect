@@ -259,6 +259,27 @@ t('throwing error must not create recursion', async t => {
   t.end()
 })
 
+t('remove/add should not retrigger element', async t => {
+  let a = document.createElement('a')
+  let b = document.createElement('b')
+  document.body.appendChild(b.appendChild(a))
+
+  let log = []
+  let unspect = $('a', el => {
+    log.push('a')
+  })
+  setTimeout(() => {
+    document.body.appendChild(a)
+  })
+
+  await time(10)
+  t.deepEqual(log, ['a'])
+
+  document.body.removeChild(a)
+  unspect()
+  t.end()
+})
+
 t.todo('duplicates are ignored', async t => {
   let log = []
 

@@ -2,10 +2,12 @@ import { observe } from 'selector-observer'
 import enhook from 'enhook'
 import globalCache from 'global-cache'
 import tuple from 'immutable-tuple'
+import reraf from 'reraf'
 
 let instances = globalCache.get('__spect__')
 if (!instances) globalCache.set('__spect__', instances = new WeakMap)
 
+let raf = reraf()
 
 // element-based aspect
 export default function spect(target, fn) {
@@ -38,13 +40,16 @@ export function $(selector, fn) {
       let unrun
       return {
         add(el) {
+          if (el._abortUnrun) return el._abortUnrun()
+
           unrun = run(el, fn)
 
           // duplicate event since it's not emitted
           el.dispatchEvent(new CustomEvent('connected'))
         },
         remove(el) {
-          unrun()
+          // disposal is scheduled, because some elements may be asynchronously reinserted, eg. material hoistMenuToBody etc.
+          el._abortUnrun = raf(unrun)
         }
       }
     }
