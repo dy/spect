@@ -1,7 +1,7 @@
 import $ from '../src/index.js'
 import t from 'tst'
 import { tick, frame, idle, time } from 'wait-please'
-import setHooks, { useState, useEffect } from 'unihooks'
+import setHooks, { useState, useEffect, useMemo } from 'unihooks'
 
 
 t('tag selector', async t => {
@@ -239,6 +239,23 @@ t('returned function disposes all internal aspects', async t => {
   await frame(2)
   t.deepEqual(log, ['a1', 'a2', 'effect-a1', 'effect-a2', 'una1', 'uneffect-a1', 'una2', 'uneffect-a2'])
 
+  t.end()
+})
+
+t('throwing error must not create recursion', async t => {
+  let a = document.createElement('a')
+  document.body.appendChild(a)
+  let unspect = $('a', el => {
+    useMemo(() => {}, [])
+    useEffect(() => {
+      a.classList.add('x')
+    }, [])
+    throw Error('That error is planned')
+  })
+  await tick()
+
+  unspect()
+  document.body.removeChild(a)
   t.end()
 })
 

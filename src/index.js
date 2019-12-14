@@ -55,9 +55,9 @@ export function run(el, fn) {
   let key = tuple(el, fn)
 
   if (!instances.has(key)) {
-    let aspect = enhook(fn)
-    let dispose = aspect(el)
-    instances.set(key, { aspect, dispose })
+    let instance = { aspect: enhook(fn) }
+    instances.set(key, instance)
+    instance.dispose = instance.aspect(el)
   }
 
   return () => {
