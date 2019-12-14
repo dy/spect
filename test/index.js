@@ -1,7 +1,7 @@
 import $ from '../src/index.js'
 import t from 'tst'
 import { tick, frame, idle, time } from 'wait-please'
-import { useState, useEffect } from 'unihooks'
+import setHooks, { useState, useEffect } from 'unihooks'
 
 
 t('tag selector', async t => {
@@ -28,7 +28,7 @@ t('tag selector', async t => {
   container.appendChild(document.createElement('x'))
   await Promise.resolve()
   t.is(ellog, ['x', 'x', 'x', 'x'], 'additional aspect')
-  t.is(proplog, [1], 'additional aspect')
+  t.is(proplog, [1, 1, 1, 1], 'additional aspect')
 
   document.body.removeChild(container)
 })
@@ -49,7 +49,7 @@ t('init existing elements', async t => {
   document.body.removeChild(container)
 })
 
-t.skip('$: removing $ disables internal effects', async t => {
+t.skip('removing $ disables internal effects', async t => {
   let container = document.createElement('div')
   document.body.appendChild(container)
 
@@ -65,7 +65,7 @@ t.skip('$: removing $ disables internal effects', async t => {
 })
 
 
-t.skip('$: defined props must be available', async t => {
+t.skip('defined props must be available', async t => {
   let log = []
 
   let el = document.createElement('div')
@@ -98,7 +98,7 @@ t('dynamically assigned selector', async t => {
   document.body.removeChild(el)
 })
 
-t.todo('$: returned result replaces the target', async t => {
+t.todo('returned result replaces the target', async t => {
   let container = document.createElement('div')
   container.innerHTML = '<div class="foo"></div>'
   document.body.appendChild(container)
@@ -114,7 +114,7 @@ t.todo('$: returned result replaces the target', async t => {
   unuse()
 })
 
-t('$: simple hooks', async t => {
+t('simple hooks', async t => {
   let el = document.createElement('div')
 
   $(el, el => {
@@ -131,7 +131,7 @@ t('$: simple hooks', async t => {
 })
 
 
-t.todo('$: aspects, assigned through parent wrapper', async t => {
+t.todo('aspects, assigned through parent wrapper', async t => {
   // some wrappers over same elements can be created in different ways
   // but effects must be bound to final elements
   let a = document.createElement('a')
@@ -158,20 +158,23 @@ t.todo('$: aspects, assigned through parent wrapper', async t => {
   t.is($a5[0], a)
 })
 
-t('$: aspects must be called in order', async t => {
+t('aspects must be called in order', async t => {
   let log = []
   let a = document.createElement('a')
 
-  $(a, [() => (log.push(1)), () => log.push(2), () => log.push(3)])
+  let unspect = $(a, [() => (log.push(1)), () => log.push(2), () => log.push(3)])
 
   document.body.appendChild(a)
 
   await tick()
 
   t.deepEqual(log, [1, 2, 3])
+
+  document.body.removeChild(a)
+  unspect()
 })
 
-t('$: each aspect must have own hooks scope', async t => {
+t('each aspect must have own hooks scope', async t => {
   let log = []
 
   let a1 = document.createElement('a')
@@ -197,7 +200,49 @@ t('$: each aspect must have own hooks scope', async t => {
   off()
 })
 
-t.todo('$: duplicates are ignored', async t => {
+t('returned function disposes all internal aspects', async t => {
+  let log = []
+
+  let una = $('a', (el) => {
+    log.push('a1')
+    useEffect(() => {
+      log.push('effect-a1')
+      return () => {
+        log.push('uneffect-a1')
+      }
+    })
+    return () => log.push('una1')
+  })
+  let una2 = $('a', (el) => {
+    log.push('a2')
+    useEffect(() => {
+      log.push('effect-a2')
+      return () => log.push('uneffect-a2')
+    })
+    return () => log.push('una2')
+  })
+
+  let a = document.body.appendChild(document.createElement('a'))
+
+  await frame(2)
+  t.deepEqual(log, ['a1', 'a2', 'effect-a1', 'effect-a2'])
+
+  una()
+  await frame(3)
+  t.deepEqual(log, ['a1', 'a2', 'effect-a1', 'effect-a2', 'una1', 'uneffect-a1'])
+
+  una2()
+  await frame(3)
+  t.deepEqual(log, ['a1', 'a2', 'effect-a1', 'effect-a2', 'una1', 'uneffect-a1', 'una2', 'uneffect-a2'])
+
+  document.body.removeChild(a)
+  await frame(2)
+  t.deepEqual(log, ['a1', 'a2', 'effect-a1', 'effect-a2', 'una1', 'uneffect-a1', 'una2', 'uneffect-a2'])
+
+  t.end()
+})
+
+t.todo('duplicates are ignored', async t => {
   let log = []
 
   await $(document.createElement('a')).use([fn, fn, fn])
@@ -213,7 +258,7 @@ t.todo('$: duplicates are ignored', async t => {
   t.is(log, [1, 1])
 })
 
-t.todo('$: aspects must not be called multiple times, unless target state changes', async t => {
+t.todo('aspects must not be called multiple times, unless target state changes', async t => {
   let log = []
 
   let $a = $`<a/>`
@@ -229,7 +274,7 @@ t.todo('$: aspects must not be called multiple times, unless target state change
   function fn(el) { log.push('x') }
 })
 
-t.todo('$: same aspect different targets', async t => {
+t.todo('same aspect different targets', async t => {
   let log = []
   function fx(el) {
     log.push(el.tagName)
@@ -249,7 +294,7 @@ t.todo('$: same aspect different targets', async t => {
   t.deepEqual(log, ['A', 'SPAN'])
 })
 
-t.todo('$: Same target different aspects', async t => {
+t.todo('Same target different aspects', async t => {
   let log = []
 
   let a = document.createElement('a')
@@ -264,7 +309,7 @@ t.todo('$: Same target different aspects', async t => {
   document.body.removeChild(a)
 })
 
-t.todo('$: same aspect same target', async t => {
+t.todo('same aspect same target', async t => {
   let log = []
   let a = document.createElement('a')
   document.body.appendChild(a)
@@ -280,7 +325,7 @@ t.todo('$: same aspect same target', async t => {
   document.body.removeChild(a)
 })
 
-t.todo('$: subaspects init themselves independent of parent aspects', async t => {
+t.todo('subaspects init themselves independent of parent aspects', async t => {
   let log = []
 
   let a = document.body.appendChild(document.createElement('a'))
@@ -309,22 +354,22 @@ t.todo('$: subaspects init themselves independent of parent aspects', async t =>
   document.body.removeChild(a)
 })
 
-t.todo('$: generators aspects')
+t.todo('generators aspects')
 
-t.todo('$: async aspects')
+t.todo('async aspects')
 
 
-t.todo('$: promise (suspense)', t => {
+t.todo('promise (suspense)', t => {
   $('div', import('url'))
 })
 
-t.todo('$: hyperscript case', t => {
+t.todo('hyperscript case', t => {
   $('div', () => {
 
   })
 })
 
-t.todo('$: new custom element', t => {
+t.todo('new custom element', t => {
   $('custom-element', () => {
 
   })
@@ -332,14 +377,14 @@ t.todo('$: new custom element', t => {
 
 
 
-t.todo('$: aspects must be called in order', async t => {
+t.todo('aspects must be called in order', async t => {
   let log = []
   let a = {}
   await spect(a).use([() => log.push(1), () => log.push(2), () => log.push(3)])
   t.deepEqual(log, [1, 2, 3])
 })
 
-t.todo('$: duplicates are ignored', async t => {
+t.todo('duplicates are ignored', async t => {
   let log = []
 
   await spect({}).use([fn, fn, fn])
@@ -355,7 +400,7 @@ t.todo('$: duplicates are ignored', async t => {
   t.is(log, [1, 1])
 })
 
-t.todo('$: aspects must not be called multiple times, unless target state changes', async t => {
+t.todo('aspects must not be called multiple times, unless target state changes', async t => {
   let log = []
 
   let $a = spect({})
@@ -371,7 +416,7 @@ t.todo('$: aspects must not be called multiple times, unless target state change
   function fn(el) { log.push('x') }
 })
 
-t.skip('$: same aspect different targets', t => {
+t.skip('same aspect different targets', t => {
   let log = []
   function fx([el]) {
     log.push(el.tagName)
@@ -389,7 +434,7 @@ t.skip('$: same aspect different targets', t => {
   t.deepEqual(log, ['A', 'SPAN'])
 })
 
-t.todo('$: Same target different aspects', async t => {
+t.todo('Same target different aspects', async t => {
   let log = []
 
   let a = {}
@@ -401,7 +446,7 @@ t.todo('$: Same target different aspects', async t => {
   t.deepEqual(log, ['a', 'b'])
 })
 
-t.todo('$: same aspect same target', async t => {
+t.todo('same aspect same target', async t => {
   let log = []
   let a = {}
 
@@ -414,7 +459,7 @@ t.todo('$: same aspect same target', async t => {
   t.deepEqual(log, ['a'])
 })
 
-t.todo('$: subaspects init themselves independent of parent aspects', async t => {
+t.todo('subaspects init themselves independent of parent aspects', async t => {
   let log = []
 
   let a = { b: { c: {} } }
@@ -441,9 +486,9 @@ t.todo('$: subaspects init themselves independent of parent aspects', async t =>
   // t.deepEqual(log, ['a', 'b', 'c', '-c', '-b', '-a'])
 })
 
-t.todo('$: generators aspects')
+t.todo('generators aspects')
 
-t.todo('$: async aspects', t => {
+t.todo('async aspects', t => {
   let a = spect({})
 
   a.use(async function a() {
@@ -454,7 +499,7 @@ t.todo('$: async aspects', t => {
 
 })
 
-t.skip('$: promise', async t => {
+t.skip('promise', async t => {
   let to = new Promise(ok => setTimeout(ok, 100))
 
   to.then()
@@ -475,7 +520,7 @@ t.todo('fx: global effect is triggered after current callstack', async t => {
 })
 
 
-t.todo('$: simple selector', t => {
+t.todo('simple selector', t => {
   let $b = $('body')
   t.is($b.length, 1)
 
@@ -483,7 +528,7 @@ t.todo('$: simple selector', t => {
   t.is($b1[0], $b[0])
 })
 
-t.todo('$: create from nodes', t => {
+t.todo('create from nodes', t => {
   let el = document.createElement('div')
 
   let $node = $(el)
@@ -499,7 +544,7 @@ t.todo('$: create from nodes', t => {
   t.is($difNodes[0], el)
 })
 
-t.todo('$: create new', t => {
+t.todo('create new', t => {
   let $new = $('<div/>')
   t.equal($new[0].tagName, 'DIV')
 
@@ -510,7 +555,7 @@ t.todo('$: create new', t => {
   t.equal($tpl.length, 2)
 })
 
-t.todo('$: create components', t => {
+t.todo('create components', t => {
   let $el = $`<${C}/>`
 
   function C($el) {
@@ -519,7 +564,7 @@ t.todo('$: create components', t => {
   console.log($el)
 })
 
-t.todo('$: subselect nodes', t => {
+t.todo('subselect nodes', t => {
   let $foo = $`<foo><bar/></foo>`
 
   console.log('bar')
@@ -528,7 +573,7 @@ t.todo('$: subselect nodes', t => {
   t.is($bar[0], $foo[0].firstChild)
 })
 
-t.skip('$: live nodes list as reference under the hood', t => {
+t.skip('live nodes list as reference under the hood', t => {
   // FIXME: that's insustainable for now: we have to extend Spect class from Proxy-ed prototype,
   // providing numeric access to underneath store, like NodeList etc.
   // The proxy prototype looks
@@ -543,7 +588,7 @@ t.skip('$: live nodes list as reference under the hood', t => {
   t.is($children.length, 2)
 })
 
-t.todo('$: rebinding to other document', async t => {
+t.todo('rebinding to other document', async t => {
   let { document } = await import('dom-lite')
 
   // FIXME: w
@@ -557,19 +602,19 @@ t.todo('$: rebinding to other document', async t => {
   })
 })
 
-t.todo('$: ignore wrapping collections', t => {
+t.todo('ignore wrapping collections', t => {
   let $a = $`<a/>`
 
   t.equal($($a), $a)
 })
 
-t.todo('$: wrapped subsets are fine', t => {
+t.todo('wrapped subsets are fine', t => {
   let $a = $`<a/>`
 
   t.equal($($a[0]), $a)
 })
 
-t.todo('$: fragments', t => {
+t.todo('fragments', t => {
   let [foo, bar, baz] = $`<>foo <bar/> baz</>`
   // t.equal(el.innerHTML, 'foo <bar></bar> baz')
   t.ok(foo instanceof Node)
@@ -583,7 +628,7 @@ t.todo('$: fragments', t => {
   // t.ok(foo2 instanceof Node)
 })
 
-t.skip('$: empty selectors', t => {
+t.skip('empty selectors', t => {
   let $x = $()
   t.is($x.length, 0)
 
@@ -602,7 +647,7 @@ t.skip('$: empty selectors', t => {
   // t.notEqual($x, $w)
 })
 
-t.todo('$: selecting forms', t => {
+t.todo('selecting forms', t => {
   let $f = $`<form><input name="a"/><input name="b"/></form>`
 
   let $form = $($f)
@@ -612,17 +657,17 @@ t.todo('$: selecting forms', t => {
   t.is($form[0], $f[0])
 })
 
-t.skip('$: array map should work fine', t => {
+t.skip('array map should work fine', t => {
   let $a = $`<a/>`
   let $b = $a.map(x => x.html`<span/>`)
   t.is($a, $b)
 })
 
-t.skip('$: negative, positive indices')
-t.skip('$: Set methods')
-t.skip('$: call subfilters elements')
+t.skip('negative, positive indices')
+t.skip('Set methods')
+t.skip('call subfilters elements')
 
-t.todo('$: promise postpones properly / effects are bound', async t => {
+t.todo('promise postpones properly / effects are bound', async t => {
   let $a = $`<a use=${({ html }) => html`<span.x/>`}/>`
 
   await $a
@@ -630,12 +675,12 @@ t.todo('$: promise postpones properly / effects are bound', async t => {
   t.is($a[0].innerHTML, '<span class="x"></span>')
 })
 
-t.todo('$: create document fragment is ok', t => {
+t.todo('create document fragment is ok', t => {
   let $d = $(document.createDocumentFragment())
 
   t.is($d.length, 0)
 })
 
-t.todo('$: select within multiple', t => {
+t.todo('select within multiple', t => {
 
 })
