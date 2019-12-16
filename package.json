@@ -55,7 +55,7 @@
     "node-localstorage": "^2.1.5",
     "raf": "^3.4.1",
     "tst": "^3.4.2",
-    "unihooks": "^1.4.4",
+    "unihooks": "^1.4.5",
     "wait-please": "^2.0.1"
   }
 }
