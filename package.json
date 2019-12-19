@@ -1,6 +1,6 @@
 {
   "name": "spect",
-  "version": "11.2.2",
+  "version": "11.3.0",
   "description": "Aspect-Oriented Reactive DOM framework",
   "main": "./src/index.js",
   "scripts": {
