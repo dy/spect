@@ -1,5 +1,4 @@
 import { observe } from 'selector-observer'
-import tuple from 'immutable-tuple'
 import reraf from 'reraf'
 import { augmentor, dropEffect } from 'augmentor'
 

@@ -43,8 +43,7 @@
   "homepage": "https://github.com/spectjs/spect#readme",
   "dependencies": {
     "augmentor": "^2.1.4",
-    "global-cache": "^1.2.1",
-    "immutable-tuple": "^0.4.10",
+    "reraf": "^1.1.1",
     "selector-observer": "^2.1.6"
   },
   "devDependencies": {
