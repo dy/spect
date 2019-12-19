@@ -2,34 +2,40 @@
 
 _Spect_ provides minimal abstraction to build web-apps in [aspect-oriented](https://en.wikipedia.org/wiki/Aspect-oriented_programming) fashion.
 
-<!--
-<details>
-<summary>B. As ES module</summary>
+
+## Installation
+
+#### A. As NPM package
+
+[![npm i spect](https://nodei.co/npm/spect.png?mini=true)](https://npmjs.org/package/spect/)
+
+
+#### B. As ES module
 
 ```html
 <script type="module">
-import { use, fx, on } from 'https://unpkg.com/spect@latest?module'
+import spect from 'https://unpkg.com/spect@latest?module'
 
 // ...UI code
 </script>
 ```
-</details>
 
-<details>
-<summary>C. As standalone bundle</summary>
+<!--
+#### C. As standalone bundle
 
 ```html
 <script src="https://unpkg.com/spect/dist-umd/index.bundled.js"></script>
 <script>
-  let { fx, on } = window.spect
+  let spect = window.spect
 
   // ...UI code
 </script>
 ```
-</details>
 -->
 
-[![npm i spect](https://nodei.co/npm/spect.png?mini=true)](https://npmjs.org/package/spect/)
+## Usage
+
+Spect assigns reactive functions with hooks to selectors or elements.
 
 ```js
 import spect, { useEffect } from 'spect'
@@ -48,23 +54,18 @@ spect('#app', el => {
     setLoading(false)
   }, [id])
 
-  render(html`
-    <p>${
-      !loading ? `Hello, ${ user.name }!`
-      : `Thanks for patience...`
-    }</p>
-  `, el)
+  render(loading ? 'Loading...' : html`Hello, ${ user.name }!`, el)
 }
 
-// preloader aspect
+// preloader aspect - displays preloader when `loading` attribute is set
 spect('[loading]', el => {
-  let content = useMemo(() => [...el.childNodes]),
-      progress = html`<progress class="progress-circle" />`
-  let [loading] = useAttribute(el, 'loading')
-
-  render(loading ? content : progress, el)
+  let preloader = document.createElement('progress')
+  preloader.classList.add('circular-progress')
+  el.replaceWith(preloader)
+  return () => preloader.replaceWith(el)
 })
 ```
+
 
 ## 🏛️ Concepts
 
@@ -73,13 +74,13 @@ spect('[loading]', el => {
 * Aspect defines behavior, or component logic - that way _separation of concerns_ and _progressive enhancement_ are achievable without wrappers, HOCs, contexts etc.
 * Rendering is a side-effect, not the main effect. That allows render-less aspect, and enables any rendering lib as a base, eg. [lit-html](https://ghub.io/lit-html), [htl](https://ghub.io/htl) or [morphdom](https://ghub.io/morphdom).
 
-<!--
 ## Getting started
-
+<!--
 🎬 Let's build [react examples](https://reactjs.org/).
 
-### A Simple Selector Stream
-
+### A Simple Aspect
+-->
+<!--
 This example assigns handler to `#hello-example` element and observes its `name` property, rerendering content.
 
 ```html
@@ -87,42 +88,41 @@ This example assigns handler to `#hello-example` element and observes its `name`
 
 <script type="module">
 import spect from 'spect'
+import { render, html } from 'lit-html'
 
-spect('#hello-example', props => {
-  return <this>
+spect('#hello-example', el => {
+  render(html`
     <div class="message">
-      Hello, { props.name }!
+      Hello, ${ el.attributes.name.value }!
     </div>
-  </this>
+  `, el)
 })
 ```
+-->
 
-This is example of simple timer: it handles `connected` and `disconnected` event streams, as well as runs side-effect via `fx`, that is triggered whenever any input stream (`prop`) emits new value.
+Simple timer example.
 
 ```js
-import spect from 'spect'
+import spect, { useEffect, useState } from 'spect'
 
 // for every #timer-example element
 spect('#timer-example', async el => {
-  let state = { seconds: 0 }
+  let [count, setCount] = useState(0)
 
-  // start timer when connected, end when disconnected
-  on(el, 'connected', e => {
+  useEffect(() => {
     let i = setInterval(() => {
-      state.seconds++
+      setCount(count => ++count)
     }, 1000)
+    return () => clearInterval(i)
+  }, [])
 
-    on(el, 'disconnected', () => clearInterval(i))
-  })
-
-  // rerender when seconds change
-  fx(prop(state, 'seconds'), seconds => html`<${el}>Seconds: ${seconds}</>`)
+  render(html`Seconds: ${seconds}`, el)
 })
 ```
 
 <p align='right'><a href="https://codesandbox.io/s/a-stateful-aspect-9pbji">Open in sandbox</a></p>
 
-
+<!--
 ### An Application
 
 Selector streams allow easily assign aspects to elements.
@@ -223,6 +223,88 @@ let getRawMarkup = content => {
 * [Popup-info component from MDN](https://developer.mozilla.org/en-US/docs/Web/API/CustomElementRegistry/define#Autonomous_custom_element):
 -->
 
+## Ideas
+
+#### Convert `<img src="*.svg"/>` to `<svg>...</svg>`
+
+```js
+$('img[src$=".svg"]', async el => {
+  let resp = await fetch(el.getAttribute('src'))
+  let parser = new DOMParser()
+  let text = await resp.text()
+  let root = parser.parseFromString(text, "image/svg+xml")
+  el.replaceWith(root.querySelector('svg'))
+})
+```
+
+See [svg-inject](https://ghub.io/svg-inject).
+
+#### CSS atoms
+
+```js
+const UNIT = 8
+
+// <div m=4 />
+$('[m]', el => {
+  let margin = parseInt(el.getAttribute('m'))
+  el.style.margin = `${margin * UNIT}px`
+})
+```
+
+See [tachyons](https://ghub.io/tachyons), [atomic css](https://ghub.io/atomic), [tailwind](https://ghub.io/tailwind), [ui-box](https://ghub.io/ui-box) etc.
+
+#### jQuery plugins
+
+```js
+import $ from 'jquery'
+import spect from 'spect'
+import 'some-jquery-plugin'
+
+spect('.target', el => {
+  let plugin = $(el).somePlugin()
+  return () => {
+    plugin.destroy()
+  }
+})
+```
+
+#### i18n
+
+```js
+$('.i18n', el => {
+  let initial = el.textContent
+  el.textContent = t(el.textContent)
+  return () => el.textContent = initial
+})
+```
+
+#### HTML actions
+
+```js
+let actions = {
+  login() {},
+  logout() {}
+}
+
+$('[data-action]', el => {
+  let action = el.dataset.action
+  el.onclick = actions[action]
+})
+```
+
+#### Custom tooltips
+
+```js
+import tippy from 'tippy'
+
+$('[title]', el => {
+  tippy(el, {
+    content: el.title
+  });
+})
+```
+
+<!-- #### Ripple visual effect -->
 
 
 ## API
