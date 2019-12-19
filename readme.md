@@ -67,12 +67,12 @@ spect('[loading]', el => {
 ```
 
 
-## 🏛️ Concepts
+## Concepts
 
 * Aspect is reactive function with react-like hooks.
-* Aspects are assigned to DOM in CSS fashion, allowing multiple aspects and declarative sheets.
+* Aspects are assigned to DOM in CSS fashion, allowing multiple aspects and declarative format.
 * Aspect defines behavior, or component logic - that way _separation of concerns_ and _progressive enhancement_ are achievable without wrappers, HOCs, contexts etc.
-* Rendering is a side-effect, not the main effect. That allows render-less aspect, and enables any rendering lib as a base, eg. [lit-html](https://ghub.io/lit-html), [htl](https://ghub.io/htl) or [morphdom](https://ghub.io/morphdom).
+* Rendering is a side-effect, not the main effect. That allows render-less aspects and enables any rendering lib as a base, eg. [lit-html](https://ghub.io/lit-html), [htl](https://ghub.io/htl), [morphdom](https://ghub.io/morphdom) etc.
 
 ## Getting started
 <!--
@@ -225,7 +225,7 @@ let getRawMarkup = content => {
 
 ## Ideas
 
-#### Convert `<img src="*.svg"/>` to `<svg>...</svg>`
+### Convert `<img src="*.svg"/>` to `<svg>...</svg>`
 
 ```js
 $('img[src$=".svg"]', async el => {
@@ -239,7 +239,7 @@ $('img[src$=".svg"]', async el => {
 
 See [svg-inject](https://ghub.io/svg-inject).
 
-#### CSS atoms
+### CSS atoms
 
 ```js
 const UNIT = 8
@@ -249,11 +249,15 @@ $('[m]', el => {
   let margin = parseInt(el.getAttribute('m'))
   el.style.margin = `${margin * UNIT}px`
 })
+$('[p]', el => {
+  let padding = parseInt(el.getAttribute('p'))
+  el.style.padding = `${padding * UNIT}px`
+})
 ```
 
 See [tachyons](https://ghub.io/tachyons), [atomic css](https://ghub.io/atomic), [tailwind](https://ghub.io/tailwind), [ui-box](https://ghub.io/ui-box) etc.
 
-#### jQuery plugins
+### jQuery plugins
 
 ```js
 import $ from 'jquery'
@@ -268,9 +272,11 @@ spect('.target', el => {
 })
 ```
 
-#### i18n
+### I18n as aspect
 
 ```js
+import t from 'i18n-lib'
+
 $('.i18n', el => {
   let initial = el.textContent
   el.textContent = t(el.textContent)
@@ -278,7 +284,7 @@ $('.i18n', el => {
 })
 ```
 
-#### HTML actions
+### HTML actions
 
 ```js
 let actions = {
@@ -292,7 +298,7 @@ $('[data-action]', el => {
 })
 ```
 
-#### Custom tooltips
+### Custom tooltips
 
 ```js
 import tippy from 'tippy'
@@ -304,14 +310,14 @@ $('[title]', el => {
 })
 ```
 
-<!-- #### Ripple visual effect -->
+<!-- ### Ripple visual effect -->
 
 
 ## API
 
-### `unspect = spect( selector | element[s], aspectFn )`
+### unspect = spect( selector | element[s], aspectFn )
 
-Assign aspect to elements matching selector or direct elements. Returned `unspect` function destroys created aspect, cleaning up all `useEffect` calls.
+Assign aspect to elements matching selector or direct elements. Returned function destroys created aspect, cleaning up all `useEffect` calls.
 
 
 <!--
