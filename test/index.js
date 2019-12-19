@@ -244,7 +244,7 @@ t('returned function disposes all internal aspects', async t => {
   t.end()
 })
 
-t('throwing error must not create recursion', async t => {
+t.demo('throwing error must not create recursion', async t => {
   let a = document.createElement('a')
   document.body.appendChild(a)
   let unspect = $('a', el => {

@@ -6,7 +6,7 @@
   "type": "module",
   "scripts": {
     "start": "es-dev-server --app-index test/index.html --node-resolve --dedupe",
-    "test": "node -r node-localstorage/register -r browser-env/register test/index.js"
+    "test": "node -r esm -r node-localstorage/register -r browser-env/register test/index.js"
   },
   "repository": {
     "type": "git",
