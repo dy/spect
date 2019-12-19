@@ -241,11 +241,11 @@ Assign aspect to elements matching selector or direct elements. Returned `unspec
 
 
 
-
 ## Changelog
 
 Version | Changes
 ---|---
+12.0.0 | Own hooks
 11.0.0 | Aspects-only observer.
 10.0.0 | Web-streams.
 9.0.0 | Effects as asynchronous iterators.
