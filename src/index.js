@@ -3,7 +3,7 @@ import tuple from 'immutable-tuple'
 import reraf from 'reraf'
 import { augmentor, dropEffect } from 'augmentor'
 
-const instances = new WeakMap
+const _aspects = Symbol.for('spectAspects')
 const raf = reraf()
 
 // element-based aspect
@@ -54,18 +54,18 @@ export function $(selector, fn) {
 }
 
 export function run(el, fn) {
-  let key = tuple(el, fn)
+  if (!el[_aspects]) el[_aspects] = new WeakMap
 
-  if (!instances.has(key)) {
-    let instance = { aspect: augmentor(fn) }
-    instances.set(key, instance)
-    instance.dispose = instance.aspect(el)
+  if (!el[_aspects].has(fn)) {
+    let aspect = augmentor(fn)
+    el[_aspects].set(fn, aspect)
+    aspect.destroy = aspect(el)
   }
 
   return () => {
-    let { aspect, dispose } = instances.get(key)
-    if (dispose && dispose.call) dispose()
-    instances.delete(key)
+    let aspect = el[_aspects].get(fn)
+    if (aspect.destroy && aspect.destroy.call) aspect.destroy()
+    el[_aspects].delete(fn)
     dropEffect(aspect)
   }
 }
