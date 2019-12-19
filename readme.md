@@ -68,11 +68,10 @@ spect('[loading]', el => {
 
 ## 🏛️ Concepts
 
-* Aspect is reactive function with react-compatible data/effect hooks, see [unihooks](https://ghub.io/unihooks).
+* Aspect is reactive function with react-like hooks.
 * Aspects are assigned to DOM in CSS fashion, allowing multiple aspects and declarative sheets.
 * Aspect defines behavior, or component logic - that way _separation of concerns_ and _progressive enhancement_ are achievable without wrappers, HOCs, contexts etc.
 * Rendering is a side-effect, not the main effect. That allows render-less aspect, and enables any rendering lib as a base, eg. [lit-html](https://ghub.io/lit-html), [htl](https://ghub.io/htl) or [morphdom](https://ghub.io/morphdom).
-* Easter Egg: _spect_ works with any installed hooks framework - [react](https://ghub.io/react), [preact](https://ghub.io/preact), [haunted](https://ghub.io/haunted) etc., with default fallback to [augmentor](https://ghub.io/augmentor).
 
 <!--
 ## Getting started
@@ -239,6 +238,10 @@ Assign aspect to elements matching selector or direct elements. Returned `unspec
 * `event` - describes aspect of interaction, from event source to side-effects.
 -->
 
+
+## See also
+
+* [unihooks](https://ghub.io) − universal essential react/+ hooks library, perfect match for _spect_ and helpful for other hooks-enabled frameworks.
 
 
 ## Changelog
