@@ -4,6 +4,7 @@
   "description": "Aspect-Oriented Reactive DOM framework",
   "main": "./src/index.js",
   "type": "module",
+  "module": "./src/index.js",
   "scripts": {
     "start": "es-dev-server --app-index test/index.html --node-resolve --dedupe",
     "test": "node -r esm -r node-localstorage/register -r browser-env/register test/index.js"
