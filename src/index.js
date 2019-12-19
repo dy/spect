@@ -1,13 +1,10 @@
 import { observe } from 'selector-observer'
-import enhook from 'enhook'
-import globalCache from 'global-cache'
 import tuple from 'immutable-tuple'
 import reraf from 'reraf'
+import { augmentor, dropEffect } from 'augmentor'
 
-let instances = globalCache.get('__spect__')
-if (!instances) globalCache.set('__spect__', instances = new WeakMap)
-
-let raf = reraf()
+const instances = new WeakMap
+const raf = reraf()
 
 // element-based aspect
 export default function spect(target, fn) {
@@ -60,7 +57,7 @@ export function run(el, fn) {
   let key = tuple(el, fn)
 
   if (!instances.has(key)) {
-    let instance = { aspect: enhook(fn) }
+    let instance = { aspect: augmentor(fn) }
     instances.set(key, instance)
     instance.dispose = instance.aspect(el)
   }
@@ -69,6 +66,8 @@ export function run(el, fn) {
     let { aspect, dispose } = instances.get(key)
     if (dispose && dispose.call) dispose()
     instances.delete(key)
-    aspect.unhook()
+    dropEffect(aspect)
   }
 }
+
+export { useEffect, useState, useReducer, useRef, useContext, useMemo, useLayoutEffect, useCallback } from 'augmentor'

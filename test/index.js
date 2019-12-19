@@ -1,8 +1,10 @@
-import $ from '../src/index.js'
+import $, * as hooks from '../src/index.js'
 import t from 'tst'
 import { tick, frame, idle, time } from 'wait-please'
-import setHooks, { useState, useEffect, useMemo } from 'unihooks'
+// import setHooks, { useState, useEffect, useMemo } from 'unihooks'
+// setHooks(hooks)
 
+const { useState, useEffect, useMemo } = hooks
 
 t('tag selector', async t => {
   let ellog = []
@@ -126,7 +128,7 @@ t('simple hooks', async t => {
   })
 
   t.is(el.count, 0)
-  await tick()
+  await frame()
   t.is(el.count, 1)
 })
 
@@ -191,7 +193,7 @@ t('each aspect must have own hooks scope', async t => {
   a2.x = 2
   document.documentElement.appendChild(a2)
 
-  await tick(2)
+  await frame(2)
 
   t.deepEqual(log, [1, 2])
 
@@ -242,7 +244,7 @@ t('returned function disposes all internal aspects', async t => {
   t.end()
 })
 
-t('throwing error must not create recursion', async t => {
+t.demo('throwing error must not create recursion', async t => {
   let a = document.createElement('a')
   document.body.appendChild(a)
   let unspect = $('a', el => {
@@ -397,9 +399,9 @@ t.todo('generators aspects')
 t.todo('async aspects')
 
 
-t.todo('promise (suspense)', t => {
-  $('div', import('url'))
-})
+// t.todo('promise (suspense)', t => {
+//   $('div', import('url'))
+// })
 
 t.todo('hyperscript case', t => {
   $('div', () => {

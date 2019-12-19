@@ -3,9 +3,10 @@
   "version": "12.0.0",
   "description": "Aspect-Oriented Reactive DOM framework",
   "main": "./src/index.js",
+  "type": "module",
   "scripts": {
-    "start": "parcel serve --no-hmr test/index.html",
-    "test": "node -r esm -r raf/polyfill -r node-localstorage/register -r browser-env/register test/index.js"
+    "start": "es-dev-server --app-index test/index.html --node-resolve --dedupe",
+    "test": "node -r esm -r node-localstorage/register -r browser-env/register test/index.js"
   },
   "repository": {
     "type": "git",
@@ -41,7 +42,6 @@
   "homepage": "https://github.com/spectjs/spect#readme",
   "dependencies": {
     "augmentor": "^2.1.4",
-    "enhook": "^2.2.0",
     "global-cache": "^1.2.1",
     "immutable-tuple": "^0.4.10",
     "selector-observer": "^2.1.6"
@@ -51,11 +51,12 @@
     "@babel/plugin-proposal-async-generator-functions": "^7.7.4",
     "browser-env": "^3.3.0",
     "dom-lite": "^0.5.1",
+    "es-dev-server": "^1.32.0",
     "esm": "^3.2.25",
     "node-localstorage": "^2.1.5",
     "raf": "^3.4.1",
-    "tst": "^3.4.2",
+    "tst": "^4.2.0",
     "unihooks": "^1.4.5",
-    "wait-please": "^2.0.1"
+    "wait-please": "^3.0.0"
   }
 }

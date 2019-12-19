@@ -32,8 +32,8 @@ import { use, fx, on } from 'https://unpkg.com/spect@latest?module'
 [![npm i spect](https://nodei.co/npm/spect.png?mini=true)](https://npmjs.org/package/spect/)
 
 ```js
-import spect from 'spect'
-import { useAttribute, useRoute, useStore, useEffect } from 'unihooks'
+import spect, { useEffect } from 'spect'
+import { useAttribute, useRoute, useStore } from 'unihooks'
 import { html, render } from 'lit-html'
 
 // main app aspect
