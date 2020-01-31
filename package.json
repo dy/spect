@@ -7,7 +7,7 @@
   "module": "./src/index.js",
   "scripts": {
     "start": "es-dev-server --app-index test/index.html --node-resolve --dedupe",
-    "test": "node -r esm -r node-localstorage/register -r browser-env/register test/index.js"
+    "test": "node -r esm -r ./test/register.js test/index.js"
   },
   "repository": {
     "type": "git",
@@ -43,19 +43,15 @@
   "homepage": "https://github.com/spectjs/spect#readme",
   "dependencies": {
     "augmentor": "^2.1.4",
-    "reraf": "^1.1.1",
     "selector-observer": "^2.1.6"
   },
   "devDependencies": {
     "@babel/core": "^7.7.4",
     "@babel/plugin-proposal-async-generator-functions": "^7.7.4",
-    "browser-env": "^3.3.0",
-    "dom-lite": "^0.5.1",
     "es-dev-server": "^1.32.0",
     "esm": "^3.2.25",
-    "node-localstorage": "^2.1.5",
-    "raf": "^3.4.1",
-    "tst": "^4.2.0",
+    "jsdom": "^16.0.1",
+    "tst": "^5.2.1",
     "unihooks": "^1.4.5",
     "wait-please": "^3.0.0"
   }

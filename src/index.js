@@ -1,12 +1,15 @@
 import { observe } from 'selector-observer'
-import reraf from 'reraf'
 import { augmentor, dropEffect } from 'augmentor'
 
-const _aspects = Symbol.for('spectAspects')
-const raf = reraf()
+const _aspects = Symbol.for('spect-aspects')
 
 // element-based aspect
 export default function spect(target, fn) {
+  if (typeof target === 'function') {
+    fn = target
+    target = {}
+  }
+
   if (Array.isArray(fn)) {
     let offs = fn.map(fn => spect(target, fn))
     return () => offs.map(off => off())
@@ -45,7 +48,7 @@ export function $(selector, fn) {
         },
         remove(el) {
           // disposal is scheduled, because some elements may be asynchronously reinserted, eg. material hoistMenuToBody etc.
-          el._abortUnrun = raf(unrun)
+          el._abortUnrun = window.requestAnimationFrame(unrun)
         }
       }
     }
