@@ -1,16 +1,13 @@
 # Spect ![experimental](https://img.shields.io/badge/stability-experimental-yellow) [![Build Status](https://travis-ci.org/spectjs/spect.svg?branch=master)](https://travis-ci.org/spectjs/spect)
 
-_Spect_ provides minimal abstraction to build web-apps in [aspect-oriented](https://en.wikipedia.org/wiki/Aspect-oriented_programming) fashion.
+_Spect_ is a tool for building web-apps in [aspect-oriented](https://en.wikipedia.org/wiki/Aspect-oriented_programming) fashion. It defines a set of rules for web-page, similar to CSS, where for every rule there is corresponding _aspect_.
 
 
 ## Installation
 
-#### A. As NPM package
-
 [![npm i spect](https://nodei.co/npm/spect.png?mini=true)](https://npmjs.org/package/spect/)
 
-
-#### B. As ES module
+<details><summary><strong>Or as ES module</strong></summary><br/>
 
 ```html
 <script type="module">
@@ -19,6 +16,7 @@ import spect from 'https://unpkg.com/spect@latest?module'
 // ...UI code
 </script>
 ```
+</details>
 
 <!--
 #### C. As standalone bundle
@@ -33,6 +31,7 @@ import spect from 'https://unpkg.com/spect@latest?module'
 ```
 -->
 
+<!--
 ## Usage
 
 Spect assigns reactive functions with hooks to selectors or elements.
@@ -65,14 +64,19 @@ spect('[loading]', el => {
   return () => preloader.replaceWith(el)
 })
 ```
+-->
 
 
 ## Concepts
 
-* Aspect is reactive function with react-like hooks.
-* Aspects are assigned to DOM in CSS fashion, allowing multiple aspects and declarative format.
-* Aspect defines behavior, or component logic - that way _separation of concerns_ and _progressive enhancement_ are achievable without wrappers, HOCs, contexts etc.
-* Rendering is a side-effect, not the main effect. That allows render-less aspects and enables any rendering lib as a base, eg. [lit-html](https://ghub.io/lit-html), [htl](https://ghub.io/htl), [morphdom](https://ghub.io/morphdom) etc.
+1. Aspect is reactive function with enabled react-like hooks.
+2. Aspect is assigned to some target: either selector, element or an object. That allows multiple aspects per target and enables declarative code.
+3. Aspect addresses a particular side of component logic. That way [_separation of concerns_](https://en.wikipedia.org/wiki/Separation_of_concerns) and _progressive enhancement_ are achieved without HOCs, contexts, composing functions etc.
+4. Rendering is a side-effect, not the main effect. That allows render-less aspects and makes aspect agnostic to rendering tool, such as[lit-html](https://ghub.io/lit-html), [htl](https://ghub.io/htl), [morphdom](https://ghub.io/morphdom) etc.
+
+<!--
+Components?
+-->
 
 ## Getting started
 <!--
@@ -100,10 +104,11 @@ spect('#hello-example', el => {
 ```
 -->
 
-Simple timer example.
+Let's build simple timer example.
 
 ```js
 import spect, { useEffect, useState } from 'spect'
+import { render, html } from 'lit-html'
 
 // for every #timer-example element
 spect('#timer-example', async el => {
@@ -223,9 +228,12 @@ let getRawMarkup = content => {
 * [Popup-info component from MDN](https://developer.mozilla.org/en-US/docs/Web/API/CustomElementRegistry/define#Autonomous_custom_element):
 -->
 
-## Ideas
+## Use-cases
 
-### Convert `<img src="*.svg"/>` to `<svg>...</svg>`
+<details>
+<summary><strong>Inject SVG elements</strong></summary><br/>
+
+Convert `<img src="*.svg"/>` to `<svg>...</svg>`:
 
 ```js
 $('img[src$=".svg"]', async el => {
@@ -238,8 +246,13 @@ $('img[src$=".svg"]', async el => {
 ```
 
 See [svg-inject](https://ghub.io/svg-inject).
+</details>
 
-### CSS atoms
+
+<details>
+<summary><strong>CSS atoms</strong></summary><br/>
+
+CSS tachyons / modifiers can be organized in fashion:
 
 ```js
 const UNIT = 8
@@ -253,11 +266,16 @@ $('[p]', el => {
   let padding = parseInt(el.getAttribute('p'))
   el.style.padding = `${padding * UNIT}px`
 })
+
+// ...
 ```
 
 See [tachyons](https://ghub.io/tachyons), [atomic css](https://ghub.io/atomic), [tailwind](https://ghub.io/tailwind), [ui-box](https://ghub.io/ui-box) etc.
+</details>
 
-### jQuery plugins
+<details><summary><strong>jQuery plugins</strong></summary><br/>
+
+JQuery plugins can be robustly assigned to elements as:
 
 ```js
 import $ from 'jquery'
@@ -271,53 +289,80 @@ spect('.target', el => {
   }
 })
 ```
+</details>
 
-### I18n as aspect
+<details><summary><strong>i18n</strong></summary>
+
+I18n can be organized as an aspect with a separate module:
 
 ```js
+import spect from 'spect'
 import t from 'i18n-lib'
 
-$('.i18n', el => {
+spect('.i18n', el => {
   let initial = el.textContent
   el.textContent = t(el.textContent)
   return () => el.textContent = initial
 })
 ```
+</details>
 
-### HTML actions
 
-```js
+<details><summary><strong>Actions in HTML</strong></summary><br/>
+
+Spect allows wiring up app actions directly from HTML:
+
+```html
+<button data-action="login"></button>
+
+<script type="module">
+import spect from 'spect'
+
 let actions = {
-  login() {},
-  logout() {}
+  login() {
+    // ...
+  },
+  logout() {
+    // ...
+  }
 }
 
-$('[data-action]', el => {
+spect('[data-action]', el => {
   let action = el.dataset.action
   el.onclick = actions[action]
 })
+</script>
 ```
 
-### Custom tooltips
+</details>
+
+<details><summary><strong>Tooltips</strong></summary><br/>
+
+Custom tooltips can be organized as
 
 ```js
 import tippy from 'tippy'
+import spect from 'spect'
 
-$('[title]', el => {
+spect('[title]', el => {
   tippy(el, {
     content: el.title
   });
 })
 ```
+</details>
 
 <!-- ### Ripple visual effect -->
 
 
 ## API
 
-### unspect = spect( selector | element[s], aspectFn )
+### unspect = spect( target , aspect )
 
-Assign aspect to elements matching selector or direct elements. Returned function destroys created aspect, cleaning up all `useEffect` calls.
+* `target` is _selector_, _element_, _elements list_ or an _object_.
+* `aspect` is a function `target => destructor`.
+
+Assigns aspect function to elements matching selector or direct elements. Returned `unspect` function removes created aspect, cleaning up all `useEffect` calls.
 
 
 <!--
@@ -329,9 +374,9 @@ Assign aspect to elements matching selector or direct elements. Returned functio
 
 ## See also
 
-* [unihooks](https://ghub.io) − universal essential react/+ hooks library, perfect match for _spect_ and helpful for other hooks-enabled frameworks.
+* [unihooks](https://ghub.io) − cross-framework hooks collection.
 
-
+<!--
 ## Changelog
 
 Version | Changes
@@ -350,5 +395,6 @@ Version | Changes
 1.0.0 | HTM compiler remake with support for anonymous attributes, html-comments and unclosed tags.
 0.0.1 | [jsxify](https://github.com/scrapjs/jsxify) R&D.
 0.0.0 | Mod framework (Modifiers for DOM).
+-->
 
 <p align="right">HK</p>
