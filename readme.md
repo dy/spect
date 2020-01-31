@@ -69,10 +69,10 @@ spect('[loading]', el => {
 
 ## Concepts
 
-1. Aspect is reactive function with enabled react-like hooks.
-2. Aspect is assigned to some target: either selector, element or an object. That allows multiple aspects per target and enables declarative code.
-3. Aspect addresses a particular side of component logic. That way [_separation of concerns_](https://en.wikipedia.org/wiki/Separation_of_concerns) and _progressive enhancement_ are achieved without HOCs, contexts, composing functions etc.
-4. Rendering is a side-effect, not the main effect. That allows render-less aspects and makes aspect agnostic to rendering tool, such as[lit-html](https://ghub.io/lit-html), [htl](https://ghub.io/htl), [morphdom](https://ghub.io/morphdom) etc.
+1. _Aspect_ is reactive function with enabled react-like hooks.
+2. _Aspect_ is assigned to a target an element or an object, allowing multiple aspects and declarative code.
+3. _Aspect_ addresses a side of component logic. That way [_SoC_](https://en.wikipedia.org/wiki/Separation_of_concerns) and _progressive enhancement_ are achieved without HOCs, contexts, composers etc.
+4. Rendering is a side-effect, not main effect. That allows render-less aspects and any rendering engine, such as [lit-html](https://ghub.io/lit-html), [htl](https://ghub.io/htl), [morphdom](https://ghub.io/morphdom) etc.
 
 <!--
 Components?
