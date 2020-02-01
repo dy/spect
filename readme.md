@@ -354,6 +354,16 @@ spect('[title]', el => {
 
 <!-- ### Ripple visual effect -->
 
+<!--
+<details><summary><strong>Client-side Image Optimization</strong></summary><br/>
+
+As described [here](https://eager.io/blog/three-real-world-use-cases-for-mutation-observer/), it is possible to swap image src before it started loading, to load optimized for current device version of it.
+
+</details>
+-->
+
+<!-- ### Insert links dynamically in contenteditable -->
+
 
 ## API
 
