@@ -2,7 +2,7 @@
 
 _Spect_ is a tool for organizing web-apps in [aspect-oriented](https://en.wikipedia.org/wiki/Aspect-oriented_programming) fashion. It defines a set of rules for web-page, similar to CSS, where for every rule there is corresponding _aspect_ function.
 
-<img src="timer.svg" width="640"/>
+<img src="timer.png" width="640"/>
 
 ## Installation
 
@@ -22,8 +22,11 @@ import spect from 'https://unpkg.com/spect@latest?module'
 
 ## Usage
 
-Let's build simple timer example.
+_Spect_ makes no guess about at store, actions, rendering implementation or tooling setup, so can be used with different flavors, from vanilla to sugared frameworks.
 
+#### Vanilla + Observable
+
+<!--
 ```js
 import spect from 'spect'
 import { render, html } from 'lit-html'
@@ -36,8 +39,78 @@ spect('.timer', el => {
   return () => clearInterval(id)
 })
 ```
+-->
+
+```html
+<!DOCTYPE html>
+<html lang="en">
+  <title>spect demo</title>
+
+  <div id="todo-list">
+    <header name="ToDo's (${page})" />
+    <ul>
+      ${todos.map(todo => html`
+        <li>${todo}</li>
+      `)}
+    </ul>
+    <button id="add-todo">Add Todo</button>
+    <footer>footer content here</footer>
+  </div>
+
+  <script type="module">
+    import $ from 'https://unpkg.com/spect@latest'
+
+    const state = { todos: [] }
+
+    const addTodo() {
+      state.todos.push(`Item ${todos.length}`) }
+    }
+
+    $('#todo-list", el => {
+
+    })
+
+    $('#add-todo", el => el.addEventListener('click', e => {
+      addTodo()
+    }))
+
+    $('header', el => {
+      el.innerHTML = `<h1>ToDo's (${ el.getAttribute('name')}) List</h1>`
+    })
+  </script>
+</html>
+```
 
 <p align='right'><a href="https://codesandbox.io/s/a-stateful-aspect-9pbji">Open in sandbox</a></p>
+
+
+#### React-less hooks
+
+```js
+import $ from 'spect'
+import * as augmentor from 'augmentor'
+import hooked from 'enhook'
+import setHooks, { useState, useEffect } from 'unihooks'
+
+// init hooks
+enhook.use(augmentor)
+setHooks(augmentor)
+
+$('#timer', hooked(el => {
+  let [count, setCount] = useState(0)
+  useEffect(() => {
+    let interval = setInterval(() => setCount(count => count + 1), 1000)
+    return () => clearInterval(interval)
+  }, [])
+  el.textContent = `Seconds: ${count}`
+}))
+```
+
+#### Microfrontends
+
+
+#### Aspect-Oriented DOM
+
 
 ## API
 
