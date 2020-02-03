@@ -1,4 +1,4 @@
-<p align="center"><img src="https://avatars3.githubusercontent.com/u/53097200?s=200&v=4" width=48 height=48 /></p>
+<div align="center"><img src="https://avatars3.githubusercontent.com/u/53097200?s=200&v=4" width=108 /></div>
 <h1 align="center">
   spect
 </h1>
