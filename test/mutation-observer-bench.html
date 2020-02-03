@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+
+<div></div>
+
+<p>
+  Result: worst case of global mutation observer slows down adding 10000 els + attributes + textContent only for 25% the most.
+</p>
+
+<script>
+async function populateDOM (N=1e4) {
+  let els = document.getElementsByTagName('div')
+  for (let i = 0; i < N-1; i++) {
+    let el = document.createElement('div')
+    el.textContent = Math.random().toString(36).slice(2, 4)
+    els[Math.floor(Math.random() * els.length)].appendChild(el)
+    els[Math.floor(Math.random() * els.length)].setAttribute(
+      'a'+Math.random().toString(36).slice(2,4),
+      'v'+Math.random().toString(36).slice(2,4)
+    )
+    await Promise.resolve()
+  }
+}
+
+// console.time('noMO')
+// populateDOM()
+// console.timeEnd('noMO')
+
+let config = {
+  attributes: true,
+  childList: true,
+  subtree: true,
+  characterData: true
+}
+const observer = new MutationObserver(function (mutationsList, observer) {
+  for (let mutation of mutationsList) {
+    if (mutation.type === 'childList') {
+    }
+    else if (mutation.type === 'attributes') {
+    }
+  }
+})
+observer.observe(document.documentElement, config);
+
+;(async () => {
+  let N = 1e4
+  console.time(`${N} nodes`)
+  await populateDOM(N)
+  console.timeEnd(`${N} nodes`)
+})();
+</script>

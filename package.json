@@ -1,0 +1,55 @@
+{
+  "name": "spect",
+  "version": "12.1.0",
+  "description": "DOM micro-aspects",
+  "main": "./index.js",
+  "type": "module",
+  "module": "./index.js",
+  "scripts": {
+    "start": "es-dev-server --app-index test/index.html --node-resolve --dedupe",
+    "test": "node -r esm -r ./test/register.js test/index.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/spectjs/spect.git"
+  },
+  "browserslist": [
+    "last 1 Chrome versions"
+  ],
+  "keywords": [
+    "aspect",
+    "spect",
+    "aop",
+    "aspect oriented programming",
+    "hooks",
+    "fx",
+    "effects",
+    "use-effect",
+    "lifecycle",
+    "react-hooks",
+    "react",
+    "dom",
+    "custom-elements",
+    "web-components",
+    "pointcut",
+    "join point",
+    "advice",
+    "htm"
+  ],
+  "author": "dy <df.creative@gmail.com>",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/spectjs/spect/issues"
+  },
+  "homepage": "https://github.com/spectjs/spect#readme",
+  "dependencies": {},
+  "devDependencies": {
+    "augmentor": "^2.1.5",
+    "es-dev-server": "^1.32.0",
+    "esm": "^3.2.25",
+    "jsdom": "^16.0.1",
+    "tst": "^5.3.1",
+    "unihooks": "^1.4.5",
+    "wait-please": "^3.0.0"
+  }
+}
