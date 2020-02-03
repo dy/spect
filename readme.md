@@ -10,7 +10,7 @@
   <a href="https://travis-ci.org/spectjs/spect"><img src="https://travis-ci.org/spectjs/spect.svg?branch=master"/></a>
 </p>
 
-<p align="center"><img src="/timer.png" width="580"/></p>
+<p align="center"><img src="/timer.png" width="650"/></p>
 
 ## Installation
 
