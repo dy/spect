@@ -1,83 +1,112 @@
 import SelectorSet from 'selector-set'
 
-let set = new SelectorSet
+const _callbacks = Symbol.for('spectCallbacks')
+const _destroyPlanned = Symbol.for('spectDestroyPlanned')
+const _observer = Symbol.for('spectObserver')
+const set = new SelectorSet
+const root = document.documentElement
 
 // element-based aspect
-export default function spect(target, fn) {
+export default function spect(target, fn, context) {
+  // spect('.a', b)
+  if (typeof target === 'string') {
+    return $(target, fn, context)
+  }
+
+  let offs = []
+
   // spect({'.x': a, '.y': b})
   if (arguments.length === 1) {
-    let offs = []
     for (let selector in target) {
-      offs.push(spect(selector, target[selector]))
+      offs.push(spect(selector, target[selector], context))
     }
-    return () => offs.map(off => off())
   }
 
   // spect('.a', [b, c])
-  if (Array.isArray(fn)) {
-    let offs = fn.map(fn => spect(target, fn))
-    return () => offs.map(off => off())
+  else if (Array.isArray(fn)) {
+    offs = fn.map(fn => spect(target, fn, context))
   }
 
-
-
-  // spect('.a', b)
-  if (typeof target === 'string') {
-    return $(target, fn)
+  // spect(list, fn)
+  else if (target.length && !target.nodeType) {
+    for (let i = 0; i < target.length; i++) {
+      offs.push(spect(target[i], fn, context))
+    }
   }
 
-  // spect(a)
-  if (target.forEach) {
-    let offs = target.map(target => spect(target, fn))
-    return () => offs.map(off => off())
+  // spect(target, fn)
+  else {
+    initCallback(target, fn)
+    return () => destroyCallback(target, fn)
   }
 
-  return run(target, fn)
+  return () => offs.map(off => off())
 }
 
 // selector-based aspect
-export function $(selector, fn) {
-  if (Array.isArray(fn)) {
-    fn.forEach(fn => spect(selector, fn))
+function $(selector, fn, context = root) {
+  if (!context[_observer]) {
+    const observer = context[_observer] = new MutationObserver((list) => {
+      for (let mutation of list) {
+        let { addedNodes, removedNodes, target } = mutation
+        if (mutation.type === 'childList') {
+          removedNodes.forEach(el => {
+            if (el.nodeType !== 1) return
+            set.matches(el).forEach(rule => {
+              // some elements may be asynchronously reinserted, eg. material hoistMenuToBody etc.
+              el[_destroyPlanned] = true
+              window.requestAnimationFrame(() => el[_destroyPlanned] && destroyCallback(el, rule.data))
+            })
+          })
+          addedNodes.forEach(el => {
+            if (el.nodeType !== 1) return
+            set.matches(el).forEach(rule => {
+              initCallback(el, rule.data)
+            })
+          })
+        }
+        else if (mutation.type === 'attributes') {
+          set.matches(target).forEach(rule => initCallback(target, rule.data))
+        }
+      }
+    })
+    observer.observe(context, {
+      attributes: true,
+      childList: true,
+      subtree: true
+    })
+  }
+
+  set.add(selector, fn)
+  set.queryAll(context).forEach(rule => rule.elements.forEach(el => initCallback(el, rule.data)))
+
+  return () => {
+    set.queryAll(context).forEach(rule => rule.elements.forEach(el => destroyCallback(el, rule.data)))
+    set.remove(selector, fn)
+    if (!set.size) {
+      context[_observer].disconnect()
+      delete context[_observer]
+    }
+  }
+}
+
+function initCallback(el, fn) {
+  if (!el[_callbacks]) el[_callbacks] = new WeakMap
+  if (el[_callbacks].has(fn)) {
+    el[_destroyPlanned] = false
     return
   }
 
-  return observe(selector, {
-    initialize() {
-      let unrun
-      return {
-        add(el) {
-          if (el._abortUnrun) return el._abortUnrun()
-
-          unrun = run(el, fn)
-
-          // duplicate event since it's not emitted
-          el.dispatchEvent(new CustomEvent('connected'))
-        },
-        remove(el) {
-          // disposal is scheduled, because some elements may be asynchronously reinserted, eg. material hoistMenuToBody etc.
-          el._abortUnrun = window.requestAnimationFrame(unrun)
-        }
-      }
-    }
-  }).abort
+  let cb = fn.bind(el)
+  el[_callbacks].set(fn, cb)
+  try { cb.destroy = cb(el) }
+  catch (e) { console.error(e) }
 }
 
-export function run(el, fn) {
-  if (!el[_aspects]) el[_aspects] = new WeakMap
-
-  if (!el[_aspects].has(fn)) {
-    let aspect = augmentor(fn)
-    el[_aspects].set(fn, aspect)
-    aspect.destroy = aspect(el)
-  }
-
-  return () => {
-    let aspect = el[_aspects].get(fn)
-    if (aspect.destroy && aspect.destroy.call) aspect.destroy()
-    el[_aspects].delete(fn)
-    dropEffect(aspect)
-  }
+function destroyCallback(el, fn) {
+  if (!el[_callbacks]) return
+  if (!el[_callbacks].has(fn)) return
+  let cb = el[_callbacks].get(fn)
+  if (cb.destroy && cb.destroy.call) cb.destroy()
+  el[_callbacks].delete(fn)
 }
-
-export { useEffect, useState, useReducer, useRef, useContext, useMemo, useLayoutEffect, useCallback } from 'augmentor'

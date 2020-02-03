@@ -42,13 +42,16 @@
     "url": "https://github.com/spectjs/spect/issues"
   },
   "homepage": "https://github.com/spectjs/spect#readme",
-  "dependencies": {},
+  "dependencies": {
+    "selector-set": "^1.1.5"
+  },
   "devDependencies": {
     "augmentor": "^2.1.5",
+    "dom-lite": "^0.5.1",
     "es-dev-server": "^1.32.0",
     "esm": "^3.2.25",
-    "jsdom": "^16.0.1",
-    "tst": "^5.3.1",
+    "jsdom": "^16.1.0",
+    "tst": "^5.3.3",
     "unihooks": "^1.4.5",
     "wait-please": "^3.0.0"
   }

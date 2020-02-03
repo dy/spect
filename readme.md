@@ -1,6 +1,6 @@
 # spect ![experimental](https://img.shields.io/badge/stability-experimental-yellow) [![Build Status](https://travis-ci.org/spectjs/spect.svg?branch=master)](https://travis-ci.org/spectjs/spect)
 
-_Spect_ is a tiny tool for organizing web-apps in [aspect-oriented](https://en.wikipedia.org/wiki/Aspect-oriented_programming) fashion. It defines a set of rules for web-page, similar to CSS, where for every rule there is corresponding _aspect_.
+_Spect_ is a tiny tool for organizing web-apps in [aspect-oriented](https://en.wikipedia.org/wiki/Aspect-oriented_programming) fashion. It defines a set of rules for web-page, similar to CSS, where for every rule there is corresponding _aspect_ function.
 
 
 ## Installation
@@ -40,13 +40,13 @@ spect('.timer', el => {
 
 ## API
 
-### unspect = spect( target, callback )
+### unspect = spect( target, callback, context = document.body)
 
 Assigns a `callback` function to selector or direct element. Returned `unspect` function removes assigned `callback`. The return of `callback` is destructor callback, called when element is unmounted.
 
 * `target` can be _selector_, _dict_, _element_ or _list_.
 * `callback` is a function `target => onDestroy` or an array of functions.
-
+* `context` is optional element to assign mutation observer to, can be helpful for perf optimization, but benchmark shows that the worst case mutation observer contributes ≤ 5% to app slowdown.
 
 ## See also
 
