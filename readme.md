@@ -3,7 +3,7 @@
   spect
 </h1>
 <p align="center">
-  <a href="https://en.wikipedia.org/wiki/Aspect-oriented_programming">Aspect-Oriented</a> DOM.
+  DOM micro <a href="https://en.wikipedia.org/wiki/Aspect-oriented_programming">aspects</a>.
 </p>
 <p align="center">
   <img src="https://img.shields.io/badge/stability-experimental-yellow"/>
