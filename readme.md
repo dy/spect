@@ -2,7 +2,7 @@
 
 _Spect_ is a tool for organizing web-apps in [aspect-oriented](https://en.wikipedia.org/wiki/Aspect-oriented_programming) fashion. It defines a set of rules for web-page, similar to CSS, where for every rule there is corresponding _aspect_ function.
 
-<img src="timer.svg" width="400"/>
+<p align="center"><img src="timer.svg" width="400"/></p>
 
 ## Installation
 
