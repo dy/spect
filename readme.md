@@ -8,7 +8,7 @@
   <a href="https://travis-ci.org/spectjs/spect"><img src="https://travis-ci.org/spectjs/spect.svg?branch=master"/></a>
 </p>
 
-<img src="/timer-example.svg" width="640"/>
+![](/timer-example.svg)
 
 _Spect_ is a tool for organizing web-apps in [aspect-oriented](https://en.wikipedia.org/wiki/Aspect-oriented_programming) fashion. It defines a set of rules for web-page, similar to CSS, where for every rule there is corresponding _aspect_ function.
 
