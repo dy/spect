@@ -1,13 +1,15 @@
-<h1>
-  <img src="https://avatars3.githubusercontent.com/u/53097200?s=200&v=4" width=17 height=17/>
+<p align="center"><img src="https://avatars3.githubusercontent.com/u/53097200?s=200&v=4" width=48 height=48 /></p>
+<h1 align="center">
   spect
+</h1>
+<p align="center">
   <img src="https://img.shields.io/badge/stability-experimental-yellow"/>
   <a href="https://travis-ci.org/spectjs/spect"><img src="https://travis-ci.org/spectjs/spect.svg?branch=master"/></a>
-</h1>
+</p>
+
+<img src="/timer.svg" width="640"/>
 
 _Spect_ is a tool for organizing web-apps in [aspect-oriented](https://en.wikipedia.org/wiki/Aspect-oriented_programming) fashion. It defines a set of rules for web-page, similar to CSS, where for every rule there is corresponding _aspect_ function.
-
-<img src="timer.svg" width="640"/>
 
 ## Installation
 
