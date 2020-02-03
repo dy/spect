@@ -2,6 +2,7 @@
 <h1 align="center">
   spect
 </h1>
+<p align="center">DOM Aspects</p>
 <p align="center">
   <img src="https://img.shields.io/badge/stability-experimental-yellow"/>
   <a href="https://travis-ci.org/spectjs/spect"><img src="https://travis-ci.org/spectjs/spect.svg?branch=master"/></a>
