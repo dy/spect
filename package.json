@@ -54,5 +54,8 @@
     "tst": "^5.3.3",
     "unihooks": "^1.4.5",
     "wait-please": "^3.0.0"
-  }
+  },
+  "files": [
+    "index.js", "readme.md", "test"
+  ]
 }
