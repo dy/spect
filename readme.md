@@ -3,14 +3,14 @@
   spect
 </h1>
 <p align="center">
-  DOM micro <a href="https://en.wikipedia.org/wiki/Aspect-oriented_programming">aspects</a>.
+  <em>Spect</em> is a tool for creating DOM <a href="https://en.wikipedia.org/wiki/Aspect-oriented_programming">aspects</a> − a set of rules, similar to CSS, where for every rule there is corresponding <em>aspect</em> function.
 </p>
 <p align="center">
   <img src="https://img.shields.io/badge/stability-experimental-yellow"/>
   <a href="https://travis-ci.org/spectjs/spect"><img src="https://travis-ci.org/spectjs/spect.svg?branch=master"/></a>
 </p>
 
-<p align="center"><img src="/timer.png" width="580"/></p>
+<p align="center"><img src="/timer.png" width="540"/></p>
 
 ## Installation
 
@@ -30,7 +30,6 @@ import spect from 'https://unpkg.com/spect@latest?module'
 
 ## Usage
 
-_Spect_ defines a set of rules, similar to CSS, where for every rule there is corresponding <em>aspect</em> function.
 _Spect_ makes no guess about at store, actions, rendering implementation or tooling setup, so can be used with different flavors, from vanilla to sugared frameworks.
 
 #### Vanilla + Observable
