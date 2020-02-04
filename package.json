@@ -1,6 +1,6 @@
 {
   "name": "spect",
-  "version": "13.0.0",
+  "version": "13.0.1",
   "description": "DOM micro-aspects",
   "main": "./index.js",
   "type": "module",
@@ -56,6 +56,8 @@
     "wait-please": "^3.0.0"
   },
   "files": [
-    "index.js", "readme.md", "test"
+    "index.js",
+    "readme.md",
+    "test"
   ]
 }
