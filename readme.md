@@ -29,7 +29,7 @@ import spect from 'https://unpkg.com/spect@latest?module'
 
 ## Usage
 
-_Spect_ makes no guess at store provider, actions, renderere or tooling setup, so can be used with different flavors, from vanilla to sugared frameworks.
+_Spect_ makes no guess at store provider, actions, renderer or tooling setup, that by can be used with different flavors, from vanilla to sugared frameworks.
 
 #### Vanilla
 
