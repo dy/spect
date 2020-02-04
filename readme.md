@@ -3,7 +3,7 @@
   spect
 </h1>
 <p align="center">
-  <em>Spect</em> is a tool for creating DOM <a href="https://en.wikipedia.org/wiki/Aspect-oriented_programming">aspects</a><br/>
+  <em>Spect</em> is a tool for creating DOM <a href="https://en.wikipedia.org/wiki/Aspect-oriented_programming">aspects</a>.<br/>
   Rules, similar to CSS, where for every rule there is corresponding <em>aspect</em> function.
 </p>
 <p align="center">
