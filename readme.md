@@ -1,7 +1,5 @@
 <div align="center"><img src="https://avatars3.githubusercontent.com/u/53097200?s=200&v=4" width=108 /></div>
-<h1 align="center">
-  spect
-</h1>
+<p align="center"><h1 align="center">spect</h1></p>
 <p align="center">
   <em>Spect</em> is a tool for creating DOM <a href="https://en.wikipedia.org/wiki/Aspect-oriented_programming">aspects</a> −<br/>
   rules, similar to CSS, where for every rule there is corresponding <em>aspect</em> function.
