@@ -1,8 +1,8 @@
 <div align="center"><img src="https://avatars3.githubusercontent.com/u/53097200?s=200&v=4" width=108 /></div>
 <p align="center"><h1 align="center">spect</h1></p>
 <p align="center">
-  <em>Spect</em> is a tool for creating DOM <a href="https://en.wikipedia.org/wiki/Aspect-oriented_programming">aspects</a> −<br/>
-  rules, similar to CSS, where for every rule there is corresponding <em>aspect</em> function.
+  Micro DOM <a href="https://en.wikipedia.org/wiki/Aspect-oriented_programming"><em>aspects</em></a>.<br/>
+  Build UI with rules, similar to CSS − each rule specifies an <em>aspect</em> function, carrying a piece of logic.
 </p>
 <p align="center">
   <img src="https://img.shields.io/badge/stability-experimental-yellow"/>
