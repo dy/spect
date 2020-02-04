@@ -3,8 +3,8 @@
   spect
 </h1>
 <p align="center">
-  <em>Spect</em> is a tool for creating DOM <a href="https://en.wikipedia.org/wiki/Aspect-oriented_programming">aspects</a>.<br/>
-  Rules, similar to CSS, where for every rule there is corresponding <em>aspect</em> function.
+  <em>Spect</em> is a tool for creating DOM <a href="https://en.wikipedia.org/wiki/Aspect-oriented_programming">aspects</a> −<br/>
+  rules, similar to CSS, where for every rule there is corresponding <em>aspect</em> function.
 </p>
 <p align="center">
   <img src="https://img.shields.io/badge/stability-experimental-yellow"/>
@@ -19,7 +19,7 @@
 
 [![npm i spect](https://nodei.co/npm/spect.png?mini=true)](https://npmjs.org/package/spect/)
 
-#### Or as ES module:
+#### As ES module:
 
 ```html
 <script type="module">
@@ -33,61 +33,18 @@ import spect from 'https://unpkg.com/spect@latest?module'
 
 _Spect_ makes no guess about at store, actions, rendering implementation or tooling setup, so can be used with different flavors, from vanilla to sugared frameworks.
 
-#### Vanilla + Observable
+#### Vanilla
 
-<!--
 ```js
 import spect from 'spect'
-import { render, html } from 'lit-html'
 
 spect('.timer', el => {
   let count = 0
   let id = setInterval(() => {
-    render(html`Seconds: ${count++}`, el)
+    el.innerHTML = `Seconds: ${count++}`
   }, 1000)
   return () => clearInterval(id)
 })
-```
--->
-
-```html
-<!DOCTYPE html>
-<html lang="en">
-  <title>spect demo</title>
-
-  <div id="todo-list">
-    <header name="ToDo's (${page})" />
-    <ul>
-      ${todos.map(todo => html`
-        <li>${todo}</li>
-      `)}
-    </ul>
-    <button id="add-todo">Add Todo</button>
-    <footer>footer content here</footer>
-  </div>
-
-  <script type="module">
-    import $ from 'https://unpkg.com/spect@latest'
-
-    const state = { todos: [] }
-
-    const addTodo() {
-      state.todos.push(`Item ${todos.length}`) }
-    }
-
-    $('#todo-list", el => {
-
-    })
-
-    $('#add-todo", el => el.addEventListener('click', e => {
-      addTodo()
-    }))
-
-    $('header', el => {
-      el.innerHTML = `<h1>ToDo's (${ el.getAttribute('name')}) List</h1>`
-    })
-  </script>
-</html>
 ```
 
 <p align='right'><a href="https://codesandbox.io/s/a-stateful-aspect-9pbji">Open in sandbox</a></p>
@@ -117,13 +74,15 @@ $('#timer', hooked(el => {
 
 #### Microfrontends
 
+Pending...
 
 #### Aspect-Oriented DOM
 
+Pending...
 
 ## API
 
-### unspect = spect( selector | target, callback, context?)
+### `unspect = spect( selector | target, callback, context?)`
 
 Assigns a `callback` function to `selector` or direct element. Returned `unspect` function removes assigned `callback`. The return of `callback` is destructor callback, called when element is unmounted.
 
@@ -132,7 +91,7 @@ Assigns a `callback` function to `selector` or direct element. Returned `unspect
 * `callback` is a function `target => ondestroy` or an array of functions.
 * `context` is optional element to assign mutation observer to, can be helpful for perf optimization, but benchmark shows that the worst case mutation observer contributes ≤ 5% to app slowdown.
 
-## See also
+## Related
 
 * [selector-observer](https://ghub.io/selector-observer) − same idea with object-based API.
 * [augmentor](https://ghub.io/augmentor) − turn callbacks into react components.
