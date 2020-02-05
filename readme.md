@@ -2,7 +2,8 @@
 <p align="center"><h1 align="center">spect</h1></p>
 <p align="center">
   Micro DOM <a href="https://en.wikipedia.org/wiki/Aspect-oriented_programming"><em>aspects</em></a>.<br/>
-  Build UI rules, similar to CSS&thinsp;−&thinsp;each rule specifies an <em>aspect</em> function, carrying a piece of logic.<br/>
+  Build reactive UI with rules, similar to CSS.<br/>
+  Each rule specifies an <em>aspect</em> function, carrying a piece of logic.<br/>
 </p>
 <p align="center">
   <img src="https://img.shields.io/badge/stability-experimental-yellow"/>
@@ -46,8 +47,9 @@ $('.timer', el => {
 })
 ```
 
-<p align='right'><a href="https://codesandbox.io/s/a-stateful-aspect-9pbji">Open in sandbox</a></p>
+<p><a href="https://codesandbox.io/s/a-stateful-aspect-9pbji">Open in sandbox</a></p>
 
+<!--
 
 #### React-less hooks
 
@@ -78,6 +80,8 @@ Pending...
 #### Aspect-Oriented DOM
 
 Pending...
+
+-->
 
 ## API
 
