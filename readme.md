@@ -35,9 +35,9 @@ _Spect_ makes no guess at store provider, actions, renderer or tooling setup, th
 #### Vanilla
 
 ```js
-import spect from 'spect'
+import { $ } from 'spect'
 
-spect('.timer', el => {
+$('.timer', el => {
   let count = 0
   let id = setInterval(() => {
     el.innerHTML = `Seconds: ${count++}`
@@ -81,7 +81,7 @@ Pending...
 
 ## API
 
-### `unspect = spect( selector | target, callback, context?)`
+### `unspect = $( selector | target, callback, context?)`
 
 Assigns a `callback` function to `selector` or direct element. Returned `unspect` function removes assigned `callback`. The return of `callback` is destructor callback, called when element is unmounted.
 
@@ -89,6 +89,12 @@ Assigns a `callback` function to `selector` or direct element. Returned `unspect
 * `target` can be _dict_ of selectors, an _element_ or _elements list_.
 * `callback` is a function `target => ondestroy` or an array of functions.
 * `context` is optional element to assign mutation observer to, can be helpful for perf optimization, but benchmark shows that the worst case mutation observer contributes ≤ 5% to app slowdown.
+
+### `unfx = fx( callback, deps? )`
+
+Run callback whenever state, provided by `deps` changes. That is `useEffect` unreacted.
+
+* `deps` is a list of observables, promises or async iterables.
 
 ## Related
 
