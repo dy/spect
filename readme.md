@@ -81,7 +81,7 @@ Pending...
 
 ## API
 
-<details><summary><strong>$</strong></summary>
+<details><summary><strong><code>$</</code>strong></summary>
 
 #### `$( selector | target, callback, context?)`
 
@@ -94,7 +94,7 @@ Assigns a `callback` function to `selector` or direct element. Returned `unspect
 
 </details>
 
-<details><summary><strong>state</strong></summary>
+<details><summary><strong><code>state</code></strong></summary>
 
 #### `value = state( init? )`
 
@@ -126,7 +126,7 @@ Combines _useRef_ and _useState_ hooks logic, with regards to [observable](https
 </details>
 
 
-<details><summary><strong>fx</strong></summary>
+<details><summary><strong><code>fx</code></strong></summary>
 
 #### `fx( callback, deps = [] )`
 
