@@ -117,13 +117,35 @@ for await (let value of count) {
 }
 ```
 
-<sub>Combines `useRef` and `useState` hooks logic, inspired by _observable_ / _observ_ / _mutant_ packages and observable proposal, see <a href="https://github.com/spectjs/spect/issues/142">argumentation</a>.</sub>
+Combines _useRef_ and _useState_ hooks logic, with regards to _observable_ / _observ_ / _mutant_ packages and observable proposal. See <a href="https://github.com/spectjs/spect/issues/142">design argumentation</a>.
 
-### `fx( callback, deps? )`
 
-Run callback whenever state, provided by `deps` changes. That is `useEffect` unreacted.
+### `fx( callback, deps = [] )`
 
-* `deps` is a list of observables, promises or async iterables.
+Run callback whenever `deps` change. `deps` is a list of _async iterators_ or _Promises_.
+Initial run is triggered with initial deps state.
+
+```js
+let count = state(0)
+let loading = attr(el, 'loading')
+
+fx((deps) => {
+  let [count, loading, data] = deps
+  // count === 0
+  // loading === el.attributes.loading.value
+  // data === el.data
+
+  el.innerHTML = loading ? `Loading...` : `Seconds: ${ count }`
+}, [count, loading])
+
+// trigger fx each second
+setInterval(() => count(c => c + 1), 1000)
+
+// trigger fx via element attribute
+button.onclick = e => el.setAttribute('loading', true)
+```
+
+Provides _useEffect_ logic with `deps` as observables or promises instead of direct values.
 
 ## Related
 
