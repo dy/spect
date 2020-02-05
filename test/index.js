@@ -340,11 +340,11 @@ t('state: get/set', async t => {
   let log = []
   let s = state(0)
 
-    ; (async () => {
-      for await (let value of s) {
-        log.push(value)
-      }
-    })()
+  ;(async () => {
+    for await (let value of s) {
+      log.push(value)
+    }
+  })()
 
   t.equal(+s, 0, 'toPrimitive')
   t.equal(s.current, 0, 'current')
@@ -361,8 +361,12 @@ t('state: get/set', async t => {
   s(c => (t.equal(c, 2, 'ref(old => )'), 3))
   t.equal(+s, 3, 'ref(() => value)')
 
+  let log2 = []
+  ;(async () => { for await (let value of s) log2.push(value) })()
+
   await tick()
   t.deepEqual(log, [0], 'should publish the initial state')
+
   await tick(2)
   t.deepEqual(log, [0, 3], 'should track and notify first tick changes')
 
@@ -373,6 +377,8 @@ t('state: get/set', async t => {
   s(5)
   await tick(4)
   t.deepEqual(log, [0, 3, 4, 5], 'arbitrary change 2')
+
+  t.deepEqual(log2, [3, 4, 5], 'secondary observer is fine')
 
   t.end()
 })

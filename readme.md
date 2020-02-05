@@ -90,23 +90,34 @@ Assigns a `callback` function to `selector` or direct element. Returned `unspect
 * `callback` is a function `target => ondestroy` or an array of functions.
 * `context` is optional element to assign mutation observer to, can be helpful for perf optimization, but benchmark shows that the worst case mutation observer contributes ≤ 5% to app slowdown.
 
-### `ref = state( init? )`
+### `value = state( init? )`
 
-Create observable value. Returned `ref` is getter/setter function with _asyncIterator_ interface for observing changes.
+Create observable value. Returned `ref` is a getter/setter function with _asyncIterator_ interface for observing changes.
 
 ```js
 let count = state(0)
 
 // get current value
-count.current === +count === count.valueOf() === count() // 0
+count.current
++count
+count.valueOf()
+count.toString()
+count()
+// 0
 
 // set value
-count.current += 1
+count.current = 1
 count(1)
 count(c => c + 1)
+// 1
+
+// observe value changes
+for await (let value of count) {
+  // 1, ...
+}
 ```
 
-<sub>Combines `useRef` and `useState` logic, inspired by _observable_ / _observ_ / _mutant_ and observable proposal, see <a href="https://github.com/spectjs/spect/issues/142">research</a>.</sub>
+<sub>Combines `useRef` and `useState` hooks logic, inspired by _observable_ / _observ_ / _mutant_ packages and observable proposal, see <a href="https://github.com/spectjs/spect/issues/142">argumentation</a>.</sub>
 
 ### `fx( callback, deps? )`
 

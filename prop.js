@@ -1,6 +1,6 @@
 const cache = new WeakMap()
 
-async function* prop(target, name) {
+export default async function prop(target, name) {
   let propRefs = cache.get(target)
   if (!propRefs) cache.set(target, propRefs = {})
   let ref = propRefs[name]
@@ -41,5 +41,3 @@ async function* prop(target, name) {
 
   return ref
 }
-
-prop[Symbol.asyncIterator] = prop

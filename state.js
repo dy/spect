@@ -1,5 +1,5 @@
 export default function state (value) {
-  let current = value
+  let current = typeof value === 'function' ? value() : value
   const get = () => current
   const set = (value) => {
     if (value === current) return
