@@ -81,7 +81,7 @@ Pending...
 
 ## API
 
-<details><summary><strong><code>$</</code>strong></summary>
+<details><summary><strong><code>$</code></strong></summary>
 
 #### `$( selector | target, callback, context?)`
 
