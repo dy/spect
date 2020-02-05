@@ -81,7 +81,7 @@ Pending...
 
 ## API
 
-### `unspect = $( selector | target, callback, context?)`
+### `$( selector | target, callback, context?)`
 
 Assigns a `callback` function to `selector` or direct element. Returned `unspect` function removes assigned `callback`. The return of `callback` is destructor callback, called when element is unmounted.
 
@@ -90,7 +90,25 @@ Assigns a `callback` function to `selector` or direct element. Returned `unspect
 * `callback` is a function `target => ondestroy` or an array of functions.
 * `context` is optional element to assign mutation observer to, can be helpful for perf optimization, but benchmark shows that the worst case mutation observer contributes ≤ 5% to app slowdown.
 
-### `unfx = fx( callback, deps? )`
+### `ref = state( init? )`
+
+Create observable value. Returned `ref` is getter/setter function with _asyncIterator_ interface for observing changes.
+
+```js
+let count = state(0)
+
+// get current value
+count.current === +count === count.valueOf() === count() // 0
+
+// set value
+count.current += 1
+count(1)
+count(c => c + 1)
+```
+
+<sub>Combines `useRef` and `useState` logic, inspired by _observable_ / _observ_ / _mutant_ and observable proposal, see <a href="https://github.com/spectjs/spect/issues/142">research</a>.</sub>
+
+### `fx( callback, deps? )`
 
 Run callback whenever state, provided by `deps` changes. That is `useEffect` unreacted.
 

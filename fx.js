@@ -1,15 +1,7 @@
-export default function fx(cb, deps = []) {
-  let planned = false
+export default function fx(cb, deps=[]) {
   let values = deps.map(dep => dep.current)
-  let unsubscribe = deps.map((dep, i) =>
-    // FIXME: extend to async iterable
-    dep.subscribe(value => {
-      if (values[i] === value) return
-      values[i] = value
-      plan()
-    })
-  )
 
+  let planned = false
   const plan = () => {
     if (planned) return
     planned = true
@@ -19,5 +11,13 @@ export default function fx(cb, deps = []) {
     })
   }
 
-  return () => unsubscribe.map(unsubscribe => unsubscribe())
+  deps.map(async (dep, i) => {
+    for await (let value of dep) {
+      if (value === values[i]) continue
+      values[i] = value
+      plan()
+    }
+  })
+
+  plan()
 }

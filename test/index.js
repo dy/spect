@@ -1,10 +1,9 @@
-import $, * as hooks from '../index.js'
 import t from 'tst'
+import { $, state } from '../index.js'
 import { tick, frame, idle, time } from 'wait-please'
 import { augmentor, useState, useEffect, useMemo } from 'augmentor'
-import SSet from 'selector-set'
 
-t('tag selector', async t => {
+t('$: tag selector', async t => {
   let ellog = []
   let proplog = []
   let container = document.body.appendChild(document.createElement('div'))
@@ -37,7 +36,7 @@ t('tag selector', async t => {
   t.end()
 })
 
-t('init existing elements', async t => {
+t('$: init existing elements', async t => {
   let log = []
   let container = document.body.appendChild(document.createElement('div'))
   container.appendChild(document.createElement('x'))
@@ -53,7 +52,7 @@ t('init existing elements', async t => {
   document.body.removeChild(container)
 })
 
-t('dynamically assigned selector', async t => {
+t('$: dynamically assigned selector', async t => {
   let log = []
 
   $('.x', el => {
@@ -74,7 +73,7 @@ t('dynamically assigned selector', async t => {
   document.body.removeChild(el)
 })
 
-t('simple hooks', async t => {
+t('$: simple hooks', async t => {
   let el = document.createElement('div')
 
   $(el, augmentor(el => {
@@ -90,7 +89,7 @@ t('simple hooks', async t => {
   t.is(el.count, 1)
 })
 
-t('aspects must be called in order', async t => {
+t('$: aspects must be called in order', async t => {
   let log = []
   let a = document.createElement('a')
 
@@ -106,7 +105,7 @@ t('aspects must be called in order', async t => {
   unspect()
 })
 
-t('throwing error must not create recursion', async t => {
+t('$: throwing error must not create recursion', async t => {
   let a = document.createElement('a')
   document.body.appendChild(a)
   let unspect = $('a', el => {
@@ -119,7 +118,7 @@ t('throwing error must not create recursion', async t => {
   t.end()
 })
 
-t('remove/add should not retrigger element', async t => {
+t('$: remove/add should not retrigger element', async t => {
   let a = document.createElement('a')
   let b = document.createElement('b')
   document.body.appendChild(b.appendChild(a))
@@ -141,7 +140,7 @@ t('remove/add should not retrigger element', async t => {
   t.end()
 })
 
-t('destructor is called on unmount', async t => {
+t('$: destructor is called on unmount', async t => {
   let el = document.createElement('div')
   let log = []
   let off = $('*', el => {
@@ -322,7 +321,7 @@ t.todo('selecting forms', t => {
   t.end()
 })
 
-t('init on list of elements', async t => {
+t('$: init on list of elements', async t => {
   let log = []
   let el = document.createElement('div')
   el.innerHTML = '<a>1</a><a>2</a>'
@@ -335,5 +334,46 @@ t('init on list of elements', async t => {
   unset()
   await frame(2)
   t.deepEqual(log, ['1', '2', 'un1', 'un2'])
+})
+
+t('state: get/set', async t => {
+  let log = []
+  let s = state(0)
+
+    ; (async () => {
+      for await (let value of s) {
+        log.push(value)
+      }
+    })()
+
+  t.equal(+s, 0, 'toPrimitive')
+  t.equal(s.current, 0, 'current')
+  t.equal(s.valueOf(), 0, 'valueOf')
+  t.equal(s.toString(), 0, 'toString')
+  t.equal(s(), 0, 's()')
+
+  s.current = 1
+  t.equal(+s, 1, 'ref.current = value')
+
+  s(2)
+  t.equal(+s, 2, 'ref(value)')
+
+  s(c => (t.equal(c, 2, 'ref(old => )'), 3))
+  t.equal(+s, 3, 'ref(() => value)')
+
+  await tick()
+  t.deepEqual(log, [0], 'should publish the initial state')
+  await tick(2)
+  t.deepEqual(log, [0, 3], 'should track and notify first tick changes')
+
+  await frame(10)
+  s.current = 4
+  await tick(4) // why 4 ticks delay?
+  t.deepEqual(log, [0, 3, 4], 'arbitrary change 1')
+  s(5)
+  await tick(4)
+  t.deepEqual(log, [0, 3, 4, 5], 'arbitrary change 2')
+
+  t.end()
 })
 
