@@ -204,7 +204,7 @@ Creates an observable value, computed from `deps`.
 
 > value = prop( target, name )
 
-_Prop_ is observable for property. Same as _state_, but the value is accessed as object property. _Prop_ keeps initial properties descriptor, so if target has defined setter/getter, they're kept safe.
+_`prop`_ has the same logic as _state_, but the value is accessed as `target` property. _`prop`_ keeps defined properties, so that the target's setter/getter are kept safe.
 
 ```js
 import { prop, fx } from 'spect'
@@ -214,15 +214,11 @@ let o = { foo: 'bar' }
 fx(([foo]) => console.log(foo), [prop(o, 'foo')])
 
 o.foo = 'baz'
-```
 
-That outputs:
+// outputs
+// "bar"
+// "baz"
 ```
-"bar"
-"baz"
-```
-
-Useful to organize props for DOM elements, along with _attr_ effect.
 
 <br/>
 
@@ -238,11 +234,11 @@ Useful to organize props for DOM elements, along with _attr_ effect.
 
 <br/>
 
-### _`ref`_ − value reference
+### _`ref`_ − core observable
 
 > value = ref( init? )
 
-_`ref`_ is the foundation for _`state`_ and other observables, except for it does not support functional setter and it emits updates on every value set.
+_`ref`_ is the foundation for _`state`_ and other observables, except for it does not support functional setter and it emits updates on every value set.  _`ref`_ is direct analog of _useRef_ hook in FRP world.
 
 ```js
 let count = ref(0)
@@ -253,12 +249,10 @@ count()
 // set
 count(1)
 
-// sets value to function (!)
+// sets value to a function (!)
 count(c => c + 1)
 count() // c => c + 1
 ```
-
-_`ref`_ is direct analog of _useRef_ hook in async iterables world.
 
 <br/>
 
