@@ -89,9 +89,9 @@ Pending...
 
 ## API
 
-### _$_ − selector effect
+### _`$`_ − selector effect
 
-> $( `selector` | `element`, `callback`, `context`? )
+> $( selector | element, callback, context? )
 
 Assigns a `callback` to `selector` or `element` node. Returned from `callback `result is destructor, called when element is unmounted.
 
@@ -114,23 +114,20 @@ $('.timer', el => {
 
 <br/>
 
-### _fx_ − deps effect
+### _`fx`_ − deps effect
 
 > fx( callback, deps = [] )
 
-Run callback on any `deps` change. `deps` is a list of _async iterators_ or _promises_.
-First callback is triggered immediately with initial `deps` state.
-_fx_ is _useEffect_ hook in async iterators land.
+Run callback on any `deps` change. `deps` should be a list of _async iterables_ or _promises_.
+First callback is triggered as immediately microtask with initial state.
 
 ```js
 let count = state(0)
 let loading = attr(el, 'loading')
 
-fx((deps) => {
-  let [count, loading, data] = deps
+fx(([count, loading]) => {
   // count === 0
   // loading === el.attributes.loading.value
-  // data === el.data
 
   el.innerHTML = loading ? `Loading...` : `Seconds: ${ count }`
 }, [count, loading])
@@ -138,7 +135,7 @@ fx((deps) => {
 // trigger fx each second
 setInterval(() => count(c => c + 1), 1000)
 
-// trigger fx via element attribute
+// trigger fx via element attribute change
 button.onclick = e => el.setAttribute('loading', true)
 ```
 
@@ -146,7 +143,7 @@ _fx_ incorporates _useEffect_ logic with _deps_ as _iterables_ / _promises_ inst
 
 <br/>
 
-### _state_ − value observable
+### _`state`_ − value observable
 
 > value = state( init? )
 
@@ -172,7 +169,7 @@ _state_ is modern version of [observable](https://ghub.io/observable), incorpora
 
 <br/>
 
-### _compute_ − computed value
+### _`compute`_ − computed value
 
 > value = computed( fn, deps = [] )
 
@@ -180,7 +177,7 @@ Creates an observable value, computed from `deps`.
 
 <br/>
 
-### _prop_ − property observable
+### _`prop`_ − property observable
 
 > value = prop( target, name )
 
@@ -206,19 +203,19 @@ Useful to organize props for DOM elements, along with _attr_ effect.
 
 <br/>
 
-### _attr_ − observable attribute
+### _`attr`_ − attribute observable
 
 <br/>
 
-### _store_ − object observable
+### _`store`_ − object observable
 
 <br/>
 
-### _on_ − events stream
+### _`on`_ − event observable
 
 <br/>
 
-### _ref_ − value reference
+### _`ref`_ − value reference
 
 > value = ref( init? )
 
