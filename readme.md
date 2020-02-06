@@ -119,6 +119,7 @@ $('.timer', el => {
 > fx( callback, deps = [] )
 
 _`fx`_ runs `callback` when the `deps` change. First callback is triggered immediately as microtask with the initial state.
+Deps values passed to `callback` as arguments. Returned from `callback` function is used as destructor.
 
 `deps` may contain:
 * _Async Generator_ / _Async Iterable_ (an object with `Symbol.asyncIterator` method)
@@ -133,12 +134,30 @@ const likes = fetch(url).then(response => {
 })
 const loading = state(true)
 
-fx(([data, loading]) => {
+fx((data, loading) => {
   el.innerHTML = loading ? `Loading...` : `Likes: ${ likes }`
+
+  return () => {
+    // destroy
+  }
 }, [data, loading])
 ```
 
 _`fx`_ incorporates _`useEffect`_ logic in FRP world.
+
+Self-running effects:
+
+```js
+import { state, fx } from 'spect'
+import { time } from 'wait-please'
+
+let count = state(0)
+fx(async c => {
+  console.log('Seconds', c)
+  await time(1000)
+  count(c + 1)
+}, [count])
+```
 
 <br/>
 

@@ -1,5 +1,5 @@
 export default function fx(cb, deps=[]) {
-  let current = []
+  let current = [], prev = []
   deps.map((dep, i) => {
     if (primitive(dep)) return current[i] = dep
     if ('then' in dep || 'subscribe' in dep) return
@@ -37,13 +37,15 @@ export default function fx(cb, deps=[]) {
     }
   })
 
-  let changed = false
+  let changed = false, destroy
   const notify = () => {
     if (changed) return
     changed = true
     Promise.resolve().then(() => {
       changed = false
-      cb(current)
+      if (destroy && destroy.call) destroy(...prev)
+      prev = [...current]
+      destroy = cb(...current)
     })
   }
   notify()

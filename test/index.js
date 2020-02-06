@@ -1,5 +1,5 @@
 import t from 'tst'
-import { $, state, fx, prop } from '../index.js'
+import { $, state, fx, prop, ref } from '../index.js'
 import { tick, frame, idle, time } from 'wait-please'
 import { augmentor, useState, useEffect, useMemo } from 'augmentor'
 
@@ -355,13 +355,13 @@ t('state: core', async t => {
   t.deepEqual(log, [0], 'should publish the initial state')
 
   s.current = 1
-  t.equal(+s, 1, 'ref.current = value')
+  t.equal(+s, 1, 'state.current = value')
 
   s(2)
-  t.equal(+s, 2, 'ref(value)')
+  t.equal(+s, 2, 'state(value)')
 
-  s(c => (t.equal(c, 2, 'ref(old => )'), 3))
-  t.equal(+s, 3, 'ref(() => value)')
+  s(c => (t.equal(c, 2, 'state(old => )'), 3))
+  t.equal(+s, 3, 'state(() => value)')
 
   // observer 2
   let log2 = []
@@ -495,7 +495,7 @@ t('fx: core', async t => {
   let b = prop(o, 'b')
 
   let log = []
-  fx(([a, b]) => {
+  fx((a, b) => {
     log.push(a, b)
   }, [a, b])
 
@@ -514,12 +514,66 @@ t('fx: core', async t => {
   t.is(log, [0, 1, 2, 1, 2, 2], 'unchanged prop')
 })
 
-t('fx: destructor')
-t('fx: initial state')
-t('fx: doesn not run unchanged')
-t('fx: no-deps runs once')
-t('fx: empty-deps runs once')
-t('fx: async fx')
+t('fx: destructor', async t => {
+  let log = []
+  let a = state(0), b = state(0)
+  fx((a, b) => {
+    log.push('in', a, b)
+    return () => {
+      log.push('out', a, b)
+    }
+  }, [a, b])
+
+  await tick(4)
+  t.is(log, ['in', 0, 0])
+
+  log = []
+  a(1)
+  b(1)
+  await tick(6)
+  t.is(log, ['out', 0, 0, 'in', 1, 1], 'destructor is ok')
+})
+
+t('fx: disposed by unmounted element automatically')
+t('fx: doesn\'t run unchanged', async t => {
+  let a = ref(0)
+  let log = []
+  fx(a => {
+    log.push(a)
+  }, [a])
+
+  await tick(4)
+  t.is(log, [0])
+  a(1)
+  a(0)
+  await tick(6)
+  t.is(log, [0], 'does not run unchanged')
+})
+t('fx: no-deps/empty deps runs once', async t => {
+  let log = []
+  fx(() => {
+    log.push(0)
+  }, [])
+  fx(() => {
+    log.push(1)
+  })
+
+  await tick(6)
+  t.is(log, [0, 1])
+})
+t('fx: async fx', async t => {
+  let count = state(0)
+  let log = []
+  fx(async c => {
+    log.push(c)
+    if (c > 3) return
+    await tick()
+    count(c + 1)
+  }, [count])
+
+  await tick(50)
+  t.is(log, [0, 1, 2, 3, 4])
+})
 
 t('fx: promise / observable / direct dep', async t => {
   let p = new Promise(r => setTimeout(() => r(2), 10))
@@ -527,7 +581,7 @@ t('fx: promise / observable / direct dep', async t => {
   let v = 1
 
   let log = []
-  fx(([p, o, v]) => {
+  fx((p, o, v) => {
     log.push(v, p, o)
   }, [p, o, v])
 
