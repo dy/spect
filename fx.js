@@ -1,10 +1,15 @@
+const _fxValue = Symbol.for('spectFx')
+
 export default function fx(cb, deps=[]) {
   let current = [], prev = []
   deps.map((dep, i) => {
     if (primitive(dep)) return current[i] = dep
     if ('then' in dep || 'subscribe' in dep) return
-
     if ('current' in dep) current[i] = dep.current
+
+    // store/etc case
+    if (dep[_fxValue]) current[i] = dep[_fxValue]
+
     else current[i] = dep
   })
 

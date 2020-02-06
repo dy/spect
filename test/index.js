@@ -1,5 +1,5 @@
 import t from 'tst'
-import { $, state, fx, prop, ref } from '../index.js'
+import { $, state, fx, prop, store, ref } from '../index.js'
 import { tick, frame, idle, time } from 'wait-please'
 import { augmentor, useState, useEffect, useMemo } from 'augmentor'
 
@@ -35,7 +35,6 @@ t('$: tag selector', async t => {
 
   t.end()
 })
-
 t('$: init existing elements', async t => {
   let log = []
   let container = document.body.appendChild(document.createElement('div'))
@@ -51,7 +50,6 @@ t('$: init existing elements', async t => {
 
   document.body.removeChild(container)
 })
-
 t('$: dynamically assigned selector', async t => {
   let log = []
 
@@ -72,7 +70,6 @@ t('$: dynamically assigned selector', async t => {
 
   document.body.removeChild(el)
 })
-
 t('$: simple hooks', async t => {
   let el = document.createElement('div')
 
@@ -88,7 +85,6 @@ t('$: simple hooks', async t => {
   await frame()
   t.is(el.count, 1)
 })
-
 t('$: aspects must be called in order', async t => {
   let log = []
   let a = document.createElement('a')
@@ -104,7 +100,6 @@ t('$: aspects must be called in order', async t => {
   document.body.removeChild(a)
   unspect()
 })
-
 t('$: throwing error must not create recursion', async t => {
   let a = document.createElement('a')
   document.body.appendChild(a)
@@ -119,7 +114,6 @@ t('$: throwing error must not create recursion', async t => {
   unspect()
   t.end()
 })
-
 t('$: remove/add should not retrigger element', async t => {
   let a = document.createElement('a')
   let b = document.createElement('b')
@@ -141,7 +135,6 @@ t('$: remove/add should not retrigger element', async t => {
   await frame()
   t.end()
 })
-
 t('$: destructor is called on unmount', async t => {
   let el = document.createElement('div')
   let log = []
@@ -163,7 +156,6 @@ t('$: destructor is called on unmount', async t => {
   t.deepEqual(log, [1, 1, 2, 2])
   t.end()
 })
-
 t.todo('subaspects', async t => {
   let log = []
 
@@ -192,20 +184,17 @@ t.todo('subaspects', async t => {
 
   document.body.removeChild(a)
 })
-
 t.todo('new custom element', t => {
   $('custom-element', () => {
 
   })
 })
-
 t.todo('aspects must be called in order', async t => {
   let log = []
   let a = {}
   await spect(a).use([() => log.push(1), () => log.push(2), () => log.push(3)])
   t.deepEqual(log, [1, 2, 3])
 })
-
 t.todo('duplicates are ignored', async t => {
   let log = []
 
@@ -221,7 +210,6 @@ t.todo('duplicates are ignored', async t => {
 
   t.is(log, [1, 1])
 })
-
 t.skip('same aspect different targets', t => {
   let log = []
   function fx([el]) {
@@ -239,7 +227,6 @@ t.skip('same aspect different targets', t => {
 
   t.deepEqual(log, ['A', 'SPAN'])
 })
-
 t.todo('Same target different aspects', async t => {
   let log = []
 
@@ -251,7 +238,6 @@ t.todo('Same target different aspects', async t => {
   await spect(a).use([bfx = () => (log.push('b'), () => log.push('de b'))])
   t.deepEqual(log, ['a', 'b'])
 })
-
 t.todo('same aspect same target', async t => {
   let log = []
   let a = {}
@@ -264,9 +250,7 @@ t.todo('same aspect same target', async t => {
   await spect(a).use(fx)
   t.deepEqual(log, ['a'])
 })
-
 t.todo('generators aspects')
-
 t.todo('async aspects', t => {
   let a = document.createElement('a')
 
@@ -277,7 +261,6 @@ t.todo('async aspects', t => {
   })
 
 })
-
 t.todo('rebinding to other document', async t => {
   let { document } = await import('dom-lite')
 
@@ -291,7 +274,6 @@ t.todo('rebinding to other document', async t => {
     t.is(el.tagName, 'DIV')
   })
 })
-
 t.skip('empty selectors', t => {
   let $x = $()
   t.is($x.length, 0)
@@ -310,7 +292,6 @@ t.skip('empty selectors', t => {
   t.notEqual($x, $z)
   // t.notEqual($x, $w)
 })
-
 t.todo('selecting forms', t => {
   let $f = $`<form><input name="a"/><input name="b"/></form>`
 
@@ -322,7 +303,6 @@ t.todo('selecting forms', t => {
 
   t.end()
 })
-
 t('$: init on list of elements', async t => {
   let log = []
   let el = document.createElement('div')
@@ -422,7 +402,6 @@ t('prop: subscription', async t => {
   await tick(10)
   t.is(log, [0, 2, 5, 6], 'end destructs property')
 })
-
 t('prop: get/set', async t => {
   let o = { x: () => { t.fail('Should not be called') } }
   let xs = prop(o, 'x')
@@ -430,14 +409,12 @@ t('prop: get/set', async t => {
   t.is(o.x, 0, 'set is ok')
   t.is(xs(), 0, 'get is ok')
 })
-
 t('prop: keep initial property value if applied/unapplied', async t => {
   let o = { foo: 'bar' }
   let foos = prop(o, 'foo')
   foos.close()
   t.is(o, {foo: 'bar'}, 'initial object is unchanged')
 })
-
 t('prop: multiple instances', async t => {
   let x = { x: 1}
   let xs1 = prop(x, 'x')
@@ -445,7 +422,6 @@ t('prop: multiple instances', async t => {
 
   t.is(xs1, xs2, 'same ref')
 })
-
 t('prop: minimize get/set invocations', async t => {
   let log = []
   let obj = {
@@ -513,7 +489,6 @@ t('fx: core', async t => {
   await tick(5)
   t.is(log, [0, 1, 2, 1, 2, 2], 'unchanged prop')
 })
-
 t('fx: destructor', async t => {
   let log = []
   let a = state(0), b = state(0)
@@ -533,7 +508,6 @@ t('fx: destructor', async t => {
   await tick(6)
   t.is(log, ['out', 0, 0, 'in', 1, 1], 'destructor is ok')
 })
-
 t('fx: disposed by unmounted element automatically')
 t('fx: doesn\'t run unchanged', async t => {
   let a = ref(0)
@@ -574,7 +548,6 @@ t('fx: async fx', async t => {
   await tick(50)
   t.is(log, [0, 1, 2, 3, 4])
 })
-
 t('fx: promise / observable / direct dep', async t => {
   let p = new Promise(r => setTimeout(() => r(2), 10))
   let o = { subscribe(fn){ setTimeout(() => fn(3), 20) } }
@@ -593,4 +566,19 @@ t('fx: promise / observable / direct dep', async t => {
   log = []
   await time(10)
   t.is(log, [1, 2, 3])
+})
+
+t.only('store: core', async t => {
+  let s = store({x: 1})
+  let log = []
+  fx(s => {
+    log.push(s)
+  }, [s])
+
+  await tick(4)
+  t.is(log, [{x: 1}])
+
+  s.x = 2
+  await tick(6)
+  t.is(log, [{x: 1}, {x: 2}])
 })

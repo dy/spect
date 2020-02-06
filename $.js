@@ -4,7 +4,6 @@ const _callbacks = Symbol.for('spectCallbacks')
 const _destroyPlanned = Symbol.for('spectDestroyPlanned')
 const _observer = Symbol.for('spectObserver')
 const set = new SelectorSet
-const root = document.documentElement
 
 // element-based aspect
 export default function spect(target, fn, context) {
@@ -44,7 +43,7 @@ export default function spect(target, fn, context) {
 }
 
 // selector-based aspect
-function $(selector, fn, context = root) {
+function $(selector, fn, context = document.documentElement) {
   if (!context[_observer]) {
     const observer = context[_observer] = new MutationObserver((list) => {
       for (let mutation of list) {

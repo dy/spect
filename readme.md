@@ -196,7 +196,7 @@ fx(async c => {
 
 > value = computed( fn, deps = [] )
 
-Creates an observable value, computed from `deps`.
+Creates an observable _`state`_, computed from `deps`. Direct analog of _`useMemo`_ hook.
 
 <br/>
 
@@ -224,13 +224,19 @@ o.foo = 'baz'
 
 ### _`attr`_ − attribute observable
 
+> value = attr( element, name )
+
 <br/>
 
 ### _`store`_ − object observable
 
+> obj = store( init = {} )
+
 <br/>
 
 ### _`on`_ − event observable
+
+> evts = on( element, eventName )
 
 <br/>
 
