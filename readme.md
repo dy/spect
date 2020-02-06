@@ -89,11 +89,11 @@ Pending...
 
 ## API
 
-### _`$`_ − selector effect
+### _`$`_ − aspect
 
-> $( selector | element, callback, context? )
+> $( selector | element, aspect, context? )
 
-Assigns a `callback` to `selector` or `element` node. Returned from `callback `result is destructor, called when element is unmounted.
+Assigns an `aspect` function to `selector` or `element` node. Returned from `aspect `result is destructor, called when element is unmounted.
 
 * `selector` must be valid CSS selector.
 * `target` can be _dict_ of selectors, an _element_ or _elements list_.
@@ -114,12 +114,12 @@ $('.timer', el => {
 
 <br/>
 
-### _`fx`_ − deps effect
+### _`fx`_ − effect
 
 > fx( callback, deps = [] )
 
-Run callback on any `deps` change. `deps` should be a list of _async iterables_ or _promises_.
-First callback is triggered as immediately microtask with initial state.
+_`fx`_ runs callback when the dependencies change. `deps` should be a list of _async iterables_ or _promises_.
+First callback is triggered as immediately microtask with the initial state.
 
 ```js
 let count = state(0)
@@ -139,7 +139,7 @@ setInterval(() => count(c => c + 1), 1000)
 button.onclick = e => el.setAttribute('loading', true)
 ```
 
-_fx_ incorporates _useEffect_ logic with _deps_ as _iterables_ / _promises_ instead of direct values.
+_`fx`_ incorporates _`useEffect`_ logic with _`deps`_ as _async iterables_ / _promises_ instead of direct values.
 
 <br/>
 
