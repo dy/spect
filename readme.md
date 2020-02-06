@@ -121,9 +121,9 @@ $('.timer', el => {
 _`fx`_ runs `callback` when the `deps` change. First callback is triggered immediately as microtask with the initial state.
 
 `deps` may contain:
-* _async iterable_ (`Symbol.asyncIterator` method)
+* _Async Generator_ / _Async Iterable_ (an object with `Symbol.asyncIterator` method)
 * _Observable_ (`.subscribe` method)
-* _Promise_ (`.then` method)
+* _Promise_ / _Thenable_ (an object with `.then` method)
 * other value (not subscribed)
 
 ```js
