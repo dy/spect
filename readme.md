@@ -114,6 +114,33 @@ $('.timer', el => {
 
 <br/>
 
+### _`state`_ − value observable
+
+> value = state( init? )
+
+_`state`_ creates observable value. Returned `value` is getter/setter function with _asyncIterator_ interface for subscriptions.
+_`state`_ is modern version of [observable](https://ghub.io/observable) and incorporates _useState_ hook logic.
+
+```js
+let count = state(0)
+
+// get
+count()
+
+// set
+count(1)
+count(c => c + 1)
+
+// observe changes
+for await (let value of count) {
+  // 0, 1, ...
+}
+```
+
+<sup>See <a href="https://github.com/spectjs/spect/issues/142">#142</a> for design argumentation.</sup>
+
+<br/>
+
 ### _`fx`_ − effect
 
 > fx( callback, deps = [] )
@@ -122,10 +149,16 @@ _`fx`_ runs `callback` when the `deps` change. First callback is triggered immed
 Deps values passed to `callback` as arguments. Returned from `callback` function is used as destructor.
 
 `deps` may contain:
+
 * _Async Generator_ / _Async Iterable_ (an object with `Symbol.asyncIterator` method)
 * _Observable_ (`.subscribe` method)
 * _Promise_ / _Thenable_ (an object with `.then` method)
-* other value (not subscribed)
+* other - used as is
+
+_`fx`_ incorporates _`useEffect`_ logic in FRP world.
+
+<!--
+Example:
 
 ```js
 const likes = fetch(url).then(response => {
@@ -142,10 +175,7 @@ fx((data, loading) => {
   }
 }, [data, loading])
 ```
-
-_`fx`_ incorporates _`useEffect`_ logic in FRP world.
-
-Self-running effects:
+-->
 
 ```js
 import { state, fx } from 'spect'
@@ -161,33 +191,6 @@ fx(async c => {
 
 <br/>
 
-### _`state`_ − value observable
-
-> value = state( init? )
-
-_`state`_ creates observable value. Returned `value` is getter/setter function with _asyncIterator_ interface for subscribing to changes.
-
-```js
-let count = state(0)
-
-// get the value
-count()
-
-// set the value
-count(1)
-count(c => c + 1)
-
-// observe changes
-for await (let value of count) {
-  // 0, 1, ...
-}
-```
-
-_`state`_ is modern version of [observable](https://ghub.io/observable), incorporates _useState_ hook logic.
-
-<sub>See <a href="https://github.com/spectjs/spect/issues/142">#142</a> for design argumentation.</sub>
-
-<br/>
 
 ### _`compute`_ − computed value
 
