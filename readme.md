@@ -91,7 +91,7 @@ Pending...
 
 ### _$_ − selector effect
 
-> $( selector | element, callback, context?)
+> $( `selector` | `element`, `callback`, `context`? )
 
 Assigns a `callback` to `selector` or `element` node. Returned from `callback `result is destructor, called when element is unmounted.
 
