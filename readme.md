@@ -85,7 +85,7 @@ Pending...
 
 ## API
 
-### _$_ − selector observer
+### _$_ − selector effect
 
 > $( selector | target, aspect, context?)
 
@@ -98,7 +98,7 @@ Assigns a `aspect` function to `selector` or `target` element. The return result
 
 <br/>
 
-### _fx_ − deps observer
+### _fx_ − deps effect
 
 > fx( callback, deps = [] )
 
@@ -129,7 +129,7 @@ Provides _useEffect_ logic with _deps_ as _iterables_ / _promises_ instead of di
 
 <br/>
 
-### _state_ − value observer
+### _state_ − observable value
 
 > value = state( init? )
 
@@ -158,7 +158,23 @@ for await (let value of count) {
 
 _fx_ combines _useRef_ and _useState_ logic, with regards to [observable](https://ghub.io/observable) / [observ](https://ghub.io/observ) / [mutant](https://ghub.io/mutant) and _Observable_ proposal. See <a href="https://github.com/spectjs/spect/issues/142">#142</a>.
 
+<br/>
 
+### _store_ − observable object
+
+<br/>
+
+### _prop_ − observable property
+
+<br/>
+
+### _attr_ − observable attribute
+
+<br/>
+
+### _on_ − events stream
+
+<br/>
 
 ## Related
 
