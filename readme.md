@@ -87,9 +87,7 @@ Pending...
 
 ### _$_ − selector observer
 
-```js
-$( selector | target, callback, context?)
-```
+> $( selector | target, callback, context?)
 
 Assigns a `callback` function to `selector` or direct element. Returned `unspect` function removes assigned `callback`. The return of `callback` is destructor callback, called when element is unmounted.
 
@@ -102,9 +100,7 @@ Assigns a `callback` function to `selector` or direct element. Returned `unspect
 
 ### _fx_ − deps observer
 
-```js
-fx( callback, deps = [] )
-```
+> fx( callback, deps = [] )
 
 Run callback whenever `deps` change. `deps` is a list of _async iterators_ or _Promises_.
 Initial run is triggered with initial deps state.
@@ -135,9 +131,7 @@ Provides _useEffect_ logic with `deps` as observables or promises instead of dir
 
 ### _state_ − value observer
 
-```js
-state( init? )
-```
+> state( init? )
 
 Create observable value. Returned `ref` is a getter/setter function with _asyncIterator_ interface for observing changes.
 
