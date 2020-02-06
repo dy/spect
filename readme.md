@@ -85,9 +85,9 @@ Pending...
 
 ## API
 
-### $
+### $ − selector observer
 
-> `$( selector | target, callback, context?)`
+_`$( selector | target, callback, context?)`_
 
 Assigns a `callback` function to `selector` or direct element. Returned `unspect` function removes assigned `callback`. The return of `callback` is destructor callback, called when element is unmounted.
 
@@ -96,11 +96,11 @@ Assigns a `callback` function to `selector` or direct element. Returned `unspect
 * `callback` is a function `target => ondestroy` or an array of functions.
 * `context` is optional element to assign mutation observer to, can be helpful for perf optimization, but benchmark shows that the worst case mutation observer contributes ≤ 5% to app slowdown.
 
----
+<br/>
 
-### fx
+### fx − deps observer
 
-> `fx( callback, deps = [] )`
+_`fx( callback, deps = [] )`_
 
 Run callback whenever `deps` change. `deps` is a list of _async iterators_ or _Promises_.
 Initial run is triggered with initial deps state.
@@ -127,11 +127,11 @@ button.onclick = e => el.setAttribute('loading', true)
 
 Provides _useEffect_ logic with `deps` as observables or promises instead of direct values.
 
----
+<br/>
 
-### state
+### state − value observer
 
-> `state( init? )`
+_`state( init? )`_
 
 Create observable value. Returned `ref` is a getter/setter function with _asyncIterator_ interface for observing changes.
 
