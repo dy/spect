@@ -85,9 +85,9 @@ Pending...
 
 ## API
 
-<details><summary><strong><code>$</code></strong></summary>
+### $
 
-#### `$( selector | target, callback, context?)`
+> `$( selector | target, callback, context?)`
 
 Assigns a `callback` function to `selector` or direct element. Returned `unspect` function removes assigned `callback`. The return of `callback` is destructor callback, called when element is unmounted.
 
@@ -96,43 +96,11 @@ Assigns a `callback` function to `selector` or direct element. Returned `unspect
 * `callback` is a function `target => ondestroy` or an array of functions.
 * `context` is optional element to assign mutation observer to, can be helpful for perf optimization, but benchmark shows that the worst case mutation observer contributes ≤ 5% to app slowdown.
 
-</details>
+---
 
-<details><summary><strong><code>state</code></strong></summary>
+### fx
 
-#### `value = state( init? )`
-
-Create observable value. Returned `ref` is a getter/setter function with _asyncIterator_ interface for observing changes.
-
-```js
-let count = state(0)
-
-// get current value
-count.current
-count()
-+count
-count.valueOf()
-count.toString()
-
-// set value
-count.current = 1
-count(1)
-count(c => c + 1)
-
-// observe changes
-for await (let value of count) {
-  // 1, ...
-}
-```
-
-Combines _useRef_ and _useState_ hooks logic, with regards to [observable](https://ghub.io/observable) / [observ](https://ghub.io/observ) / [mutant](https://ghub.io/mutant) and _Observable_ proposal. See design argumentation <a href="https://github.com/spectjs/spect/issues/142">#142</a>.
-
-</details>
-
-
-<details><summary><strong><code>fx</code></strong></summary>
-
-#### `fx( callback, deps = [] )`
+> `fx( callback, deps = [] )`
 
 Run callback whenever `deps` change. `deps` is a list of _async iterators_ or _Promises_.
 Initial run is triggered with initial deps state.
@@ -159,7 +127,37 @@ button.onclick = e => el.setAttribute('loading', true)
 
 Provides _useEffect_ logic with `deps` as observables or promises instead of direct values.
 
-</details>
+---
+
+### state
+
+> `state( init? )`
+
+Create observable value. Returned `ref` is a getter/setter function with _asyncIterator_ interface for observing changes.
+
+```js
+let count = state(0)
+
+// get current value
+count.current
+count()
++count
+count.valueOf()
+count.toString()
+
+// set value
+count.current = 1
+count(1)
+count(c => c + 1)
+
+// observe changes
+for await (let value of count) {
+  // 1, ...
+}
+```
+
+Combines _useRef_ and _useState_ hooks logic, with regards to [observable](https://ghub.io/observable) / [observ](https://ghub.io/observ) / [mutant](https://ghub.io/mutant) and _Observable_ proposal. See design argumentation <a href="https://github.com/spectjs/spect/issues/142">#142</a>.
+
 
 
 ## Related
