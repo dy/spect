@@ -118,28 +118,23 @@ $('.timer', el => {
 
 > fx( callback, deps = [] )
 
-_`fx`_ runs callback when the dependencies change. `deps` should be a list of _async iterables_ or _promises_.
-First callback is triggered as immediately microtask with the initial state.
+_`fx`_ runs `callback` when the `deps` change. First callback is triggered immediately as microtask with the initial state.
+
+* `deps` should be a list of either _async iterables_ (`Symbol.asyncIterator` method), _observables_ (`.subscribe` method), _promises_ (`.then` method) or direct values.
 
 ```js
-let count = state(0)
-let loading = attr(el, 'loading')
+const likes = fetch(url).then(response => {
+  loading(false)
+  return response.json()
+})
+const loading = state(true)
 
-fx(([count, loading]) => {
-  // count === 0
-  // loading === el.attributes.loading.value
-
-  el.innerHTML = loading ? `Loading...` : `Seconds: ${ count }`
-}, [count, loading])
-
-// trigger fx each second
-setInterval(() => count(c => c + 1), 1000)
-
-// trigger fx via element attribute change
-button.onclick = e => el.setAttribute('loading', true)
+fx(([data, loading]) => {
+  el.innerHTML = loading ? `Loading...` : `Likes: ${ likes }`
+}, [data, loading])
 ```
 
-_`fx`_ incorporates _`useEffect`_ logic with _`deps`_ as _async iterables_ / _promises_ instead of direct values.
+_`fx`_ incorporates _`useEffect`_ logic in FRP world.
 
 <br/>
 

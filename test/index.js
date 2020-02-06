@@ -520,4 +520,23 @@ t('fx: doesn not run unchanged')
 t('fx: no-deps runs once')
 t('fx: empty-deps runs once')
 t('fx: async fx')
-t('fx: promise dep')
+
+t('fx: promise / observable / direct dep', async t => {
+  let p = new Promise(r => setTimeout(() => r(2), 10))
+  let o = { subscribe(fn){ setTimeout(() => fn(3), 20) } }
+  let v = 1
+
+  let log = []
+  fx(([p, o, v]) => {
+    log.push(v, p, o)
+  }, [p, o, v])
+
+  await tick(4)
+  t.is(log, [1, undefined, undefined])
+  log = []
+  await time(10)
+  t.is(log, [1, 2, undefined])
+  log = []
+  await time(10)
+  t.is(log, [1, 2, 3])
+})
