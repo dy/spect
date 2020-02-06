@@ -87,9 +87,9 @@ Pending...
 
 ### _$_ − selector observer
 
-> $( selector | target, callback, context?)
+> $( selector | target, aspect, context?)
 
-Assigns a `callback` function to `selector` or direct element. Returned `unspect` function removes assigned `callback`. The return of `callback` is destructor callback, called when element is unmounted.
+Assigns a `aspect` function to `selector` or `target` element. The return result of `aspect` is destructor, called when element is unmounted.
 
 * `selector` must be valid CSS selector.
 * `target` can be _dict_ of selectors, an _element_ or _elements list_.
@@ -102,8 +102,8 @@ Assigns a `callback` function to `selector` or direct element. Returned `unspect
 
 > fx( callback, deps = [] )
 
-Run callback whenever `deps` change. `deps` is a list of _async iterators_ or _Promises_.
-Initial run is triggered with initial deps state.
+Run callback on any `deps` change. `deps` is a list of _async iterators_ or _Promises_.
+First callback is triggered immediately with initial `deps` state.
 
 ```js
 let count = state(0)
@@ -125,15 +125,15 @@ setInterval(() => count(c => c + 1), 1000)
 button.onclick = e => el.setAttribute('loading', true)
 ```
 
-Provides _useEffect_ logic with `deps` as observables or promises instead of direct values.
+Provides _useEffect_ logic with _deps_ as _iterables_ / _promises_ instead of direct values.
 
 <br/>
 
 ### _state_ − value observer
 
-> state( init? )
+> value = state( init? )
 
-Create observable value. Returned `ref` is a getter/setter function with _asyncIterator_ interface for observing changes.
+Create observable value. Returned `value` is ref function with _asyncIterator_ interface for observing changes.
 
 ```js
 let count = state(0)
@@ -156,7 +156,7 @@ for await (let value of count) {
 }
 ```
 
-Combines _useRef_ and _useState_ hooks logic, with regards to [observable](https://ghub.io/observable) / [observ](https://ghub.io/observ) / [mutant](https://ghub.io/mutant) and _Observable_ proposal. See design argumentation <a href="https://github.com/spectjs/spect/issues/142">#142</a>.
+_fx_ combines _useRef_ and _useState_ logic, with regards to [observable](https://ghub.io/observable) / [observ](https://ghub.io/observ) / [mutant](https://ghub.io/mutant) and _Observable_ proposal. See <a href="https://github.com/spectjs/spect/issues/142">#142</a>.
 
 
 
