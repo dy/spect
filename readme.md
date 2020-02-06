@@ -11,7 +11,7 @@
   <img src="https://img.shields.io/badge/size-%E2%89%A4%E2%80%892.1kb-brightgreen"/>
 </p>
 
-<p align="center"><img src="/timer.png" width="480"/></p>
+<p align="center"><img src="/timer.png"/></p>
 
 ## Installation
 
