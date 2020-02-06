@@ -1,9 +1,9 @@
 <div align="center"><img src="https://avatars3.githubusercontent.com/u/53097200?s=200&v=4" width=108 /></div>
 <p align="center"><h1 align="center">spect</h1></p>
 <p align="center">
-  Micro <a href="https://en.wikipedia.org/wiki/Aspect-oriented_programming"><em>aspects</em></a> to rule your DOM.<br/>
-  Build reactive UIs with aspect rules, similar to CSS.<br/>
-  Each rule specifies an <em>aspect</em> function, carrying a piece of logic.<br/>
+  Micro <a href="https://en.wikipedia.org/wiki/Aspect-oriented_programming"><em>aspects</em></a> with <em>effects</em> and <em>observables</em> for building expressive UIs.<br/>
+  <!-- Build reactive UIs with rules, similar to CSS.<br/> -->
+  <!-- Each rule specifies an <em>aspect</em> function, carrying a piece of logic.<br/> -->
 </p>
 <p align="center">
   <img src="https://img.shields.io/badge/stability-experimental-yellow"/>
@@ -147,7 +147,7 @@ _fx_ incorporates _useEffect_ logic with _deps_ as _iterables_ / _promises_ inst
 
 > value = state( init? )
 
-_State_ creates observable value. Returned `value` is getter/setter function with _asyncIterator_ interface for subscribing to changes.
+_`state`_ creates observable value. Returned `value` is getter/setter function with _asyncIterator_ interface for subscribing to changes.
 
 ```js
 let count = state(0)
@@ -165,7 +165,9 @@ for await (let value of count) {
 }
 ```
 
-_state_ is modern version of [observable](https://ghub.io/observable), incorporates _useState_ hook logic. See <a href="https://github.com/spectjs/spect/issues/142">#142</a>.
+_`state`_ is modern version of [observable](https://ghub.io/observable), incorporates _useState_ hook logic.
+
+<sub>See <a href="https://github.com/spectjs/spect/issues/142">#142</a> for design argumentation.</sub>
 
 <br/>
 
@@ -219,7 +221,7 @@ Useful to organize props for DOM elements, along with _attr_ effect.
 
 > value = ref( init? )
 
-_Ref_ is the foundation for _state_, except for it does not support functional setter and it emits updates on every set. Used as foundation for other effects.
+_`ref`_ is the foundation for _`state`_ and other observables, except for it does not support functional setter and it emits updates on every value set.
 
 ```js
 let count = ref(0)
@@ -234,6 +236,8 @@ count(1)
 count(c => c + 1)
 count() // c => c + 1
 ```
+
+_`ref`_ is direct analog of _useRef_ hook in async iterables world.
 
 <br/>
 
