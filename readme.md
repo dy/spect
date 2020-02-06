@@ -13,22 +13,25 @@
 
 <p align="center"><img src="/timer.png" width="435"/></p>
 
-## Installation
+## Usage
 
-#### From npm:
-
-[![npm i spect](https://nodei.co/npm/spect.png?mini=true)](https://npmjs.org/package/spect/)
-
-#### As ES module:
+#### A. Directly as module:
 
 ```html
 <script type="module">
-import spect from 'https://unpkg.com/spect@latest?module'
+import { $, fx } from 'https://unpkg.com/spect@latest?module'
 
-// ...UI code
+// ...code
 </script>
 ```
 
+#### B. As dependency from npm:
+
+[![npm i spect](https://nodei.co/npm/spect.png?mini=true)](https://npmjs.org/package/spect/)
+
+_Spect_ plays perfectly with [Snowpack](https://www.snowpack.dev/), but any other bundler can be used as well.
+
+<!--
 ## Usage
 
 _Spect_ makes no guess at store provider, actions, renderer or tooling setup, that by can be used with different flavors, from vanilla to sugared frameworks.
@@ -48,6 +51,7 @@ $('.timer', el => {
 ```
 
 <p><a href="https://codesandbox.io/s/a-stateful-aspect-9pbji">Open in sandbox</a></p>
+-->
 
 <!--
 
@@ -87,14 +91,26 @@ Pending...
 
 ### _$_ − selector effect
 
-> $( selector | target, aspect, context?)
+> $( selector | element, callback, context?)
 
-Assigns a `aspect` function to `selector` or `target` element. The return result of `aspect` is destructor, called when element is unmounted.
+Assigns a `callback` to `selector` or `element` node. Returned from `callback `result is destructor, called when element is unmounted.
 
 * `selector` must be valid CSS selector.
 * `target` can be _dict_ of selectors, an _element_ or _elements list_.
 * `callback` is a function `target => ondestroy` or an array of functions.
 * `context` is optional element to assign mutation observer to, can be helpful for perf optimization, but benchmark shows that the worst case mutation observer contributes ≤ 5% to app slowdown.
+
+```js
+import { $ } from 'spect'
+
+$('.timer', el => {
+  let count = 0
+  let id = setInterval(() => {
+    el.innerHTML = `Seconds: ${count++}`
+  }, 1000)
+  return () => clearInterval(id)
+})
+```
 
 <br/>
 
