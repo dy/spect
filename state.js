@@ -1,51 +1,38 @@
+// modern version of observable/value
 export default function state (value) {
-  let current = typeof value === 'function' ? value() : value
-  const get = () => current
+  let resolve, p = new Promise(r => resolve = r), changed
   const set = (value) => {
-    if (value === current) return
-    current = typeof value === 'function' ? value(current) : value
-    plan()
+    let newValue = typeof value === 'function' ? value(ref.current) : value
+    if (newValue === ref.current) return
+    ref.current = newValue
+    notify()
   }
-  function ref(value) {
-    if (arguments.length) set(value)
-    return current
-  }
-
-  Object.defineProperties(ref, { current: { get, set } })
-
-  Object.assign(ref, {
-    // +value
-    valueOf: get,
-    toString: get,
-    [Symbol.toPrimitive]: get,
-
-    async *[Symbol.asyncIterator]() {
-      yield current
-      while (true) {
-        let v = await p
-        yield current
-      }
-    },
-
-    // [value, setValue] = state()
-    *[Symbol.iterator](){
-      yield current
-      yield set
-    }
-  })
-
-  let planned = false, resolve, p = new Promise(r => resolve = r)
-  const plan = () => {
-    if (planned) return
-    planned = true
-    // to compensate the initial subscription tick (first `yield` must be the state at the moment of subscription)
-    // 2 ticks must be introduced for notification
-    Promise.resolve().then().then(() => {
-      planned = false
-      resolve(current)
+  const notify = () => {
+    if (changed) return
+    changed = Promise.resolve().then(() => {
+      changed = null
+      resolve(ref.current)
       p = new Promise(r => resolve = r)
     })
   }
+  function ref(value) {
+    return arguments.length ? set(value) : ref.current
+  }
+  ref.valueOf = ref.toString = ref[Symbol.toPrimitive] = () => ref.current
+
+  Object.assign(ref, {
+    async *[Symbol.asyncIterator]() {
+      yield ref.current
+      while (1) yield await p
+    },
+
+    // [value, setValue] = state()
+    *[Symbol.iterator]() {
+      yield ref.current
+      yield set
+    }
+  })
+  set(value)
 
   return ref
 }

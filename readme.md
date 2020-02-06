@@ -1,8 +1,8 @@
 <div align="center"><img src="https://avatars3.githubusercontent.com/u/53097200?s=200&v=4" width=108 /></div>
 <p align="center"><h1 align="center">spect</h1></p>
 <p align="center">
-  Micro DOM <a href="https://en.wikipedia.org/wiki/Aspect-oriented_programming"><em>aspects</em></a>.<br/>
-  Build reactive UI with rules, similar to CSS.<br/>
+  Micro <a href="https://en.wikipedia.org/wiki/Aspect-oriented_programming"><em>aspects</em></a> to rule your DOM.<br/>
+  Build reactive UIs with aspect rules, similar to CSS.<br/>
   Each rule specifies an <em>aspect</em> function, carrying a piece of logic.<br/>
 </p>
 <p align="center">
@@ -133,30 +133,25 @@ Provides _useEffect_ logic with _deps_ as _iterables_ / _promises_ instead of di
 
 > value = state( init? )
 
-Create observable value. Returned `value` is ref function with _asyncIterator_ interface for observing changes.
+Create observable value. Returned `value` is getter/setter function with _asyncIterator_ interface for subscribing to changes.
 
 ```js
 let count = state(0)
 
-// get current value
-count.current
+// get the value
 count()
-+count
-count.valueOf()
-count.toString()
 
-// set value
-count.current = 1
+// set the value
 count(1)
 count(c => c + 1)
 
 // observe changes
 for await (let value of count) {
-  // 1, ...
+  // 0, 1, ...
 }
 ```
 
-_fx_ combines _useRef_ and _useState_ logic, with regards to [observable](https://ghub.io/observable) / [observ](https://ghub.io/observ) / [mutant](https://ghub.io/mutant) and _Observable_ proposal. See <a href="https://github.com/spectjs/spect/issues/142">#142</a>.
+_fx_ is modern version of [observable](https://ghub.io/observable), combines _useRef_ and _useState_ logic. See <a href="https://github.com/spectjs/spect/issues/142">#142</a>.
 
 <br/>
 

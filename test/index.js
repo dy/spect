@@ -337,20 +337,20 @@ t('$: init on list of elements', async t => {
 })
 
 t('state: get/set', async t => {
-  let log = []
   let s = state(0)
 
-  ;(async () => {
-    for await (let value of s) {
-      log.push(value)
-    }
-  })()
+  // observer 1
+  let log = []
+  ;(async () => { for await (let value of s) log.push(value) })()
 
   t.equal(+s, 0, 'toPrimitive')
   t.equal(s.current, 0, 'current')
   t.equal(s.valueOf(), 0, 'valueOf')
   t.equal(s.toString(), 0, 'toString')
   t.equal(s(), 0, 's()')
+
+  await tick()
+  t.deepEqual(log, [0], 'should publish the initial state')
 
   s.current = 1
   t.equal(+s, 1, 'ref.current = value')
@@ -361,17 +361,14 @@ t('state: get/set', async t => {
   s(c => (t.equal(c, 2, 'ref(old => )'), 3))
   t.equal(+s, 3, 'ref(() => value)')
 
+  // observer 2
   let log2 = []
   ;(async () => { for await (let value of s) log2.push(value) })()
 
-  await tick()
-  t.deepEqual(log, [0], 'should publish the initial state')
-
-  await tick(2)
+  await tick(3)
   t.deepEqual(log, [0, 3], 'should track and notify first tick changes')
-
   await frame(10)
-  s.current = 4
+  s(4)
   await tick(4) // why 4 ticks delay?
   t.deepEqual(log, [0, 3, 4], 'arbitrary change 1')
   s(5)
