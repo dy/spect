@@ -85,9 +85,11 @@ Pending...
 
 ## API
 
-### $ − selector observer
+### _$_ − selector observer
 
-_`$( selector | target, callback, context?)`_
+```js
+$( selector | target, callback, context?)
+```
 
 Assigns a `callback` function to `selector` or direct element. Returned `unspect` function removes assigned `callback`. The return of `callback` is destructor callback, called when element is unmounted.
 
@@ -98,9 +100,11 @@ Assigns a `callback` function to `selector` or direct element. Returned `unspect
 
 <br/>
 
-### fx − deps observer
+### _fx_ − deps observer
 
-_`fx( callback, deps = [] )`_
+```js
+fx( callback, deps = [] )
+```
 
 Run callback whenever `deps` change. `deps` is a list of _async iterators_ or _Promises_.
 Initial run is triggered with initial deps state.
@@ -129,9 +133,11 @@ Provides _useEffect_ logic with `deps` as observables or promises instead of dir
 
 <br/>
 
-### state − value observer
+### _state_ − value observer
 
-_`state( init? )`_
+```js
+state( init? )
+```
 
 Create observable value. Returned `ref` is a getter/setter function with _asyncIterator_ interface for observing changes.
 
