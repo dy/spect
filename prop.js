@@ -1,28 +1,32 @@
 import ref from './ref.js'
 
+const cache = new WeakMap
+
 export default function prop(target, name) {
-  // let propRefs = cache.get(target)
-  // if (!propRefs) cache.set(target, propRefs = {})
+  let refs = cache.get(target)
+  if (!refs) cache.set(target, refs = {})
+  if (refs[name]) return refs[name]
 
   const desc = Object.getOwnPropertyDescriptor(target, name)
-  const prop = ref(
+  const prop = refs[name] = ref(
     desc ? (
       ('value' in desc) ?
         desc.value :
         // desc.get.call(target)
-        // no need to call initial getter - the target is rewired on get anyways
+        // no need to call initial getter - ref.get() anyways calls it
         undefined
     ) :
     target[name]
   )
-  const set = prop.set
 
+  const set = prop.set
   Object.defineProperty(target, name, {
     configurable: true,
     get() {
       return desc && desc.get ? desc.get.call(target) : prop.current
     },
     set(value) {
+      // FIXME: notifying only changed values
       set(value)
       if (desc && desc.set) desc.set.call(target, value)
     }

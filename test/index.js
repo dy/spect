@@ -108,9 +108,11 @@ t('$: aspects must be called in order', async t => {
 t('$: throwing error must not create recursion', async t => {
   let a = document.createElement('a')
   document.body.appendChild(a)
+  console.groupCollapsed('error here')
   let unspect = $('a', el => {
     throw Error('That error is planned')
   })
+  console.groupEnd()
   await tick()
 
   document.body.removeChild(a)
@@ -429,9 +431,6 @@ t('prop: get/set', async t => {
   t.is(xs(), 0, 'get is ok')
 })
 
-t.todo('prop: reconfigure descriptors')
-t.todo('prop: ignore reconfiguring sealed objects')
-
 t('prop: keep initial property value if applied/unapplied', async t => {
   let o = { foo: 'bar' }
   let foos = prop(o, 'foo')
@@ -439,11 +438,15 @@ t('prop: keep initial property value if applied/unapplied', async t => {
   t.is(o, {foo: 'bar'}, 'initial object is unchanged')
 })
 
-t.todo('prop: multiple instances of same property', async t => {
+t('prop: multiple instances', async t => {
+  let x = { x: 1}
+  let xs1 = prop(x, 'x')
+  let xs2 = prop(x, 'x')
 
+  t.is(xs1, xs2, 'same ref')
 })
 
-t('prop: keeps prev setter/getter', async t => {
+t('prop: minimize get/set invocations', async t => {
   let log = []
   let obj = {
     _x: 0,
