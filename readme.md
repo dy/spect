@@ -95,10 +95,10 @@ Pending...
 
 Assigns an `aspect` function to `selector` or `element` node. Returned from `aspect `result is destructor, called when element is unmounted.
 
-* `selector` must be valid CSS selector.
-* `target` can be _dict_ of selectors, an _element_ or _elements list_.
-* `callback` is a function `target => ondestroy` or an array of functions.
-* `context` is optional element to assign mutation observer to, can be helpful for perf optimization, but benchmark shows that the worst case mutation observer contributes ≤ 5% to app slowdown.
+* `selector` should be a valid CSS selector.
+* `element` can be an _element_ or _elements list_.
+* `callback` is a function with `target => onDestroy` signature or an array of functions.
+* `context` is optional element to assign mutation observer to, can be helpful for perf optimization, but benchmark shows that the effect of MO is insignificant.
 
 ```js
 import { $ } from 'spect'
