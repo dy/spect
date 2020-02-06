@@ -104,6 +104,7 @@ Assigns a `aspect` function to `selector` or `target` element. The return result
 
 Run callback on any `deps` change. `deps` is a list of _async iterators_ or _promises_.
 First callback is triggered immediately with initial `deps` state.
+_fx_ is _useEffect_ hook in async iterators land.
 
 ```js
 let count = state(0)
@@ -125,15 +126,15 @@ setInterval(() => count(c => c + 1), 1000)
 button.onclick = e => el.setAttribute('loading', true)
 ```
 
-Provides _useEffect_ logic with _deps_ as _iterables_ / _promises_ instead of direct values.
+_fx_ incorporates _useEffect_ logic with _deps_ as _iterables_ / _promises_ instead of direct values.
 
 <br/>
 
-### _state_ − observable value
+### _state_ − value observable
 
 > value = state( init? )
 
-Create observable value. Returned `value` is getter/setter function with _asyncIterator_ interface for subscribing to changes.
+_State_ creates observable value. Returned `value` is getter/setter function with _asyncIterator_ interface for subscribing to changes.
 
 ```js
 let count = state(0)
@@ -143,14 +144,15 @@ count()
 
 // set the value
 count(1)
+count(c => c + 1)
 
-// observe changes as async iterable
+// observe changes
 for await (let value of count) {
   // 0, 1, ...
 }
 ```
 
-_fx_ is modern version of [observable](https://ghub.io/observable), incorporates _useRef_ and _useState_ logic. See <a href="https://github.com/spectjs/spect/issues/142">#142</a>.
+_state_ is modern version of [observable](https://ghub.io/observable), incorporates _useState_ hook logic. See <a href="https://github.com/spectjs/spect/issues/142">#142</a>.
 
 <br/>
 
@@ -160,11 +162,31 @@ _fx_ is modern version of [observable](https://ghub.io/observable), incorporates
 
 Creates an observable value, computed from `deps`.
 
-### _store_ − observable object
-
 <br/>
 
-### _prop_ − observable property
+### _prop_ − property observable
+
+> value = prop( target, name )
+
+_Prop_ is observable for property. Same as _state_, but the value is accessed as object property. _Prop_ keeps initial properties descriptor, so if target has defined setter/getter, they're kept safe.
+
+```js
+import { prop, fx } from 'spect'
+
+let o = { foo: 'bar' }
+
+fx(([foo]) => console.log(foo), [prop(o, 'foo')])
+
+o.foo = 'baz'
+```
+
+That outputs:
+```
+"bar"
+"baz"
+```
+
+Useful to organize props for DOM elements, along with _attr_ effect.
 
 <br/>
 
@@ -172,9 +194,36 @@ Creates an observable value, computed from `deps`.
 
 <br/>
 
+### _store_ − object observable
+
+<br/>
+
 ### _on_ − events stream
 
 <br/>
+
+### _ref_ − value reference
+
+> value = ref( init? )
+
+_Ref_ is the foundation for _state_, except for it does not support functional setter and it emits updates on every set. Used as foundation for other effects.
+
+```js
+let count = ref(0)
+
+// get
+count()
+
+// set
+count(1)
+
+// sets value to function (!)
+count(c => c + 1)
+count() // c => c + 1
+```
+
+<br/>
+
 
 <!-- Best of React, jQuery and RxJS worlds in tiny tool. -->
 

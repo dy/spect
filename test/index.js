@@ -489,12 +489,29 @@ t('prop: minimize get/set invocations', async t => {
   t.is(log, ['get', 1, 'set', 0])
 })
 
-t.skip('fx: core', async t => {
+t('fx: core', async t => {
   let a = state(0)
-  let b = state(1)
-  fx((a, b) => {
+  let o = { b: 1 }
+  let b = prop(o, 'b')
 
-  }, [])
+  let log = []
+  fx(([a, b]) => {
+    log.push(a, b)
+  }, [a, b])
+
+  await tick(4)
+  t.is(log, [0, 1], 'initial state')
+  a(1)
+  a(2)
+  await tick(5)
+  t.is(log, [0, 1, 2, 1], 'changed state')
+  o.b = 2
+  await tick(5)
+  t.is(log, [0, 1, 2, 1, 2, 2], 'changed prop')
+  o.b = 2
+  a(2)
+  await tick(5)
+  t.is(log, [0, 1, 2, 1, 2, 2], 'unchanged prop')
 })
 
 t('fx: destructor')
