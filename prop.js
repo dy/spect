@@ -1,43 +1,46 @@
-const cache = new WeakMap()
+import ref from './ref.js'
 
-export default async function prop(target, name) {
-  let propRefs = cache.get(target)
-  if (!propRefs) cache.set(target, propRefs = {})
-  let ref = propRefs[name]
+export default function prop(target, name) {
+  // let propRefs = cache.get(target)
+  // if (!propRefs) cache.set(target, propRefs = {})
 
-  if (!ref) {
-    const initialDesc = Object.getOwnPropertyDescriptor(target, name)
-    let resolve, p = new Promise(r => resolve = r)
+  const desc = Object.getOwnPropertyDescriptor(target, name)
+  const prop = ref(
+    desc ? (
+      ('value' in desc) ?
+        desc.value :
+        // desc.get.call(target)
+        // no need to call initial getter - the target is rewired on get anyways
+        undefined
+    ) :
+    target[name]
+  )
+  const set = prop.set
 
-    propRefs[name] = ref = {
-      [Symbol.asyncIterator]: async function* () {
-        while (!ref.closed) {
-          yield target[name]
-          await p
-        }
-      },
-      close() {
-        this.closed = true
-        if (initialDesc) Object.defineProperty(target, name, initialDesc)
-        else Object.defineProperty(target, name, { configurable: true, value: ref.current })
-      },
-      closed: false,
-      current: initialDesc ? (('value' in initialDesc) ? initialDesc.value : null) : target[name]
+  Object.defineProperty(target, name, {
+    configurable: true,
+    get() {
+      return desc && desc.get ? desc.get.call(target) : prop.current
+    },
+    set(value) {
+      set(value)
+      if (desc && desc.set) desc.set.call(target, value)
     }
+  })
 
-    Object.defineProperty(target, name, {
-      configurable: true,
-      get() {
-        return initialDesc && initialDesc.get ? initialDesc.get.call(target) : ref.current
-      },
-      set(value) {
-        if (initialDesc && initialDesc.set) initialDesc.set.call(target, value)
-        else ref.current = value
-        resolve()
-        p = new Promise(r => resolve = r)
-      }
-    })
+  // rewire ref get/set to target prop
+  prop.get = () => target[name]
+  prop.set = value => {
+    if (typeof value === 'function') value = value(target[name])
+    target[name] = value
   }
 
-  return ref
+  let closed = false
+  prop.close = () => {
+    closed = true
+    if (desc) Object.defineProperty(target, name, desc)
+    else Object.defineProperty(target, name, { configurable: true, value: prop.get() })
+  }
+
+  return prop
 }

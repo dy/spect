@@ -102,7 +102,7 @@ Assigns a `aspect` function to `selector` or `target` element. The return result
 
 > fx( callback, deps = [] )
 
-Run callback on any `deps` change. `deps` is a list of _async iterators_ or _Promises_.
+Run callback on any `deps` change. `deps` is a list of _async iterators_ or _promises_.
 First callback is triggered immediately with initial `deps` state.
 
 ```js
@@ -143,17 +143,22 @@ count()
 
 // set the value
 count(1)
-count(c => c + 1)
 
-// observe changes
+// observe changes as async iterable
 for await (let value of count) {
   // 0, 1, ...
 }
 ```
 
-_fx_ is modern version of [observable](https://ghub.io/observable), combines _useRef_ and _useState_ logic. See <a href="https://github.com/spectjs/spect/issues/142">#142</a>.
+_fx_ is modern version of [observable](https://ghub.io/observable), incorporates _useRef_ and _useState_ logic. See <a href="https://github.com/spectjs/spect/issues/142">#142</a>.
 
 <br/>
+
+### _compute_ − computed value
+
+> value = computed( fn, deps = [] )
+
+Creates an observable value, computed from `deps`.
 
 ### _store_ − observable object
 
@@ -170,6 +175,8 @@ _fx_ is modern version of [observable](https://ghub.io/observable), combines _us
 ### _on_ − events stream
 
 <br/>
+
+<!-- Best of React, jQuery and RxJS worlds in tiny tool. -->
 
 ## Related
 

@@ -1,5 +1,5 @@
 import t from 'tst'
-import { $, state } from '../index.js'
+import { $, state, fx, prop } from '../index.js'
 import { tick, frame, idle, time } from 'wait-please'
 import { augmentor, useState, useEffect, useMemo } from 'augmentor'
 
@@ -336,7 +336,7 @@ t('$: init on list of elements', async t => {
   t.deepEqual(log, ['1', '2', 'un1', 'un2'])
 })
 
-t('state: get/set', async t => {
+t('state: core', async t => {
   let s = state(0)
 
   // observer 1
@@ -365,7 +365,7 @@ t('state: get/set', async t => {
   let log2 = []
   ;(async () => { for await (let value of s) log2.push(value) })()
 
-  await tick(3)
+  await tick(4)
   t.deepEqual(log, [0, 3], 'should track and notify first tick changes')
   await frame(10)
   s(4)
@@ -380,3 +380,124 @@ t('state: get/set', async t => {
   t.end()
 })
 
+t('prop: subscription', async t => {
+  let o = { x: 0 }
+  let xs = prop(o, 'x')
+  t.is(xs(), 0)
+
+  // observer 1
+  let log = []
+  ;(async () => { for await (const item of xs) {
+    log.push(item)
+  }})();
+
+  await tick(2)
+  t.is(log, [0], 'initial value notification')
+
+  o.x = 1
+  await tick()
+  o.x = 2
+  await tick()
+  o.x = 3
+  o.x = 4
+  o.x = 5
+  await tick(4)
+  t.is(log, [0, 2, 5], 'updates to latest value')
+
+  o.x = 6
+  t.is(o.x, 6, 'reading value')
+  await tick(4)
+  t.is(log, [0, 2, 5, 6], 'reading has no side-effects')
+
+  // o.x = 7
+  // o.x = 6
+  // await tick(4)
+  // t.is(log, [0, 2, 5, 6], 'changing and back does not cause trigger')
+
+  xs.close()
+  o.x = 7
+  t.is(o.x, 7, 'end destructs property')
+  await tick(10)
+  t.is(log, [0, 2, 5, 6], 'end destructs property')
+})
+
+t('prop: get/set', async t => {
+  let o = { x: () => { t.fail('Should not be called') } }
+  let xs = prop(o, 'x')
+  xs(0)
+  t.is(o.x, 0, 'set is ok')
+  t.is(xs(), 0, 'get is ok')
+})
+
+t.todo('prop: reconfigure descriptors')
+t.todo('prop: ignore reconfiguring sealed objects')
+
+t('prop: keep initial property value if applied/unapplied', async t => {
+  let o = { foo: 'bar' }
+  let foos = prop(o, 'foo')
+  foos.close()
+  t.is(o, {foo: 'bar'}, 'initial object is unchanged')
+})
+
+t.todo('prop: multiple instances of same property', async t => {
+
+})
+
+t('prop: keeps prev setter/getter', async t => {
+  let log = []
+  let obj = {
+    _x: 0,
+    get x() {
+      log.push('get', this._x); return this._x
+    },
+    set x(x) {
+      log.push('set', x);
+      this._x = x
+    }
+  }
+
+  let xs = prop(obj, 'x')
+  ;(async () => {
+    for await (let value of xs) {
+      log.push('changed', value)
+    }
+  })();
+
+  await tick(6)
+  t.is(log, ['get', 0, 'changed', 0])
+
+  obj.x
+  await tick(6)
+  t.is(log, ['get', 0, 'changed', 0, 'get', 0])
+
+  obj.x = 1
+  await tick(12)
+  t.is(log, ['get', 0, 'changed', 0, 'get', 0, 'set', 1, 'get', 1, 'changed', 1])
+
+  log = []
+  xs.close()
+  t.is(log, [])
+
+  obj.x
+  t.is(log, ['get', 1])
+
+  obj.x = 0
+  await tick(6)
+  t.is(log, ['get', 1, 'set', 0])
+})
+
+t.skip('fx: core', async t => {
+  let a = state(0)
+  let b = state(1)
+  fx((a, b) => {
+
+  }, [])
+})
+
+t('fx: destructor')
+t('fx: initial state')
+t('fx: doesn not run unchanged')
+t('fx: no-deps runs once')
+t('fx: empty-deps runs once')
+t('fx: async fx')
+t('fx: promise dep')
