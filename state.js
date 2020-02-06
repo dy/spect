@@ -1,38 +1,18 @@
-// modern version of observable/value
+import ref from './ref.js'
+
+// Observable with notifications only about changed values
 export default function state (value) {
-  let resolve, p = new Promise(r => resolve = r), changed
-  const set = (value) => {
-    let newValue = typeof value === 'function' ? value(ref.current) : value
-    if (newValue === ref.current) return
-    ref.current = newValue
-    notify()
-  }
-  const notify = () => {
-    if (changed) return
-    changed = Promise.resolve().then(() => {
-      changed = null
-      resolve(ref.current)
-      p = new Promise(r => resolve = r)
-    })
-  }
-  function ref(value) {
-    return arguments.length ? set(value) : ref.current
-  }
-  ref.valueOf = ref.toString = ref[Symbol.toPrimitive] = () => ref.current
+  const state = ref()
 
-  Object.assign(ref, {
-    async *[Symbol.asyncIterator]() {
-      yield ref.current
-      while (1) yield await p
-    },
+  const set = state.set
+  state.set = (value) => {
+    let current = state.get()
+    value = typeof value === 'function' ? value(current) : value
+    if (value === current) return current
+    return set(value)
+  }
 
-    // [value, setValue] = state()
-    *[Symbol.iterator]() {
-      yield ref.current
-      yield set
-    }
-  })
-  set(value)
+  state(value)
 
-  return ref
+  return state
 }
