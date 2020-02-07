@@ -1,10 +1,11 @@
-import $, * as hooks from '../index.js'
 import t from 'tst'
+import { $, state, fx, prop, store, calc, ref, attr, on } from '../index.js'
 import { tick, frame, idle, time } from 'wait-please'
 import { augmentor, useState, useEffect, useMemo } from 'augmentor'
-import SSet from 'selector-set'
+import Observable from 'zen-observable/esm'
+import observable from './observable.js'
 
-t('tag selector', async t => {
+t('$: tag selector', async t => {
   let ellog = []
   let proplog = []
   let container = document.body.appendChild(document.createElement('div'))
@@ -36,8 +37,7 @@ t('tag selector', async t => {
 
   t.end()
 })
-
-t('init existing elements', async t => {
+t('$: init existing elements', async t => {
   let log = []
   let container = document.body.appendChild(document.createElement('div'))
   container.appendChild(document.createElement('x'))
@@ -52,8 +52,7 @@ t('init existing elements', async t => {
 
   document.body.removeChild(container)
 })
-
-t('dynamically assigned selector', async t => {
+t('$: dynamically assigned selector', async t => {
   let log = []
 
   $('.x', el => {
@@ -73,8 +72,7 @@ t('dynamically assigned selector', async t => {
 
   document.body.removeChild(el)
 })
-
-t('simple hooks', async t => {
+t('$: simple hooks', async t => {
   let el = document.createElement('div')
 
   $(el, augmentor(el => {
@@ -89,8 +87,7 @@ t('simple hooks', async t => {
   await frame()
   t.is(el.count, 1)
 })
-
-t('aspects must be called in order', async t => {
+t('$: aspects must be called in order', async t => {
   let log = []
   let a = document.createElement('a')
 
@@ -105,21 +102,21 @@ t('aspects must be called in order', async t => {
   document.body.removeChild(a)
   unspect()
 })
-
-t('throwing error must not create recursion', async t => {
+t('$: throwing error must not create recursion', async t => {
   let a = document.createElement('a')
   document.body.appendChild(a)
+  console.groupCollapsed('error here')
   let unspect = $('a', el => {
     throw Error('That error is planned')
   })
+  console.groupEnd()
   await tick()
 
   document.body.removeChild(a)
   unspect()
   t.end()
 })
-
-t('remove/add should not retrigger element', async t => {
+t('$: remove/add should not retrigger element', async t => {
   let a = document.createElement('a')
   let b = document.createElement('b')
   document.body.appendChild(b.appendChild(a))
@@ -140,8 +137,7 @@ t('remove/add should not retrigger element', async t => {
   await frame()
   t.end()
 })
-
-t('destructor is called on unmount', async t => {
+t('$: destructor is called on unmount', async t => {
   let el = document.createElement('div')
   let log = []
   let off = $('*', el => {
@@ -162,7 +158,6 @@ t('destructor is called on unmount', async t => {
   t.deepEqual(log, [1, 1, 2, 2])
   t.end()
 })
-
 t.todo('subaspects', async t => {
   let log = []
 
@@ -191,20 +186,17 @@ t.todo('subaspects', async t => {
 
   document.body.removeChild(a)
 })
-
 t.todo('new custom element', t => {
   $('custom-element', () => {
 
   })
 })
-
 t.todo('aspects must be called in order', async t => {
   let log = []
   let a = {}
   await spect(a).use([() => log.push(1), () => log.push(2), () => log.push(3)])
   t.deepEqual(log, [1, 2, 3])
 })
-
 t.todo('duplicates are ignored', async t => {
   let log = []
 
@@ -220,7 +212,6 @@ t.todo('duplicates are ignored', async t => {
 
   t.is(log, [1, 1])
 })
-
 t.skip('same aspect different targets', t => {
   let log = []
   function fx([el]) {
@@ -238,7 +229,6 @@ t.skip('same aspect different targets', t => {
 
   t.deepEqual(log, ['A', 'SPAN'])
 })
-
 t.todo('Same target different aspects', async t => {
   let log = []
 
@@ -250,7 +240,6 @@ t.todo('Same target different aspects', async t => {
   await spect(a).use([bfx = () => (log.push('b'), () => log.push('de b'))])
   t.deepEqual(log, ['a', 'b'])
 })
-
 t.todo('same aspect same target', async t => {
   let log = []
   let a = {}
@@ -263,9 +252,7 @@ t.todo('same aspect same target', async t => {
   await spect(a).use(fx)
   t.deepEqual(log, ['a'])
 })
-
 t.todo('generators aspects')
-
 t.todo('async aspects', t => {
   let a = document.createElement('a')
 
@@ -276,7 +263,6 @@ t.todo('async aspects', t => {
   })
 
 })
-
 t.todo('rebinding to other document', async t => {
   let { document } = await import('dom-lite')
 
@@ -290,7 +276,6 @@ t.todo('rebinding to other document', async t => {
     t.is(el.tagName, 'DIV')
   })
 })
-
 t.skip('empty selectors', t => {
   let $x = $()
   t.is($x.length, 0)
@@ -309,7 +294,6 @@ t.skip('empty selectors', t => {
   t.notEqual($x, $z)
   // t.notEqual($x, $w)
 })
-
 t.todo('selecting forms', t => {
   let $f = $`<form><input name="a"/><input name="b"/></form>`
 
@@ -321,8 +305,7 @@ t.todo('selecting forms', t => {
 
   t.end()
 })
-
-t('init on list of elements', async t => {
+t('$: init on list of elements', async t => {
   let log = []
   let el = document.createElement('div')
   el.innerHTML = '<a>1</a><a>2</a>'
@@ -337,3 +320,361 @@ t('init on list of elements', async t => {
   t.deepEqual(log, ['1', '2', 'un1', 'un2'])
 })
 
+t('state: core', async t => {
+  let s = state(0)
+
+  // observer 1
+  let log = []
+  ;(async () => { for await (let value of s) log.push(value) })()
+
+  t.equal(+s, 0, 'toPrimitive')
+  t.equal(s.current, 0, 'current')
+  t.equal(s.valueOf(), 0, 'valueOf')
+  t.equal(s.toString(), 0, 'toString')
+  t.equal(s(), 0, 's()')
+
+  await tick()
+  t.deepEqual(log, [0], 'should publish the initial state')
+
+  s.current = 1
+  t.equal(+s, 1, 'state.current = value')
+
+  s(2)
+  t.equal(+s, 2, 'state(value)')
+
+  s(c => (t.equal(c, 2, 'state(old => )'), 3))
+  t.equal(+s, 3, 'state(() => value)')
+
+  // observer 2
+  let log2 = []
+  ;(async () => { for await (let value of s) log2.push(value) })()
+
+  await tick(8)
+  t.deepEqual(log, [0, 3], 'should track and notify first tick changes')
+  await frame(10)
+  s(4)
+  await tick(8) // why 4 ticks delay?
+  t.deepEqual(log, [0, 3, 4], 'arbitrary change 1')
+  s(5)
+  await tick(8)
+  t.deepEqual(log, [0, 3, 4, 5], 'arbitrary change 2')
+
+  t.deepEqual(log2, [3, 4, 5], 'secondary observer is fine')
+
+  t.end()
+})
+
+t('prop: subscription', async t => {
+  let o = { x: 0 }
+  let xs = prop(o, 'x')
+  t.is(xs(), 0)
+
+  // observer 1
+  let log = []
+  ;(async () => { for await (const item of xs) {
+    log.push(item)
+  }})();
+
+  await tick(2)
+  t.is(log, [0], 'initial value notification')
+
+  o.x = 1
+  await tick()
+  o.x = 2
+  await tick()
+  o.x = 3
+  o.x = 4
+  o.x = 5
+  await tick(8)
+  t.is(log, [0, 2, 5], 'updates to latest value')
+
+  o.x = 6
+  t.is(o.x, 6, 'reading value')
+  await tick(8)
+  t.is(log, [0, 2, 5, 6], 'reading has no side-effects')
+
+  // o.x = 7
+  // o.x = 6
+  // await tick(8)
+  // t.is(log, [0, 2, 5, 6], 'changing and back does not cause trigger')
+
+  xs.cancel()
+  o.x = 7
+  t.is(o.x, 7, 'end destructs property')
+  await tick(10)
+  t.is(log, [0, 2, 5, 6], 'end destructs property')
+})
+t('prop: get/set', async t => {
+  let o = { x: () => { t.fail('Should not be called') } }
+  let xs = prop(o, 'x')
+  xs(0)
+  t.is(o.x, 0, 'set is ok')
+  t.is(xs(), 0, 'get is ok')
+})
+t('prop: keep initial property value if applied/unapplied', async t => {
+  let o = { foo: 'bar' }
+  let foos = prop(o, 'foo')
+  foos.cancel()
+  t.is(o, {foo: 'bar'}, 'initial object is unchanged')
+})
+t('prop: multiple instances', async t => {
+  let x = { x: 1}
+  let xs1 = prop(x, 'x')
+  let xs2 = prop(x, 'x')
+
+  t.is(xs1, xs2, 'same ref')
+})
+t('prop: minimize get/set invocations', async t => {
+  let log = []
+  let obj = {
+    _x: 0,
+    get x() {
+      log.push('get', this._x); return this._x
+    },
+    set x(x) {
+      log.push('set', x);
+      this._x = x
+    }
+  }
+
+  let xs = prop(obj, 'x')
+  ;(async () => {
+    for await (let value of xs) {
+      log.push('changed', value)
+    }
+  })();
+
+  await tick(8)
+  t.is(log, ['get', 0, 'changed', 0])
+
+  obj.x
+  await tick(8)
+  t.is(log, ['get', 0, 'changed', 0, 'get', 0])
+
+  obj.x = 1
+  await tick(12)
+  t.is(log, ['get', 0, 'changed', 0, 'get', 0, 'set', 1, 'get', 1, 'changed', 1])
+
+  log = []
+  xs.cancel()
+  t.is(log, [])
+
+  obj.x
+  t.is(log, ['get', 1])
+
+  obj.x = 0
+  await tick(8)
+  t.is(log, ['get', 1, 'set', 0])
+})
+
+t('fx: core', async t => {
+  let a = state(0)
+  let o = { b: 1 }
+  let b = prop(o, 'b')
+
+  let log = []
+  fx((a, b) => {
+    log.push(a, b)
+  }, [a, b])
+
+  await tick(8)
+  t.is(log, [0, 1], 'initial state')
+  a(1)
+  a(2)
+  await tick(7)
+  t.is(log, [0, 1, 2, 1], 'changed state')
+  o.b = 2
+  await tick(7)
+  t.is(log, [0, 1, 2, 1, 2, 2], 'changed prop')
+  o.b = 2
+  a(2)
+  await tick(7)
+  t.is(log, [0, 1, 2, 1, 2, 2], 'unchanged prop')
+})
+t('fx: destructor', async t => {
+  let log = []
+  let a = state(0), b = state(0)
+  fx((a, b) => {
+    log.push('in', a, b)
+    return () => {
+      log.push('out', a, b)
+    }
+  }, [a, b])
+
+  await tick(8)
+  t.is(log, ['in', 0, 0])
+
+  log = []
+  a(1)
+  b(1)
+  await tick(8)
+  t.is(log, ['out', 0, 0, 'in', 1, 1], 'destructor is ok')
+})
+t('fx: disposed by unmounted element automatically')
+t('fx: doesn\'t run unchanged', async t => {
+  let a = ref(0)
+  let log = []
+  fx(a => {
+    log.push(a)
+  }, [a])
+
+  await tick(8)
+  t.is(log, [0])
+  a(1)
+  a(0)
+  await tick(8)
+  t.is(log, [0], 'does not run unchanged')
+})
+t('fx: no-deps/empty deps runs once', async t => {
+  let log = []
+  fx(() => {
+    log.push(0)
+  }, [])
+  fx(() => {
+    log.push(1)
+  })
+
+  await tick(8)
+  t.is(log, [0, 1])
+})
+t('fx: async fx', async t => {
+  let count = state(0)
+  let log = []
+  fx(async c => {
+    log.push(c)
+    if (c > 3) return
+    await tick()
+    count(c + 1)
+  }, [count])
+
+  await tick(70)
+  t.is(log, [0, 1, 2, 3, 4])
+})
+t('fx: promise / observable / direct dep', async t => {
+  let p = new Promise(r => setTimeout(() => r(2), 10))
+  let O = new Observable(obs => setTimeout(() => obs.next(3), 20))
+  let o = observable(); setTimeout(() => o(4), 30)
+  let v = 1
+
+  let log = []
+  fx((p, O, v, o) => {
+    log.push(v, p, O, o)
+  }, [p, O, v, o])
+
+  await tick(8)
+  t.is(log, [1, undefined, undefined, undefined])
+  log = []
+  await time(10)
+  t.is(log, [1, 2, undefined, undefined])
+  log = []
+  await time(10)
+  t.is(log, [1, 2, 3, undefined])
+  log = []
+  await time(10)
+  t.is(log, [1, 2, 3, 4])
+})
+
+t('store: core', async t => {
+  let s = store({x: 1})
+  let log = []
+  fx(s => {
+    log.push(s)
+  }, [s])
+
+  await tick(8)
+  t.is(log, [{x: 1}], 'init state')
+
+  s.x = 2
+  await tick(8)
+  t.is(log, [{x: 1}, {x: 2}], 'change prop')
+
+  s.y = 'foo'
+  await tick(8)
+  t.is(log, [{ x: 1 }, { x: 2 }, { x:2, y:'foo' }], 'add new prop')
+
+  delete s.x
+  await tick(8)
+  t.is(log, [{ x: 1 }, { x: 2 }, { x:2, y:'foo' }, {y: 'foo'}], 'delete props')
+})
+
+t('calc: core', async t => {
+
+  const f = state(32), c = state(0)
+  const celsius = calc(f => (f - 32) / 1.8, [f])
+  const fahren = calc(c => (c * 9) / 5 + 32, [c])
+
+  await tick(8)
+
+  t.is(celsius(), 0) // 0
+  t.is(fahren(), 32) // 32
+
+  c(20)
+  await tick(8)
+  t.is(fahren(), 68)
+})
+
+t('attr: core', async t => {
+  let el = document.createElement('div')
+  let xattrs = attr(el, 'x')
+  let log = []
+    ; (async () => {
+      for await (const value of xattrs) {
+        log.push(value)
+      }
+    })()
+  await tick(8)
+  t.is(log, [false], 'init')
+  // el.setAttribute('x', '1')
+  el.setAttribute('x', '2')
+  await tick(12)
+  t.is(log, [false, '2'], 'basic')
+  el.setAttribute('x', '3')
+  el.setAttribute('x', '4')
+  el.setAttribute('x', '5')
+  await tick(8)
+  t.is(log, [false, '2', '5'], 'updates to latest value')
+  // el.setAttribute('x', '5')
+  // el.setAttribute('x', '5')
+  // await tick(8)
+  // t.is(log, [false, '2', '5'], 'ignores unchanged value')
+  // el.setAttribute('x', '6')
+  // t.is(el.getAttribute('x'), '6', 'reading applies value')
+  // await tick(8)
+  // t.is(log, [false, '2', '5', '6'], 'reading applies value')
+  // xattrs.cancel()
+  // el.setAttribute('x', '7')
+  // await tick(8)
+  // t.is(el.getAttribute('x'), '7', 'end destructures property')
+  // t.is(log, [false, '2', '5', '6'], 'end destructures property')
+})
+
+t('on: core', async t => {
+  let el = document.createElement('div')
+  let clicks = on(el, 'click')
+  let log = []
+  ;(async () => {
+    for await (const e of clicks) {
+      log.push(e.type)
+    }
+  })()
+  el.click()
+  await tick(2)
+  t.is(log, ['click'], 'basic')
+  el.click()
+  el.click()
+  await tick(8)
+  t.is(log, ['click', 'click'], 'skips events within same tick')
+  el.click()
+  el.click()
+  el.click()
+  await tick(8)
+  t.is(log, ['click', 'click', 'click'], 'updates to latest value')
+
+  // TODO: find a way to stop it
+
+  // clicks.return()
+  // el.click()
+  // el.click()
+  // await tick(8)
+  // t.is(log, ['click', 'click', 'click'], 'end stops event stream')
+})
