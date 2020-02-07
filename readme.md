@@ -91,14 +91,15 @@ Pending...
 
 ### _`$`_ − aspect
 
-> $( selector | element, aspect, context? )
+> $( selector | element, aspect )
 
-Assigns an `aspect` function to `selector` or `element` node. Returned from `aspect `result is destructor, called when element is unmounted.
+Assigns an `aspect` function to `selector` or `element`. Returned from `aspect` result is destructor, called when element is unmounted.
 
 * `selector` should be a valid CSS selector.
-* `element` can be an _element_ or _elements list_.
-* `callback` is a function with `target => onDestroy` signature or an array of functions.
-* `context` is optional element to assign mutation observer to, can be helpful for perf optimization, but benchmark shows that the effect of MO is insignificant.
+* `element` can be an _HTMLElement_ or list of elements (any array-like).
+* `aspect` is a function with `target => onDestroy` signature. or an array of functions.
+
+<!-- * `context` is optional element to assign mutation observer to, can be helpful for perf optimization, but benchmark shows that the effect of MO is insignificant. -->
 
 ```js
 import { $ } from 'spect'
@@ -114,12 +115,12 @@ $('.timer', el => {
 
 <br/>
 
-### _`state`_ − value observable
+### _`state`_ − observable value
 
 > value = state( init? )
 
-_`state`_ creates observable value. Returned `value` is getter/setter function with _asyncIterator_ interface for subscriptions.
-_`state`_ is modern version of [observable](https://ghub.io/observable) and incorporates _useState_ hook logic.
+_**`state`**_ creates observable value container. Returned `value` is simply getter/setter function with _asyncIterator_ interface for subscriptions.
+_**`state`**_ is like modern [observable](https://ghub.io/observable), or _useState_ unhooked.
 
 ```js
 let count = state(0)
@@ -137,7 +138,7 @@ for await (let value of count) {
 }
 ```
 
-<sup>See <a href="https://github.com/spectjs/spect/issues/142">#142</a> for design argumentation.</sup>
+<!--<sup>See <a href="https://github.com/spectjs/spect/issues/142">#142</a> for design argumentation.</sup>-->
 
 <br/>
 
@@ -145,11 +146,8 @@ for await (let value of count) {
 
 > fx( callback, deps = [] )
 
-_`fx`_ runs `callback` when the `deps` change (like _useEffect_ hook).
-First callback is triggered immediately as microtask with the initial state.
-Deps values are passed to `callback` as arguments. Returned from `callback` function is used as destructor.
-
-`deps` may contain:
+_**`fx`**_ reacts on changed `deps` and runs `callback`, very much like _useEffect_.
+`deps` expect:
 
 * _Async Generator_ / _Async Iterable_ (an object with `Symbol.asyncIterator` method);
 * _Promise_ / _Thenable_ (an object with `.then` method);
@@ -157,6 +155,7 @@ Deps values are passed to `callback` as arguments. Returned from `callback` func
 * _Function_ − considered an [observable](https://ghub.io) / [observ](https://ghub.io) / [mutant](https://ghub.io/mutant);
 * any other value used as constant.
 
+Deps values are passed to `callback` as arguments. Returned from `callback` function is used as destructor.
 
 ```js
 import { state, fx } from 'spect'
@@ -174,7 +173,7 @@ fx(async c => {
 <br/>
 
 
-### _`calc`_ − computed value
+### _calc`__ − computed value
 
 > value = calc( fn, deps = [] )
 
