@@ -13,15 +13,13 @@
 
 <p align="center"><img src="/timer.png" width="435"/></p>
 
-## Usage
+## Installing
 
 #### A. Directly as module:
 
 ```html
 <script type="module">
 import { $, fx } from 'https://unpkg.com/spect@latest?module'
-
-// ...
 </script>
 ```
 
@@ -31,12 +29,11 @@ import { $, fx } from 'https://unpkg.com/spect@latest?module'
 
 ```js
 import { $ } from 'spect'
-
-// ...
 ```
 
 _Spect_ is perfect match with [Snowpack](https://www.snowpack.dev/), but any other bundler will do.
 
+## Usage
 
 _Spect_ makes no guess at storage, actions, renderer or tooling setup and can be used with different flavors.
 
