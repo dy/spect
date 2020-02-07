@@ -1,12 +1,22 @@
-export default async function* on(el, event, o) {
-  let resolve, p = new Promise(r => resolve = r)
+import ref, { _p } from './ref.js'
 
-  el.addEventListener(event, e => {
-    resolve(e)
-    p = new Promise(r => resolve = r)
-  }, o)
+export default function on (el, event) {
+  let last = ref()
+  Object.assign(last, {
+    // no initial value notification
+    async * [Symbol.asyncIterator]() {
+      try {
+        while (1) {
+          await last[_p]
+          yield last.get()
+        }
+      } catch (e) {
+      } finally {
+      }
+    }
+  })
 
-  while (1) {
-    yield await p
-  }
+  el.addEventListener(event, e => last(e))
+
+  return last
 }

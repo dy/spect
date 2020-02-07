@@ -269,7 +269,7 @@ $('.likes-count', el => {
 
 > evts = on( element, eventName )
 
-Stateless events stream. Useful for organizing event-based observables, such as _**`hover`**_, _**`focus`**_, _**`input`**_ etc.
+Stateless events async iteratable. To detach listeners invoke `evts.cancel()`.
 
 ```js
 import { $, on, calc, fx } from 'spect'
@@ -287,8 +287,9 @@ $('input', el => {
     on(el, 'blur')
   ])
 
-  // for example...
   fx(validate, [ value ])
+
+  return on.cancel
 })
 ```
 
@@ -314,6 +315,14 @@ count(1)
 // sets value to a function (!)
 count(c => c + 1)
 count() // c => c + 1
+
+// observe changes
+for await (const c of count) {
+  // 1, ...
+}
+
+// cancel
+count.cancel()
 ```
 
 <br/>

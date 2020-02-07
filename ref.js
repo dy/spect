@@ -1,8 +1,8 @@
 import Cancelable from './cancelable.js'
 
 // observable value with notification on every set
-export const _notify = Symbol.for('__spect.notify')
-export const _p = Symbol.for('__spect.p')
+export const _n = Symbol.for('__spect.notify')
+export const _p = Symbol.for('__spect.promise')
 
 export default function ref(value) {
   let resolve, changed
@@ -19,10 +19,10 @@ export default function ref(value) {
 
     set(value) {
       ref.current = value
-      ref[_notify]()
+      ref[_n]()
     },
 
-    [_notify]() {
+    [_n]() {
       if (changed) return
       // need 2 ticks delay or else subscribed iterators possibly miss latest changed value
       changed = Promise.resolve().then().then(() => {
@@ -38,8 +38,8 @@ export default function ref(value) {
           await ref[_p]
           yield ref.get()
         }
+      } catch (e) {
       } finally {
-
       }
     },
 

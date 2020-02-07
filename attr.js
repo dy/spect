@@ -1,4 +1,4 @@
-import ref, { _notify } from './ref.js'
+import ref, { _n } from './ref.js'
 
 const cache = new WeakMap
 
@@ -18,12 +18,18 @@ export default function attr(el, name) {
     if (value === true) el.setAttribute(name, '')
     else if (value === false || value == null) el.removeAttribute(name)
     else el.setAttribute(value)
-    attr[_notify]()
+    attr[_n]()
   }
 
   // FIXME: observer notifies unchanged attributes too
-  const observer = new MutationObserver(attr[_notify])
-  observer.observe(el, { attributes: true, attributeFilter: [name] })
+  const observer = new MutationObserver(rx => {
+    rx.forEach(rec => {
+      if (rec.oldValue !== el.getAttribute(name)) {
+        attr[_n]()
+      }
+    })
+  })
+  observer.observe(el, { attributes: true, attributeFilter: [name], attributeOldValue: true })
 
   return attr
 }
