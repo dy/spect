@@ -6,9 +6,10 @@
   <!-- Each rule specifies an <em>aspect</em> function, carrying a piece of logic.<br/> -->
 </p>
 <p align="center">
-  <img src="https://img.shields.io/badge/stability-experimental-yellow"/>
+  <img src="https://img.shields.io/badge/stability-unstable-yellowgreen"/>
   <a href="https://travis-ci.org/spectjs/spect"><img src="https://travis-ci.org/spectjs/spect.svg?branch=master"/></a>
-  <img src="https://img.shields.io/badge/size-%E2%89%A4%E2%80%893.4kb-brightgreen"/>
+  <a href="https://bundlephobia.com/result?p=spect"><img alt="npm bundle size" src="https://img.shields.io/bundlephobia/min/spect"></a>
+  <a href="https://npmjs.org/package/spect"><img alt="npm" src="https://img.shields.io/npm/v/spect"></a>
 </p>
 
 <p align="center"><img src="/timer.png" width="435"/></p>
