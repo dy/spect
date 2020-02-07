@@ -97,17 +97,15 @@ Pending...
 
 ## API
 
-### _`$`_ − DOM aspect
+### _`$`_ − selector effect
 
 > $( selector | element, aspect )
 
-Assigns an `aspect` function to `selector` or `element`.
+Assigns an `aspect` function to `selector` or `element`. The `aspect` is triggered when an element matching the `selector` is mounted, and optional returned callback is called when unmounted or asect is tore down.
 
 * `selector` should be a valid CSS selector.
 * `element` can be an _HTMLElement_ or list of elements (any array-like).
 * `aspect` is a function with `target => teardown` signature, or an array of functions.
-
-Returned from `aspect` teardown callback is called when element is unmounted or aspect is cancelled.
 
 <!-- * `context` is optional element to assign mutation observer to, can be helpful for perf optimization, but benchmark shows that the effect of MO is insignificant. -->
 
@@ -129,9 +127,9 @@ $('.timer', el => {
 
 ### _`fx`_ − effect
 
-> fx( callback, deps = [] )
+> fx( (...values) => teardown, deps = [] )
 
-_**`fx`**_ reacts to changes in `deps` and runs `callback`, much like _useEffect_.
+_**`fx`**_ reacts to changes in `deps` and runs callback, much like _useEffect_.
 
 `deps` expect:
 
@@ -141,7 +139,7 @@ _**`fx`**_ reacts to changes in `deps` and runs `callback`, much like _useEffect
 * _Function_ is considered an [observable](https://ghub.io) / [observ](https://ghub.io) / [mutant](https://ghub.io/mutant);
 * any other value is considered constant.
 
-`deps` values are passed to `callback` as arguments. Returned from `callback` function is used as destructor.
+`values` reflect new `deps` state and passed as arguments. Returned `teardown` function is used as destructor, when the deps state changes.
 
 ```js
 import { state, fx } from 'spect'
