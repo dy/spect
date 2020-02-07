@@ -1,8 +1,8 @@
 import SelectorSet from 'selector-set'
 
-const _callbacks = Symbol.for('spectCallbacks')
-const _destroyPlanned = Symbol.for('spectDestroyPlanned')
-const _observer = Symbol.for('spectObserver')
+const _callbacks = Symbol.for('__spect.callbacks')
+const _destroyPlanned = Symbol.for('__spect.destroyPlanned')
+const _observer = Symbol.for('__spect.observer')
 const set = new SelectorSet
 
 // element-based aspect

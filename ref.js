@@ -1,4 +1,8 @@
 // observable value with notification on every set
+
+export const _get = Symbol.for('__spect.get')
+export const _set = Symbol.for('__spect.set')
+
 export default function ref(value) {
   let resolve, p = new Promise(r => resolve = r), changed
   const notify = () => {
@@ -11,31 +15,31 @@ export default function ref(value) {
     })
   }
   function ref(value) {
-    if (arguments.length) ref.set(value)
-    return ref.get()
+    if (arguments.length) ref[_set](value)
+    return ref[_get]()
   }
   Object.assign(ref, {
     current: value,
 
-    get() { return ref.current },
+    [_get]() { return ref.current },
 
-    set(value) {
+    [_set](value) {
       ref.current = value
       notify()
     },
 
     async *[Symbol.asyncIterator]() {
-      yield ref.get()
+      yield ref[_get]()
       while (1) {
         await p
-        yield ref.get()
+        yield ref[_get]()
       }
     },
 
     // Observable
     // async subscribe(cb) { for await (let value of ref) cb(value) }
   })
-  ref.valueOf = ref.toString = ref[Symbol.toPrimitive] = ref.get
+  ref.valueOf = ref.toString = ref[Symbol.toPrimitive] = ref[_get]
 
   return ref
 }

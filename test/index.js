@@ -574,10 +574,11 @@ t('fx: promise / observable / direct dep', async t => {
   t.is(log, [1, 2, 3, 4])
 })
 
-t.only('store: core', async t => {
+t.skip('store: core', async t => {
   let s = store({x: 1})
   let log = []
   fx(s => {
+    console.log(s)
     log.push(s)
   }, [s])
 
