@@ -1,16 +1,27 @@
-import createRef from './ref.js'
+import createRef, { _get } from './ref.js'
 
 export default function store(obj = {}) {
   const ref = createRef(obj)
-  // obj = Object.assign(Object.create(ref), obj)
-  // ref(obj)
-  obj[Symbol.asyncIterator] = ref[Symbol.asyncIterator]
 
-  const proxy = new Proxy(obj, {
+  const proxy = new Proxy(
+    Object.assign(Object.create({
+      [Symbol.asyncIterator]: ref[Symbol.asyncIterator],
+      [_get]: ref[_get]
+    }), obj), {
     set(obj, prop, value) {
       obj[prop] = value
-      ref(obj)
+      ref({...obj})
       return true
+    },
+    deleteProperty(obj, prop) {
+      if (prop in obj) {
+        delete obj[prop]
+        ref({...obj})
+        return true
+      }
+      else {
+        return false
+      }
     }
   })
 

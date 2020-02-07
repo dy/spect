@@ -574,18 +574,25 @@ t('fx: promise / observable / direct dep', async t => {
   t.is(log, [1, 2, 3, 4])
 })
 
-t.skip('store: core', async t => {
+t('store: core', async t => {
   let s = store({x: 1})
   let log = []
   fx(s => {
-    console.log(s)
     log.push(s)
   }, [s])
 
   await tick(4)
-  t.is(log, [{x: 1}])
+  t.is(log, [{x: 1}], 'init state')
 
   s.x = 2
   await tick(6)
-  t.is(log, [{x: 1}, {x: 2}])
+  t.is(log, [{x: 1}, {x: 2}], 'change prop')
+
+  s.y = 'foo'
+  await tick(6)
+  t.is(log, [{ x: 1 }, { x: 2 }, { x:2, y:'foo' }], 'add new prop')
+
+  delete s.x
+  await tick(6)
+  t.is(log, [{ x: 1 }, { x: 2 }, { x:2, y:'foo' }, {y: 'foo'}], 'delete props')
 })
