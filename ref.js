@@ -2,18 +2,10 @@
 
 export const _get = Symbol.for('__spect.get')
 export const _set = Symbol.for('__spect.set')
+export const _notify = Symbol.for('__spect.notify')
 
 export default function ref(value) {
   let resolve, p = new Promise(r => resolve = r), changed
-  const notify = () => {
-    if (changed) return
-    // needs 2 ticks delay or else subscribed iterators possibly miss latest changed value
-    changed = Promise.resolve().then().then(() => {
-      changed = null
-      resolve()
-      p = new Promise(r => resolve = r)
-    })
-  }
   function ref(value) {
     if (arguments.length) ref[_set](value)
     return ref[_get]()
@@ -25,9 +17,18 @@ export default function ref(value) {
 
     [_set](value) {
       ref.current = value
-      notify()
+      ref[_notify]()
     },
 
+    [_notify]() {
+      if (changed) return
+      // need 2 ticks delay or else subscribed iterators possibly miss latest changed value
+      changed = Promise.resolve().then().then(() => {
+        changed = null
+        resolve()
+        p = new Promise(r => resolve = r)
+      })
+    },
     async *[Symbol.asyncIterator]() {
       yield ref[_get]()
       while (1) {

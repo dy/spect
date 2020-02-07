@@ -201,14 +201,14 @@ fahren() // 32
 
 > value = prop( target, name )
 
-_`prop`_ has the same logic as _state_, but the value is accessed as `target` property. _`prop`_ keeps defined properties, so that the target's setter/getter are kept safe.
+_**`prop`**_ has the same logic as _**`state`**_, but the value is accessed as `target` property. _**`prop`**_ handles properly target getter/setter, if property has custom descriptor.
 
 ```js
 import { prop, fx } from 'spect'
 
 let o = { foo: 'bar' }
 
-fx(([foo]) => console.log(foo), [prop(o, 'foo')])
+fx(foo => console.log(foo), [prop(o, 'foo')])
 
 o.foo = 'baz'
 
@@ -223,11 +223,45 @@ o.foo = 'baz'
 
 > value = attr( element, name )
 
+Like _**`prop`**_, can provide access to element attribute. Notifies whenever attribute value changes.
+
+```js
+import { fx, attr } from 'spect'
+
+fx(loading => {
+  console.log(loading)
+}, [attr(el, 'loading')])
+```
+
 <br/>
 
-### _`store`_ − object observable
+### _`store`_ − store provider
 
 > obj = store( init = {} )
+
+Observable object. Unlike _**`state`**_, returns direct oobject (implemented as _Proxy_), than can be used as a dependency for _**`fx`**_ or changed directly. Similar to _Struct_ in [mutant](https://ghub.io/mutant) (if that's of any help).
+
+```js
+import { store } from 'spect'
+
+let likes = store({
+  count: null,
+  loading: false,
+  load() {
+    this.loading = true
+    let response = await fetch(url)
+    let data = await response.json()
+    this.loading = false
+    this.count = data.count
+  }
+})
+
+$('.likes-count', el => {
+  fx(async () => {
+    render(likes.loading ? html`Loading...` : html`Likes: ${ likes.count }`, element)
+  }, [likes])
+})
+```
 
 <br/>
 
@@ -235,15 +269,40 @@ o.foo = 'baz'
 
 > evts = on( element, eventName )
 
+Stateless events stream. Useful for organizing event-based observables, such as _**`hover`**_, _**`focus`**_, _**`input`**_ etc.
+
+```js
+import { $, on, calc, fx } from 'spect'
+
+$('input', el => {
+  // current input value
+  let value = calc(e => e.target.value, [
+    on(el, 'input'),
+    on(el, 'change')
+  ])
+
+  // current focus state
+  let focus = calc(e => e.type === 'focus', [
+    on(el, 'focus'),
+    on(el, 'blur')
+  ])
+
+  // for example...
+  fx(validate, [ value ])
+})
+```
+
 <br/>
 
-### _`ref`_ − core observable
+### _`ref`_ − raw value observer
 
 > value = ref( init? )
 
-_`ref`_ is the foundation for _`state`_ and other observables, except for it does not support functional setter and it emits updates on every value set.  _`ref`_ is direct analog of _useRef_ hook in FRP world.
+_**`ref`**_ is the foundation for _`state`_ and other observables. Is simply stores value − does not support functional setter and notifies about every set call.  _**`ref`**_ is direct analog of _useRef_ hook.
 
 ```js
+import { ref } from 'spect'
+
 let count = ref(0)
 
 // get
