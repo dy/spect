@@ -8,7 +8,7 @@
 <p align="center">
   <img src="https://img.shields.io/badge/stability-experimental-yellow"/>
   <a href="https://travis-ci.org/spectjs/spect"><img src="https://travis-ci.org/spectjs/spect.svg?branch=master"/></a>
-  <img src="https://img.shields.io/badge/size-%E2%89%A4%E2%80%892.1kb-brightgreen"/>
+  <!-- <img src="https://img.shields.io/badge/size-%E2%89%A4%E2%80%892.1kb-brightgreen"/> -->
 </p>
 
 <p align="center"><img src="/timer.png" width="435"/></p>
