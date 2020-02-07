@@ -2,6 +2,8 @@ import t from 'tst'
 import { $, state, fx, prop, store, ref } from '../index.js'
 import { tick, frame, idle, time } from 'wait-please'
 import { augmentor, useState, useEffect, useMemo } from 'augmentor'
+import Observable from 'zen-observable/esm'
+import observable from './observable.js'
 
 t('$: tag selector', async t => {
   let ellog = []
@@ -550,22 +552,26 @@ t('fx: async fx', async t => {
 })
 t('fx: promise / observable / direct dep', async t => {
   let p = new Promise(r => setTimeout(() => r(2), 10))
-  let o = { subscribe(fn){ setTimeout(() => fn(3), 20) } }
+  let O = new Observable(obs => setTimeout(setTimeout(() => obs.next(3), 20)))
+  let o = observable(); setTimeout(() => o(4), 30)
   let v = 1
 
   let log = []
-  fx((p, o, v) => {
-    log.push(v, p, o)
-  }, [p, o, v])
+  fx((p, O, v, o) => {
+    log.push(v, p, O, o)
+  }, [p, O, v, o])
 
   await tick(4)
-  t.is(log, [1, undefined, undefined])
+  t.is(log, [1, undefined, undefined, undefined])
   log = []
   await time(10)
-  t.is(log, [1, 2, undefined])
+  t.is(log, [1, 2, undefined, undefined])
   log = []
   await time(10)
-  t.is(log, [1, 2, 3])
+  t.is(log, [1, 2, 3, undefined])
+  log = []
+  await time(10)
+  t.is(log, [1, 2, 3, 4])
 })
 
 t.only('store: core', async t => {

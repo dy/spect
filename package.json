@@ -1,7 +1,7 @@
 {
   "name": "spect",
   "version": "13.0.2",
-  "description": "DOM micro-aspects",
+  "description": "Micro aspects with effects and observables",
   "main": "./index.js",
   "type": "module",
   "module": "./index.js",
@@ -27,6 +27,7 @@
     "jquery",
     "react-hooks",
     "fx",
+    "effect",
     "useEffect",
     "lifecycle",
     "dom",
@@ -53,9 +54,11 @@
     "es-dev-server": "^1.32.0",
     "esm": "^3.2.25",
     "jsdom": "^16.1.0",
+    "observable": "^2.1.4",
     "tst": "^5.3.3",
     "unihooks": "^1.4.5",
-    "wait-please": "^3.0.0"
+    "wait-please": "^3.0.0",
+    "zen-observable": "^0.8.15"
   },
   "files": [
     "index.js",

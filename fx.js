@@ -1,16 +1,12 @@
-const _fxValue = Symbol.for('spectFx')
 
 export default function fx(cb, deps=[]) {
   let current = [], prev = []
   deps.map((dep, i) => {
     if (primitive(dep)) return current[i] = dep
     if ('then' in dep || 'subscribe' in dep) return
-    if ('current' in dep) current[i] = dep.current
-
-    // store/etc case
-    if (dep[_fxValue]) current[i] = dep[_fxValue]
-
-    else current[i] = dep
+    if (typeof dep === 'function') return current[i] = dep()
+    if ('current' in dep) return current[i] = dep.current
+    current[i] = dep
   })
 
   // observe changes
@@ -32,9 +28,17 @@ export default function fx(cb, deps=[]) {
         notify()
       })
     }
-    // observable
+    // Observable
     else if ('subscribe' in dep) {
       dep.subscribe(value => {
+        if (value === current[i]) return
+        current[i] = value
+        notify()
+      })
+    }
+    // observ / mutant
+    else if (typeof dep === 'function') {
+      dep(value => {
         if (value === current[i]) return
         current[i] = value
         notify()

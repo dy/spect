@@ -145,43 +145,25 @@ for await (let value of count) {
 
 > fx( callback, deps = [] )
 
-_`fx`_ runs `callback` when the `deps` change. First callback is triggered immediately as microtask with the initial state.
-Deps values passed to `callback` as arguments. Returned from `callback` function is used as destructor.
+_`fx`_ runs `callback` when the `deps` change (like _useEffect_ hook).
+First callback is triggered immediately as microtask with the initial state.
+Deps values are passed to `callback` as arguments. Returned from `callback` function is used as destructor.
 
 `deps` may contain:
 
-* _Async Generator_ / _Async Iterable_ (an object with `Symbol.asyncIterator` method)
-* _Observable_ (`.subscribe` method)
-* _Promise_ / _Thenable_ (an object with `.then` method)
-* other - used as is
+* _Async Generator_ / _Async Iterable_ (an object with `Symbol.asyncIterator` method);
+* _Promise_ / _Thenable_ (an object with `.then` method);
+* _Observable_ (an object with `.subscribe` method) − [rxjs](https://ghub.io/rxjs), [any-observable](https://ghub.io/any-observable), [zen-observable](https://ghub.io/zen-observable) etc;
+* _Function_ − considered an [observable](https://ghub.io) / [observ](https://ghub.io) / [mutant](https://ghub.io/mutant);
+* any other value used as constant.
 
-_`fx`_ incorporates _`useEffect`_ logic in FRP world.
-
-<!--
-Example:
-
-```js
-const likes = fetch(url).then(response => {
-  loading(false)
-  return response.json()
-})
-const loading = state(true)
-
-fx((data, loading) => {
-  el.innerHTML = loading ? `Loading...` : `Likes: ${ likes }`
-
-  return () => {
-    // destroy
-  }
-}, [data, loading])
-```
--->
 
 ```js
 import { state, fx } from 'spect'
 import { time } from 'wait-please'
 
 let count = state(0)
+
 fx(async c => {
   console.log('Seconds', c)
   await time(1000)
@@ -192,11 +174,11 @@ fx(async c => {
 <br/>
 
 
-### _`compute`_ − computed value
+### _`calc`_ − computed value
 
-> value = computed( fn, deps = [] )
+> value = calc( fn, deps = [] )
 
-Creates an observable _`state`_, computed from `deps`. Direct analog of _`useMemo`_ hook.
+Creates an observable value, computed from `deps`. Direct analog of _`useMemo`_ hook.
 
 <br/>
 
