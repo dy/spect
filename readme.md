@@ -127,7 +127,7 @@ $('.timer', el => {
 
 ### _`fx`_
 
-> fx( (...values) => teardown, deps = [] )
+> fx( state => teardown, deps = [] )
 
 _**`fx`**_ is generic effect. It reacts to changes in `deps` and runs callback, much like _useEffect_.
 
@@ -186,7 +186,7 @@ for await (let value of count) {
 
 ### _`calc`_
 
-> value = calc( fn, deps = [] )
+> value = calc( state => result, deps = [] )
 
 Creates an observable value, computed from `deps`. Similar to _**`fx`**_, but the result is observable. _**`calc`**_ is analog of _useMemo_.
 
