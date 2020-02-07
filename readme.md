@@ -43,11 +43,7 @@ _Spect_ makes no guess at storage, actions, renderer or tooling setup and can be
 import { $ } from 'spect'
 
 // touched inputs
-$('input', el => {
-  el.addEventListener('focus', e => {
-    el.classList.append('touched')
-  })
-})
+$('input', el => el.addEventListener('focus', e => el.classList.add('touched')))
 ```
 
 #### Lit-html
