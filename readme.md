@@ -8,20 +8,18 @@
 <p align="center">
   <img src="https://img.shields.io/badge/stability-experimental-yellow"/>
   <a href="https://travis-ci.org/spectjs/spect"><img src="https://travis-ci.org/spectjs/spect.svg?branch=master"/></a>
-  <img src="https://img.shields.io/badge/size-%E2%89%A4%E2%80%892.1kb-brightgreen"/>
+  <!-- <img src="https://img.shields.io/badge/size-%E2%89%A4%E2%80%892.1kb-brightgreen"/> -->
 </p>
 
 <p align="center"><img src="/timer.png" width="435"/></p>
 
-## Usage
+## Installing
 
 #### A. Directly as module:
 
 ```html
 <script type="module">
 import { $, fx } from 'https://unpkg.com/spect@latest?module'
-
-// ...code
 </script>
 ```
 
@@ -29,29 +27,39 @@ import { $, fx } from 'https://unpkg.com/spect@latest?module'
 
 [![npm i spect](https://nodei.co/npm/spect.png?mini=true)](https://npmjs.org/package/spect/)
 
-_Spect_ plays perfectly with [Snowpack](https://www.snowpack.dev/), but any other bundler can be used as well.
+```js
+import { $ } from 'spect'
+```
 
-<!--
+_Spect_ is perfect match with [Snowpack](https://www.snowpack.dev/), but any other bundler will do.
+
 ## Usage
 
-_Spect_ makes no guess at store provider, actions, renderer or tooling setup, that by can be used with different flavors, from vanilla to sugared frameworks.
+_Spect_ makes no guess at storage, actions, renderer or tooling setup and can be used with different flavors.
 
 #### Vanilla
 
 ```js
 import { $ } from 'spect'
 
-$('.timer', el => {
-  let count = 0
-  let id = setInterval(() => {
-    el.innerHTML = `Seconds: ${count++}`
-  }, 1000)
-  return () => clearInterval(id)
-})
+// touched inputs
+$('input', el => el.addEventListener('focus', e => el.classList.add('touched')))
 ```
 
-<p><a href="https://codesandbox.io/s/a-stateful-aspect-9pbji">Open in sandbox</a></p>
--->
+#### Lit-html
+
+```js
+import { $, fx, on } from 'spect'
+import { render, html } from 'lit-html'
+
+$('input#height', el => {
+  fx(e => {
+    const value = e.target.value
+
+    render(html`Your height: <strong>${ value }</strong>cm`, hintEl)
+  }, [on(el, 'input'), on(el, 'change')])
+})
+```
 
 <!--
 
@@ -93,11 +101,13 @@ Pending...
 
 > $( selector | element, aspect )
 
-Assigns an `aspect` function to `selector` or `element`. Returned from `aspect` result is destructor, called when element is unmounted.
+Assigns an `aspect` function to `selector` or `element`.
 
 * `selector` should be a valid CSS selector.
 * `element` can be an _HTMLElement_ or list of elements (any array-like).
-* `aspect` is a function with `target => onDestroy` signature. or an array of functions.
+* `aspect` is a function with `target => teardown` signature, or an array of functions.
+
+Returned from `aspect` teardown callback is called when element is unmounted or aspect is cancelled.
 
 <!-- * `context` is optional element to assign mutation observer to, can be helpful for perf optimization, but benchmark shows that the effect of MO is insignificant. -->
 
@@ -117,46 +127,17 @@ $('.timer', el => {
 
 <br/>
 
-### _`state`_ − observable value
-
-> value = state( init? )
-
-_**`state`**_ creates observable value container. Returned `value` is simply getter/setter function with _asyncIterator_ interface for subscriptions. `init` can be an initial value or initializer function.
-_**`state`**_ is like modern [observable](https://ghub.io/observable), or _useState_ unhooked.
-
-```js
-import { state } from 'spect'
-
-let count = state(0)
-
-// get
-count()
-
-// set
-count(1)
-count(c => c + 1)
-
-// observe changes
-for await (let value of count) {
-  // 0, 1, ...
-}
-```
-
-<!--<sup>See <a href="https://github.com/spectjs/spect/issues/142">#142</a> for design argumentation.</sup>-->
-
-<br/>
-
 ### _`fx`_ − effect
 
 > fx( callback, deps = [] )
 
-_**`fx`**_ reacts on changed `deps` and runs `callback`, very much like _useEffect_.
+_**`fx`**_ reacts to changes in `deps` and runs `callback`, much like _useEffect_.
 
 `deps` expect:
 
-* _Async Generator_ / _Async Iterable_ (an object with [`Symbol.asyncIterator`](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Symbol/asyncIterator) method);
-* _Promise_ / _Thenable_ (an object with `.then` method);
-* _Observable_ (an object with `.subscribe` method) − [rxjs](https://ghub.io/rxjs) / [any-observable](https://ghub.io/any-observable) / [zen-observable](https://ghub.io/zen-observable) etc;
+* _Async Generator_ / _Async Iterable_ / object with [`Symbol.asyncIterator`](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Symbol/asyncIterator) method;
+* _Promise_ / _Thenable_;
+* _Observable_ / an object with `.subscribe` method ([rxjs](https://ghub.io/rxjs) / [any-observable](https://ghub.io/any-observable) / [zen-observable](https://ghub.io/zen-observable) etc);
 * _Function_ is considered an [observable](https://ghub.io) / [observ](https://ghub.io) / [mutant](https://ghub.io/mutant);
 * any other value is considered constant.
 
@@ -177,12 +158,39 @@ fx(async c => {
 
 <br/>
 
+### _`state`_ − observable value
+
+> value = state( init? )
+
+_**`state`**_ creates an observable value − simply a getter/setter function with [_asyncIterator_](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Symbol/asyncIterator) interface. `init` can be an initial value or initializer function.
+_**`state`**_ plays role of _useState_ hook, or [observable](https://ghub.io/observable).
+
+```js
+import { state } from 'spect'
+
+let count = state(0)
+
+// get
+count()
+
+// set
+count(1)
+count(c => c + 1)
+
+// observe changes
+for await (let value of count) {
+  // 0, 1, ...
+}
+```
+
+<br/>
+
 
 ### _`calc`_ − computed value
 
 > value = calc( fn, deps = [] )
 
-Creates an observable value, computed from `deps`. Direct async analog of _useMemo_ hook. Has the same API as _**`fx`**_, but returned result is observable `value`, instead of destructor.
+Creates an observable value, computed from `deps`. It has the same API as _**`fx`**_, but returned result is observable `value`, instead of destructor. _**`calc`**_ is direct async iterable analog of _useMemo_.
 
 ```js
 import { $, input, calc } from 'spect'
@@ -201,7 +209,7 @@ fahren() // 32
 
 > value = prop( target, name )
 
-_**`prop`**_ has the same logic as _**`state`**_, but the value is accessed as `target` property. _**`prop`**_ handles properly target getter/setter, if property has custom descriptor.
+_**`prop`**_ is observable accessor for `target` object property. _**`prop`**_ keeps safe target's own getter/setter.
 
 ```js
 import { prop, fx } from 'spect'
@@ -223,7 +231,7 @@ o.foo = 'baz'
 
 > value = attr( element, name )
 
-Like _**`prop`**_, can provide access to element attribute. Notifies whenever attribute value changes.
+Like _**`prop`**_, can provide access to element attribute and stream changes.
 
 ```js
 import { fx, attr } from 'spect'
@@ -239,7 +247,7 @@ fx(loading => {
 
 > obj = store( init = {} )
 
-Observable object. Unlike _**`state`**_, returns direct oobject (implemented as _Proxy_), than can be used as a dependency for _**`fx`**_ or changed directly. Similar to _Struct_ in [mutant](https://ghub.io/mutant) (if that's of any help).
+Observable object. Unlike _**`state`**_, returns observable object. Adding, deleting or changing props of that object ticks iterator. Similar to _Struct_ in [mutant](https://ghub.io/mutant).
 
 ```js
 import { store } from 'spect'
@@ -269,7 +277,7 @@ $('.likes-count', el => {
 
 > evts = on( element, eventName )
 
-Stateless events async iteratable. To detach listeners invoke `evts.cancel()`.
+Stateless events async iteratable. Come handy for event-based effects. To stop observing, invoke `evts.cancel()`.
 
 ```js
 import { $, on, calc, fx } from 'spect'
@@ -287,19 +295,19 @@ $('input', el => {
     on(el, 'blur')
   ])
 
-  fx(validate, [ value ])
+  fx(validate, [ value, focus ])
 
-  return on.cancel
+  return () => on.cancel( )
 })
 ```
 
 <br/>
 
-### _`ref`_ − raw value observer
+### _`ref`_ − value reference
 
 > value = ref( init? )
 
-_**`ref`**_ is the foundation for _`state`_ and other observables. Is simply stores value − does not support functional setter and notifies about every set call.  _**`ref`**_ is direct analog of _useRef_ hook.
+_**`ref`**_ is the foundation for _`state`_ and other observables. Is simply stores value − does not support functional setter and notifies about every set.  _**`ref`**_ is direct analog of _useRef_ hook.
 
 ```js
 import { ref } from 'spect'
@@ -327,8 +335,7 @@ count.cancel()
 
 <br/>
 
-
-<!-- Best of React, jQuery and RxJS worlds in tiny tool. -->
+<!-- Best of React, jQuery and RxJS worlds in a tiny tool. -->
 
 ## Related
 
