@@ -40,7 +40,7 @@ export default function prop(target, name) {
   }
 
   let closed = false
-  prop.close = () => {
+  prop.cancel = () => {
     closed = true
     if (desc) Object.defineProperty(target, name, desc)
     else Object.defineProperty(target, name, { configurable: true, value: prop[_get]() })

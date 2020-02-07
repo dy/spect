@@ -398,7 +398,7 @@ t('prop: subscription', async t => {
   // await tick(4)
   // t.is(log, [0, 2, 5, 6], 'changing and back does not cause trigger')
 
-  xs.close()
+  xs.cancel()
   o.x = 7
   t.is(o.x, 7, 'end destructs property')
   await tick(10)
@@ -414,7 +414,7 @@ t('prop: get/set', async t => {
 t('prop: keep initial property value if applied/unapplied', async t => {
   let o = { foo: 'bar' }
   let foos = prop(o, 'foo')
-  foos.close()
+  foos.cancel()
   t.is(o, {foo: 'bar'}, 'initial object is unchanged')
 })
 t('prop: multiple instances', async t => {
@@ -456,7 +456,7 @@ t('prop: minimize get/set invocations', async t => {
   t.is(log, ['get', 0, 'changed', 0, 'get', 0, 'set', 1, 'get', 1, 'changed', 1])
 
   log = []
-  xs.close()
+  xs.cancel()
   t.is(log, [])
 
   obj.x
@@ -552,7 +552,7 @@ t('fx: async fx', async t => {
 })
 t('fx: promise / observable / direct dep', async t => {
   let p = new Promise(r => setTimeout(() => r(2), 10))
-  let O = new Observable(obs => setTimeout(setTimeout(() => obs.next(3), 20)))
+  let O = new Observable(obs => setTimeout(() => obs.next(3), 20))
   let o = observable(); setTimeout(() => o(4), 30)
   let v = 1
 
@@ -646,4 +646,35 @@ t('attr: core', async t => {
   // await tick(6)
   // t.is(el.getAttribute('x'), '7', 'end destructures property')
   // t.is(log, [false, '2', '5', '6'], 'end destructures property')
+})
+
+t('on: core', async t => {
+  let el = document.createElement('div')
+  let clicks = on(el, 'click')
+  let log = []
+  ;(async () => {
+    for await (const e of clicks) {
+      log.push(e.type)
+    }
+  })()
+  el.click()
+  await tick(2)
+  t.is(log, ['click'], 'basic')
+  el.click()
+  el.click()
+  await tick(6)
+  t.is(log, ['click', 'click'], 'skips events within same tick')
+  el.click()
+  el.click()
+  el.click()
+  await tick(6)
+  t.is(log, ['click', 'click', 'click'], 'updates to latest value')
+
+  // TODO: find a way to stop it
+
+  // clicks.return()
+  // el.click()
+  // el.click()
+  // await tick(6)
+  // t.is(log, ['click', 'click', 'click'], 'end stops event stream')
 })

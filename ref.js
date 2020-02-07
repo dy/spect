@@ -3,14 +3,17 @@
 export const _get = Symbol.for('__spect.get')
 export const _set = Symbol.for('__spect.set')
 export const _notify = Symbol.for('__spect.notify')
+export const _p = Symbol.for('__spect.p')
 
 export default function ref(value) {
-  let resolve, p = new Promise(r => resolve = r), changed
+  let resolve, changed
   function ref(value) {
     if (arguments.length) ref[_set](value)
     return ref[_get]()
   }
   Object.assign(ref, {
+    [_p]: new Promise(r => resolve = r),
+
     current: value,
 
     [_get]() { return ref.current },
@@ -26,13 +29,13 @@ export default function ref(value) {
       changed = Promise.resolve().then().then(() => {
         changed = null
         resolve()
-        p = new Promise(r => resolve = r)
+        ref[_p] = new Promise(r => resolve = r)
       })
     },
     async *[Symbol.asyncIterator]() {
       yield ref[_get]()
       while (1) {
-        await p
+        await ref[_p]
         yield ref[_get]()
       }
     },
