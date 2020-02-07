@@ -1,24 +1,23 @@
-// observable value with notification on every set
+import Cancelable from './cancelable.js'
 
-export const _get = Symbol.for('__spect.get')
-export const _set = Symbol.for('__spect.set')
+// observable value with notification on every set
 export const _notify = Symbol.for('__spect.notify')
 export const _p = Symbol.for('__spect.p')
 
 export default function ref(value) {
   let resolve, changed
   function ref(value) {
-    if (arguments.length) ref[_set](value)
-    return ref[_get]()
+    if (arguments.length) ref.set(value)
+    return ref.get()
   }
   Object.assign(ref, {
-    [_p]: new Promise(r => resolve = r),
+    [_p]: new Cancelable(r => resolve = r),
 
     current: value,
 
-    [_get]() { return ref.current },
+    get() { return ref.current },
 
-    [_set](value) {
+    set(value) {
       ref.current = value
       ref[_notify]()
     },
@@ -29,21 +28,29 @@ export default function ref(value) {
       changed = Promise.resolve().then().then(() => {
         changed = null
         resolve()
-        ref[_p] = new Promise(r => resolve = r)
+        ref[_p] = new Cancelable(r => resolve = r)
       })
     },
     async *[Symbol.asyncIterator]() {
-      yield ref[_get]()
-      while (1) {
-        await ref[_p]
-        yield ref[_get]()
+      yield ref.get()
+      try {
+        while (1) {
+          await ref[_p]
+          yield ref.get()
+        }
+      } finally {
+
       }
     },
+
+    cancel() {
+      ref[_p].cancel()
+    }
 
     // Observable
     // async subscribe(cb) { for await (let value of ref) cb(value) }
   })
-  ref.valueOf = ref.toString = ref[Symbol.toPrimitive] = ref[_get]
+  ref.valueOf = ref.toString = ref[Symbol.toPrimitive] = ref.get
 
   return ref
 }

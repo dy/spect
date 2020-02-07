@@ -1,4 +1,4 @@
-import ref, { _get, _set, _notify } from './ref.js'
+import ref, { _notify } from './ref.js'
 
 const cache = new WeakMap
 
@@ -8,13 +8,13 @@ export default function attr(el, name) {
   if (refs[name]) return refs[name]
 
   const attr = refs[name] = ref(el.getAttribute(name))
-  attr[_get] = () => {
+  attr.get = () => {
     let value = el.getAttribute(name)
     return !value ? el.hasAttribute(name) : value
   }
-  attr[_set] = value => {
-    if (typeof value === 'function') value = value(attr[_get]())
-    if (value === attr[_get]()) return
+  attr.set = value => {
+    if (typeof value === 'function') value = value(attr.get())
+    if (value === attr.get()) return
     if (value === true) el.setAttribute(name, '')
     else if (value === false || value == null) el.removeAttribute(name)
     else el.setAttribute(value)

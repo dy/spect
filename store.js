@@ -1,4 +1,4 @@
-import createRef, { _get } from './ref.js'
+import createRef from './ref.js'
 
 export default function store(obj = {}) {
   const ref = createRef(obj)
@@ -6,7 +6,7 @@ export default function store(obj = {}) {
   const proxy = new Proxy(
     Object.assign(Object.create({
       [Symbol.asyncIterator]: ref[Symbol.asyncIterator],
-      [_get]: ref[_get]
+      valueOf: ref.get
     }), obj), {
     set(obj, prop, value) {
       obj[prop] = value

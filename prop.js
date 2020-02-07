@@ -1,4 +1,4 @@
-import ref, { _get, _set } from './ref.js'
+import ref from './ref.js'
 
 const cache = new WeakMap
 
@@ -19,7 +19,7 @@ export default function prop(target, name) {
     target[name]
   )
 
-  const set = prop[_set]
+  const set = prop.set
   Object.defineProperty(target, name, {
     configurable: true,
     get() {
@@ -33,8 +33,8 @@ export default function prop(target, name) {
   })
 
   // rewire ref get/set to target prop
-  prop[_get] = () => target[name]
-  prop[_set] = value => {
+  prop.get = () => target[name]
+  prop.set = value => {
     if (typeof value === 'function') value = value(target[name])
     target[name] = value
   }
@@ -43,7 +43,7 @@ export default function prop(target, name) {
   prop.cancel = () => {
     closed = true
     if (desc) Object.defineProperty(target, name, desc)
-    else Object.defineProperty(target, name, { configurable: true, value: prop[_get]() })
+    else Object.defineProperty(target, name, { configurable: true, value: prop.get() })
   }
 
   return prop

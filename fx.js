@@ -1,12 +1,10 @@
-const _get = Symbol.for('__spect.get')
-
 export default function fx(cb, deps=[]) {
   let current = [], prev = []
   deps.map((dep, i) => {
     if (primitive(dep)) return current[i] = dep
     if ('then' in dep || 'subscribe' in dep) return
-    if (_get in dep) return current[i] = dep[_get]()
     if (typeof dep === 'function') return current[i] = dep()
+    if ('valueOf' in dep) return current[i] = dep.valueOf()
     if ('current' in dep) return current[i] = dep.current
     current[i] = dep
   })
