@@ -1,7 +1,7 @@
 <div align="center"><img src="https://avatars3.githubusercontent.com/u/53097200?s=200&v=4" width=108 /></div>
 <p align="center"><h1 align="center">spect</h1></p>
 <p align="center">
-  Micro <a href="https://en.wikipedia.org/wiki/Aspect-oriented_programming"><em>aspects</em></a> with <em>effects</em> and <em>observables</em>.<br/>
+  DOM <a href="https://en.wikipedia.org/wiki/Aspect-oriented_programming"><em>aspects</em></a> with <em>effects</em> and <em>observables</em>.<br/>
   <!-- Build reactive UIs with rules, similar to CSS.<br/> -->
   <!-- Each rule specifies an <em>aspect</em> function, carrying a piece of logic.<br/> -->
 </p>
@@ -21,7 +21,7 @@
 <script type="module">
 import { $, fx } from 'https://unpkg.com/spect@latest?module'
 
-// ...code
+// ...
 </script>
 ```
 
@@ -29,12 +29,16 @@ import { $, fx } from 'https://unpkg.com/spect@latest?module'
 
 [![npm i spect](https://nodei.co/npm/spect.png?mini=true)](https://npmjs.org/package/spect/)
 
-_Spect_ plays perfectly with [Snowpack](https://www.snowpack.dev/), but any other bundler can be used as well.
+```js
+import { $ } from 'spect'
 
-<!--
-## Usage
+// ...
+```
 
-_Spect_ makes no guess at store provider, actions, renderer or tooling setup, that by can be used with different flavors, from vanilla to sugared frameworks.
+_Spect_ is perfect match with [Snowpack](https://www.snowpack.dev/), but any other bundler will do too.
+
+
+_Spect_ makes no guess at storage, actions, renderer or tooling setup, thereby can be used with different flavors.
 
 #### Vanilla
 
@@ -51,7 +55,21 @@ $('.timer', el => {
 ```
 
 <p><a href="https://codesandbox.io/s/a-stateful-aspect-9pbji">Open in sandbox</a></p>
--->
+
+#### Lit-html
+
+```js
+import { $, fx, on } from 'spect'
+import { render, html } from 'lit-html'
+
+$('input#height', el => {
+  fx(e => {
+    const value = e.target.value
+    
+    render(html`Your height: <strong>${ value }</strong>cm`, hintEl)
+  }, [on(el, 'input'), on(el, 'change')])
+})
+```
 
 <!--
 
@@ -93,11 +111,13 @@ Pending...
 
 > $( selector | element, aspect )
 
-Assigns an `aspect` function to `selector` or `element`. Returned from `aspect` result is destructor, called when element is unmounted.
+Assigns an `aspect` function to `selector` or `element`.
 
 * `selector` should be a valid CSS selector.
 * `element` can be an _HTMLElement_ or list of elements (any array-like).
-* `aspect` is a function with `target => onDestroy` signature. or an array of functions.
+* `aspect` is a function with `target => teardown` signature, or an array of functions.
+
+Returned from `aspect` teardown callback is called when element is unmounted or aspect is cancelled.
 
 <!-- * `context` is optional element to assign mutation observer to, can be helpful for perf optimization, but benchmark shows that the effect of MO is insignificant. -->
 
@@ -121,8 +141,8 @@ $('.timer', el => {
 
 > value = state( init? )
 
-_**`state`**_ creates observable value container. Returned `value` is simply getter/setter function with _asyncIterator_ interface for subscriptions. `init` can be an initial value or initializer function.
-_**`state`**_ is like modern [observable](https://ghub.io/observable), or _useState_ unhooked.
+_**`state`**_ creates an observable value container − it is simply getter/setter function with [_asyncIterator_](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Symbol/asyncIterator) interface for subscriptions. `init` can be an initial value or initializer function.
+_**`state`**_ represents _useState_ unhooked for FRP, much like [observable](https://ghub.io/observable).
 
 ```js
 import { state } from 'spect'
@@ -150,13 +170,13 @@ for await (let value of count) {
 
 > fx( callback, deps = [] )
 
-_**`fx`**_ reacts on changed `deps` and runs `callback`, very much like _useEffect_.
+_**`fx`**_ reacts to changes in `deps` and runs `callback`, as _useEffect_ hook.
 
 `deps` expect:
 
-* _Async Generator_ / _Async Iterable_ (an object with [`Symbol.asyncIterator`](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Symbol/asyncIterator) method);
-* _Promise_ / _Thenable_ (an object with `.then` method);
-* _Observable_ (an object with `.subscribe` method) − [rxjs](https://ghub.io/rxjs) / [any-observable](https://ghub.io/any-observable) / [zen-observable](https://ghub.io/zen-observable) etc;
+* _Async Generator_ / _Async Iterable_ / object with [`Symbol.asyncIterator`](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Symbol/asyncIterator) method;
+* _Promise_ / _Thenable_;
+* _Observable_ / an object with `.subscribe` method ([rxjs](https://ghub.io/rxjs) / [any-observable](https://ghub.io/any-observable) / [zen-observable](https://ghub.io/zen-observable) etc);
 * _Function_ is considered an [observable](https://ghub.io) / [observ](https://ghub.io) / [mutant](https://ghub.io/mutant);
 * any other value is considered constant.
 
