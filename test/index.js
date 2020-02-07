@@ -1,5 +1,5 @@
 import t from 'tst'
-import { $, state, fx, prop, store, ref } from '../index.js'
+import { $, state, fx, prop, store, calc, ref } from '../index.js'
 import { tick, frame, idle, time } from 'wait-please'
 import { augmentor, useState, useEffect, useMemo } from 'augmentor'
 import Observable from 'zen-observable/esm'
@@ -595,4 +595,20 @@ t('store: core', async t => {
   delete s.x
   await tick(6)
   t.is(log, [{ x: 1 }, { x: 2 }, { x:2, y:'foo' }, {y: 'foo'}], 'delete props')
+})
+
+t('calc: core', async t => {
+
+  const f = state(32), c = state(0)
+  const celsius = calc(f => (f - 32) / 1.8, [f])
+  const fahren = calc(c => (c * 9) / 5 + 32, [c])
+
+  await tick(4)
+
+  t.is(celsius(), 0) // 0
+  t.is(fahren(), 32) // 32
+
+  c(20)
+  await tick(6)
+  t.is(fahren(), 68)
 })
