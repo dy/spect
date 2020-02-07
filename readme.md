@@ -329,7 +329,7 @@ count() // c => c + 1
 
 <br/>
 
-Best of React, jQuery and RxJS worlds in a tiny tool.
+<!-- Best of React, jQuery and RxJS worlds in a tiny tool. -->
 
 ## Related
 
