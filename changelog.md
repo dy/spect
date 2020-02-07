@@ -2,11 +2,12 @@
 
 Version | Changes
 ---|---
-13.0.0 | Orphaned minimal selector-observer implementation.
-12.0.0 | Own hooks.
+14.0.0 | $ is considered a selector effect, added fx and observables.
+13.0.0 | Orphaned minimal selector-observer implementation, single $ entry.
+12.0.0 | React hooks support.
 11.0.0 | Aspects-only observer.
-10.0.0 | Web-streams.
-9.0.0 | Effects as asynchronous iterators.
+10.0.0 | Web-streams, ReadableStream polyfill.
+9.0.0 | Effects as asynchronous iterables.
 8.0.0 | Atomize: split core $ to multiple effects.
 7.0.0 | Deatomize; single core approach; ref-based approach.
 6.0.0 | DOM-less core. Pluggable effects.
