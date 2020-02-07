@@ -61,8 +61,8 @@
     "zen-observable": "^0.8.15"
   },
   "files": [
-    "index.js",
     "readme.md",
-    "test"
+    "test",
+    "*.js"
   ]
 }
