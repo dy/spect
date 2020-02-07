@@ -97,11 +97,11 @@ Pending...
 
 ## API
 
-### _`$`_ − selector effect
+### _`$`_
 
 > $( selector | element, aspect )
 
-Assigns an `aspect` function to `selector` or `element`. The `aspect` is triggered when an element matching the `selector` is mounted, and optional returned callback is called when unmounted or asect is tore down.
+_**`$`**_ is selector observer effect. It assigns an `aspect` function to `selector` or `element`. The `aspect` is triggered when an element matching the `selector` is mounted, and optional returned callback is called when unmounted or asect is tore down.
 
 * `selector` should be a valid CSS selector.
 * `element` can be an _HTMLElement_ or list of elements (any array-like).
@@ -125,11 +125,11 @@ $('.timer', el => {
 
 <br/>
 
-### _`fx`_ − effect
+### _`fx`_
 
 > fx( (...values) => teardown, deps = [] )
 
-_**`fx`**_ reacts to changes in `deps` and runs callback, much like _useEffect_.
+_**`fx`**_ is generic effect. It reacts to changes in `deps` and runs callback, much like _useEffect_.
 
 `deps` expect:
 
@@ -156,11 +156,11 @@ fx(async c => {
 
 <br/>
 
-### _`state`_ − observable value
+### _`state`_
 
 > value = state( init? )
 
-_**`state`**_ creates an observable value − simply a getter/setter function with [_asyncIterator_](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Symbol/asyncIterator) interface. `init` can be an initial value or initializer function.
+_**`state`**_ creates an observable value, that is simply getter/setter function with [_asyncIterator_](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Symbol/asyncIterator) interface. `init` can be an initial value or initializer function.
 _**`state`**_ plays role of _useState_ hook, or [observable](https://ghub.io/observable).
 
 ```js
@@ -184,11 +184,11 @@ for await (let value of count) {
 <br/>
 
 
-### _`calc`_ − computed value
+### _`calc`_
 
 > value = calc( fn, deps = [] )
 
-Creates an observable value, computed from `deps`. It has the same API as _**`fx`**_, but returned result is observable `value`, instead of destructor. _**`calc`**_ is direct async iterable analog of _useMemo_.
+Creates an observable value, computed from `deps`. Similar to _**`fx`**_, but the result is observable. _**`calc`**_ is analog of _useMemo_.
 
 ```js
 import { $, input, calc } from 'spect'
@@ -203,11 +203,11 @@ fahren() // 32
 
 <br/>
 
-### _`prop`_ − property observable
+### _`prop`_
 
 > value = prop( target, name )
 
-_**`prop`**_ is observable accessor for `target` object property. _**`prop`**_ keeps safe target's own getter/setter.
+_**`prop`**_ is target property observable, serves as accessor and streams changes. _**`prop`**_ keeps safe target's own getter/setter, if defined.
 
 ```js
 import { prop, fx } from 'spect'
@@ -225,11 +225,11 @@ o.foo = 'baz'
 
 <br/>
 
-### _`attr`_ − attribute observable
+### _`attr`_
 
 > value = attr( element, name )
 
-Like _**`prop`**_, can provide access to element attribute and stream changes.
+Element attribute observable. Similar to _**`prop`**_, it provides access to attribute value and streams changes.
 
 ```js
 import { fx, attr } from 'spect'
@@ -241,11 +241,11 @@ fx(loading => {
 
 <br/>
 
-### _`store`_ − store provider
+### _`store`_
 
 > obj = store( init = {} )
 
-Observable object. Unlike _**`state`**_, returns observable object. Adding, deleting or changing props of that object ticks iterator. Similar to _Struct_ in [mutant](https://ghub.io/mutant).
+Observable object. Unlike _**`state`**_, creates a proxy for the object − adding, changing or deleting props emits changes. Similar to _Struct_ in [mutant](https://ghub.io/mutant).
 
 ```js
 import { store } from 'spect'
@@ -271,7 +271,7 @@ $('.likes-count', el => {
 
 <br/>
 
-### _`on`_ − event observable
+### _`on`_
 
 > evts = on( element, eventName )
 
@@ -301,11 +301,11 @@ $('input', el => {
 
 <br/>
 
-### _`ref`_ − value reference
+### _`ref`_
 
 > value = ref( init? )
 
-_**`ref`**_ is the foundation for _`state`_ and other observables. Is simply stores value − does not support functional setter and notifies about every set.  _**`ref`**_ is direct analog of _useRef_ hook.
+_**`ref`**_ is core value observer, serves as foundation for other observables. Unlike _**`state`**_, it does not support functional setter and emits every set value.  _**`ref`**_ is direct analog of _useRef_ hook.
 
 ```js
 import { ref } from 'spect'
@@ -327,7 +327,7 @@ for await (const c of count) {
   // 1, ...
 }
 
-// cancel
+// discard observable, end generators
 count.cancel()
 ```
 
@@ -335,10 +335,14 @@ count.cancel()
 
 <!-- Best of React, jQuery and RxJS worlds in a tiny tool. -->
 
-## Related
+## Inspiration / R&D
 
 * [selector-observer](https://ghub.io/selector-observer) − same idea with object-based API.
-* [augmentor](https://ghub.io/augmentor) − turn callbacks into react components.
 * [unihooks](https://ghub.io/unihooks) − cross-framework hooks collection.
+* [observable](https://ghub.io/observable), [observ](https://ghub.io/observ), [mutant](https://ghub.io/mutant) − elegant observable implementation.
+* [zen-observable](https://ghub.io/zen-observable), [es-observable](https://ghub.io/es-observable) et all − foundational research / proposal.
+* [reuse](https://ghub.io/reuse) − aspects attempt for react world.
+* [tonic](https://ghub.io/tonic), [etch](https://ghub.io/etch), [turbine](https://github.com/funkia/turbine), [hui](https://ghub.io/hui) − nice takes on web-component framework.
+* [atomico](https://ghub.io/atomico), [haunted](https://ghub.io/haunted), [fuco](https://ghub.io/fuco) − react-less hooks implementations.
 
 <p align="right">HK</p>
