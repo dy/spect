@@ -349,14 +349,14 @@ t('state: core', async t => {
   let log2 = []
   ;(async () => { for await (let value of s) log2.push(value) })()
 
-  await tick(4)
+  await tick(8)
   t.deepEqual(log, [0, 3], 'should track and notify first tick changes')
   await frame(10)
   s(4)
-  await tick(4) // why 4 ticks delay?
+  await tick(8) // why 4 ticks delay?
   t.deepEqual(log, [0, 3, 4], 'arbitrary change 1')
   s(5)
-  await tick(4)
+  await tick(8)
   t.deepEqual(log, [0, 3, 4, 5], 'arbitrary change 2')
 
   t.deepEqual(log2, [3, 4, 5], 'secondary observer is fine')
@@ -385,17 +385,17 @@ t('prop: subscription', async t => {
   o.x = 3
   o.x = 4
   o.x = 5
-  await tick(4)
+  await tick(8)
   t.is(log, [0, 2, 5], 'updates to latest value')
 
   o.x = 6
   t.is(o.x, 6, 'reading value')
-  await tick(4)
+  await tick(8)
   t.is(log, [0, 2, 5, 6], 'reading has no side-effects')
 
   // o.x = 7
   // o.x = 6
-  // await tick(4)
+  // await tick(8)
   // t.is(log, [0, 2, 5, 6], 'changing and back does not cause trigger')
 
   xs.cancel()
@@ -444,11 +444,11 @@ t('prop: minimize get/set invocations', async t => {
     }
   })();
 
-  await tick(6)
+  await tick(8)
   t.is(log, ['get', 0, 'changed', 0])
 
   obj.x
-  await tick(6)
+  await tick(8)
   t.is(log, ['get', 0, 'changed', 0, 'get', 0])
 
   obj.x = 1
@@ -463,7 +463,7 @@ t('prop: minimize get/set invocations', async t => {
   t.is(log, ['get', 1])
 
   obj.x = 0
-  await tick(6)
+  await tick(8)
   t.is(log, ['get', 1, 'set', 0])
 })
 
@@ -477,18 +477,18 @@ t('fx: core', async t => {
     log.push(a, b)
   }, [a, b])
 
-  await tick(4)
+  await tick(8)
   t.is(log, [0, 1], 'initial state')
   a(1)
   a(2)
-  await tick(5)
+  await tick(7)
   t.is(log, [0, 1, 2, 1], 'changed state')
   o.b = 2
-  await tick(5)
+  await tick(7)
   t.is(log, [0, 1, 2, 1, 2, 2], 'changed prop')
   o.b = 2
   a(2)
-  await tick(5)
+  await tick(7)
   t.is(log, [0, 1, 2, 1, 2, 2], 'unchanged prop')
 })
 t('fx: destructor', async t => {
@@ -501,13 +501,13 @@ t('fx: destructor', async t => {
     }
   }, [a, b])
 
-  await tick(4)
+  await tick(8)
   t.is(log, ['in', 0, 0])
 
   log = []
   a(1)
   b(1)
-  await tick(6)
+  await tick(8)
   t.is(log, ['out', 0, 0, 'in', 1, 1], 'destructor is ok')
 })
 t('fx: disposed by unmounted element automatically')
@@ -518,11 +518,11 @@ t('fx: doesn\'t run unchanged', async t => {
     log.push(a)
   }, [a])
 
-  await tick(4)
+  await tick(8)
   t.is(log, [0])
   a(1)
   a(0)
-  await tick(6)
+  await tick(8)
   t.is(log, [0], 'does not run unchanged')
 })
 t('fx: no-deps/empty deps runs once', async t => {
@@ -534,7 +534,7 @@ t('fx: no-deps/empty deps runs once', async t => {
     log.push(1)
   })
 
-  await tick(6)
+  await tick(8)
   t.is(log, [0, 1])
 })
 t('fx: async fx', async t => {
@@ -547,7 +547,7 @@ t('fx: async fx', async t => {
     count(c + 1)
   }, [count])
 
-  await tick(50)
+  await tick(70)
   t.is(log, [0, 1, 2, 3, 4])
 })
 t('fx: promise / observable / direct dep', async t => {
@@ -561,7 +561,7 @@ t('fx: promise / observable / direct dep', async t => {
     log.push(v, p, O, o)
   }, [p, O, v, o])
 
-  await tick(4)
+  await tick(8)
   t.is(log, [1, undefined, undefined, undefined])
   log = []
   await time(10)
@@ -581,19 +581,19 @@ t('store: core', async t => {
     log.push(s)
   }, [s])
 
-  await tick(4)
+  await tick(8)
   t.is(log, [{x: 1}], 'init state')
 
   s.x = 2
-  await tick(6)
+  await tick(8)
   t.is(log, [{x: 1}, {x: 2}], 'change prop')
 
   s.y = 'foo'
-  await tick(6)
+  await tick(8)
   t.is(log, [{ x: 1 }, { x: 2 }, { x:2, y:'foo' }], 'add new prop')
 
   delete s.x
-  await tick(6)
+  await tick(8)
   t.is(log, [{ x: 1 }, { x: 2 }, { x:2, y:'foo' }, {y: 'foo'}], 'delete props')
 })
 
@@ -603,13 +603,13 @@ t('calc: core', async t => {
   const celsius = calc(f => (f - 32) / 1.8, [f])
   const fahren = calc(c => (c * 9) / 5 + 32, [c])
 
-  await tick(4)
+  await tick(8)
 
   t.is(celsius(), 0) // 0
   t.is(fahren(), 32) // 32
 
   c(20)
-  await tick(6)
+  await tick(8)
   t.is(fahren(), 68)
 })
 
@@ -622,7 +622,7 @@ t('attr: core', async t => {
         log.push(value)
       }
     })()
-  await tick(6)
+  await tick(8)
   t.is(log, [false], 'init')
   // el.setAttribute('x', '1')
   el.setAttribute('x', '2')
@@ -631,19 +631,19 @@ t('attr: core', async t => {
   el.setAttribute('x', '3')
   el.setAttribute('x', '4')
   el.setAttribute('x', '5')
-  await tick(6)
+  await tick(8)
   t.is(log, [false, '2', '5'], 'updates to latest value')
   // el.setAttribute('x', '5')
   // el.setAttribute('x', '5')
-  // await tick(6)
+  // await tick(8)
   // t.is(log, [false, '2', '5'], 'ignores unchanged value')
   // el.setAttribute('x', '6')
   // t.is(el.getAttribute('x'), '6', 'reading applies value')
-  // await tick(6)
+  // await tick(8)
   // t.is(log, [false, '2', '5', '6'], 'reading applies value')
   // xattrs.cancel()
   // el.setAttribute('x', '7')
-  // await tick(6)
+  // await tick(8)
   // t.is(el.getAttribute('x'), '7', 'end destructures property')
   // t.is(log, [false, '2', '5', '6'], 'end destructures property')
 })
@@ -662,12 +662,12 @@ t('on: core', async t => {
   t.is(log, ['click'], 'basic')
   el.click()
   el.click()
-  await tick(6)
+  await tick(8)
   t.is(log, ['click', 'click'], 'skips events within same tick')
   el.click()
   el.click()
   el.click()
-  await tick(6)
+  await tick(8)
   t.is(log, ['click', 'click', 'click'], 'updates to latest value')
 
   // TODO: find a way to stop it
@@ -675,6 +675,6 @@ t('on: core', async t => {
   // clicks.return()
   // el.click()
   // el.click()
-  // await tick(6)
+  // await tick(8)
   // t.is(log, ['click', 'click', 'click'], 'end stops event stream')
 })
