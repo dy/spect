@@ -1,7 +1,7 @@
 <div align="center"><img src="https://avatars3.githubusercontent.com/u/53097200?s=200&v=4" width=108 /></div>
 <p align="center"><h1 align="center">spect</h1></p>
 <p align="center">
-  Micro <a href="https://en.wikipedia.org/wiki/Aspect-oriented_programming"><em>aspects</em></a> with <em>effects</em> and <em>observables</em>.<br/>
+  Micro DOM <a href="https://en.wikipedia.org/wiki/Aspect-oriented_programming"><em>aspects</em></a> with <em>effects</em> and <em>observables</em>.<br/>
   <!-- Build reactive UIs with rules, similar to CSS.<br/> -->
   <!-- Each rule specifies an <em>aspect</em> function, carrying a piece of logic.<br/> -->
 </p>
@@ -12,7 +12,34 @@
   <a href="https://npmjs.org/package/spect"><img alt="npm" src="https://img.shields.io/npm/v/spect"></a>
 </p>
 
-<p align="center"><img src="/timer.png" width="435"/></p>
+<p align="center"><img src="/preview.png" width="695"/></p>
+<!--
+<script type="module">
+    import { $, fx, state, store } from "https://unpkg.com/spect?module"
+    import { html, render } from "https://unpkg.com/lit-html?module"
+    import ky from 'https://unpkg.com/ky?module'
+
+    const url = "https://api.hnpwa.com/v0/news"
+    const page = state(0)
+    const news = store({
+      items: [],
+      loading: false,
+      async load(page) {
+        this.loading = true
+        this.items = await ky(`${url}?page=${ page }`).json()
+        this.loading = false
+      }
+    })
+
+    $('.news-list', el => {
+      fx(page => news.load( page ), [ page ])
+      fx(({ items, loading }) => render(
+        news.loading ? html`<progress />` :
+        items.map(item => html`<li>${ item.title }</li>`),
+      el), [ news ])
+    })
+  </script>
+-->
 
 ## Installing
 
