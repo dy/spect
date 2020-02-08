@@ -16,24 +16,22 @@
 
 <!--
 <script type="module">
-  import { $, fx, state, store } from "https://unpkg.com/spect?module"
+  import { $, fx, store } from "https://unpkg.com/spect?module"
   import { html, render } from "https://unpkg.com/lit-html?module"
-  import ky from 'https://unpkg.com/ky?module'
 
   const url = "https://api.hnpwa.com/v0/news"
-  const page = state(0)
   const news = store({
     items: [],
     loading: false,
-    async load( page ) {
+    async load() {
       this.loading = true
-      this.items = await ky(`${ url }?page=${ page }`).json()
+      this.items = await fetch(url).then(r => r.json())
       this.loading = false
     }
   })
 
   $('.news-list', el => {
-    fx(page => news.load( page ), [ page ])
+    news.load()
     fx(({ items, loading }) => render(
       news.loading ? html`<progress />` :
       items.map(item => html`<li>${ item.title }</li>`),
