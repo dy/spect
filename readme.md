@@ -12,33 +12,33 @@
   <a href="https://npmjs.org/package/spect"><img alt="npm" src="https://img.shields.io/npm/v/spect"></a>
 </p>
 
-<p align="center"><img src="/preview.png" width="695"/></p>
+<p align="center"><img src="/preview.png" width="679"/></p>
 <!--
 <script type="module">
-    import { $, fx, state, store } from "https://unpkg.com/spect?module"
-    import { html, render } from "https://unpkg.com/lit-html?module"
-    import ky from 'https://unpkg.com/ky?module'
+  import { $, fx, state, store } from "https://unpkg.com/spect?module"
+  import { html, render } from "https://unpkg.com/lit-html?module"
+  import ky from 'https://unpkg.com/ky?module'
 
-    const url = "https://api.hnpwa.com/v0/news"
-    const page = state(0)
-    const news = store({
-      items: [],
-      loading: false,
-      async load(page) {
-        this.loading = true
-        this.items = await ky(`${url}?page=${ page }`).json()
-        this.loading = false
-      }
-    })
+  const url = "https://api.hnpwa.com/v0/news"
+  const page = state(0)
+  const news = store({
+    items: [],
+    loading: false,
+    async load( page ) {
+      this.loading = true
+      this.items = await ky(`${ url }?page=${ page }`).json()
+      this.loading = false
+    }
+  })
 
-    $('.news-list', el => {
-      fx(page => news.load( page ), [ page ])
-      fx(({ items, loading }) => render(
-        news.loading ? html`<progress />` :
-        items.map(item => html`<li>${ item.title }</li>`),
-      el), [ news ])
-    })
-  </script>
+  $('.news-list', el => {
+    fx(page => news.load( page ), [ page ])
+    fx(({ items, loading }) => render(
+      news.loading ? html`<progress />` :
+      items.map(item => html`<li>${ item.title }</li>`),
+    el), [ news ])
+  })
+</script>
 -->
 
 ## Installing
