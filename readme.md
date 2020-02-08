@@ -12,7 +12,7 @@
   <a href="https://npmjs.org/package/spect"><img alt="npm" src="https://img.shields.io/npm/v/spect"></a>
 </p>
 
-<p align="center"><img src="/preview.png" width="641"/></p>
+<p align="center"><img src="/preview.png" width="642"/></p>
 
 <!--
 <time id="current-time"></time>
@@ -25,7 +25,7 @@
 
     fx(() => {
       el.innerHTML = date().toLocaleTimeString()
-      el.setAttribute('datetime', date().toISOString('en-CA'))
+      el.setAttribute('datetime', date().toISOString())
 
       setTimeout(() => date(new Date()), 1000)
     }, [date])
