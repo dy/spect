@@ -43,6 +43,12 @@ export default function ref(value) {
       }
     },
 
+    // let [value, setValue] = state()
+    // *[Symbol.iterator]() {
+    //   yield ref.get()
+    //   yield ref.set
+    // },
+
     cancel() {
       ref[_p].cancel()
     }
@@ -51,6 +57,9 @@ export default function ref(value) {
     // async subscribe(cb) { for await (let value of ref) cb(value) }
   })
   ref.valueOf = ref.toString = ref[Symbol.toPrimitive] = ref.get
+
+  // value[0]
+  // Object.defineProperties(ref, { [0]: { enumerable: false, get: ref.get }, [1]: { enumerable: false, get: () => ref.set } })
 
   return ref
 }

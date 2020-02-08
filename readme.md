@@ -15,29 +15,40 @@
 <p align="center"><img src="/preview.png" width="647"/></p>
 
 <!--
+<time id="current-time"></time>
+
 <script type="module">
-  import { $, fx, store } from "https://unpkg.com/spect?module"
-  import { html, render } from "https://unpkg.com/lit-html?module"
+  import { $, fx, state } from "https://unpkg.com/spect?module"
 
-  const url = "https://api.hnpwa.com/v0/news"
-  const news = store({
-    items: [],
-    loading: false,
-    async load() {
-      this.loading = true
-      this.items = await fetch(url).then(r => r.json())
-      this.loading = false
-    }
-  })
+  $('#current-time', el => {
+    const date = state(new Date())
 
-  $('.news-list', el => {
-    news.load()
-    fx(({ items, loading }) => render(
-      news.loading ? html`<progress />` :
-      items.map(item => html`<li>${ item.title }</li>`),
-    el), [ news ])
+    fx(() => {
+      el.innerHTML = date().toLocaleTimeString()
+      el.setAttribute('datetime', date().toISOString('en-CA'))
+
+      setTimeout(() => date(new Date()), 1000)
+    }, [date])
   })
 </script>
+-->
+
+<!--
+Too much store, too much like react too little core profits. Needs showcasing core values.
+
+separate aspects: auth, vis, sound, logging, meta, messaging etc.
+vanilla-first
+Respects semantic HTML
+web-components friendly
+clean tree
+Particles of behavior, pieces / fragments / atoms / particles of logic
+Can be gradually infused into react/JSX, reducing tree complexity
+Replacement to HOCs
+Natural hydration
+0 bundling
+real SPA
+best of react, rxjs and jquery worlds
+
 -->
 
 ## Installing
@@ -58,7 +69,7 @@ import { $, fx } from 'https://unpkg.com/spect@latest?module'
 import { $ } from 'spect'
 ```
 
-_Spect_ is perfect match with [Snowpack](https://www.snowpack.dev/), but any other bundler will do.
+_Spect_ plays perfectly with [snowpack](https://www.snowpack.dev/), but any other bundler will do.
 
 ## Usage
 
@@ -166,7 +177,7 @@ _**`fx`**_ is generic effect. It reacts to changes in `deps` and runs callback, 
 * _Function_ is considered an [observable](https://ghub.io) / [observ](https://ghub.io) / [mutant](https://ghub.io/mutant);
 * any other value is considered constant.
 
-`values` reflect new `deps` state and passed as arguments. Returned `teardown` function is used as destructor, when the deps state changes.
+Deps `state` is passed as arguments. Returned `teardown` function is used as destructor, when the `state` changes.
 
 ```js
 import { state, fx } from 'spect'
@@ -234,7 +245,7 @@ fahren() // 32
 
 > value = prop( target, name )
 
-_**`prop`**_ is target property observable, serves as accessor and streams changes. _**`prop`**_ keeps safe target's own getter/setter, if defined.
+_**`prop`**_ is target property observable and accessor. _**`prop`**_ keeps safe target's own getter/setter, if defined.
 
 ```js
 import { prop, fx } from 'spect'

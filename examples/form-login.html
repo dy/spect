@@ -1,0 +1,41 @@
+<form id="login">
+  <input name="username" placeholder="Username / Email" required />
+  <input name="password" minlength="8" required />
+  <button>Sign In</button>
+</form>
+
+<script type="module">
+  import { $, fx, store } from "https://unpkg.com/spect?module"
+
+  // data logic
+  $('#login-form', el => {
+    el.addEventListener('submit', e => {
+      e.preventDefault()
+    })
+  })
+
+  // show/hide password
+  $('[type=password]', el => {
+    const visible = state(false)
+    const icon = el.appendChild(htl`<i class="material-icons"></i>`)
+
+    fx(() => {
+      icon.onclick = e => visible(true)
+      icon.textContent = 'visibility-off'
+      return () => {
+        icon.onclick = e => visible(false)
+        icon.textContent = 'visibility'
+      }
+    }, [visible])
+  })
+
+  // prepend icon
+  $('[icon]', el => {
+    el.prepend()
+  })
+
+  // fancy tooltips
+  $('[title]', el => {
+
+  })
+</script>
