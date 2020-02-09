@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/normalize/8.0.1/normalize.css"/>
+<style>
+  body {
+    position: relative;
+  }
+  #channel-split-material {
+    position: absolute;
+    left: 0;
+    right: 0;
+    top: 0;
+    bottom: 0;
+    margin: auto;
+    font-weight: 700;
+    font-size: 40px;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  }
+</style>
+
+<div id="channel-split-material">spect</div>
+
+<script src="https://raw.githack.com/bradley/Blotter/master/build/blotter.min.js"></script>
+<script src="https://raw.githack.com/bradley/Blotter/master/build/materials/channelSplitMaterial.js"></script>
+<script type="module">
+  import { $ } from 'https://unpkg.com/spect?module'
+
+
+  $('#channel-split-material', el => {
+    let style = getComputedStyle(el)
+    const text = el.textContent
+    el.textContent = ''
+
+    let blotterText = new Blotter.Text(text, {
+      family: style.fontFamily,
+      // FIXME: use to-px instead
+      size: parseInt(style.fontSize),
+      // leading: style.lineHeight,
+      leading: 1,
+      fill: style.color,
+      style: style.fontStyle,
+      weight: style.fontWeight,
+      paddingTop: style.paddingTop,
+      paddingRight: style.paddingRight,
+      paddingBottom: style.paddingBotton,
+      paddingLeft: style.paddingLeft
+    });
+
+    let material = new Blotter.ChannelSplitMaterial();
+
+    let blotter = new Blotter(material, {
+      texts: blotterText
+    })
+
+    let scope = blotter.forText(blotterText);
+    scope.appendTo(el)
+  })
+</script>
