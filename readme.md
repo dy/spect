@@ -76,7 +76,7 @@ _Spect_ plays perfectly with [snowpack](https://www.snowpack.dev/), but any othe
 
 ## Usage
 
-_Spect_ makes no guess at storage, actions, renderer or tooling setup and can be used with different flavors.
+_Spect_ doesn't make any guess about storage, actions, renderer or tooling setup and can be used with different flavors.
 
 #### Vanilla
 
@@ -142,10 +142,10 @@ Pending...
 
 > $( selector | element, aspect )
 
-_**`$`**_ is selector observer effect. It assigns an `aspect` function to `selector` or `element`. The `aspect` is triggered when an element matching the `selector` is mounted, and optional returned callback is called when unmounted or asect is tore down.
+_**`$`**_ is selector observer effect. It assigns an `aspect` function to `selector` or `element`. The `aspect` is triggered when an element matching the `selector` is mounted, and optional returned callback is called when unmounted or apsect is torn down.
 
 * `selector` should be a valid CSS selector.
-* `element` can be an _HTMLElement_ or list of elements (any array-like).
+* `element` can be an _HTMLElement_ or a list of elements (array or array-like).
 * `aspect` is a function with `target => teardown` signature, or an array of functions.
 
 <!-- * `context` is optional element to assign mutation observer to, can be helpful for perf optimization, but benchmark shows that the effect of MO is insignificant. -->
@@ -180,7 +180,7 @@ _**`fx`**_ is generic effect. It reacts to changes in `deps` and runs callback, 
 * _Function_ is considered an [observable](https://ghub.io) / [observ](https://ghub.io) / [mutant](https://ghub.io/mutant);
 * any other value is considered constant.
 
-Deps `state` is passed as arguments. Returned `teardown` function is used as destructor, when the `state` changes.
+Deps `state` is passed as arguments. Returned `teardown` function is used as destructor when the `state` changes.
 _**`fx**_ doesn't run if `deps` list is empty. If `deps` isn't provided, the callback is run only once as microtask.
 
 ```js
@@ -202,8 +202,8 @@ fx(async c => {
 
 > value = state( init? )
 
-_**`state`**_ creates an observable value, that is simply getter/setter function with [_asyncIterator_](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Symbol/asyncIterator) interface. `init` can be an initial value or initializer function.
-_**`state`**_ plays role of _useState_ hook, or [observable](https://ghub.io/observable).
+_**`state`**_ creates an observable value that is simply a getter/setter function with [_asyncIterator_](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Symbol/asyncIterator) interface. `init` can be an initial value or an initializer function.
+_**`state`**_ acts as _useState_ hook, or [observable](https://ghub.io/observable).
 
 ```js
 import { state } from 'spect'
@@ -271,7 +271,7 @@ o.foo = 'baz'
 
 > value = attr( element, name )
 
-Element attribute observable. Similar to _**`prop`**_, it provides access to attribute value and streams changes.
+Element attribute observable. Similar to _**`prop`**_, it provides access to attribute value and emits changes.
 
 ```js
 import { fx, attr } from 'spect'
@@ -287,7 +287,7 @@ fx(loading => {
 
 > obj = store( init = {} )
 
-Observable object. Unlike _**`state`**_, creates a proxy for the object − adding, changing or deleting props emits changes. Similar to _Struct_ in [mutant](https://ghub.io/mutant).
+Observable object. Unlike _**`state`**_, creates a proxy for the object − adding, changing, or deleting its properties emits changes. Similar to _Struct_ in [mutant](https://ghub.io/mutant).
 
 ```js
 import { store } from 'spect'
@@ -317,7 +317,7 @@ $('.likes-count', el => {
 
 > evts = on( element, eventName )
 
-Stateless events async iteratable. Come handy for event-based effects. To stop observing, invoke `evts.cancel()`.
+Stateless events async iteratable. Comes handy for event-based effects. To stop observing, invoke `evts.cancel()`.
 
 ```js
 import { $, on, calc, fx } from 'spect'
@@ -347,7 +347,7 @@ $('input', el => {
 
 > value = ref( init? )
 
-_**`ref`**_ is core value observer, serves as foundation for other observables. Unlike _**`state`**_, it does not support functional setter and emits every set value.  _**`ref`**_ is direct analog of _useRef_ hook.
+_**`ref`**_ is core value observer, serves as a foundation for other observables. Unlike _**`state`**_, it does not support functional setter and emits every set value.  _**`ref`**_ is a direct analog of _useRef_ hook.
 
 ```js
 import { ref } from 'spect'
