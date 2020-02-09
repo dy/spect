@@ -3,6 +3,7 @@ import SelectorSet from 'selector-set'
 const _callbacks = Symbol.for('__spect.callbacks')
 const _destroyPlanned = Symbol.for('__spect.destroyPlanned')
 const _observer = Symbol.for('__spect.observer')
+const _attrTargets = Symbol.for('__spect.attrTargets')
 const set = new SelectorSet
 
 // element-based aspect
@@ -65,7 +66,32 @@ function $(selector, fn, context = document.documentElement) {
           })
         }
         else if (mutation.type === 'attributes') {
-          set.matches(target).forEach(rule => initCallback(target, rule.data))
+          const attrName = mutation.attributeName
+          if (!target[_attrTargets]) target[_attrTargets] = {}
+          if (!target[_attrTargets][attrName]) target[_attrTargets][attrName] = new Map
+
+          const active = new WeakSet()
+          set.matches(target).forEach(rule => {
+            initCallback(target, rule.data)
+            target[_attrTargets][attrName].set(target, rule.data)
+            active.add(target)
+          })
+
+          set.queryAll(target).forEach(rule => {
+            rule.elements.forEach(el => {
+              initCallback(el, rule.data)
+              target[_attrTargets][attrName].set(el, rule.data)
+              active.add(el)
+            })
+          })
+
+          // remove selectors not matching attr rules anymore
+          for (let [el, aspect] of target[_attrTargets][attrName]) {
+            if (active.has(el)) continue
+            destroyCallback(el, aspect)
+            target[_attrTargets][attrName].delete(el)
+            if (!target[_attrTargets][attrName].size) delete target[_attrTargets][attrName]
+          }
         }
       }
     })

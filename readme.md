@@ -37,7 +37,8 @@
 Too much store, too much like react too little core profits. Needs showcasing core values.
 
 separate aspects: auth, vis, sound, logging, meta, messaging etc.
-vanilla-first
+standard vanilla first
+compatible with vanillic components
 Respects semantic HTML
 web-components friendly
 clean tree
@@ -46,6 +47,8 @@ Can be gradually infused into react/JSX, reducing tree complexity
 Replacement to HOCs
 Natural hydration
 0 bundling
+no-server
+single-file
 real SPA
 best of react, rxjs and jquery worlds
 

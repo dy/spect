@@ -158,6 +158,42 @@ t('$: destructor is called on unmount', async t => {
   t.deepEqual(log, [1, 1, 2, 2])
   t.end()
 })
+t('$: changed attribute matches new nodes', async t => {
+  let el = document.createElement('div')
+  el.innerHTML = '<a><b><c></c></b></a>'
+
+  let log = []
+  $('a b.b', e => {
+    log.push('+2')
+    return () => log.push('-2')
+  })
+  $('a b.b c', e => {
+    log.push('+3')
+    return () => log.push('-3')
+  }, el)
+  await frame()
+
+  t.is(log, [])
+
+  el.querySelector('b').classList.add('b')
+  await frame()
+  t.is(log, ['+2', '+3'])
+
+  el.querySelector('b').classList.remove('b')
+  await frame()
+  t.is(log, ['+2', '+3', '-2', '-3'])
+
+
+  log = []
+  el.querySelector('b').classList.add('b')
+  await frame()
+  t.is(log, ['+2', '+3'])
+
+  el.querySelector('b').classList.remove('b')
+  await frame()
+  t.is(log, ['+2', '+3', '-2', '-3'])
+})
+
 t.todo('subaspects', async t => {
   let log = []
 
