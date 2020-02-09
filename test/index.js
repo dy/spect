@@ -546,7 +546,7 @@ t('fx: destructor', async t => {
   await tick(8)
   t.is(log, ['out', 0, 0, 'in', 1, 1], 'destructor is ok')
 })
-t('fx: disposed by unmounted element automatically')
+t.todo('fx: disposed by unmounted element automatically')
 t('fx: doesn\'t run unchanged', async t => {
   let a = ref(0)
   let log = []
@@ -571,7 +571,7 @@ t('fx: no-deps/empty deps runs once', async t => {
   })
 
   await tick(8)
-  t.is(log, [0, 1])
+  t.is(log, [1])
 })
 t('fx: async fx', async t => {
   let count = state(0)
@@ -608,6 +608,16 @@ t('fx: promise / observable / direct dep', async t => {
   log = []
   await time(10)
   t.is(log, [1, 2, 3, 4])
+})
+t('fx: on must not create initial tick', async t => {
+  let ex = on(document.createElement('x'), 'click')
+  let log = []
+  fx(e => {
+    log.push(1)
+  }, [ex])
+
+  await tick(20)
+  t.is(log, [])
 })
 
 t('store: core', async t => {

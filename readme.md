@@ -168,11 +168,11 @@ $('.timer', el => {
 
 ### _`fx`_
 
-> fx( state => teardown, deps = [] )
+> fx( state => teardown, deps = [ Promise.resolve() ] )
 
 _**`fx`**_ is generic effect. It reacts to changes in `deps` and runs callback, much like _useEffect_.
 
-`deps` expect:
+`deps` list expects:
 
 * _Async Generator_ / _Async Iterable_ / object with [`Symbol.asyncIterator`](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Symbol/asyncIterator) method;
 * _Promise_ / _Thenable_;
@@ -181,6 +181,7 @@ _**`fx`**_ is generic effect. It reacts to changes in `deps` and runs callback, 
 * any other value is considered constant.
 
 Deps `state` is passed as arguments. Returned `teardown` function is used as destructor, when the `state` changes.
+_**`fx**_ doesn't run if `deps` list is empty. If `deps` isn't provided, the callback is run only once as microtask.
 
 ```js
 import { state, fx } from 'spect'

@@ -1,20 +1,27 @@
-export default function fx(cb, deps=[]) {
+export default function fx(cb, deps=[Promise.resolve()]) {
   let current = [], prev = []
-  deps.map((dep, i) => {
-    if (primitive(dep)) return current[i] = dep
-    if ('then' in dep || 'subscribe' in dep) return
-    if (typeof dep === 'function') return current[i] = dep()
-    if ('valueOf' in dep) return current[i] = dep.valueOf()
-    if ('current' in dep) return current[i] = dep.current
-    current[i] = dep
-  })
+  let changed = false, destroy
+  const notify = () => {
+    if (changed) return
+    changed = true
+    Promise.resolve().then(() => {
+      changed = false
+      if (destroy && destroy.call) destroy(...prev)
+      prev = [...current]
+      destroy = cb(...current)
+    })
+  }
 
   // observe changes
   deps.map(async (dep, i) => {
-    if (primitive(dep)) return
+    // resolve primitive immediately
+    if (primitive(dep)) {
+      current[i] = dep
+      notify()
+    }
 
     // async iterator
-    if (Symbol.asyncIterator in dep) {
+    else if (Symbol.asyncIterator in dep) {
       for await (let value of dep) {
         if (value === current[i]) continue
         current[i] = value
@@ -45,19 +52,6 @@ export default function fx(cb, deps=[]) {
       })
     }
   })
-
-  let changed = false, destroy
-  const notify = () => {
-    if (changed) return
-    changed = true
-    Promise.resolve().then(() => {
-      changed = false
-      if (destroy && destroy.call) destroy(...prev)
-      prev = [...current]
-      destroy = cb(...current)
-    })
-  }
-  notify()
 }
 
 function primitive(val) {
