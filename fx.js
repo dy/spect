@@ -1,4 +1,4 @@
-export default function fx(cb, deps=[Promise.resolve()]) {
+export default function fx(cb, deps=[Promise.resolve().then()]) {
   let current = [], prev = []
   let changed = false, destroy
   const notify = () => {

@@ -581,17 +581,24 @@ t('fx: doesn\'t run unchanged', async t => {
   await tick(8)
   t.is(log, [0], 'does not run unchanged')
 })
-t('fx: no-deps/empty deps runs once', async t => {
+t('fx: no-deps/empty deps runs once after deps', async t => {
   let log = []
+  const c = state(0)
   fx(() => {
-    log.push(0)
-  }, [])
+    log.push(c())
+  }, [c])
   fx(() => {
     log.push(1)
+  }, [])
+  fx(() => {
+    log.push(2)
   })
+  fx(() => {
+    log.push(c())
+  }, [c])
 
   await tick(8)
-  t.is(log, [1])
+  t.is(log, [0, 2, 0])
 })
 t('fx: async fx', async t => {
   let count = state(0)
