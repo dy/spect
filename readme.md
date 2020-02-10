@@ -13,7 +13,7 @@
 </p>
 
 <p align="center"><img src="/preview.png" width="642"/></p>
-<p align="center"><a href="https://codepen.io/dyv/pen/oNXXZEb"><strong>▶ Run</strong></a></p>
+<p align="center"><a href="https://codepen.io/dyv/pen/oNXXZEb">▶ <strong>Run</strong></a></p>
 
 <!--
 <time id="current-time"></time>
