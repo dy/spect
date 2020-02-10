@@ -45,17 +45,17 @@ best of react, rxjs and jquery worlds
 -->
 
 _Spect_ provides a lightweight alternative to industrial frameworks, encompassing best parts under elegant modern API.
-Its design is inspired by [_React hooks_](https://reactjs.org/docs/hooks-intro.html), [_Observables_](https://www.npmjs.com/package/observable) and [_aspect-oriented-programming_](https://en.wikipedia.org/wiki/Aspect-oriented_programming).
+Its design is inspired by [_react hooks_](https://reactjs.org/docs/hooks-intro.html), [_observables_](https://www.npmjs.com/package/observable) and [_aspect-oriented-programming_](https://en.wikipedia.org/wiki/Aspect-oriented_programming).
 
 ## Principles
 
-:gem: **Separation of Concerns**: complementary pieces of logic in declarative fashion.
+:gem: **Splitting concerns** via **aspects** − complementary pieces of logic in declarative fashion.
 
-:deciduous_tree: **Native First**: semantic HTML, clean tree, vanilla / web components friendly.
+:deciduous_tree: **Native first**: semantic HTML, clean tree, vanilla / web components friendly.
 
-:ocean: **Progressive Enhancement** via organic structuring.
+:ocean: **Progressive enhancement** via built-in organic structuring.
 
-:baby_chick: **Low entry barrier**: no complexity hostages.
+:baby_chick: **Low entry barrier** − no complexity hostages.
 
 :dizzy: **0** bundling, **0** server, **0** template.
 
