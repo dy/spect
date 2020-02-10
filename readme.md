@@ -182,7 +182,7 @@ _**`fx`**_ is generic effect. It reacts to changes in `deps` and runs callback, 
 * any other value is considered constant.
 
 Deps `state` is passed as arguments. Returned `teardown` function is used as destructor when the `state` changes.
-_**`fx**_ doesn't run if `deps` list is empty. If `deps` isn't provided, the callback is run only once as microtask.
+_**`fx`**_ doesn't run if `deps` list is empty. If `deps` isn't provided, the callback is run only once as microtask.
 
 ```js
 import { state, fx } from 'spect'
