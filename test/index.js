@@ -55,7 +55,7 @@ t('$: init existing elements', async t => {
 t('$: dynamically assigned selector', async t => {
   let log = []
 
-  $('.x', el => {
+  let off = $('.x', el => {
     log.push(el)
   })
 
@@ -70,7 +70,9 @@ t('$: dynamically assigned selector', async t => {
 
   t.is(log, [el])
 
+  off()
   document.body.removeChild(el)
+
 })
 t('$: simple hooks', async t => {
   let el = document.createElement('div')
@@ -140,10 +142,10 @@ t('$: remove/add should not retrigger element', async t => {
 t('$: destructor is called on unmount', async t => {
   let el = document.createElement('div')
   let log = []
-  let off = $('*', el => {
+  let off = $(el, '*', el => {
     log.push(1)
     return () => log.push(2)
-  }, el)
+  })
   t.deepEqual(log, [])
   el.innerHTML = 'x<a></a><a></a>x'
   await tick()
@@ -163,14 +165,14 @@ t('$: changed attribute matches new nodes', async t => {
   el.innerHTML = '<a><b><c></c></b></a>'
 
   let log = []
-  $('a b.b', e => {
+  $(el, 'a b.b', e => {
     log.push('+2')
     return () => log.push('-2')
   })
-  $('a b.b c', e => {
+  $(el, 'a b.b c', e => {
     log.push('+3')
     return () => log.push('-3')
-  }, el)
+  })
   await frame()
 
   t.is(log, [])
@@ -193,7 +195,26 @@ t('$: changed attribute matches new nodes', async t => {
   await frame()
   t.is(log, ['+2', '+3', '-2', '-3'])
 })
-
+t('$: contextual query with self-matching', async t => {
+  let el = document.createElement('x')
+  let log = []
+  $(el, '.x y', y => {
+    log.push('y')
+  })
+  $(el, '.x', el => {
+    log.push('x')
+  })
+  $(el, () => {
+    log.push('-')
+  })
+  $(el, ' y', el => {
+    log.push(' y')
+  })
+  el.innerHTML = '<y></y>'
+  el.classList.add('x')
+  await tick(8)
+  t.same(log, ['y', 'x', '-', ' y'])
+})
 t.todo('subaspects', async t => {
   let log = []
 
@@ -265,7 +286,7 @@ t.skip('same aspect different targets', t => {
 
   t.deepEqual(log, ['A', 'SPAN'])
 })
-t.todo('Same target different aspects', async t => {
+t.todo('same target different aspects', async t => {
   let log = []
 
   let a = {}
@@ -288,7 +309,6 @@ t.todo('same aspect same target', async t => {
   await spect(a).use(fx)
   t.deepEqual(log, ['a'])
 })
-t.todo('generators aspects')
 t.todo('async aspects', t => {
   let a = document.createElement('a')
 

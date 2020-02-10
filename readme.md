@@ -74,6 +74,7 @@ import { $ } from 'spect'
 
 _Spect_ plays perfectly with [snowpack](https://www.snowpack.dev/), but any other bundler will do.
 
+<!--
 ## Usage
 
 _Spect_ doesn't make any guess about storage, actions, renderer or tooling setup and can be used with different flavors.
@@ -101,6 +102,7 @@ $('input#height', el => {
   }, [on(el, 'input'), on(el, 'change')])
 })
 ```
+-->
 
 <!--
 
@@ -140,15 +142,14 @@ Pending...
 
 ### _`$`_
 
-> $( selector | element, aspect )
+> $( scope? , selector | element, aspect )
 
 _**`$`**_ is selector observer effect. It assigns an `aspect` function to `selector` or `element`. The `aspect` is triggered when an element matching the `selector` is mounted, and optional returned callback is called when unmounted or apsect is torn down.
 
 * `selector` should be a valid CSS selector.
 * `element` can be an _HTMLElement_ or a list of elements (array or array-like).
 * `aspect` is a function with `target => teardown` signature, or an array of functions.
-
-<!-- * `context` is optional element to assign mutation observer to, can be helpful for perf optimization, but benchmark shows that the effect of MO is insignificant. -->
+* `scope` is optional container element to assign mutation observer to, by default that is `document`.
 
 ```js
 import { $ } from 'spect'

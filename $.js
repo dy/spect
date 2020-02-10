@@ -7,10 +7,17 @@ const _attrTargets = Symbol.for('__spect.attrTargets')
 const set = new SelectorSet
 
 // element-based aspect
-export default function spect(target, fn, context) {
+export default function spect(context, target, fn) {
+  // spect(target, fn)
+  if (arguments.length === 2) {
+    fn = target
+    target = context
+    context = document
+  }
+
   // spect('.a', b)
   if (typeof target === 'string') {
-    return $(target, fn, context)
+    return $(context, target, fn)
   }
 
   let offs = []
@@ -18,19 +25,19 @@ export default function spect(target, fn, context) {
   // spect({'.x': a, '.y': b})
   if (arguments.length === 1) {
     for (let selector in target) {
-      offs.push(spect(selector, target[selector], context))
+      offs.push(spect(context, selector, target[selector]))
     }
   }
 
   // spect('.a', [b, c])
   else if (Array.isArray(fn)) {
-    offs = fn.map(fn => spect(target, fn, context))
+    offs = fn.map(fn => spect(context, target, fn))
   }
 
   // spect(list, fn)
   else if (target.length && !target.nodeType) {
     for (let i = 0; i < target.length; i++) {
-      offs.push(spect(target[i], fn, context))
+      offs.push(spect(context, target[i], fn))
     }
   }
 
@@ -44,7 +51,7 @@ export default function spect(target, fn, context) {
 }
 
 // selector-based aspect
-function $(selector, fn, context = document.documentElement) {
+function $(context, selector, fn) {
   if (!context[_observer]) {
     const observer = context[_observer] = new MutationObserver((list) => {
       for (let mutation of list) {
