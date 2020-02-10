@@ -59,7 +59,7 @@ Its design is inspired by [_React hooks_](https://reactjs.org/docs/hooks-intro.h
 
 :dizzy: **0** bundling, **0** server, **0** template.
 
-:syringe: **Utility**: can be used as helper tool for UI tasks. 
+:syringe: **Utility**: can be used as helper tool for complex UI tasks. 
 
 
 ## Installation
