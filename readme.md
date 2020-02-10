@@ -169,9 +169,11 @@ $('.timer', el => {
 
 ### _`fx`_
 
-> fx( state => teardown, deps = [ Promise.resolve() ] )
+> fx( callback, deps = [ Promise.resolve() ] )
 
-_**`fx`**_ is generic effect. It reacts to changes in `deps` and runs callback, much like _useEffect_.
+_**`fx`**_ is generic effect. It reacts to changes in `deps` and runs `callback`, much like _useEffect_.
+
+`callback` is a function with `(...args) => teardown` signature.
 
 `deps` list expects:
 
@@ -181,8 +183,8 @@ _**`fx`**_ is generic effect. It reacts to changes in `deps` and runs callback, 
 * _Function_ is considered an [observable](https://ghub.io) / [observ](https://ghub.io) / [mutant](https://ghub.io/mutant);
 * any other value is considered constant.
 
-Deps `state` is passed as arguments. Returned `teardown` function is used as destructor when the `state` changes.
-_**`fx`**_ doesn't run if `deps` list is empty. If `deps` isn't provided, the callback is run only once as microtask.
+Resolved deps values are passed as arguments to `callback`. Returned `teardown` function is used as destructor when the `state` changes.
+Omitted deps run effect only once as microtask.
 
 ```js
 import { state, fx } from 'spect'
@@ -195,6 +197,12 @@ fx(async c => {
   await time(1000)
   count(c + 1)
 }, [count])
+
+// called once
+fx(() => {})
+
+// never called
+fx(() => {}, [])
 ```
 
 <br/>
