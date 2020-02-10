@@ -13,6 +13,7 @@
 </p>
 
 <p align="center"><img src="/preview.png" width="642"/></p>
+<p align="center">▶ Run</p>
 
 <!--
 <time id="current-time"></time>
@@ -51,6 +52,10 @@ no-server
 single-file
 real SPA
 best of react, rxjs and jquery worlds
+no fake inevitable complexity hostage developers
+0 maintenance (simple html pages just work)
+0 entry barrier
+as simple as 90s
 
 -->
 
