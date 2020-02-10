@@ -51,15 +51,15 @@ Its design is inspired by [_React hooks_](https://reactjs.org/docs/hooks-intro.h
 
 :gem: **Separation of Concerns**: complementary pieces of logic in declarative fashion.
 
-:deciduous_tree: **Native First**: respects semantic HTML, keeps clean tree, vanilla / web components friendly.
+:deciduous_tree: **Native First**: semantic HTML, clean tree, vanilla / web components friendly.
 
 :ocean: **Progressive Enhancement** via organic structuring.
 
-:baby_chick: **Low entry barrier**: no complexity victims / hostages.
+:baby_chick: **Low entry barrier**: no complexity hostages.
 
 :dizzy: **0** bundling, **0** server, **0** template.
 
-:syringe: **Utility**: can be used as helper tool for complex UI tasks. 
+:syringe: **Utility**: can be used as UI helper tool. 
 
 
 ## Installation
