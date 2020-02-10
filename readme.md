@@ -35,14 +35,6 @@
 </script>
 -->
 
-<!--
-Too much store, too much like react too little core profits. Needs showcasing core values.
-
-Can be gradually infused into react/JSX, reducing tree complexity
-Replacement to HOCs
-best of react, rxjs and jquery worlds
-
--->
 
 _Spect_ provides a lightweight alternative to industrial frameworks, encompassing best parts under elegant modern API.
 Its design is inspired by [_react hooks_](https://reactjs.org/docs/hooks-intro.html), [_observables_](https://www.npmjs.com/package/observable) and [_aspect-oriented-programming_](https://en.wikipedia.org/wiki/Aspect-oriented_programming).
@@ -59,7 +51,7 @@ Its design is inspired by [_react hooks_](https://reactjs.org/docs/hooks-intro.h
 
 :dizzy: **0** bundling, **0** server, **0** template.
 
-:syringe: **Utility**: can be used as UI helper tool. 
+:syringe: **Utility** − can be used as a band-aid tool in existing projects / transitioned gradually. 
 
 
 ## Installation
