@@ -38,25 +38,9 @@
 <!--
 Too much store, too much like react too little core profits. Needs showcasing core values.
 
-separate aspects: auth, vis, sound, logging, meta, messaging etc.
-standard vanilla / native first
-compatible with vanillic components
-Respects semantic HTML
-web-components friendly
-clean tree
-Particles of behavior, pieces / fragments / atoms / particles of logic
 Can be gradually infused into react/JSX, reducing tree complexity
 Replacement to HOCs
-Natural hydration
-0 bundling
-no-server
-single-file
-real SPA
 best of react, rxjs and jquery worlds
-no fake inevitable complexity hostage developers
-0 maintenance (simple html pages just work)
-0 entry barrier
-as simple as 90s
 
 -->
 
@@ -65,15 +49,17 @@ Its design is inspired by [_React hooks_](https://reactjs.org/docs/hooks-intro.h
 
 ## Principles
 
-:gem: **Separation of Concerns**: complementary pieces of logic in CSS-like fashion.
+:gem: **Separation of Concerns**: complementary pieces of logic in declarative fashion.
 
-:deciduous_tree: **Native First**: semantic HTML, clean tree, vanilla / web-components friendly.
+:deciduous_tree: **Native First**: respects semantic HTML, keeps clean tree, vanilla / web components friendly.
 
-:ocean: **Progressive Enhancement** via organic structure.
+:ocean: **Progressive Enhancement** via organic structuring.
 
 :baby_chick: **Low entry barrier**: no complexity victims / hostages.
 
 :dizzy: **0** bundling, **0** server, **0** template.
+
+:syringe: ba can be employed part-stack for complex UI tasks. 
 
 
 ## Installation
