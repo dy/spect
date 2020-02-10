@@ -1,7 +1,7 @@
 <div align="center"><img src="https://avatars3.githubusercontent.com/u/53097200?s=200&v=4" width=108 /></div>
 <p align="center"><h1 align="center">spect</h1></p>
 <p align="center">
-  Micro DOM <a href="https://en.wikipedia.org/wiki/Aspect-oriented_programming"><em>aspects</em></a> with <em>effects</em> and <em>observables</em>.<br/>
+  Micro DOM <em>aspects</em> with <em>effects</em> and <em>observables</em>.<br/>
   <!-- Build reactive UIs with rules, similar to CSS.<br/> -->
   <!-- Each rule specifies an <em>aspect</em> function, carrying a piece of logic.<br/> -->
 </p>
@@ -16,12 +16,13 @@
 <p align="center">▶ <a href="https://codepen.io/dyv/pen/oNXXZEb" target="_blank"><strong>Run</strong></a></p>
 
 <!--
-<time id="current-time"></time>
+<time id="clock"></time>
 
 <script type="module">
   import { $, fx, state } from "https://unpkg.com/spect?module"
+  import { $, fx, state } from "https://unpkg.com/spect"
 
-  $('#current-time', el => {
+  $('#clock', el => {
     const date = state(new Date())
 
     fx(() => {
@@ -38,7 +39,7 @@
 Too much store, too much like react too little core profits. Needs showcasing core values.
 
 separate aspects: auth, vis, sound, logging, meta, messaging etc.
-standard vanilla first
+standard vanilla / native first
 compatible with vanillic components
 Respects semantic HTML
 web-components friendly
@@ -59,7 +60,23 @@ as simple as 90s
 
 -->
 
-## Installing
+_Spect_ provides a lightweight alternative to industrial frameworks, encompassing best parts under elegant modern API.
+Its design is inspired by [_React hooks_](https://reactjs.org/docs/hooks-intro.html), [_Observables_](https://www.npmjs.com/package/observable) and [_aspect-oriented-programming_](https://en.wikipedia.org/wiki/Aspect-oriented_programming).
+
+## Principles
+
+:gem: **Separation of Concerns**: complementary pieces of logic in CSS-like fashion.
+
+:deciduous_tree: **Native First**: semantic HTML, clean tree, vanilla / web-components friendly.
+
+:ocean: **Progressive Enhancement** via organic structure.
+
+:baby_chick: **Low entry barrier**: no complexity victims / hostages.
+
+:dizzy: **0** bundling, **0** server, **0** template.
+
+
+## Installation
 
 #### A. Directly as module:
 
