@@ -43,14 +43,18 @@ export default function ref(value) {
       }
     },
 
-    // let [value, setValue] = state()
+    // let [value, setValue] = ref
     // *[Symbol.iterator]() {
     //   yield ref.get()
     //   yield ref.set
     // },
 
-    cancel() {
-      ref[_p].cancel()
+    // Promise
+    cancel(...args) {
+      return ref[_p].cancel(...args)
+    },
+    then(...args) {
+      return ref[_p].then(...args)
     }
 
     // Observable
