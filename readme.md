@@ -46,22 +46,24 @@ Its design is inspired by [_react hooks_](https://reactjs.org/docs/hooks-intro.h
 
 :deciduous_tree: **Native first**: semantic HTML, clean DOM tree, vanilla / web components friendly.
 
-:ocean: **Progressive enhancement** via organic layering up aspects.
+:ocean: **Progressive enhancement** via organic layering aspects.
 
-:baby_chick: **Low entry barrier** − no complexity hostage devs.
+:baby_chick: **Low entry barrier** − no victimized by complexity developers.
 
-:dizzy: **0** bundling, **0** server, **0** template.
+:dizzy: **0** bundling, **0** server, **0** template − just drop a `<script type="module">` to the page.
 
 :shipit: **Low-profile** − no forced structure, useful as utility tool.
 
 
 ## Installation
 
-#### A. Directly as module:
+#### A. Directly as a dule:
 
 ```html
 <script type="module">
-import { $, fx } from 'https://unpkg.com/spect@latest?module'
+import { $, fx } from 'https://unpkg.com/spect?module'
+  
+// ... code here
 </script>
 ```
 
@@ -71,6 +73,8 @@ import { $, fx } from 'https://unpkg.com/spect@latest?module'
 
 ```js
 import { $ } from 'spect'
+
+// ... code here too
 ```
 
 _Spect_ plays perfectly with [snowpack](https://www.snowpack.dev/), but any other bundler will do.
