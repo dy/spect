@@ -52,7 +52,7 @@ Its design is inspired by [_react hooks_](https://reactjs.org/docs/hooks-intro.h
 
 :dizzy: **0** bundling, **0** server, **0** template.
 
-:syringe: **Low-profile** − no forced structure, useful as utility tool.
+:shipit: **Low-profile** − no forced structure, useful as utility tool.
 
 
 ## Installation
