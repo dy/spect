@@ -50,7 +50,7 @@ Its design is inspired by [_react hooks_](https://reactjs.org/docs/hooks-intro.h
 
 :baby_chick: **Low entry barrier** − no complexity victims.
 
-:dizzy: **0** bundling, **0** server, **0** template − just drop a script with imports, done.
+:dizzy: **0** bundling, **0** server, **0** template − single script with imports is enough.
 
 :shipit: **Low-profile** − no forced structure, useful as utility tool.
 
