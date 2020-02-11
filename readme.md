@@ -37,22 +37,22 @@
 -->
 
 
-_Spect_ provides a lightweight alternative to industrial frameworks, encompassing best parts under elegant modern API.
+_Spect_ provides a lightweight alternative to industrial frameworks, encompassing best parts with elegant modern API.
 Its design is inspired by [_react hooks_](https://reactjs.org/docs/hooks-intro.html), [_observables_](https://www.npmjs.com/package/observable) and [_aspect-oriented-programming_](https://en.wikipedia.org/wiki/Aspect-oriented_programming).
 
 ## Principles
 
-:gem: **Splitting concerns** via **aspects** − complementary pieces of logic in declarative fashion.
+:gem: **Separation of concerns** via aspects − compartmental pieces of logic in declarative fashion.
 
-:deciduous_tree: **Native first**: semantic HTML, clean tree, vanilla / web components friendly.
+:deciduous_tree: **Native first**: semantic HTML, clean DOM tree, vanilla / web components friendly.
 
-:ocean: **Progressive enhancement** via built-in organic structuring.
+:ocean: **Progressive enhancement** via organic layering up aspects.
 
-:baby_chick: **Low entry barrier** − no complexity hostages.
+:baby_chick: **Low entry barrier** − no complexity hostage devs.
 
 :dizzy: **0** bundling, **0** server, **0** template.
 
-:syringe: **Utility** − can be used as a band-aid tool in existing projects / transitioned gradually. 
+:syringe: **Low-profile** − no forced structure, useful as utility tool.
 
 
 ## Installation
