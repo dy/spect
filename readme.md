@@ -37,22 +37,24 @@
 -->
 
 
-_Spect_ provides a lightweight alternative to industrial frameworks, encompassing best parts with elegant modern API.
-Its design is inspired by [_react hooks_](https://reactjs.org/docs/hooks-intro.html), [_observables_](https://www.npmjs.com/package/observable) and [_aspect-oriented-programming_](https://en.wikipedia.org/wiki/Aspect-oriented_programming).
+_Spect_ is alternative framework, inspired by [_react hooks_](https://reactjs.org/docs/hooks-intro.html), [_observables_](https://www.npmjs.com/package/observable) and [_aspect-oriented-programming_](https://en.wikipedia.org/wiki/Aspect-oriented_programming).
 
 ## Principles
 
-:gem: **Separation of concerns** via _aspects_ − compartmental pieces of logic in CSS-like fashion.
+:gem: **Separation of concerns** via _aspects_.
+<!-- − compartmental pieces of logic in CSS-like fashion. -->
 
-:deciduous_tree: **Native first**: semantic HTML, clean DOM tree, vanilla / web components friendly.
+:deciduous_tree: **Native first**: semantic clean tree, vanilla friendly.
 
-:ocean: **Progressive enhancement** via organic layering aspects.
+:ocean: **Progressive enhancement** via layering aspects.
 
-:baby_chick: **Low entry barrier** − no complexity victims.
+:baby_chick: **Low entry barrier**
+<!-- − no complexity victims. -->
 
-:dizzy: **0** bundling, **0** server, **0** template − single script with imports is enough.
+:dizzy: **0** bundling, **0** server, **0** template
+<!-- − single script with imports is enough. -->
 
-:shipit: **Low-profile** − no forced structure, useful as utility tool.
+:shipit: **Low-profile**, useful as utility.
 
 
 ## Installation
