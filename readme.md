@@ -48,10 +48,10 @@ _Spect_ is alternative framework, inspired by [_react hooks_](https://reactjs.or
 
 :ocean: **Progressive enhancement** via layering aspects.
 
-:baby_chick: **Low entry barrier**
+:baby_chick: **Low entry barrier**.
 <!-- − no complexity victims. -->
 
-:dizzy: **0** bundling, **0** server, **0** template
+:dizzy: **0** bundling, **0** server, **0** template.
 <!-- − single script with imports is enough. -->
 
 :shipit: **Low-profile**, useful as utility.
