@@ -48,7 +48,7 @@ Its design is inspired by [_react hooks_](https://reactjs.org/docs/hooks-intro.h
 
 :ocean: **Progressive enhancement** via organic layering aspects.
 
-:baby_chick: **Low entry barrier** − no victimized by complexity developers.
+:baby_chick: **Low entry barrier** − no complexity victims.
 
 :dizzy: **0** bundling, **0** server, **0** template − just drop a script with imports, done.
 
