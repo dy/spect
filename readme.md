@@ -153,7 +153,7 @@ Pending...
 
 > $( scope? , selector | element, aspect )
 
-_**`$`**_ is selector observer effect. It assigns an `aspect` function to `selector` or `element`. The `aspect` is triggered when an element matching the `selector` is mounted, and optional returned callback is called when unmounted or apsect is torn down.
+_**`$`**_ is selector observer with callback. It assigns an `aspect` function to `selector` or `element`. The `aspect` callback is triggered when an element matching the `selector` is mounted, and optional returned callback is called when unmounted.
 
 * `selector` should be a valid CSS selector.
 * `element` can be an _HTMLElement_ or a list of elements (array or array-like).
@@ -178,7 +178,7 @@ $('.timer', el => {
 
 ### _`fx`_
 
-> fx( callback, deps = [ Promise.resolve() ] )
+> fx( callback, deps = [ nextTick ] )
 
 _**`fx`**_ is generic effect. It reacts to changes in `deps` and runs `callback`, much like _useEffect_.
 
@@ -190,9 +190,9 @@ _**`fx`**_ is generic effect. It reacts to changes in `deps` and runs `callback`
 * _Promise_ / _Thenable_;
 * _Observable_ / an object with `.subscribe` method ([rxjs](https://ghub.io/rxjs) / [any-observable](https://ghub.io/any-observable) / [zen-observable](https://ghub.io/zen-observable) etc);
 * _Function_ is considered an [observable](https://ghub.io) / [observ](https://ghub.io) / [mutant](https://ghub.io/mutant);
-* any other value is considered constant.
+* any other value is wrapped as `Promise.resolve(value)`.
 
-Resolved deps values are passed as arguments to `callback`. Returned `teardown` function is used as destructor when the `state` changes.
+When any dep resolves, effect invokes the `callback` with resolved deps values as arguments. Returned `teardown` function can be used as destructor of the previous state.
 Omitted deps run effect only once as microtask.
 
 ```js
@@ -239,6 +239,9 @@ count(c => c + 1)
 for await (let value of count) {
   // 0, 1, ...
 }
+
+// current value
+count.current
 ```
 
 <br/>
@@ -248,7 +251,7 @@ for await (let value of count) {
 
 > value = calc( state => result, deps = [] )
 
-Creates an observable value, computed from `deps`. Similar to _**`fx`**_, but the result is observable. _**`calc`**_ is analog of _useMemo_.
+Creates an observable value, computed from `deps`. Similar to _**`fx`**_, but returns an observable value. _**`calc`**_ is analog of _useMemo_.
 
 ```js
 import { $, input, calc } from 'spect'
@@ -267,7 +270,7 @@ fahren() // 32
 
 > value = prop( target, name )
 
-_**`prop`**_ is target property observable and accessor. _**`prop`**_ keeps safe target's own getter/setter, if defined.
+_**`prop`**_ is target property accessor emitting changes. _**`prop`**_ keeps safe target's own getter/setter, if defined.
 
 ```js
 import { prop, fx } from 'spect'
@@ -305,7 +308,7 @@ fx(loading => {
 
 > obj = store( init = {} )
 
-Observable object. Unlike _**`state`**_, creates a proxy for the object − adding, changing, or deleting its properties emits changes. Similar to _Struct_ in [mutant](https://ghub.io/mutant).
+Observable object. Unlike _**`state`**_, creates a proxy for the object − adding, changing, or deleting properties emits changes. Similar to _Struct_ in [mutant](https://ghub.io/mutant).
 
 ```js
 import { store } from 'spect'
@@ -365,7 +368,7 @@ $('input', el => {
 
 > value = ref( init? )
 
-_**`ref`**_ is core value observer, serves as a foundation for other observables. Unlike _**`state`**_, it does not support functional setter and emits every set value.  _**`ref`**_ is a direct analog of _useRef_ hook.
+_**`ref`**_ is core value container, serves as a foundation for other observables. Unlike _**`state`**_, it does not support functional setter and emits every set call.  _**`ref`**_ is direct analog of _useRef_ hook.
 
 ```js
 import { ref } from 'spect'
