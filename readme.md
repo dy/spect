@@ -42,7 +42,7 @@ Its design is inspired by [_react hooks_](https://reactjs.org/docs/hooks-intro.h
 
 ## Principles
 
-:gem: **Separation of concerns** via aspects − compartmental pieces of logic in declarative fashion.
+:gem: **Separation of concerns** via _aspects_ − compartmental pieces of logic in CSS-like fashion.
 
 :deciduous_tree: **Native first**: semantic HTML, clean DOM tree, vanilla / web components friendly.
 
