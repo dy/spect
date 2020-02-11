@@ -84,11 +84,15 @@ _Spect_ plays perfectly with [snowpack](https://www.snowpack.dev/), but any othe
 
 ## Usage
 
+Work in progress.
+
 Here comes intoductory example.
 
 Maybe validation / sending form? 
 
 Or familiar examples of another framework, rewritten with spect?
+
+Something showcasing wow features, like composable streaming and how that restructures waterfall rendering?
 
 <!--
 
