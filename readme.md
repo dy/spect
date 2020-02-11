@@ -84,7 +84,8 @@ _Spect_ plays perfectly with [snowpack](https://www.snowpack.dev/), but any othe
 
 Here comes intoductory example. Maybe validation / sending form? 
 
-<--
+<!--
+
 _Spect_ doesn't make any guess about storage, actions, renderer or tooling setup and can be used with different flavors.
 
 #### Vanilla
@@ -110,7 +111,7 @@ $('input#height', el => {
   }, [on(el, 'input'), on(el, 'change')])
 })
 ```
--->
+--!>
 
 <!--
 
