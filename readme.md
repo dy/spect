@@ -59,7 +59,7 @@ _Spect_ is alternative framework, inspired by [_react hooks_](https://reactjs.or
 
 ## Installation
 
-#### A. Directly as a dule:
+#### A. Directly as a module:
 
 ```html
 <script type="module">
