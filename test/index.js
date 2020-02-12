@@ -215,6 +215,24 @@ t('$: contextual query with self-matching', async t => {
   await tick(8)
   t.same(log, ['y', 'x', '-', ' y'])
 })
+t.skip('$: adding/removing attribute with attribute selector', async t => {
+  let el = document.createElement('div')
+  const log = []
+  el.innerHTML = '<x></x>'
+  const x = el.firstChild
+  $(el, 'x[y]', e => {
+    log.push(1)
+    return () => log.push(2)
+  })
+  await tick(8)
+  t.is(log, [])
+  x.setAttribute('y', true)
+  await tick(8)
+  t.is(log, [1])
+  x.removeAttribute('y')
+  await tick(8)
+  t.is(log, [1, 2])
+})
 t.todo('subaspects', async t => {
   let log = []
 
@@ -375,6 +393,7 @@ t('$: init on list of elements', async t => {
   await frame(2)
   t.deepEqual(log, ['1', '2', 'un1', 'un2'])
 })
+t('$: init/destroy in body of web-component')
 
 t('state: core', async t => {
   let s = state(0)
@@ -751,4 +770,20 @@ t('on: core', async t => {
   el.click()
   await tick(8)
   t.is(log, ['click', 'click', 'click'], 'end stops event stream')
+})
+t.todo('on: next-tick event should be discarded', async t => {
+  let el = document.createElement('click')
+  let resolve, p = new Promise(r => {resolve = r})
+  let log = []
+
+  fx((e) => {
+    log.push(e ? true : false)
+  }, [on(el, 'click'), p])
+
+  el.click()
+  await tick(12)
+  t.is(log, [true])
+  resolve()
+  await tick(12)
+  t.is(log, [true, false])
 })
