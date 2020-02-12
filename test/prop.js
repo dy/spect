@@ -108,3 +108,5 @@ t('prop: minimize get/set invocations', async t => {
   await tick(8)
   t.is(log, ['get', 1, 'set', 0])
 })
+
+t.todo('prop: observe store property')

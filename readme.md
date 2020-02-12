@@ -243,7 +243,6 @@ count()
 
 // set
 count(1)
-count(c => c + 1)
 
 // observe changes
 for await (let value of count) {
@@ -388,7 +387,7 @@ Rendering effect. Returns observable element reference. Unlike rendering or morp
 
 > value = ref( init? )
 
-_**`ref`**_ is core value container, serves as a foundation for other observables. Unlike _**`state`**_, it does not support functional setter and emits every set call.  _**`ref`**_ is direct analog of _useRef_ hook.
+_**`ref`**_ is core value container, serves as foundation for other observables. Unlike _**`state`**_ emits value every set call.  _**`ref`**_ is direct analog of _useRef_ hook.
 
 ```js
 import { ref } from 'spect'
@@ -401,11 +400,7 @@ count()
 // set
 count(1)
 
-// sets value to a function (!)
-count(c => c + 1)
-count() // c => c + 1
-
-// observe changes
+// observe setting value
 for await (const c of count) {
   // 1, ...
 }

@@ -27,8 +27,10 @@ t('state: core', async t => {
   s(2)
   t.equal(+s, 2, 'state(value)')
 
-  s(c => (t.equal(c, 2, 'state(old => )'), 3))
-  t.equal(+s, 3, 'state(() => value)')
+  // DEPRECATED: functional setter is deprecated
+  // s(c => (t.equal(c, 2, 'state(old => )'), 3))
+  s(s + 1)
+  t.equal(+s, 3, 'state(state + value)')
 
   // observer 2
   let log2 = []

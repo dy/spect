@@ -35,7 +35,6 @@ export default function prop(target, name) {
   // rewire ref get/set to target prop
   prop.get = () => target[name]
   prop.set = value => {
-    if (typeof value === 'function') value = value(target[name])
     target[name] = value
   }
 
