@@ -37,31 +37,35 @@
 -->
 
 
-_Spect_ provides a lightweight alternative to industrial frameworks, encompassing best parts under elegant modern API.
-Its design is inspired by [_react hooks_](https://reactjs.org/docs/hooks-intro.html), [_observables_](https://www.npmjs.com/package/observable) and [_aspect-oriented-programming_](https://en.wikipedia.org/wiki/Aspect-oriented_programming).
+_Spect_ is alternative framework, inspired by [_react hooks_](https://reactjs.org/docs/hooks-intro.html), [_observables_](https://www.npmjs.com/package/observable) and [_aspect-oriented-programming_](https://en.wikipedia.org/wiki/Aspect-oriented_programming).
 
 ## Principles
 
-:gem: **Splitting concerns** via **aspects** − complementary pieces of logic in declarative fashion.
+:gem: **Separation of concerns** via _aspects_.
+<!-- − compartmental pieces of logic in CSS-like fashion. -->
 
-:deciduous_tree: **Native first**: semantic HTML, clean tree, vanilla / web components friendly.
+:deciduous_tree: **Native first**: semantic clean tree, vanilla friendly.
 
-:ocean: **Progressive enhancement** via built-in organic structuring.
+:ocean: **Progressive enhancement** via layering aspects.
 
-:baby_chick: **Low entry barrier** − no complexity hostages.
+:baby_chick: **Low entry barrier**.
+<!-- − no complexity victims. -->
 
 :dizzy: **0** bundling, **0** server, **0** template.
+<!-- − single script with imports is enough. -->
 
-:syringe: **Utility** − can be used as a band-aid tool in existing projects / transitioned gradually. 
+:shipit: **Low-profile**, useful as utility.
 
 
 ## Installation
 
-#### A. Directly as module:
+#### A. Directly as a module:
 
 ```html
 <script type="module">
-import { $, fx } from 'https://unpkg.com/spect@latest?module'
+import { $, fx } from 'https://unpkg.com/spect?module'
+  
+// ... code here
 </script>
 ```
 
@@ -71,12 +75,26 @@ import { $, fx } from 'https://unpkg.com/spect@latest?module'
 
 ```js
 import { $ } from 'spect'
+
+// ... code here too
 ```
 
 _Spect_ plays perfectly with [snowpack](https://www.snowpack.dev/), but any other bundler will do.
 
-<!--
+
 ## Usage
+
+Work in progress.
+
+Here comes intoductory example.
+
+Maybe validation / sending form? 
+
+Or familiar examples of another framework, rewritten with spect?
+
+Something showcasing wow features, like composable streaming and how that restructures waterfall rendering?
+
+<!--
 
 _Spect_ doesn't make any guess about storage, actions, renderer or tooling setup and can be used with different flavors.
 
@@ -103,7 +121,7 @@ $('input#height', el => {
   }, [on(el, 'input'), on(el, 'change')])
 })
 ```
--->
+--!>
 
 <!--
 
@@ -145,7 +163,7 @@ Pending...
 
 > $( scope? , selector | element, aspect )
 
-_**`$`**_ is selector observer effect. It assigns an `aspect` function to `selector` or `element`. The `aspect` is triggered when an element matching the `selector` is mounted, and optional returned callback is called when unmounted or apsect is torn down.
+_**`$`**_ is selector observer with callback. It assigns an `aspect` function to `selector` or `element`. The `aspect` callback is triggered when an element matching the `selector` is mounted, and optional returned callback is called when unmounted.
 
 * `selector` should be a valid CSS selector.
 * `element` can be an _HTMLElement_ or a list of elements (array or array-like).
@@ -170,7 +188,7 @@ $('.timer', el => {
 
 ### _`fx`_
 
-> fx( callback, deps = [ Promise.resolve() ] )
+> fx( callback, deps = [ nextTick ] )
 
 _**`fx`**_ is generic effect. It reacts to changes in `deps` and runs `callback`, much like _useEffect_.
 
@@ -182,9 +200,9 @@ _**`fx`**_ is generic effect. It reacts to changes in `deps` and runs `callback`
 * _Promise_ / _Thenable_;
 * _Observable_ / an object with `.subscribe` method ([rxjs](https://ghub.io/rxjs) / [any-observable](https://ghub.io/any-observable) / [zen-observable](https://ghub.io/zen-observable) etc);
 * _Function_ is considered an [observable](https://ghub.io) / [observ](https://ghub.io) / [mutant](https://ghub.io/mutant);
-* any other value is considered constant.
+* any other value is wrapped as `Promise.resolve(value)`.
 
-Resolved deps values are passed as arguments to `callback`. Returned `teardown` function is used as destructor when the `state` changes.
+When any dep resolves, effect invokes the `callback` with resolved deps values as arguments. Returned `teardown` function can be used as destructor of the previous state.
 Omitted deps run effect only once as microtask.
 
 ```js
@@ -231,6 +249,9 @@ count(c => c + 1)
 for await (let value of count) {
   // 0, 1, ...
 }
+
+// current value
+count.current
 ```
 
 <br/>
@@ -240,7 +261,7 @@ for await (let value of count) {
 
 > value = calc( state => result, deps = [] )
 
-Creates an observable value, computed from `deps`. Similar to _**`fx`**_, but the result is observable. _**`calc`**_ is analog of _useMemo_.
+Creates an observable value, computed from `deps`. Similar to _**`fx`**_, but returns an observable value. _**`calc`**_ is analog of _useMemo_.
 
 ```js
 import { $, input, calc } from 'spect'
@@ -259,7 +280,7 @@ fahren() // 32
 
 > value = prop( target, name )
 
-_**`prop`**_ is target property observable and accessor. _**`prop`**_ keeps safe target's own getter/setter, if defined.
+_**`prop`**_ is target property accessor emitting changes. _**`prop`**_ keeps safe target's own getter/setter, if defined.
 
 ```js
 import { prop, fx } from 'spect'
@@ -297,7 +318,7 @@ fx(loading => {
 
 > obj = store( init = {} )
 
-Observable object. Unlike _**`state`**_, creates a proxy for the object − adding, changing, or deleting its properties emits changes. Similar to _Struct_ in [mutant](https://ghub.io/mutant).
+Observable object. Unlike _**`state`**_, creates a proxy for the object − adding, changing, or deleting properties emits changes. Similar to _Struct_ in [mutant](https://ghub.io/mutant).
 
 ```js
 import { store } from 'spect'
@@ -357,7 +378,7 @@ $('input', el => {
 
 > value = ref( init? )
 
-_**`ref`**_ is core value observer, serves as a foundation for other observables. Unlike _**`state`**_, it does not support functional setter and emits every set value.  _**`ref`**_ is a direct analog of _useRef_ hook.
+_**`ref`**_ is core value container, serves as a foundation for other observables. Unlike _**`state`**_, it does not support functional setter and emits every set call.  _**`ref`**_ is direct analog of _useRef_ hook.
 
 ```js
 import { ref } from 'spect'
