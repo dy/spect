@@ -64,7 +64,7 @@ _Spect_ is alternative framework, inspired by [_react hooks_](https://reactjs.or
 ```html
 <script type="module">
 import { $, fx } from 'https://unpkg.com/spect?module'
-  
+
 // ... code here
 </script>
 ```
@@ -88,7 +88,7 @@ Work in progress.
 
 Here comes intoductory example.
 
-Maybe validation / sending form? 
+Maybe validation / sending form?
 
 Or familiar examples of another framework, rewritten with spect?
 
@@ -373,6 +373,16 @@ $('input', el => {
 ```
 
 <br/>
+
+### _`html`_
+
+> let tag = html`<tag ${ prop } ...${ props }>${ content }</>`
+> let el = html`<${ target }` ...${ props }>${ content }</>`
+
+Rendering effect. Returns observable element reference. Unlike rendering or morphing, doesn't require additional calls to update html - any value streamed to the template will automatically morph underlying DOM.
+
+```js
+```
 
 ### _`ref`_
 
