@@ -41,20 +41,17 @@ _Spect_ is alternative framework, inspired by [_react hooks_](https://reactjs.or
 
 ## Principles
 
-:gem: **Separation of concerns** via _aspects_.
-<!-- − compartmental pieces of logic in CSS-like fashion. -->
+:gem: **Separation of concerns** − _aspects_ are compartmental pieces of logic, declared in CSS-like fashion.
 
-:deciduous_tree: **Native first**: semantic clean tree, vanilla friendly.
+:deciduous_tree: **Native first** − semantic HTML, clean tree, vanilla friendly.
 
-:ocean: **Progressive enhancement** via layering aspects.
+:ocean: **Progressive enhancement** − multiple layered aspects organically augment features.
 
-:baby_chick: **Low entry barrier**.
-<!-- − no complexity victims. -->
+:baby_chick: **Low entry barrier** − no complexity victims or hostages.
 
-:dizzy: **0** bundling, **0** server, **0** template.
-<!-- − single script with imports is enough. -->
+:dizzy: **0** bundling, **0** server, **0** template − single script with imports is enough.
 
-:shipit: **Low-profile**, useful as utility.
+:shipit: **Low-profile** − doesn't force structure or stack, can be used as utility.
 
 
 ## Installation
@@ -86,6 +83,7 @@ _Spect_ plays perfectly with [snowpack](https://www.snowpack.dev/), but any othe
 
 Work in progress.
 
+<!--
 Here comes intoductory example.
 
 Maybe validation / sending form? 
@@ -93,6 +91,10 @@ Maybe validation / sending form?
 Or familiar examples of another framework, rewritten with spect?
 
 Something showcasing wow features, like composable streaming and how that restructures waterfall rendering?
+--!>
+
+Let's create an example app, showing the core principles.
+
 
 <!--
 
