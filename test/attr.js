@@ -1,0 +1,42 @@
+import t from 'tst'
+import { $, state, fx, prop, store, calc, ref, attr, on } from '../index.js'
+import { tick, frame, idle, time } from 'wait-please'
+import { augmentor, useState, useEffect, useMemo } from 'augmentor'
+import Observable from 'zen-observable/esm'
+import observable from './observable.js'
+
+
+t('attr: core', async t => {
+  let el = document.createElement('div')
+  let xattrs = attr(el, 'x')
+  let log = []
+    ; (async () => {
+      for await (const value of xattrs) {
+        log.push(value)
+      }
+    })()
+  await tick(8)
+  t.is(log, [false], 'init')
+  el.setAttribute('x', '1')
+  el.setAttribute('x', '2')
+  await tick(12)
+  t.is(log, [false, '2'], 'basic')
+  el.setAttribute('x', '3')
+  el.setAttribute('x', '4')
+  el.setAttribute('x', '5')
+  await tick(8)
+  t.is(log, [false, '2', '5'], 'updates to latest value')
+  el.setAttribute('x', '5')
+  el.setAttribute('x', '5')
+  await tick(8)
+  t.is(log, [false, '2', '5'], 'ignores unchanged value')
+  el.setAttribute('x', '6')
+  t.is(el.getAttribute('x'), '6', 'reading applies value')
+  await tick(8)
+  t.is(log, [false, '2', '5', '6'], 'reading applies value')
+  xattrs.cancel()
+  el.setAttribute('x', '7')
+  await tick(8)
+  t.is(el.getAttribute('x'), '7', 'end destroys property')
+  t.is(log, [false, '2', '5', '6'], 'end destroys property')
+})
