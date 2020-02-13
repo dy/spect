@@ -61,7 +61,7 @@ _Spect_ is alternative framework, inspired by [_react hooks_](https://reactjs.or
 ```html
 <script type="module">
 import { $, fx } from 'https://unpkg.com/spect?module'
-  
+
 // ... code here
 </script>
 ```
@@ -229,11 +229,11 @@ $('.timer', el => {
 
 <br/>
 
-### _`fx`_
+### _`fx`_ / _`dx`_
 
 > fx( callback, deps = [ nextTick ] )
 
-_**`fx`**_ is generic effect. It reacts to changes in `deps` and runs `callback`, much like _useEffect_.
+_**`fx`**_ is generic effect. It reacts to events in `deps` and runs `callback`, much like _useEffect_. _**`dx`**_ is similar to _**`fx`**_, but reacts only to changed state.
 
 `callback` is a function with `(...args) => teardown` signature.
 
@@ -286,7 +286,6 @@ count()
 
 // set
 count(1)
-count(c => c + 1)
 
 // observe changes
 for await (let value of count) {
@@ -361,7 +360,7 @@ fx(loading => {
 
 > obj = store( init = {} )
 
-Observable object. Unlike _**`state`**_, creates a proxy for the object − adding, changing, or deleting properties emits changes. Similar to _Struct_ in [mutant](https://ghub.io/mutant).
+Observable object. Unlike _**`state`**_, creates a proxy for the object − adding, changing, or deleting properties emits changes. Changing properties of values doesn't trigger updates. Similar to _Struct_ in [mutant](https://ghub.io/mutant).
 
 ```js
 import { store } from 'spect'
@@ -386,6 +385,31 @@ $('.likes-count', el => {
 ```
 
 <br/>
+
+### _`list`_
+
+> arr = list([ ...items ])
+
+Similar to _**`store`**_, intended for collections. Same as _Array_, but emits changes on any mutations.
+
+```js
+import { list } from 'spect'
+
+let arr = list([])
+
+// set
+arr[3] = 'foo'
+
+// mutator methods
+arr.push('bar', 'baz')
+arr.unshift('qux')
+
+// listen to changes
+for await (const items of arr) {
+  console.log(items)
+}
+```
+
 
 ### _`on`_
 
@@ -417,11 +441,52 @@ $('input', el => {
 
 <br/>
 
+### _`input`_
+
+> let value = input( element )
+
+Input element value observable. Emits stream of values, changed by user. The result is stateful, ie. it emits the initial value, unlike _**`on`**_.
+
+```js
+import { fx, input } from 'spect'
+
+fx(value => {
+  console.log(`Value: ${value}`)
+}, [input(el)]
+```
+
+<br/>
+
+### _`html`_
+
+> let el = html`<tag ...${ props }>${ content }</>`
+> let el = html`<${ target }` ...${ props }>${ content }</>`
+
+HTML effect. Connects observables or constants to html. Returns an element that updates itself whenever input `props` or `content` change. That way _**`html`**_ doesn't require additional calls to rerender content.
+_**`html`**_ syntax is compatible with [htm](https://ghub.io/htm).
+
+```js
+import { html, fx } from 'spect'
+
+// create new observable element
+const foo = html`<foo ${bar}=${baz} ...${qux}>${ xyzzy }</foo>`
+
+// hydrate existing element with `foo` as content
+const bat = html`<${document.querySelector('#bat')} ${bar}=${baz}>${ foo }</>`
+
+// trigger effect whenever `foo` or `bat` updates
+fx(bat => {
+  console.log('updated', bat)
+}, [bat])
+```
+
+<br/>
+
 ### _`ref`_
 
 > value = ref( init? )
 
-_**`ref`**_ is core value container, serves as a foundation for other observables. Unlike _**`state`**_, it does not support functional setter and emits every set call.  _**`ref`**_ is direct analog of _useRef_ hook.
+_**`ref`**_ is core value container, serves as foundation for other observables. Unlike _**`state`**_ emits value every set call.  _**`ref`**_ is direct analog of _useRef_ hook.
 
 ```js
 import { ref } from 'spect'
@@ -434,11 +499,7 @@ count()
 // set
 count(1)
 
-// sets value to a function (!)
-count(c => c + 1)
-count() // c => c + 1
-
-// observe changes
+// observe setting value
 for await (const c of count) {
   // 1, ...
 }

@@ -57,6 +57,9 @@ export default class Cancelable {
       return;
     }
 
+    // mute canceled uncaught error
+    this._promise.catch(e => {})
+
     if (this._cancelHandlers.length > 0) {
       try {
         for (const handler of this._cancelHandlers) {

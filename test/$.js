@@ -233,6 +233,22 @@ t.skip('$: adding/removing attribute with attribute selector', async t => {
   await tick(8)
   t.is(log, [1, 2])
 })
+t('$: matching nodes in added subtrees', async t => {
+  let el = document.createElement('div')
+  let log = []
+  $(el, 'a b c d', el => {
+    log.push('+')
+    return () => {
+      log.push('-')
+    }
+  })
+  el.innerHTML = '<a><b><c><d></d></c></b></a>'
+  await tick(8)
+  t.is(log, ['+'])
+  el.innerHTML = ''
+  await tick(8)
+  t.is(log, ['+', '-'])
+})
 t.todo('subaspects', async t => {
   let log = []
 

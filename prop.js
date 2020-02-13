@@ -35,13 +35,12 @@ export default function prop(target, name) {
   // rewire ref get/set to target prop
   prop.get = () => target[name]
   prop.set = value => {
-    if (typeof value === 'function') value = value(target[name])
     target[name] = value
   }
 
-  let closed = false
-  prop.cancel = () => {
-    closed = true
+  const cancel = prop.cancel
+  prop.cancel = (reason) => {
+    cancel(reason)
     if (desc) Object.defineProperty(target, name, desc)
     else Object.defineProperty(target, name, { configurable: true, value: prop.get() })
   }

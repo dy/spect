@@ -5,18 +5,18 @@ export default function store(obj = {}) {
 
   const proxy = new Proxy(
     Object.assign(Object.create({
-      [Symbol.asyncIterator]: ref[Symbol.asyncIterator],
-      valueOf: ref.get
-    }), obj), {
+      [Symbol.asyncIterator]: ref[Symbol.asyncIterator]
+    }, { valueOf: {enumerable: false, get: ref.get } }), obj), {
     set(obj, prop, value) {
+      if (Object.is(obj[prop], value)) return true
       obj[prop] = value
-      ref({...obj})
+      ref(obj)
       return true
     },
     deleteProperty(obj, prop) {
       if (prop in obj) {
         delete obj[prop]
-        ref({...obj})
+        ref(obj)
         return true
       }
       else {

@@ -57,18 +57,29 @@ function $(context, selector, fn) {
       for (let mutation of list) {
         let { addedNodes, removedNodes, target } = mutation
         if (mutation.type === 'childList') {
-          removedNodes.forEach(el => {
-            if (el.nodeType !== 1) return
-            set.matches(el).forEach(rule => {
+          removedNodes.forEach(target => {
+            if (target.nodeType !== 1) return
+            set.matches(target).forEach(rule => {
               // some elements may be asynchronously reinserted, eg. material hoistMenuToBody etc.
-              el[_destroyPlanned] = true
-              window.requestAnimationFrame(() => el[_destroyPlanned] && destroyCallback(el, rule.data))
+              target[_destroyPlanned] = true
+              window.requestAnimationFrame(() => target[_destroyPlanned] && destroyCallback(target, rule.data))
+            })
+
+            set.queryAll(target).forEach(rule => {
+              rule.elements.forEach(el => {
+                destroyCallback(el, rule.data)
+              })
             })
           })
-          addedNodes.forEach(el => {
-            if (el.nodeType !== 1) return
-            set.matches(el).forEach(rule => {
-              initCallback(el, rule.data)
+          addedNodes.forEach(target => {
+            if (target.nodeType !== 1) return
+            set.matches(target).forEach(rule => {
+              initCallback(target, rule.data)
+            })
+            set.queryAll(target).forEach(rule => {
+              rule.elements.forEach(el => {
+                initCallback(el, rule.data)
+              })
             })
           })
         }

@@ -13,7 +13,6 @@ export default function attr(el, name) {
     return !value ? el.hasAttribute(name) : value
   }
   attr.set = value => {
-    if (typeof value === 'function') value = value(attr.get())
     if (value === attr.get()) return
     if (value === true) el.setAttribute(name, '')
     else if (value === false || value == null) el.removeAttribute(name)
