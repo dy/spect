@@ -38,11 +38,11 @@ export default function prop(target, name) {
     target[name] = value
   }
 
-  let closed = false
+  const cancel = prop.cancel
   prop.cancel = () => {
-    closed = true
     if (desc) Object.defineProperty(target, name, desc)
     else Object.defineProperty(target, name, { configurable: true, value: prop.get() })
+    cancel()
   }
 
   return prop

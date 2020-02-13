@@ -50,8 +50,8 @@ export default function ref(value) {
     // },
 
     // Promise
-    cancel(...args) {
-      return ref[_p].cancel(...args)
+    cancel() {
+      return ref[_p].cancel()
     },
     then(...args) {
       return ref[_p].then(...args)

@@ -373,15 +373,46 @@ $('input', el => {
 
 <br/>
 
-### _`html`_
+### _`input`_
 
-> let tag = html`<tag ${ prop } ...${ props }>${ content }</>`
-> let el = html`<${ target }` ...${ props }>${ content }</>`
+> let value = input( element )
 
-Rendering effect. Returns observable element reference. Unlike rendering or morphing, doesn't require additional calls to update html - any value streamed to the template will automatically morph underlying DOM.
+Input element value observable. Emits stream of values, changed by user. The result is stateful, ie. it emits the initial value, unlike _**`on`**_.
 
 ```js
+import { fx, input } from 'spect'
+
+fx(value => {
+  console.log(`Value: ${value}`)
+}, [input(el)]
 ```
+
+<br/>
+
+### _`html`_
+
+> let el = html`<tag ...${ props }>${ content }</>`
+> let el = html`<${ target }` ...${ props }>${ content }</>`
+
+HTML effect. Connects observables or constants to html. Returns an element that updates itself whenever input `props` or `content` change. That way _**`html`**_ doesn't require additional calls to rerender content.
+_**`html`**_ syntax is compatible with [htm](https://ghub.io/htm).
+
+```js
+import { html, fx } from 'spect'
+
+// create new observable element
+const foo = html`<foo ${bar}=${baz} ...${qux}>${ xyzzy }</foo>`
+
+// hydrate existing element with `foo` as content
+const bat = html`<${document.querySelector('#bat')} ${bar}=${baz}>${ foo }</>`
+
+// trigger effect whenever `foo` or `bat` updates
+fx(bat => {
+  console.log('updated', bat)
+}, [bat])
+```
+
+<br/>
 
 ### _`ref`_
 
