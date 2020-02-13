@@ -50,3 +50,12 @@ t('state: core', async t => {
 
   t.end()
 })
+
+t('state: should not expose technical symbols', async t => {
+  let s = state({x: 1})
+  let log = []
+  for(let p in s.current) {
+    log.push(p)
+  }
+  t.is(log, ['x'])
+})
