@@ -254,17 +254,25 @@ import { time } from 'wait-please'
 
 let count = state(0)
 
-fx(async c => {
-  console.log('Seconds', c)
-  await time(1000)
-  count(c + 1)
+// triggers whenever `count` changes
+fx((count) => {
+  console.log(count)
 }, [count])
+count(1)
+setTimeout(() => count(2), 1000)
 
 // called once
 fx(() => {})
 
 // never called
 fx(() => {}, [])
+
+// timer
+fx(async c => {
+  console.log('Seconds', c)
+  await time(1000)
+  count(c + 1)
+}, [count])
 ```
 
 <br/>
@@ -294,6 +302,11 @@ for await (let value of count) {
 
 // current value
 count.current
+
+// run effect
+fx(c => {
+  console.log(c)
+}, [count])
 ```
 
 <br/>
