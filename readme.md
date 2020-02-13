@@ -41,20 +41,17 @@ _Spect_ is alternative framework, inspired by [_react hooks_](https://reactjs.or
 
 ## Principles
 
-:gem: **Separation of concerns** via _aspects_.
-<!-- − compartmental pieces of logic in CSS-like fashion. -->
+:gem: **Separation of concerns** − _aspects_ are compartmental pieces of logic, declared in CSS-like fashion.
 
-:deciduous_tree: **Native first**: semantic clean tree, vanilla friendly.
+:deciduous_tree: **Native first** − semantic HTML, clean tree, vanilla friendly.
 
-:ocean: **Progressive enhancement** via layering aspects.
+:ocean: **Progressive enhancement** − multiple layered aspects organically augment features.
 
-:baby_chick: **Low entry barrier**.
-<!-- − no complexity victims. -->
+:baby_chick: **Low entry barrier** − no complexity victims or hostages.
 
-:dizzy: **0** bundling, **0** server, **0** template.
-<!-- − single script with imports is enough. -->
+:dizzy: **0** bundling, **0** server, **0** template − single script with imports is enough.
 
-:shipit: **Low-profile**, useful as utility.
+:shipit: **Low-profile** − doesn't force structure or stack, can be used as utility.
 
 
 ## Installation
@@ -86,13 +83,59 @@ _Spect_ plays perfectly with [snowpack](https://www.snowpack.dev/), but any othe
 
 Work in progress.
 
+<!--
 Here comes intoductory example.
 
-Maybe validation / sending form?
+Maybe validation / sending form? (better for cases, eg. forms (all react cases))
 
-Or familiar examples of another framework, rewritten with spect?
+Or familiar examples of another framework, rewritten with spect? (better for docs, as spect vs N)
 
 Something showcasing wow features, like composable streaming and how that restructures waterfall rendering?
+Yes, makes more sense. The very natural flow, where with HTML you can prototype, then naturally upgrade to UI-framework, then add actions. Minimize design - code distance.
+--!>
+
+<!--
+Let's start off with an app, displaying a [list of users].
+
+First, create semantic HTML you'd regularly do without js.
+
+```html
+<!doctype html>
+
+<template id="article">
+  <article>
+  </article>
+</template>
+
+<main>
+  <div id="articles">
+  </div>
+</main>
+```
+
+Second, make data loading circuit.
+
+```js
+<script type="module">
+import { $, html, store } from 'https://unpkg.com/spect?module'
+
+const articles = store({
+  items: [],
+  load() {
+    this.loading = true
+    this.items = await (await fetch(url)).json()
+    this.loading = false
+  }
+})
+
+$('#articles', el => {
+  html`<${el}>${
+    articles.map(item => html``)
+  }</>`
+})
+</script>
+```
+--!>
 
 <!--
 
