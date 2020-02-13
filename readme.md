@@ -186,11 +186,11 @@ $('.timer', el => {
 
 <br/>
 
-### _`fx`_
+### _`fx`_, _`dx`_
 
 > fx( callback, deps = [ nextTick ] )
 
-_**`fx`**_ is generic effect. It reacts to changes in `deps` and runs `callback`, much like _useEffect_.
+_**`fx`**_ is generic effect. It reacts to events in `deps` and runs `callback`, much like _useEffect_. _**`dx`**_ is similar to _**`fx`**_, but reacts only to changed state.
 
 `callback` is a function with `(...args) => teardown` signature.
 
@@ -317,7 +317,7 @@ fx(loading => {
 
 > obj = store( init = {} )
 
-Observable object. Unlike _**`state`**_, creates a proxy for the object − adding, changing, or deleting properties emits changes. Similar to _Struct_ in [mutant](https://ghub.io/mutant).
+Observable object. Unlike _**`state`**_, creates a proxy for the object − adding, changing, or deleting properties emits changes. Changing properties of values doesn't trigger updates. Similar to _Struct_ in [mutant](https://ghub.io/mutant).
 
 ```js
 import { store } from 'spect'
@@ -342,6 +342,31 @@ $('.likes-count', el => {
 ```
 
 <br/>
+
+### _`list`_
+
+> arr = list([ ...items ])
+
+Similar to _**`store`**_, intended for collections. Same as _Array_, but emits changes on any mutations.
+
+```js
+import { list } from 'spect'
+
+let arr = list([])
+
+// standard array methods
+arr.push('foo', 'bar')
+arr.unshift('baz')
+
+// set direct element
+arr[3] = 'qux'
+
+// listen to changes
+for await (const items of arr) {
+  console.log(items)
+}
+```
+
 
 ### _`on`_
 
