@@ -20,13 +20,20 @@ t('store: core', async t => {
   await tick(8)
   t.is(log, [{x: 1}, {x: 2}], 'change prop')
 
+  s.x = 2
+  await tick(8)
+  t.is(log, [{x: 1}, {x: 2}], 'unchanged prop')
+
+
+  log = []
   s.y = 'foo'
   await tick(8)
-  t.is(log, [{ x: 1 }, { x: 2 }, { x:2, y:'foo' }], 'add new prop')
+  t.is(log, [{ x:2, y:'foo' }], 'add new prop')
 
+  log = []
   delete s.x
   await tick(8)
-  t.is(log, [{ x: 1 }, { x: 2 }, { x:2, y:'foo' }, {y: 'foo'}], 'delete props')
+  t.is(log, [{y: 'foo'}], 'delete props')
 })
 
 t('store: must not expose internal props', async t => {

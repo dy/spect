@@ -39,10 +39,10 @@ export default function prop(target, name) {
   }
 
   const cancel = prop.cancel
-  prop.cancel = () => {
+  prop.cancel = (reason) => {
+    cancel(reason)
     if (desc) Object.defineProperty(target, name, desc)
     else Object.defineProperty(target, name, { configurable: true, value: prop.get() })
-    cancel()
   }
 
   return prop
