@@ -186,7 +186,7 @@ $('.timer', el => {
 
 <br/>
 
-### _`fx`_, _`dx`_
+### _`fx`_ / _`dx`_
 
 > fx( callback, deps = [ nextTick ] )
 
@@ -354,12 +354,12 @@ import { list } from 'spect'
 
 let arr = list([])
 
-// standard array methods
-arr.push('foo', 'bar')
-arr.unshift('baz')
+// set
+arr[3] = 'foo'
 
-// set direct element
-arr[3] = 'qux'
+// mutator methods
+arr.push('bar', 'baz')
+arr.unshift('qux')
 
 // listen to changes
 for await (const items of arr) {
