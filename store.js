@@ -5,9 +5,8 @@ export default function store(obj = {}) {
 
   const proxy = new Proxy(
     Object.assign(Object.create({
-      [Symbol.asyncIterator]: ref[Symbol.asyncIterator],
-      valueOf: ref.get
-    }), obj), {
+      [Symbol.asyncIterator]: ref[Symbol.asyncIterator]
+    }, { valueOf: {enumerable: false, get: ref.get } }), obj), {
     set(obj, prop, value) {
       obj[prop] = value
       ref({...obj})
