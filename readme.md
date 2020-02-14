@@ -1,7 +1,7 @@
 <div align="center"><img src="https://avatars3.githubusercontent.com/u/53097200?s=200&v=4" width=108 /></div>
 <p align="center"><h1 align="center">spect</h1></p>
 <p align="center">
-  Micro DOM <em>aspects</em> with <em>effects</em> and <em>observables</em>.<br/>
+  Micro DOM <em>aspects</em> with <em>observables</em> and <em>effects</em>.<br/>
   <!-- Build reactive UIs with rules, similar to CSS.<br/> -->
   <!-- Each rule specifies an <em>aspect</em> function, carrying a piece of logic.<br/> -->
 </p>
@@ -207,11 +207,33 @@ Pending...
 
 ## API
 
+#### Effects
+
+_Effect_ creates a reaction on various events. Return cancelable.
+
+[_**`$`**_](#$),
+[_**`fx`**_](#fx),
+[_**`on`**_](#on)
+
+#### Observables
+
+_Observables_ create an object with _AsyncIterable_ interface, representing underlying changeable data.
+
+[_**`state`**_](#state),
+[_**`calc`**_](#calc),
+[_**`store`**_](#store),
+[_**`list`**_](#list),
+[_**`attr`**_](#attr),
+[_**`prop`**_](#prop),
+[_**`input`**_](#input),
+[_**`html`**_](#html),
+[_**`ref`**_](#ref)
+
 ### _`$`_
 
 > $( scope? , selector | element, aspect )
 
-_**`$`**_ is selector observer with callback. It assigns an `aspect` function to `selector` or `element`. The `aspect` callback is triggered when an element matching the `selector` is mounted, and optional returned callback is called when unmounted.
+_**`$`**_ is selector observer _effect_. It assigns an `aspect` callback to `selector` or `element`. The `aspect` is triggered when an element matching the `selector` is mounted, and optional returned callback is called when unmounted.
 
 * `selector` should be a valid CSS selector.
 * `element` can be an _HTMLElement_ or a list of elements (array or array-like).
@@ -238,7 +260,7 @@ $('.timer', el => {
 
 > fx( callback, deps = [ nextTick ] )
 
-_**`fx`**_ is generic effect. It reacts to events in `deps` and runs `callback`, much like _useEffect_.
+_**`fx`**_ is generic effect. It reacts to changes in `deps` and runs `callback`, much like _useEffect_.
 
 <!-- _**`dfx`**_ is delta _**`fx`**_ it reacts only to changed state. -->
 
@@ -284,6 +306,62 @@ fx(async c => {
 
 <br/>
 
+
+### _`on`_
+
+> on( target, eventName, callback )
+
+Event-based effect. Observes events on a `target`.
+
+```js
+import { $, on, calc, fx } from 'spect'
+
+$('input', el => {
+  // current input value
+  let value = calc(e => e.target.value, [
+    on(el, 'input'),
+    on(el, 'change')
+  ])
+
+  // current focus state
+  let focus = calc(e => e.type === 'focus', [
+    on(el, 'focus'),
+    on(el, 'blur')
+  ])
+
+  fx(validate, [ value, focus ])
+
+  return () => on.cancel( )
+})
+```
+
+<br/>
+
+### _`html`_
+
+> let el = html`<tag ...${ props }>${ content }</>`
+> let el = html`<${ target }` ...${ props }>${ content }</>`
+
+HTML effect. Connects observables or constants to html. Returns an element that is updated whenever input `props` or `content` change. That way _**`html`**_ doesn't require additional calls to rerender content.
+_**`html`**_ syntax is compatible with [htm](https://ghub.io/htm).
+
+```js
+import { html, fx } from 'spect'
+
+// create new observable element
+const foo = html`<foo ${bar}=${baz} ...${qux}>${ xyzzy }</foo>`
+
+// hydrate existing element with `foo` as content
+const bat = html`<${document.querySelector('#bat')} ${bar}=${baz}>${ foo }</>`
+
+// trigger effect whenever `foo` or `bat` updates
+fx(bat => {
+  console.log('updated', bat)
+}, [bat])
+```
+
+<br/>
+
 ### _`state`_
 
 > value = state( init? )
@@ -323,7 +401,7 @@ fx(c => {
 
 > value = calc( state => result, deps = [] )
 
-Creates an observable value, computed from `deps`. Similar to _**`fx`**_, but returns an observable value. _**`calc`**_ is analog of _useMemo_.
+Observable computed from `deps`. Similar to _**`fx`**_ effect, but creates an observable as result. _**`calc`**_ is analog of _useMemo_.
 
 ```js
 import { $, input, calc } from 'spect'
@@ -342,20 +420,23 @@ fahren() // 32
 
 > value = prop( target, name )
 
-_**`prop`**_ is target property accessor emitting changes. _**`prop`**_ keeps safe target's own getter/setter, if defined.
+_**`prop`**_ is target property observable/accessor. _**`prop`**_ keeps safe target's own getter/setter, if defined.
 
 ```js
 import { prop, fx } from 'spect'
 
-let o = { foo: 'bar' }
+let obj = { foo: 'bar' }
+let foox = prop(obj)
 
-fx(foo => console.log(foo), [prop(o, 'foo')])
+// log changes
+fx(foo => console.log(foo), [foox])
 
-o.foo = 'baz'
+// set
+obj.foo = 'baz'
+foox('qux')
 
-// outputs
-// "bar"
-// "baz"
+// get
+foox() // qux
 ```
 
 <br/>
@@ -364,7 +445,7 @@ o.foo = 'baz'
 
 > value = attr( element, name )
 
-Element attribute observable. Similar to _**`prop`**_, it provides access to attribute value and emits changes.
+Element attribute observable/accessor. Similar to _**`prop`**_, it provides access to attribute value and emits changes.
 
 ```js
 import { fx, attr } from 'spect'
@@ -372,6 +453,29 @@ import { fx, attr } from 'spect'
 fx(loading => {
   console.log(loading)
 }, [attr(el, 'loading')])
+```
+
+<br/>
+
+### _`input`_
+
+> value = input( element )
+
+Input element value observable. Emits values, changed by user.
+
+```js
+import { $, fx, input } from 'spect'
+
+$('input', el => {
+  fx(value => {
+    console.log(`Value: ${value}`)
+  }, [input(el)]
+
+  // to trigger change, an event must be dispatched
+  el.value = 3
+  el.dispatch(new Event('change'))
+})
+
 ```
 
 <br/>
@@ -406,6 +510,7 @@ $('.likes-count', el => {
 
 <br/>
 
+
 ### _`list`_
 
 > arr = list([ ...items ])
@@ -430,77 +535,8 @@ for await (const items of arr) {
 }
 ```
 
-
-### _`on`_
-
-> evts = on( element, eventName )
-
-Stateless events async iteratable. Comes handy for event-based effects. To stop observing, invoke `evts.cancel()`.
-
-```js
-import { $, on, calc, fx } from 'spect'
-
-$('input', el => {
-  // current input value
-  let value = calc(e => e.target.value, [
-    on(el, 'input'),
-    on(el, 'change')
-  ])
-
-  // current focus state
-  let focus = calc(e => e.type === 'focus', [
-    on(el, 'focus'),
-    on(el, 'blur')
-  ])
-
-  fx(validate, [ value, focus ])
-
-  return () => on.cancel( )
-})
-```
-
 <br/>
 
-### _`input`_
-
-> let value = input( element )
-
-Input element value observable. Emits stream of values, changed by user. The result is stateful, ie. it emits the initial value, unlike _**`on`**_.
-
-```js
-import { fx, input } from 'spect'
-
-fx(value => {
-  console.log(`Value: ${value}`)
-}, [input(el)]
-```
-
-<br/>
-
-### _`html`_
-
-> let el = html`<tag ...${ props }>${ content }</>`
-> let el = html`<${ target }` ...${ props }>${ content }</>`
-
-HTML effect. Connects observables or constants to html. Returns an element that updates itself whenever input `props` or `content` change. That way _**`html`**_ doesn't require additional calls to rerender content.
-_**`html`**_ syntax is compatible with [htm](https://ghub.io/htm).
-
-```js
-import { html, fx } from 'spect'
-
-// create new observable element
-const foo = html`<foo ${bar}=${baz} ...${qux}>${ xyzzy }</foo>`
-
-// hydrate existing element with `foo` as content
-const bat = html`<${document.querySelector('#bat')} ${bar}=${baz}>${ foo }</>`
-
-// trigger effect whenever `foo` or `bat` updates
-fx(bat => {
-  console.log('updated', bat)
-}, [bat])
-```
-
-<br/>
 
 ### _`ref`_
 
