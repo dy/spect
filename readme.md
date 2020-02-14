@@ -207,17 +207,13 @@ Pending...
 
 ## API
 
-#### Effects
-
-_Effect_ creates a reaction on various events. Return cancelable.
+_Effect_ creates a reaction on various events, returns _Cancelable_ _Thenable_.
 
 [_**`$`**_](#$),
 [_**`fx`**_](#fx),
 [_**`on`**_](#on)
 
-#### Observables
-
-_Observables_ create an object with _AsyncIterable_ interface, representing underlying changeable data.
+_Observable_ create an object with _AsyncIterable_ interface, representing underlying changeable data.
 
 [_**`state`**_](#state),
 [_**`calc`**_](#calc),
@@ -228,6 +224,8 @@ _Observables_ create an object with _AsyncIterable_ interface, representing unde
 [_**`input`**_](#input),
 [_**`html`**_](#html),
 [_**`ref`**_](#ref)
+
+<br/>
 
 ### _`$`_
 
@@ -240,10 +238,12 @@ _**`$`**_ is selector observer _effect_. It assigns an `aspect` callback to `sel
 * `aspect` is a function with `target => teardown` signature, or an array of functions.
 * `scope` is optional container element to assign mutation observer to, by default that is `document`.
 
+Returns cancelable thenable.
+
 ```js
 import { $ } from 'spect'
 
-$('.timer', el => {
+const timer = $('.timer', el => {
   let count = 0
 
   let id = setInterval(() => {
@@ -252,6 +252,12 @@ $('.timer', el => {
 
   return () => clearInterval(id)
 })
+
+// await when the next `.timer` mounts to the tree
+await timer
+
+// dispose `.timer` aspect
+timer.cancel()
 ```
 
 <br/>
@@ -297,11 +303,17 @@ fx(() => {})
 fx(() => {}, [])
 
 // timer
-fx(async c => {
+const timer = fx(async c => {
   console.log('Seconds', c)
   await time(1000)
   count(c + 1)
 }, [count])
+
+// await next count
+await timer
+
+// close timer effect
+timer.cancel()
 ```
 
 <br/>
@@ -309,29 +321,32 @@ fx(async c => {
 
 ### _`on`_
 
-> on( target, eventName, callback )
+> on( scope?, target | selector, eventName, callback )
 
-Event-based effect. Observes events on a `target`.
+Event-based effect. Registers listener for a `target` or `selector`. In case of `selector`, creates a delegated event listener on `scope`. Returns thenable cancelable.
 
 ```js
 import { $, on, calc, fx } from 'spect'
 
+// direct listeners
 $('input', el => {
-  // current input value
-  let value = calc(e => e.target.value, [
-    on(el, 'input'),
-    on(el, 'change')
-  ])
+  let click = on(el, 'click', e => {
+    console.log('clicked')
+  })
 
-  // current focus state
-  let focus = calc(e => e.type === 'focus', [
-    on(el, 'focus'),
-    on(el, 'blur')
-  ])
+  let focus = on(el, 'focus', e => {
+    console.log('focused')
+  })
 
-  fx(validate, [ value, focus ])
+  return () => {
+    click.cancel()
+    focus.cancel()
+  }
+})
 
-  return () => on.cancel( )
+// delegate events
+on('input', 'change', e => {
+  console.log(e.target.value)
 })
 ```
 
@@ -340,9 +355,8 @@ $('input', el => {
 ### _`html`_
 
 > let el = html`<tag ...${ props }>${ content }</>`
-> let el = html`<${ target }` ...${ props }>${ content }</>`
 
-HTML effect. Connects observables or constants to html. Returns an element that is updated whenever input `props` or `content` change. That way _**`html`**_ doesn't require additional calls to rerender content.
+HTML template observable. Connects observables or constants to html as template fields. Returns an element that is updated whenever any of insertions change. That way _**`html`**_ doesn't require additional calls to rerender content.
 _**`html`**_ syntax is compatible with [htm](https://ghub.io/htm).
 
 ```js

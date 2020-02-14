@@ -6,7 +6,54 @@ import Observable from 'zen-observable/esm'
 import observable from './observable.js'
 
 
-t('on: core', async t => {
+t('on: core', t => {
+	var x = document.createElement('div'), log = []
+
+  on(x, 'x', e => {
+    log.push('x')
+  })
+  x.dispatchEvent(new Event('x'))
+  t.is(log, ['x'])
+
+	t.end()
+});
+
+t('on: space-separated events', t => {
+	var x = document.createElement('div'), log = []
+
+  let xs = on(x, 'x y', e => log.push(e.type))
+  x.dispatchEvent(new Event('x'))
+  x.dispatchEvent(new Event('y'))
+  t.is(log, ['x', 'y'])
+
+  xs.cancel()
+  x.dispatchEvent(new Event('x'))
+  x.dispatchEvent(new Event('y'))
+  t.is(log, ['x', 'y'])
+
+	t.end()
+});
+
+t('on: delegated events', t => {
+	var x = document.createElement('x'), log = []
+  document.documentElement.appendChild(x)
+
+  let xs = on('x', 'x', e => log.push(e.type))
+  x.dispatchEvent(new Event('x', {bubbles: true}))
+  x.dispatchEvent(new Event('y', {bubbles: true}))
+  t.is(log, ['x'])
+
+  xs.cancel()
+  x.dispatchEvent(new Event('x', {bubbles: true}))
+  x.dispatchEvent(new Event('y', {bubbles: true}))
+  t.is(log, ['x'])
+
+  document.documentElement.removeChild(x)
+
+	t.end()
+});
+
+t.skip('on: observable', async t => {
   let el = document.createElement('div')
   let clicks = on(el, 'click')
   let log = []
