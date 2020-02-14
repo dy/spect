@@ -5,6 +5,17 @@ import { augmentor, useState, useEffect, useMemo } from 'augmentor'
 import Observable from 'zen-observable/esm'
 import observable from './observable.js'
 
+Object.defineProperty(DocumentFragment.prototype, 'outerHTML', {
+  get() {
+    let s = '<>'
+    this.childNodes.forEach(n => {
+      s += n.nodeType === 3 ? n.textContent : n.outerHTML
+    })
+    s+='</>'
+    return s
+  }
+})
+
 t('html: single attribute', async t => {
   const a = state(0)
 
@@ -22,21 +33,25 @@ t('html: single attribute', async t => {
   t.is(el.outerHTML, `<div></div>`)
 })
 
-t.skip('html: content', async t => {
+t('html: text content', async t => {
   const a = state(0)
 
-  let el = html`<div a=${a} />`
+  let el = html`<div>${ a }</div>`
 
   await tick(8)
-  t.is(el.outerHTML, `<div a="0"></div>`)
+  t.is(el.outerHTML, `<div>0</div>`)
 
   a(1)
   await tick(8)
-  t.is(el.outerHTML, `<div a="1"></div>`)
+  t.is(el.outerHTML, `<div>1</div>`)
 
   a(null)
   await tick(8)
   t.is(el.outerHTML, `<div></div>`)
+})
+
+t.todo('html: children', async t => {
+
 })
 
 t.skip('html: core', async t => {

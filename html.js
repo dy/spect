@@ -98,9 +98,16 @@ export default function htm (statics) {
         }
       }
       prev = idx + match.length
-      if (prev < str.length || !idx) evaluate(text, part => current.push(part), true)
+      // if (prev < str.length || !idx) evaluate(text, part => current.push(part), true)
+      if (prev < str.length || !idx) {
+        if (text) {
+          const textNode = current.appendChild(document.createTextNode(''))
+          fx(text => {
+            textNode.textContent = text
+          }, [evaluable(text)])
+        }
+      }
     })
-
   // return current.length > 1 ? current : current[0]
   return current.childNodes.length > 1 ? current : current.firstChild
 }
