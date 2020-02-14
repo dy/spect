@@ -4,7 +4,7 @@ Version | Changes
 ---|---
 14.0.0 | $ is considered a selector observer special effect, added the generic effect `fx` and observables `state`, `calc`, `ref`, `store` etc.
 13.0.0 | Orphaned minimal selector-observer implementation, single $ entry.
-12.0.0 | Internalized hooks via augmentor, dropped unihooks dep.
+12.0.0 | Internalized hooks via augmentor, dropped unihooks dep. Equiv. of [hooked-elements](https://github.com/WebReflection/hooked-elements).
 11.0.0 | Aspects single entry with enabled hooks via unihooks.
 10.0.0 | Web-streams, ReadableStream polyfill.
 9.0.0 | Effects as asynchronous iterables.

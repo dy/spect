@@ -9,7 +9,8 @@ import calc from './calc.js'
 import attr from './attr.js'
 import on from './on.js'
 import input from './input.js'
+import html from './html.js'
 
 export default $
 
-export { $, fx, dfx, state, prop, attr, store, list, calc, on, ref, input }
+export { $, fx, dfx, state, prop, attr, store, list, calc, on, ref, input, html }

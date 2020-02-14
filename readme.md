@@ -540,4 +540,4 @@ count.cancel()
 * [tonic](https://ghub.io/tonic), [etch](https://ghub.io/etch), [turbine](https://github.com/funkia/turbine), [hui](https://ghub.io/hui) − nice takes on web-component framework.
 * [atomico](https://ghub.io/atomico), [haunted](https://ghub.io/haunted), [fuco](https://ghub.io/fuco) − react-less hooks implementations.
 
-<p align="right">HK</p>
+<p align="center">ॐ</p>
