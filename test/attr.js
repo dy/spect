@@ -40,3 +40,29 @@ t('attr: core', async t => {
   t.is(el.getAttribute('x'), '7', 'end destroys property')
   t.is(log, [false, '2', '5', '6'], 'end destroys property')
 })
+
+t('attr: get/set', async t => {
+  let el = document.createElement('x')
+
+  let xs = attr(el, 'x')
+
+  await tick(8)
+  t.is(xs(), null)
+
+  xs(true)
+  await tick(8)
+  t.is(xs(), true)
+
+  xs('abc')
+  await tick(8)
+  t.is(xs(), 'abc')
+
+  xs(null)
+  await tick(8)
+  t.is(xs(), null)
+
+  xs.cancel()
+  t.throws(() => xs('abc'))
+  await tick(8)
+  t.is(xs(), null)
+})

@@ -18,6 +18,7 @@ export default function ref(value) {
     get() { return ref.current },
 
     set(value) {
+      if (ref[_p].isCanceled) throw Error('Set after cancel')
       ref.current = value
       ref[_n]()
     },
