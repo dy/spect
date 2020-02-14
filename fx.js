@@ -1,4 +1,4 @@
-export default dx
+export default dfx
 
 export function fx(cb, deps=[ Promise.resolve().then() ]) {
   let current = [], prev = []
@@ -59,7 +59,7 @@ function primitive(val) {
   return typeof val !== 'function'
 }
 
-export function dx(callback, deps) {
+export function dfx(callback, deps) {
   let prev = []
   return fx((...values) => {
     if (values.every((value, i) => Object.is(value, prev[i]))) return

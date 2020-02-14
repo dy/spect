@@ -1,5 +1,5 @@
 import t from 'tst'
-import { $, state, fx, dx, prop, store, calc, ref, attr, on } from '../index.js'
+import { $, state, fx, dfx, prop, store, calc, ref, attr, on } from '../index.js'
 import { tick, frame, idle, time } from 'wait-please'
 import { augmentor, useState, useEffect, useMemo } from 'augmentor'
 import Observable from 'zen-observable/esm'
@@ -30,13 +30,13 @@ t('fx: core', async t => {
   await tick(8)
   t.is(log, [0, 1, 2, 1, 2, 2, 2, 2], 'unchanged prop')
 })
-t('dx: core', async t => {
+t('dfx: core', async t => {
   let a = state(0)
   let o = { b: 1 }
   let b = prop(o, 'b')
 
   let log = []
-  dx((a, b) => {
+  dfx((a, b) => {
     log.push(a, b)
   }, [a, b])
 
@@ -74,10 +74,10 @@ t('fx: destructor', async t => {
   t.is(log, ['out', 0, 0, 'in', 1, 1], 'destructor is ok')
 })
 t.todo('fx: disposed by unmounted element automatically')
-t('dx: doesn\'t run unchanged', async t => {
+t('dfx: doesn\'t run unchanged', async t => {
   let a = ref(0)
   let log = []
-  dx(a => {
+  dfx(a => {
     log.push(a)
   }, [a])
 

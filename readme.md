@@ -186,11 +186,11 @@ $('.timer', el => {
 
 <br/>
 
-### _`fx`_ / _`dx`_
+### _`fx`_ / _`dfx`_
 
 > fx( callback, deps = [ nextTick ] )
 
-_**`fx`**_ is generic effect. It reacts to events in `deps` and runs `callback`, much like _useEffect_. _**`dx`**_ is similar to _**`fx`**_, but reacts only to changed state.
+_**`fx`**_ is generic effect. It reacts to events in `deps` and runs `callback`, much like _useEffect_. _**`dfx`**_ is delta _**`fx`**_ it reacts only to changed state.
 
 `callback` is a function with `(...args) => teardown` signature.
 
