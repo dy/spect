@@ -1,6 +1,4 @@
-export default dfx
-
-export function fx(cb, deps=[ Promise.resolve().then() ]) {
+export default function fx(cb, deps=[ Promise.resolve().then() ]) {
   let current = [], prev = []
   let changed = false, destroy
 

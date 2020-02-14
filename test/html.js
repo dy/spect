@@ -5,20 +5,51 @@ import { augmentor, useState, useEffect, useMemo } from 'augmentor'
 import Observable from 'zen-observable/esm'
 import observable from './observable.js'
 
+t('html: single attribute', async t => {
+  const a = state(0)
 
-t.only('html: core', async t => {
+  let el = html`<div a=${a} />`
+
+  await tick(8)
+  t.is(el.outerHTML, `<div a="0"></div>`)
+
+  a(1)
+  await tick(8)
+  t.is(el.outerHTML, `<div a="1"></div>`)
+
+  a(null)
+  await tick(8)
+  t.is(el.outerHTML, `<div></div>`)
+})
+
+t.skip('html: content', async t => {
+  const a = state(0)
+
+  let el = html`<div a=${a} />`
+
+  await tick(8)
+  t.is(el.outerHTML, `<div a="0"></div>`)
+
+  a(1)
+  await tick(8)
+  t.is(el.outerHTML, `<div a="1"></div>`)
+
+  a(null)
+  await tick(8)
+  t.is(el.outerHTML, `<div></div>`)
+})
+
+t.skip('html: core', async t => {
   const content = state('')
   const props = store({x: 0})
   const prop = state('')
   const tag = state('foo')
 
-  let el = html`<div></div>`
+  let el = html`<div ${prop} ...${props}>${content}</div>`
 
   fx(el => {
-    log.push({tag: el.tagName, props: {x: el.x, a: el.a}, content: el.innerHTML })
+    log.push(el.outerHTML)
   }, [el])
-
-
 })
 
 
@@ -299,7 +330,7 @@ t.skip('html: does not duplicate classes for container', t => {
   t.is(el.outerHTML, '<div class="x"></div>')
 })
 
-t('legacy html: readme default', async t => {
+t.todo('legacy html: readme default', async t => {
   let div = document.createElement('div')
 
   html`<${div}><div#id.class foo=bar>baz</div></div>`
@@ -309,7 +340,7 @@ t('legacy html: readme default', async t => {
   t.is(div.firstChild.id, 'id')
 })
 
-t('legacy html: attributes', t => {
+t.todo('legacy html: attributes', t => {
   let div = document.createElement('div')
 
   html`<${div}><a href='/' foo=bar>baz</a></>`
@@ -378,7 +409,7 @@ t.todo('html: newline nodes should have space in between', t => {
   t.is(el.textContent, 'a b')
 })
 
-t('legacy html: direct component rerendering should keep children', async t => {
+t.todo('legacy html: direct component rerendering should keep children', async t => {
   let el = html`<div><${fn}/></div>`
   let abc = el.firstChild
 
@@ -392,7 +423,7 @@ t('legacy html: direct component rerendering should keep children', async t => {
   function fn () { return html`<abc/>` }
 })
 
-t('legacy html: extended component rerendering should not destroy instance', async t => {
+t.todo('legacy html: extended component rerendering should not destroy instance', async t => {
   let el = html`<div><div is=${fn}/></div>`
   let child = el.firstChild
   html`<${el}><div.foo is=${fn}/></>`
@@ -906,7 +937,7 @@ t.todo('legacy html: 50+ elements shouldnt invoke recursion', t => {
 
 t.todo('legacy html: templates', async t => {
   // html`<${C}></>`
-  let { default: htm } = await import('htm')
+  // let { default: htm } = await import('htm')
 
   htm = htm.bind((...args) => console.log(args))
 

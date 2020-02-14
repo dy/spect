@@ -1,5 +1,5 @@
 import $ from './$.js'
-import { fx, dfx } from './fx.js'
+import fx from './fx.js'
 import ref from './ref.js'
 import state from './state.js'
 import prop from './prop.js'
@@ -13,4 +13,4 @@ import html from './html.js'
 
 export default $
 
-export { $, fx, dfx, state, prop, attr, store, list, calc, on, ref, input, html }
+export { $, fx, state, prop, attr, store, list, calc, on, ref, input, html }

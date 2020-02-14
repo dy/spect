@@ -5,7 +5,7 @@ import { augmentor, useState, useEffect, useMemo } from 'augmentor'
 import Observable from 'zen-observable/esm'
 import observable from './observable.js'
 
-t('input: core', async t => {
+t.browser('input: core', async t => {
   let el = document.createElement('input')
   document.body.appendChild(el)
   let value = input(el)
@@ -13,6 +13,8 @@ t('input: core', async t => {
   ;(async () => { for await (const v of value) {
     console.log(v)
   }})();
+
+  document.body.removeChild(el)
 })
 
 t('input: updates by changing value directly', async t => {
@@ -30,6 +32,8 @@ t('input: updates by changing value directly', async t => {
   await tick(2)
   t.is(log, ['0'], 'initial value notification')
 
+  el.focus()
+  el.dispatchEvent(new Event('focus'))
   el.value = 1
   el.dispatchEvent(new Event('change'))
   await tick()
@@ -71,4 +75,20 @@ t.skip('input: multiple instances same? ref', async t => {
   let xs2 = input(el)
 
   t.is(xs1, xs2, 'same ref')
+})
+t.skip('input: direct value set off-focus emits event', async t => {
+  // NS: not sure we have to track direct `el.value = 1` when not focused. Looks like deciding for user. Dispatching an event is not a big deal.
+  let el = document.createElement('input')
+  let i = input(el)
+  let log = []
+  fx(v => {
+    log.push(v)
+  }, [i])
+  await tick(8)
+  t.is(log, [''])
+
+  el.value = 1
+  await tick(8)
+  t.is(log, ['', '1'])
+  t.is(i(), '1')
 })
