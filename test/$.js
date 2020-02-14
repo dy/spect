@@ -124,15 +124,28 @@ t('$: remove/add should not retrigger element', async t => {
   document.body.appendChild(b.appendChild(a))
 
   let log = []
-  let unspect = $('a', el => {
-    log.push('a')
-  })
-  setTimeout(() => {
-    document.body.appendChild(a)
-  })
+  let unspect = $('a', el => log.push('a'))
+  setTimeout(() => document.body.appendChild(a))
 
   await time(10)
   t.deepEqual(log, ['a'])
+
+  document.body.removeChild(a)
+  unspect()
+  await frame()
+  t.end()
+})
+t('$: remove/add internal should not retrigger element', async t => {
+  let a = document.createElement('a')
+  let b = document.createElement('b')
+  a.appendChild(b)
+
+  let log = []
+  let unspect = $('a b', el => log.push('b'))
+  setTimeout(() => document.body.appendChild(a))
+
+  await time(10)
+  t.deepEqual(log, ['b'])
 
   document.body.removeChild(a)
   unspect()
@@ -246,7 +259,7 @@ t('$: matching nodes in added subtrees', async t => {
   await tick(8)
   t.is(log, ['+'])
   el.innerHTML = ''
-  await tick(8)
+  await frame(2)
   t.is(log, ['+', '-'])
 })
 t.todo('subaspects', async t => {

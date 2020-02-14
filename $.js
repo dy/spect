@@ -62,7 +62,7 @@ function $(context, selector, fn) {
             set.matches(target).forEach(rule => {
               // some elements may be asynchronously reinserted, eg. material hoistMenuToBody etc.
               target[_destroyPlanned] = true
-              window.requestAnimationFrame(() => target[_destroyPlanned] && destroyCallback(target, rule.data))
+              destroyCallback(target, rule.data)
             })
 
             set.queryAll(target).forEach(rule => {
@@ -139,7 +139,6 @@ function initCallback(el, fn) {
     el[_destroyPlanned] = false
     return
   }
-
   let cb = fn.bind(el)
   el[_callbacks].set(fn, cb)
   try { cb.destroy = cb(el) }
@@ -149,7 +148,11 @@ function initCallback(el, fn) {
 function destroyCallback(el, fn) {
   if (!el[_callbacks]) return
   if (!el[_callbacks].has(fn)) return
-  let cb = el[_callbacks].get(fn)
-  if (cb.destroy && cb.destroy.call) cb.destroy()
-  el[_callbacks].delete(fn)
+  el[_destroyPlanned] = true
+  window.requestAnimationFrame(() => {
+    if (!el[_destroyPlanned]) return
+    let cb = el[_callbacks].get(fn);
+    if (cb.destroy && cb.destroy.call) cb.destroy();
+    el[_callbacks].delete(fn);
+  });
 }
