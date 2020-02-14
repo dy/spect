@@ -92,6 +92,9 @@ Or familiar examples of another framework, rewritten with spect? (better for doc
 
 Something showcasing wow features, like composable streaming and how that restructures waterfall rendering?
 Yes, makes more sense. The very natural flow, where with HTML you can prototype, then naturally upgrade to UI-framework, then add actions. Minimize design - code distance.
+
+
+!? Maybe hello, world user as starter?
 --!>
 
 <!--
@@ -135,6 +138,8 @@ $('#articles', el => {
 })
 </script>
 ```
+
+!Showcase how easy that is to render with `html` effect.
 --!>
 
 <!--
@@ -254,17 +259,25 @@ import { time } from 'wait-please'
 
 let count = state(0)
 
-fx(async c => {
-  console.log('Seconds', c)
-  await time(1000)
-  count(c + 1)
+// triggers whenever `count` changes
+fx((count) => {
+  console.log(count)
 }, [count])
+count(1)
+setTimeout(() => count(2), 1000)
 
 // called once
 fx(() => {})
 
 // never called
 fx(() => {}, [])
+
+// timer
+fx(async c => {
+  console.log('Seconds', c)
+  await time(1000)
+  count(c + 1)
+}, [count])
 ```
 
 <br/>
@@ -294,6 +307,11 @@ for await (let value of count) {
 
 // current value
 count.current
+
+// run effect
+fx(c => {
+  console.log(c)
+}, [count])
 ```
 
 <br/>
@@ -360,7 +378,7 @@ fx(loading => {
 
 > obj = store( init = {} )
 
-Observable object. Unlike _**`state`**_, creates a proxy for the object − adding, changing, or deleting properties emits changes. Changing properties of values doesn't trigger updates. Similar to _Struct_ in [mutant](https://ghub.io/mutant).
+Observable object. Unlike _**`state`**_, creates a proxy for the object − adding, changing, or deleting properties emits changes. Changing sub-properties doesn't trigger updates. Similar to _Struct_ in [mutant](https://ghub.io/mutant).
 
 ```js
 import { store } from 'spect'
