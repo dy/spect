@@ -1,0 +1,15 @@
+<!DOCTYPE html>
+<time id="clock"></time>
+<script type="module">
+import { $, fx, attr } from "https://unpkg.com/spect@latest?module"
+
+$('#clock', el => {
+  el.setAttribute('datetime', new Date().toISOString() )
+  const date = attr(el, 'datetime')
+
+  fx(() => {
+    el.innerHTML = new Date(date()).toLocaleTimeString()
+    setTimeout(() => date(new Date().toISOString()), 1000)
+  }, [date])
+})
+</script>

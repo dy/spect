@@ -1,15 +1,16 @@
 // events bus - cancelable, thenable
 import Cancelable from './cancelable.js'
 
-export default function channel(callback) {
+export default function channel(callback, teardown) {
   let resolve, promise = new Cancelable(r => resolve = r)
 
-  const ref = {
-    emit(e) {
-      resolve(e)
-      promise = new Cancelable(r => resolve = r)
-      callback(e)
-    },
+  const ch = (...args) => {
+    resolve(...args)
+    promise = new Cancelable(r => resolve = r)
+    return callback && callback.call && callback(...args)
+  }
+
+  Object.assign(ch, {
     async *[Symbol.asyncIterator]() {
       try {
         while (1) yield await promise
@@ -18,6 +19,7 @@ export default function channel(callback) {
       }
     },
     cancel(reason) {
+      if (teardown && teardown.call) teardown(reason)
       return promise.cancel(reason)
     },
     then(...args) {
@@ -26,7 +28,7 @@ export default function channel(callback) {
 
     // Observable
     // async subscribe(cb) { for await (let value of ref) cb(value) }
-  }
+  })
 
-  return ref
+  return ch
 }

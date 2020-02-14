@@ -1,4 +1,5 @@
 import SelectorSet from 'selector-set'
+import channel from './channel.js'
 
 const _callbacks = Symbol.for('__spect.callbacks')
 const _destroyPlanned = Symbol.for('__spect.destroyPlanned')
@@ -44,43 +45,28 @@ export default function spect(context, target, fn) {
   // spect(target, fn)
   else {
     initCallback(target, fn)
-    return () => destroyCallback(target, fn)
+    return channel(() => {}, e => destroyCallback(target, fn) )
   }
 
-  return () => offs.map(off => off())
+  return channel(() => {}, e => offs.map($c => $c.cancel(e)))
 }
 
 // selector-based aspect
-function $(context, selector, fn) {
-  if (!context[_observer]) {
-    const observer = context[_observer] = new MutationObserver((list) => {
+function $(scope, selector, fn) {
+  if (!scope[_observer]) {
+    const observer = scope[_observer] = new MutationObserver((list) => {
       for (let mutation of list) {
         let { addedNodes, removedNodes, target } = mutation
         if (mutation.type === 'childList') {
           removedNodes.forEach(target => {
             if (target.nodeType !== 1) return
-            set.matches(target).forEach(rule => {
-              // some elements may be asynchronously reinserted, eg. material hoistMenuToBody etc.
-              target[_destroyPlanned] = true
-              destroyCallback(target, rule.data)
-            })
-
-            set.queryAll(target).forEach(rule => {
-              rule.elements.forEach(el => {
-                destroyCallback(el, rule.data)
-              })
-            })
+            set.matches(target).forEach(rule => destroyCallback(target, rule.data))
+            set.queryAll(target).forEach(rule => rule.elements.forEach(el => destroyCallback(el, rule.data)))
           })
           addedNodes.forEach(target => {
             if (target.nodeType !== 1) return
-            set.matches(target).forEach(rule => {
-              initCallback(target, rule.data)
-            })
-            set.queryAll(target).forEach(rule => {
-              rule.elements.forEach(el => {
-                initCallback(el, rule.data)
-              })
-            })
+            set.matches(target).forEach(rule => initCallback(target, rule.data))
+            set.queryAll(target).forEach(rule => rule.elements.forEach(el => initCallback(el, rule.data)))
           })
         }
         else if (mutation.type === 'attributes') {
@@ -113,24 +99,27 @@ function $(context, selector, fn) {
         }
       }
     })
-    observer.observe(context, {
+    observer.observe(scope, {
       attributes: true,
       childList: true,
       subtree: true
     })
   }
 
-  set.add(selector, fn)
-  set.queryAll(context).forEach(rule => rule.elements.forEach(el => initCallback(el, rule.data)))
-
-  return () => {
-    set.queryAll(context).forEach(rule => rule.elements.forEach(el => destroyCallback(el, rule.data)))
-    set.remove(selector, fn)
+  const $channel = channel(fn, () => {
+    set.queryAll(scope).forEach(rule => rule.elements.forEach(el => destroyCallback(el, rule.data)))
+    set.remove(selector, $channel)
     if (!set.size) {
-      context[_observer].disconnect()
-      delete context[_observer]
+      scope[_observer].disconnect()
+      delete scope[_observer]
     }
-  }
+  })
+
+  set.add(selector, $channel)
+  // set.matches(scope).forEach(rule => initCallback(scope, rule.data))
+  set.queryAll(scope).forEach(rule => rule.elements.forEach(el => initCallback(el, rule.data)))
+
+  return $channel
 }
 
 function initCallback(el, fn) {

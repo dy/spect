@@ -19,7 +19,7 @@ Object.defineProperty(DocumentFragment.prototype, 'outerHTML', {
 t('html: single attribute', async t => {
   const a = state(0)
 
-  let el = html`<div a=${a} />`
+  let el = html`<div a=${a}></div>`
 
   await tick(8)
   t.is(el.outerHTML, `<div a="0"></div>`)

@@ -1,7 +1,10 @@
-export default function fx(cb, deps=[ Promise.resolve().then() ]) {
+import channel from './channel.js'
+
+export default function fx(callback, deps=[ Promise.resolve().then() ]) {
   let current = [], prev = []
   let changed = false, destroy
 
+  const fxChannel = channel(callback)
   const notify = () => {
     if (changed) return
     changed = true
@@ -9,7 +12,7 @@ export default function fx(cb, deps=[ Promise.resolve().then() ]) {
       changed = false
       if (destroy && destroy.call) destroy(...prev)
       prev = [...current]
-      destroy = cb(...current)
+      destroy = fxChannel(...current)
     })
   }
 
@@ -50,6 +53,8 @@ export default function fx(cb, deps=[ Promise.resolve().then() ]) {
       })
     }
   })
+
+  return fxChannel
 }
 
 function primitive(val) {

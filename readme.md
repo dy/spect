@@ -551,7 +551,7 @@ for await (const items of arr) {
 
 <br/>
 
-
+<!--
 ### _`ref`_
 
 > value = ref( init? )
@@ -580,7 +580,13 @@ count.cancel()
 
 <br/>
 
-<!-- Best of React, jQuery and RxJS worlds in a tiny tool. -->
+### _`channel`_
+
+> ch = channel( callback, onCancel )
+
+<br/>
+-->
+
 
 ## Inspiration / R&D
 
@@ -591,6 +597,7 @@ count.cancel()
 * [reuse](https://ghub.io/reuse) − aspects attempt for react world.
 * [tonic](https://ghub.io/tonic), [etch](https://ghub.io/etch), [turbine](https://github.com/funkia/turbine), [hui](https://ghub.io/hui) − nice takes on web-component frameworks.
 * [atomico](https://ghub.io/atomico), [haunted](https://ghub.io/haunted), [fuco](https://ghub.io/fuco), [hooked-elements](https://github.com/WebReflection/hooked-elements) − react-less hooks implementations.
+* [jquery](https://ghub.io/jquery) − the old school spaghettiful DOM aspects.
 
 <br/>
 
