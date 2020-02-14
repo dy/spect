@@ -168,3 +168,18 @@ t('fx: on must not create initial tick', async t => {
   await tick(20)
   t.is(log, [])
 })
+t('fx: thenable', async t => {
+  const s = state(0), log = []
+  const sx = fx(s => {
+    log.push(s)
+  }, [s])
+  await tick(8)
+  t.is(log, [0])
+
+  sx.then(x => log.push('aw', x))
+  s(1)
+  // await tick(6)
+  // t.is(log, [0, 1])
+  await tick(8)
+  t.is(log, [0, 1, 'aw', 1])
+})
