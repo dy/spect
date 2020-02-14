@@ -1,6 +1,6 @@
 {
   "name": "spect",
-  "version": "14.1.1",
+  "version": "14.2.0",
   "description": "Micro aspects with effects and observables",
   "main": "./index.js",
   "type": "module",
