@@ -212,28 +212,28 @@ Pending...
     <tr>
       <td><strong>Effects:</strong></td>
       <td>
-        <a href="#-$"><strong><em><code>$</code></em></strong></a> ⋅ 
-        <a href="#on"><strong><em><code>on</code></em></strong></a> ⋅ 
+        <a href="#-$"><strong><em><code>$</code></em></strong></a> ⋅
+        <a href="#on"><strong><em><code>on</code></em></strong></a> ⋅
         <a href="#fx"><strong><em><code>fx</code></em></strong></a>
       </td>
     </tr>
     <tr>
       <td><strong>Sources:</strong></td>
       <td>
-        <a href="#state"><strong><em><code>state</code></em></strong></a> ⋅ 
-        <a href="#store"><strong><em><code>store</code></em></strong></a> ⋅ 
-        <a href="#list"><strong><em><code>list</code></em></strong></a> ⋅ 
-        <a href="#prop"><strong><em><code>prop</code></em></strong></a> ⋅ 
-        <a href="#attr"><strong><em><code>attr</code></em></strong></a> ⋅ 
-        <a href="#input"><strong><em><code>input</code></em></strong></a> ⋅ 
-        <a href="#calc"><strong><em><code>calc</code></em></strong></a> ⋅ 
+        <a href="#state"><strong><em><code>state</code></em></strong></a> ⋅
+        <a href="#store"><strong><em><code>store</code></em></strong></a> ⋅
+        <a href="#list"><strong><em><code>list</code></em></strong></a> ⋅
+        <a href="#prop"><strong><em><code>prop</code></em></strong></a> ⋅
+        <a href="#attr"><strong><em><code>attr</code></em></strong></a> ⋅
+        <a href="#input"><strong><em><code>input</code></em></strong></a> ⋅
+        <a href="#calc"><strong><em><code>calc</code></em></strong></a> ⋅
         <a href="#html"><strong><em><code>html</code></em></strong></a>
       </td>
     </tr>
     <tr>
       <td><strong>Utils:</strong></td>
       <td>
-        <a href="#ref"><strong><em><code>ref</code></em></strong></a> ⋅ 
+        <a href="#ref"><strong><em><code>ref</code></em></strong></a> ⋅
         <a href="#channel"><strong><em><code>channel</code></em></strong></a>
       </td>
     </tr>
@@ -242,22 +242,22 @@ Pending...
 
 <!--
 **Effects:**
-[_**`$`**_](#$) ⋅ 
-[_**`on`**_](#on) ⋅ 
+[_**`$`**_](#$) ⋅
+[_**`on`**_](#on) ⋅
 [_**`fx`**_](#fx)
 
 **Sources:**
-[_**`state`**_](#state) ⋅ 
-[_**`store`**_](#store) ⋅ 
-[_**`list`**_](#list) ⋅ 
-[_**`attr`**_](#attr) ⋅ 
-[_**`prop`**_](#prop) ⋅ 
-[_**`calc`**_](#calc) ⋅ 
-[_**`input`**_](#input) ⋅ 
+[_**`state`**_](#state) ⋅
+[_**`store`**_](#store) ⋅
+[_**`list`**_](#list) ⋅
+[_**`attr`**_](#attr) ⋅
+[_**`prop`**_](#prop) ⋅
+[_**`calc`**_](#calc) ⋅
+[_**`input`**_](#input) ⋅
 [_**`html`**_](#html)
 
 **Util:**
-[_**`ref`**_](#ref) ⋅ 
+[_**`ref`**_](#ref) ⋅
 [_**`channel`**_](#channel)
 -->
 
@@ -268,12 +268,12 @@ Pending...
 
 > $( scope? , selector | element, callback )
 
-_**`$`**_ is selector effect. Any time an element mathing the `selector` appears in DOM, _**`$`**_ runs the `callback` function. The `callback` can return a teardown function that runs when the element is unmounted.
+_**`$`**_ is selector effect. Any time an element matching the `selector` appears in DOM, _**`$`**_ runs the `callback` function. The `callback` can return a teardown function that runs when the element is unmounted.
 
-* `selector` should be a valid CSS selector.
-* `element` can be an _HTMLElement_ or a list of elements (array or array-like).
+* `selector` is a valid CSS selector.
+* `element` is _HTMLElement_ or a list of elements (array or array-like).
 * `callback` is a function with `(element) => teardown?` signature, or an array of such functions.
-* `scope` is optional container element to limit observations, by default that is `document`.
+* `scope` is optional container element to observe, by default that is `document`.
 
 ```js
 import { $ } from 'spect'
@@ -300,7 +300,7 @@ el.replaceWith(null)
 ```js
 import { $ } from 'spect'
 
-const timers = $('.timer', el => {
+const timer = $('.timer', el => {
   let count = 0
   let id = setInterval(() => {
     el.innerHTML = `Seconds: ${count++}`
@@ -308,11 +308,11 @@ const timers = $('.timer', el => {
   return () => clearInterval(id)
 })
 
-// await when the next `.timer` element appears in the tree
-await timers
+// wait until `.timer` element appears in the tree
+await timer
 
 // dispose `.timer` aspect
-timers.cancel()
+timer.cancel()
 ```
 
 <br/>
@@ -321,7 +321,7 @@ timers.cancel()
 
 > on( scope?, target | selector, event, callback? )
 
-_**`on`**_ is event effect. It reacts to `events` fired on `target` or `selector`. For the `selector` case it delegates events to `scope` container, by default `document`.
+_**`on`**_ is event effect. It reacts to `events` on `target` or `selector`. For the `selector` case it delegates events to `scope` container, by default `document`.
 
 ```js
 import { on } from 'spect'
@@ -334,7 +334,7 @@ on(document.querySelector('button'), 'click', e => {
 // delegate events
 const submit = on('form', 'submit', e => console.log(e))
 
-// wait for any form 'submit' event
+// wait for a 'submit' event
 const e = await submit
 
 // cancel submit events listener
@@ -350,9 +350,9 @@ const ticks = on('.timer', 'tick', e => {
   console.log('Seconds', e.detail.count)
 })
 
-let count = 0
+let count = 0, timer = document.querySelector('.timer')
 setInterval(() => {
-  document.querySelector('.timer').dispatchEvent(new CustomEvent('tick', { detail: ++count}))
+  timer.dispatchEvent(new CustomEvent('tick', { detail: ++count}))
 }, 1000)
 
 // await the next 'tick' event
@@ -369,40 +369,37 @@ ticks.cancel()
 
 > fx( callback, args = [ tick ] )
 
-_**`fx`**_ is generic effect. It reacts to changes in `args` and runs `callback` (similar to _useEffect_).
-
+_**`fx`**_ is generic effect. It reacts to `args` and runs `callback` (similar to _useEffect_, but `args` are observables). `callback` is a function with `(...argValues) => teardown` signature.
 <!-- _**`dfx`**_ is delta _**`fx`**_ it reacts only to changed state. -->
-
-`callback` is a function with `(...args) => teardown` signature.
 
 `args` list expects:
 
-* Any _Source_
-* _AsyncGenerator_, _AsyncIterable_, or _Object_ with [`Symbol.asyncIterator`](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Symbol/asyncIterator) method
+* Any _source_
+* _AsyncGenerator_, _AsyncIterable_ or _object_ with [`Symbol.asyncIterator`](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Symbol/asyncIterator)
 * _Promise_ or _Thenable_
-* _Observable_ or an _Object_ with `.subscribe` method ([rxjs](https://ghub.io/rxjs), [es-observable](https://ghub.io/es-observable), [zen-observable](https://ghub.io/zen-observable) etc)
-* _Function_ is considered an [observable](https://ghub.io) / [observ](https://ghub.io) / [mutant](https://ghub.io/mutant);
-* any other value is considered a constant.
+* _Observable_ or an _object_ with `.subscribe` method, eg. [rxjs](https://ghub.io/rxjs), [es-observable](https://ghub.io/es-observable), [zen-observable](https://ghub.io/zen-observable) etc.
+* _Function_ is considered an [observable](https://ghub.io), [observ](https://ghub.io) or [mutant](https://ghub.io/mutant)
+* any other value is considered constant.
 
-When any member of the `args` updates, the `callback` runs with the new state, disposing previous state with `teardown` function. Omitted `args` makes `callback` run only once as microtask.
+When any member of the `args` updates, the `callback` runs with new state, disposing previous state with `teardown` function. Omitted `args` trigger `callback` as microtask.
 
 ```js
 import { state, fx } from 'spect'
 import { time } from 'wait-please'
 
-let count = state(0)
+let a = state(0), b = state('foo')
 
-fx((count) => {
-  console.log('in', count)
-  return () => console.log('out', count)
-}, [count])
+fx((a, b) => {
+  console.log('in', a, b)
+  return () => console.log('out', a, b)
+}, [a, b])
 
-setTimeout(() => count(1), 1000)
+setTimeout(() => (a(1), b('bar')), 1000)
 
-// 'in' 0
+// 'in' 0 'foo'
 // ...
-// 'out' 1
-// 'in' 2
+// 'out' 0 'foo'
+// 'in' 1 'bar'
 
 // runs only once
 fx(() => {})
@@ -442,7 +439,7 @@ timer.cancel()
 
 _**`state`**_ is a value source. It is a getter/setter function with [_AsyncIterator_](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Symbol/asyncIterator) interface for observing changes.
 `init` can be an initial value or initializer function.
-_**`state`**_ acts as _useState_ hook and has similar to [observable](https://ghub.io/observable) API.
+_**`state`**_ acts as _useState_ hook and has similar to [observable](https://ghub.io/observable) API. Useful as component state, eg. visibility etc.
 
 ```js
 import { state, fx } from 'spect'
@@ -476,24 +473,29 @@ fx(c => {
 
 > obj = store( init = {} )
 
-_**`store`**_ is object source. Unlike _**`state`**_, it returns _AsyncIterable_ object − adding, changing, or deleting its properties emits changes. Useful as model layer.
+_**`store`**_ is object source. Unlike _**`state`**_, it returns an object − adding, changing, or deleting its properties emits changes. Useful as model.
 
 ```js
 import { store, fx } from 'spect'
 
 const foo = store({ foo: null })
 
-// write to store
+// set
 foo.foo = 'bar'
-foo.baz = 'boo'
+foo.baz = ['boo']
 
-// register effect
+// log changes
 fx(({ foo, ...bax }) => {
   console.log(foo, bax)
 }, [foo])
 
-// logs
 // { foo: 'bar', baz: 'boo' }
+
+// doesn't update store
+foo.baz[1] = 'far'
+
+// can have methods
+foo.plugh = function () { this.foo += 'x' }
 ```
 
 <!--
@@ -527,7 +529,7 @@ $('.likes-count', el => {
 
 > arr = list([ ...items ])
 
-_**`list`**_ is array source similar to _**`store`**_, but intended for collections. It emits changes on any mutations.
+_**`list`**_ is array source, similar to _**`store`**_, but intended for collections. Emits changes on any mutations. Useful for rendering multiple items.
 
 ```js
 import { list } from 'spect'
@@ -541,10 +543,13 @@ arr[3] = 'foo'
 arr.push('bar', 'baz')
 arr.unshift('qux')
 
-// listen to changes
+// ...changes
 for await (const items of arr) {
   console.log(items)
 }
+
+// returns new live list instance
+let mapped = arr.map(x => x * 2)
 ```
 
 <br/>
@@ -554,7 +559,7 @@ for await (const items of arr) {
 
 > value = prop( target, name )
 
-_**`prop`**_ is target property accessor. _**`prop`**_ keeps safe target's own getter/setter, if defined.
+_**`prop`**_ is target property accessor/source. _**`prop`**_ keeps safe target's own getter/setter, if defined. Useful to react to element properties changes.
 
 ```js
 import { prop, fx } from 'spect'
@@ -572,7 +577,7 @@ foos('qux')
 // get
 foos() // qux
 
-// dispose
+// forget
 foos.cancel()
 ```
 
@@ -582,7 +587,7 @@ foos.cancel()
 
 > value = attr( element, name )
 
-_**`attr`**_ is element attribute accessor. Similar to _**`prop`**_, it provides access to attribute value and emits changes.
+_**`attr`**_ is element attribute accessor/source. Similar to _**`prop`**_, it provides access to attribute value and emits changes. Useful to access/react to element attribute values.
 
 ```js
 import { fx, attr } from 'spect'
@@ -639,7 +644,7 @@ $('input', el => {
 
 > value = calc( state => result, args = [] )
 
-Source, computed from `args`. Similar to _**`fx`**_ effect, but creates an observable as result. _**`calc`**_ is analog of _useMemo_.
+Source computed from `args`. Similar to _**`fx`**_, but creates source as result. Analog of _useMemo_.
 
 ```js
 import { $, input, calc } from 'spect'
@@ -659,22 +664,27 @@ fahren() // 32
 
 > let el = html`<tag ...${ props }>${ content }</>`
 
-HTML element as source. Useful for connecting sources to some element or creating live element that reacts to updates in sources.
-_**`html`**_ syntax is compatible with [htm](https://ghub.io/htm).
+HTML element source. Useful to stream sources to an element, that updates automatically by any source changes.
+Syntax is compatible with [htm](https://ghub.io/htm).
 
 ```js
-import { html, fx } from 'spect'
+import { html, fx, text } from 'spect'
 
-// create new observable element
-const foo = html`<foo ${bar}=${baz} ...${qux}>${ xyzzy }</foo>`
+const text = state('foobar')
 
-// hydrate existing element with `foo` as content
-const bar = html`<${document.querySelector('#bat')} ${bar}=${baz}>${ foo }</>`
+// create element
+const foo = html`<foo>${ text }</foo>`
 
-// runs when `foo` or `bat` updates
-fx((foo, bar) => {
-  console.log('updated', foo, bar)
-}, [foo, bar])
+// hydrate element with `foo` as content
+const bar = html`<${document.querySelector('#bar')}>${ foo }</>`
+
+// runs when `bar` updates
+fx(bar => {
+  console.log('updated', bar.innerHTML)
+}, [bar])
+
+// update
+text('bazqux')
 ```
 
 <br/>
@@ -687,7 +697,7 @@ fx((foo, bar) => {
 
 > value = ref( init? )
 
-Core for sources. Unlike _**`state`**_ emits value every set call.  _**`ref`**_ is direct analog of _useRef_ hook. Thenable, Cancelable, AsyncIterable.
+Source base, emits value every _set_ call. Thenable, Cancelable, AsyncIterable. _**`ref`**_ is direct analog of _useRef_ hook.
 
 ```js
 import ref from 'spect/ref'
@@ -715,7 +725,7 @@ count.cancel()
 
 > ch = channel( callback, onCancel )
 
-Core for effects. Represents events bus. Thenable, Cancelable, AsyncIterable.
+Effect event bus. Thenable, Cancelable, AsyncIterable.
 
 ```js
 import channel from 'spect/channel'
