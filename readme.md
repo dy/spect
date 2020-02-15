@@ -214,7 +214,8 @@ Pending...
       <td>
         <a href="#-$"><strong><em><code>$</code></em></strong></a> ⋅
         <a href="#on"><strong><em><code>on</code></em></strong></a> ⋅
-        <a href="#fx"><strong><em><code>fx</code></em></strong></a>
+        <a href="#fx"><strong><em><code>fx</code></em></strong></a> ⋅
+        <a href="#html"><strong><em><code>html</code></em></strong></a>
       </td>
     </tr>
     <tr>
@@ -226,8 +227,7 @@ Pending...
         <a href="#prop"><strong><em><code>prop</code></em></strong></a> ⋅
         <a href="#attr"><strong><em><code>attr</code></em></strong></a> ⋅
         <a href="#input"><strong><em><code>input</code></em></strong></a> ⋅
-        <a href="#calc"><strong><em><code>calc</code></em></strong></a> ⋅
-        <a href="#html"><strong><em><code>html</code></em></strong></a>
+        <a href="#calc"><strong><em><code>calc</code></em></strong></a>
       </td>
     </tr>
     <tr>
@@ -268,7 +268,7 @@ Pending...
 
 > $( scope? , selector | element, callback )
 
-_**`$`**_ is selector effect. Any time an element matching the `selector` appears in DOM, _**`$`**_ runs the `callback` function. The `callback` can return a teardown function that runs when the element is unmounted.
+Selector effect. Any time an element matching the `selector` appears in DOM, _**`$`**_ runs the `callback` function. The `callback` can return a teardown function that runs when the element is unmounted.
 
 * `selector` is a valid CSS selector.
 * `element` is _HTMLElement_ or a list of elements (array or array-like).
@@ -321,7 +321,7 @@ timer.cancel()
 
 > on( scope?, target | selector, event, callback? )
 
-_**`on`**_ is event effect. It reacts to `events` on `target` or `selector`. For the `selector` case it delegates events to `scope` container, by default `document`.
+Event effect. Reacts to events on `target` or `selector`. For the `selector` case it delegates events to `scope` container, by default `document`.
 
 ```js
 import { on } from 'spect'
@@ -339,6 +339,9 @@ const e = await submit
 
 // cancel submit events listener
 submit.cancel()
+
+// multiple events
+on('.draggable', 'touchstart mousedown', e => {})
 ```
 
 #### Example
@@ -369,19 +372,18 @@ ticks.cancel()
 
 > fx( callback, args = [ tick ] )
 
-_**`fx`**_ is generic effect. It reacts to `args` and runs `callback` (similar to _useEffect_, but `args` are observables). `callback` is a function with `(...argValues) => teardown` signature.
+Generic effect. Reacts to `args` and runs `callback` function with `(...argValues) => teardown` signature.
+Similar to _useEffect_, but `args` are observables, any of:
 <!-- _**`dfx`**_ is delta _**`fx`**_ it reacts only to changed state. -->
 
-`args` list expects:
-
-* Any _source_
+* _Source_
 * _AsyncGenerator_, _AsyncIterable_ or _object_ with [`Symbol.asyncIterator`](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Symbol/asyncIterator)
 * _Promise_ or _Thenable_
 * _Observable_ or an _object_ with `.subscribe` method, eg. [rxjs](https://ghub.io/rxjs), [es-observable](https://ghub.io/es-observable), [zen-observable](https://ghub.io/zen-observable) etc.
 * _Function_ is considered an [observable](https://ghub.io), [observ](https://ghub.io) or [mutant](https://ghub.io/mutant)
-* any other value is considered constant.
+* other value is considered constant.
 
-When any member of the `args` updates, the `callback` runs with new state, disposing previous state with `teardown` function. Omitted `args` trigger `callback` as microtask.
+When any member of `args` updates, the `callback` runs with new state, disposing previous state with `teardown` function. Omitted `args` trigger `callback` as microtask.
 
 ```js
 import { state, fx } from 'spect'
@@ -429,6 +431,50 @@ timer.cancel()
 ```
 
 <br/>
+
+
+### _`html`_
+
+> let el = html`<tag ...${ props }>${ content }</>`
+
+HTML effect. Rerenders markup automatically by input sources updates.
+Syntax is compatible with [htm](https://ghub.io/htm).
+
+```js
+import { html, fx, text } from 'spect'
+
+const text = state('foobar')
+
+// create element
+const foo = html`<foo>${ text }</foo>`
+
+// hydrate element with `foo` as content
+const bar = html`<${document.querySelector('#bar')}>${ foo }</>`
+
+// runs when `bar` updates
+fx(bar => {
+  console.log('updated', bar.innerHTML)
+}, [bar])
+
+// update
+text('bazqux')
+```
+
+#### Example
+
+```js
+import { $, state, html } from 'spect'
+
+$('.timer', el => {
+  const count = state(0)
+  setInterval(() => count(count + 1))
+  html`<${el}>Seconds: ${ count }</>`
+})
+```
+
+
+<br/>
+
 
 
 ## Sources
@@ -655,36 +701,6 @@ const fahren = calc(c => (c * 9) / 5 + 32, [c])
 
 celsius() // 0
 fahren() // 32
-```
-
-<br/>
-
-
-### _`html`_
-
-> let el = html`<tag ...${ props }>${ content }</>`
-
-HTML element source. Useful to stream sources to an element, that updates automatically by any source changes.
-Syntax is compatible with [htm](https://ghub.io/htm).
-
-```js
-import { html, fx, text } from 'spect'
-
-const text = state('foobar')
-
-// create element
-const foo = html`<foo>${ text }</foo>`
-
-// hydrate element with `foo` as content
-const bar = html`<${document.querySelector('#bar')}>${ foo }</>`
-
-// runs when `bar` updates
-fx(bar => {
-  console.log('updated', bar.innerHTML)
-}, [bar])
-
-// update
-text('bazqux')
 ```
 
 <br/>
