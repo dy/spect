@@ -207,6 +207,40 @@ Pending...
 
 ## API
 
+<table>
+  <tbody>
+    <tr>
+      <td><strong>Effects:</strong></td>
+      <td>
+        <a href="#-$"><strong><em><code>$</code></em></strong></a> ⋅ 
+        <a href="#on"><strong><em><code>on</code></em></strong></a> ⋅ 
+        <a href="#fx"><strong><em><code>fx</code></em></strong></a> ⋅ 
+      </td>
+    </tr>
+    <tr>
+      <td><strong>Sources:</strong></td>
+      <td>
+        <a href="#state"><strong><em><code>state</code></em></strong></a> ⋅ 
+        <a href="#store"><strong><em><code>store</code></em></strong></a> ⋅ 
+        <a href="#list"><strong><em><code>list</code></em></strong></a> ⋅ 
+        <a href="#prop"><strong><em><code>prop</code></em></strong></a> ⋅ 
+        <a href="#attr"><strong><em><code>attr</code></em></strong></a> ⋅ 
+        <a href="#input"><strong><em><code>input</code></em></strong></a> ⋅ 
+        <a href="#calc"><strong><em><code>calc</code></em></strong></a> ⋅ 
+        <a href="#html"><strong><em><code>html</code></em></strong></a>
+      </td>
+    </tr>
+    <tr>
+      <td><strong>Utils:</strong></td>
+      <td>
+        <a href="#ref"><strong><em><code>ref</code></em></strong></a> ⋅ 
+        <a href="#channel"><strong><em><code>channel</code></em></strong></a>
+      </td>
+    </tr>
+  </tbody>
+  </table>
+
+<!--
 **Effects:**
 [_**`$`**_](#$) ⋅ 
 [_**`on`**_](#on) ⋅ 
@@ -222,9 +256,10 @@ Pending...
 [_**`input`**_](#input) ⋅ 
 [_**`html`**_](#html)
 
-[**Util:**](#utility)
+**Util:**
 [_**`ref`**_](#ref) ⋅ 
 [_**`channel`**_](#channel)
+-->
 
 
 ## Effects
