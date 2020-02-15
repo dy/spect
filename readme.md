@@ -207,21 +207,25 @@ Pending...
 
 ## API
 
-- [**Effects**](#effects)
-  - [_**`$`**_](#$)
-  - [_**`on`**_](#on)
-  - [_**`fx`**_](#fx)
+[**Effects**](#effects)
+⋅ [_**`$`**_](#$)
+⋅ [_**`on`**_](#on)
+⋅ [_**`fx`**_](#fx)
 
-- **Sources**
-  - [_**`state`**_](#state)
-  - [_**`calc`**_](#calc)
-  - [_**`store`**_](#store)
-  - [_**`list`**_](#list)
-  - [_**`attr`**_](#attr)
-  - [_**`prop`**_](#prop)
-  - [_**`input`**_](#input)
-  - [_**`html`**_](#html)
-  - [_**`ref`**_](#ref)
+[**Sources**](#sources)
+⋅ [_**`state`**_](#state)
+⋅ [_**`store`**_](#store)
+⋅ [_**`list`**_](#list)
+⋅ [_**`attr`**_](#attr)
+⋅ [_**`prop`**_](#prop)
+⋅ [_**`calc`**_](#calc)
+⋅ [_**`input`**_](#input)
+⋅ [_**`html`**_](#html)
+
+[**Utility**](#utility)
+⋅ [_**`ref`**_](#ref)
+⋅ [_**`channel`**_](#channel)
+
 
 ## Effects
 
@@ -229,12 +233,12 @@ Pending...
 
 > $( scope? , selector | element, callback )
 
-_**`$`**_ is selector-based _effect_. Any time an element mathing the `selector` appears in DOM, _**`$`**_ runs the `callback` (_aspect_). `callback` can return a teardown function that is called when the element is unmounted.
+_**`$`**_ is selector effect. Any time an element mathing the `selector` appears in DOM, _**`$`**_ runs the `callback` function. The `callback` can return a teardown function that runs when the element is unmounted.
 
 * `selector` should be a valid CSS selector.
 * `element` can be an _HTMLElement_ or a list of elements (array or array-like).
-* `callback` is a function with `target => teardown` signature, or an array of functions.
-* `scope` is optional container element to observe, by default that is `document`.
+* `callback` is a function with `(element) => teardown?` signature, or an array of such functions.
+* `scope` is optional container element to limit observations, by default that is `document`.
 
 ```js
 import { $ } from 'spect'
@@ -263,15 +267,13 @@ import { $ } from 'spect'
 
 const timers = $('.timer', el => {
   let count = 0
-
   let id = setInterval(() => {
     el.innerHTML = `Seconds: ${count++}`
   }, 1000)
-
   return () => clearInterval(id)
 })
 
-// await when the next `.timer` element mounts to the tree
+// await when the next `.timer` element appears in the tree
 await timers
 
 // dispose `.timer` aspect
@@ -282,29 +284,25 @@ timers.cancel()
 
 ### _`on`_
 
-> on( scope?, target | selector, eventName, callback? )
+> on( scope?, target | selector, event, callback? )
 
-_**`on`**_ is event _effect_. It registers a listener for a `target` or `selector`. For the `selector` case it delegates events to `scope` container.
+_**`on`**_ is event effect. It reacts to `events` fired on `target` or `selector`. For the `selector` case it delegates events to `scope` container, by default `document`.
 
 ```js
-import { $, on } from 'spect'
+import { on } from 'spect'
 
-// direct listeners
-$('button', el => {
-  const clicks = on(el, 'click', e => {
-    console.log('clicked')
-  })
-
-  return () => click.cancel()
+// target events
+on(document.querySelector('button'), 'click', e => {
+  console.log('clicked', e)
 })
 
 // delegate events
 const submit = on('form', 'submit', e => console.log(e))
 
-// await any form submit event
+// wait for any form 'submit' event
 const e = await submit
 
-// cancel submit listener
+// cancel submit events listener
 submit.cancel()
 ```
 
@@ -313,16 +311,20 @@ submit.cancel()
 ```js
 import { on } from 'spect'
 
-on('.timer', 'change', e => {
+const ticks = on('.timer', 'tick', e => {
   console.log('Seconds', e.detail.count)
 })
 
-const timer = document.querySelector('.timer')
 let count = 0
 setInterval(() => {
-  timer.dispatchEvent(new CustomEvent('change', { detail: ++count}))
+  document.querySelector('.timer').dispatchEvent(new CustomEvent('tick', { detail: ++count}))
 }, 1000)
 
+// await the next 'tick' event
+await ticks
+
+// cancel ticks listener
+ticks.cancel()
 ```
 
 <br/>
@@ -330,9 +332,9 @@ setInterval(() => {
 
 ### _`fx`_
 
-> fx( callback, args = [ nextTick ] )
+> fx( callback, args = [ tick ] )
 
-_**`fx`**_ is generic _effect_. It reacts to changes in `args` and runs `callback`, much like _useEffect_.
+_**`fx`**_ is generic effect. It reacts to changes in `args` and runs `callback` (similar to _useEffect_).
 
 <!-- _**`dfx`**_ is delta _**`fx`**_ it reacts only to changed state. -->
 
@@ -340,13 +342,14 @@ _**`fx`**_ is generic _effect_. It reacts to changes in `args` and runs `callbac
 
 `args` list expects:
 
-* _Async Generator_ / _Async Iterable_ / object with [`Symbol.asyncIterator`](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Symbol/asyncIterator) method;
-* _Promise_ / _Thenable_;
-* _Observable_ / an object with `.subscribe` method ([rxjs](https://ghub.io/rxjs) / [any-observable](https://ghub.io/any-observable) / [zen-observable](https://ghub.io/zen-observable) etc);
+* Any _Source_
+* _AsyncGenerator_, _AsyncIterable_, or _Object_ with [`Symbol.asyncIterator`](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Symbol/asyncIterator) method
+* _Promise_ or _Thenable_
+* _Observable_ or an _Object_ with `.subscribe` method ([rxjs](https://ghub.io/rxjs), [es-observable](https://ghub.io/es-observable), [zen-observable](https://ghub.io/zen-observable) etc)
 * _Function_ is considered an [observable](https://ghub.io) / [observ](https://ghub.io) / [mutant](https://ghub.io/mutant);
-* any other value is wrapped as `Promise.resolve(value)`.
+* any other value is considered a constant.
 
-When any argument updates, the `callback` runs with the new args values. If `callback` returns a `teardown` function, it is called before the new `callback`. Omitted `args` makes `callback` run only once as microtask.
+When any member of the `args` updates, the `callback` runs with the new state, disposing previous state with `teardown` function. Omitted `args` makes `callback` run only once as microtask.
 
 ```js
 import { state, fx } from 'spect'
@@ -354,13 +357,17 @@ import { time } from 'wait-please'
 
 let count = state(0)
 
-// runs when `count` changes
 fx((count) => {
-  console.log('Count', count)
+  console.log('in', count)
+  return () => console.log('out', count)
 }, [count])
 
-count(1)
-setTimeout(() => count(2), 1000)
+setTimeout(() => count(1), 1000)
+
+// 'in' 0
+// ...
+// 'out' 1
+// 'in' 2
 
 // runs only once
 fx(() => {})
@@ -373,6 +380,7 @@ fx(() => {}, [])
 
 ```js
 import { fx } from 'spect'
+import { time } from 'wait-please'
 
 // timer
 const timer = fx(async c => {
@@ -391,15 +399,18 @@ timer.cancel()
 <br/>
 
 
+## Sources
+
 ### _`state`_
 
 > value = state( init? )
 
-_**`state`**_ creates an observable value that is simply a getter/setter function with [_asyncIterator_](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Symbol/asyncIterator) interface. `init` can be an initial value or an initializer function.
-_**`state`**_ acts as _useState_ hook, or [observable](https://ghub.io/observable).
+_**`state`**_ is a value source. It is a getter/setter function with [_AsyncIterator_](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Symbol/asyncIterator) interface for observing changes.
+`init` can be an initial value or initializer function.
+_**`state`**_ acts as _useState_ hook and has similar to [observable](https://ghub.io/observable) API.
 
 ```js
-import { state } from 'spect'
+import { state, fx } from 'spect'
 
 let count = state(0)
 
@@ -426,11 +437,174 @@ fx(c => {
 <br/>
 
 
+### _`store`_
+
+> obj = store( init = {} )
+
+_**`store`**_ is object source. Unlike _**`state`**_, it returns _AsyncIterable_ object − adding, changing, or deleting its properties emits changes. Useful as model layer.
+
+```js
+import { store, fx } from 'spect'
+
+const foo = store({ foo: null })
+
+// write to store
+foo.foo = 'bar'
+foo.baz = 'boo'
+
+// register effect
+fx(({ foo, ...bax }) => {
+  console.log(foo, bax)
+}, [foo])
+
+// logs
+// { foo: 'bar', baz: 'boo' }
+```
+
+<!--
+#### Example
+
+```js
+import { store } from 'spect'
+
+let likes = store({
+  count: null,
+  loading: false,
+  async load() {
+    this.loading = true
+    this.count = await (await fetch('/likes')).json()
+    this.loading = false
+  }
+})
+
+$('.likes-count', el => {
+  fx(async () => {
+    render(likes.loading ? html`Loading...` : html`Likes: ${ likes.count }`, element)
+  }, [likes])
+})
+```
+-->
+
+<br/>
+
+
+### _`list`_
+
+> arr = list([ ...items ])
+
+_**`list`**_ is array source similar to _**`store`**_, but intended for collections. It emits changes on any mutations.
+
+```js
+import { list } from 'spect'
+
+let arr = list([])
+
+// set
+arr[3] = 'foo'
+
+// mutate
+arr.push('bar', 'baz')
+arr.unshift('qux')
+
+// listen to changes
+for await (const items of arr) {
+  console.log(items)
+}
+```
+
+<br/>
+
+
+### _`prop`_
+
+> value = prop( target, name )
+
+_**`prop`**_ is target property accessor. _**`prop`**_ keeps safe target's own getter/setter, if defined.
+
+```js
+import { prop, fx } from 'spect'
+
+let obj = { foo: 'bar' }
+let foos = prop(obj, 'foo')
+
+// log changes
+fx(foo => console.log(foo), [foos])
+
+// set
+obj.foo = 'baz'
+foos('qux')
+
+// get
+foos() // qux
+
+// dispose
+foos.cancel()
+```
+
+<br/>
+
+### _`attr`_
+
+> value = attr( element, name )
+
+_**`attr`**_ is element attribute accessor. Similar to _**`prop`**_, it provides access to attribute value and emits changes.
+
+```js
+import { fx, attr } from 'spect'
+
+const loading = attr(document.querySelector('button'), 'loading')
+
+// react to changes
+fx(loading => {
+  console.log(loading)
+}, [loading])
+
+// set
+loading(true)
+
+// get
+loading()
+
+// remove attribute
+loading(null)
+
+// dispose accessor
+loading.close()
+```
+
+<br/>
+
+### _`input`_
+
+> value = input( element )
+
+Input element current value source. Useful to track user input.
+
+```js
+import { $, fx, input } from 'spect'
+
+$('input', el => {
+  const inputValue = input(el)
+
+  fx(value => {
+    console.log(`Value`, value)
+  }, [inputValue]
+
+  // to update `inputValue` dispatch event
+  el.value = 3
+  el.dispatch(new Event('change'))
+})
+
+```
+
+<br/>
+
+
 ### _`calc`_
 
-> value = calc( state => result, deps = [] )
+> value = calc( state => result, args = [] )
 
-Observable computed from `deps`. Similar to _**`fx`**_ effect, but creates an observable as result. _**`calc`**_ is analog of _useMemo_.
+Source, computed from `args`. Similar to _**`fx`**_ effect, but creates an observable as result. _**`calc`**_ is analog of _useMemo_.
 
 ```js
 import { $, input, calc } from 'spect'
@@ -445,132 +619,12 @@ fahren() // 32
 
 <br/>
 
-### _`prop`_
-
-> value = prop( target, name )
-
-_**`prop`**_ is target property observable/accessor. _**`prop`**_ keeps safe target's own getter/setter, if defined.
-
-```js
-import { prop, fx } from 'spect'
-
-let obj = { foo: 'bar' }
-let foox = prop(obj)
-
-// log changes
-fx(foo => console.log(foo), [foox])
-
-// set
-obj.foo = 'baz'
-foox('qux')
-
-// get
-foox() // qux
-```
-
-<br/>
-
-### _`attr`_
-
-> value = attr( element, name )
-
-Element attribute observable/accessor. Similar to _**`prop`**_, it provides access to attribute value and emits changes.
-
-```js
-import { fx, attr } from 'spect'
-
-fx(loading => {
-  console.log(loading)
-}, [attr(el, 'loading')])
-```
-
-<br/>
-
-### _`input`_
-
-> value = input( element )
-
-Input element value observable. Emits values, changed by user.
-
-```js
-import { $, fx, input } from 'spect'
-
-$('input', el => {
-  fx(value => {
-    console.log(`Value: ${value}`)
-  }, [input(el)]
-
-  // to trigger change, an event must be dispatched
-  el.value = 3
-  el.dispatch(new Event('change'))
-})
-
-```
-
-<br/>
-
-### _`store`_
-
-> obj = store( init = {} )
-
-Observable object. Unlike _**`state`**_, creates a proxy for the object − adding, changing, or deleting properties emits changes. Changing sub-properties doesn't trigger updates. Similar to _Struct_ in [mutant](https://ghub.io/mutant).
-
-```js
-import { store } from 'spect'
-
-let likes = store({
-  count: null,
-  loading: false,
-  load() {
-    this.loading = true
-    let response = await fetch(url)
-    let data = await response.json()
-    this.loading = false
-    this.count = data.count
-  }
-})
-
-$('.likes-count', el => {
-  fx(async () => {
-    render(likes.loading ? html`Loading...` : html`Likes: ${ likes.count }`, element)
-  }, [likes])
-})
-```
-
-<br/>
-
-
-### _`list`_
-
-> arr = list([ ...items ])
-
-Similar to _**`store`**_, intended for collections. Same as _Array_, but emits changes on any mutations.
-
-```js
-import { list } from 'spect'
-
-let arr = list([])
-
-// set
-arr[3] = 'foo'
-
-// mutator methods
-arr.push('bar', 'baz')
-arr.unshift('qux')
-
-// listen to changes
-for await (const items of arr) {
-  console.log(items)
-}
-```
-
-<br/>
 
 ### _`html`_
 
 > let el = html`<tag ...${ props }>${ content }</>`
 
-HTML template observable. Connects observables or constants to html as template fields. Returns an element that is updated whenever any of insertions change. That way _**`html`**_ doesn't require additional calls to rerender content.
+HTML element as source. Useful for connecting sources to some element or creating live element that reacts to updates in sources.
 _**`html`**_ syntax is compatible with [htm](https://ghub.io/htm).
 
 ```js
@@ -580,25 +634,24 @@ import { html, fx } from 'spect'
 const foo = html`<foo ${bar}=${baz} ...${qux}>${ xyzzy }</foo>`
 
 // hydrate existing element with `foo` as content
-const bat = html`<${document.querySelector('#bat')} ${bar}=${baz}>${ foo }</>`
+const bar = html`<${document.querySelector('#bat')} ${bar}=${baz}>${ foo }</>`
 
-// trigger effect whenever `foo` or `bat` updates
-fx(bat => {
-  console.log('updated', bat)
-}, [bat])
+// runs when `foo` or `bat` updates
+fx((foo, bar) => {
+  console.log('updated', foo, bar)
+}, [foo, bar])
 ```
 
 <br/>
 
-<!--
 ### _`ref`_
 
 > value = ref( init? )
 
-_**`ref`**_ is core value container, serves as foundation for other observables. Unlike _**`state`**_ emits value every set call.  _**`ref`**_ is direct analog of _useRef_ hook.
+Core for sources. Unlike _**`state`**_ emits value every set call.  _**`ref`**_ is direct analog of _useRef_ hook. Thenable, Cancelable, AsyncIterable.
 
 ```js
-import { ref } from 'spect'
+import ref from 'spect/ref'
 
 let count = ref(0)
 
@@ -623,8 +676,30 @@ count.cancel()
 
 > ch = channel( callback, onCancel )
 
+Core for effects. Represents events bus. Thenable, Cancelable, AsyncIterable.
+
+```js
+import channel from 'spect/channel'
+
+let foobus = channel(
+  e => console.log('received', e),
+  reason => console.log('canceled', reason)
+)
+
+// post to channel
+foobus('a')
+foobus('b')
+
+// subscribe to channel
+for await (let e of foobus) {
+  console.log(e)
+}
+
+// close channel
+foobus.cancel()
+```
+
 <br/>
--->
 
 
 ## Inspiration / R&D
