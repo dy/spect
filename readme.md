@@ -212,7 +212,7 @@ Pending...
     <tr>
       <td><strong>Effects:</strong></td>
       <td>
-        <a href="#-$"><strong><em><code>$</code></em></strong></a> ⋅
+        <a href="#$"><strong><em><code>$</code></em></strong></a> ⋅
         <a href="#on"><strong><em><code>on</code></em></strong></a> ⋅
         <a href="#fx"><strong><em><code>fx</code></em></strong></a> ⋅
         <a href="#html"><strong><em><code>html</code></em></strong></a>
@@ -435,9 +435,9 @@ timer.cancel()
 
 ### _`html`_
 
-> let el = html`<tag ...${ props }>${ content }</>`
+> let el = html\`<tag ...${ props }>${ content }</>\`
 
-HTML effect. Rerenders markup automatically by input sources updates.
+HTML effect. Renders markup automatically when input sources update.
 Syntax is compatible with [htm](https://ghub.io/htm).
 
 ```js
