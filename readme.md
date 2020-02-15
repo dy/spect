@@ -214,7 +214,7 @@ Pending...
       <td>
         <a href="#-$"><strong><em><code>$</code></em></strong></a> ⋅ 
         <a href="#on"><strong><em><code>on</code></em></strong></a> ⋅ 
-        <a href="#fx"><strong><em><code>fx</code></em></strong></a> ⋅ 
+        <a href="#fx"><strong><em><code>fx</code></em></strong></a>
       </td>
     </tr>
     <tr>
@@ -678,6 +678,10 @@ fx((foo, bar) => {
 ```
 
 <br/>
+
+
+## Utils
+
 
 ### _`ref`_
 
