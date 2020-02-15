@@ -713,7 +713,7 @@ fahren() // 32
 
 > value = ref( init? )
 
-Source base, emits value every _set_ call. Thenable, Cancelable, AsyncIterable. _**`ref`**_ is direct analog of _useRef_ hook.
+Value container, emits every _set_ call. Thenable, Cancelable, AsyncIterable. _**`ref`**_ is direct analog of _useRef_ hook.
 
 ```js
 import ref from 'spect/ref'
@@ -741,7 +741,7 @@ count.cancel()
 
 > ch = channel( callback, onCancel )
 
-Effect event bus. Thenable, Cancelable, AsyncIterable.
+Event bus. Thenable, Cancelable, AsyncIterable.
 
 ```js
 import channel from 'spect/channel'
