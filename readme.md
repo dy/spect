@@ -60,7 +60,7 @@ _Spect_ is alternative framework, inspired by [_react hooks_](https://reactjs.or
 
 ```html
 <script type="module">
-import { $, fx } from 'https://unpkg.com/spect?module'
+import { $ } from 'https://unpkg.com/spect?module'
 
 // ... code here
 </script>
@@ -207,43 +207,61 @@ Pending...
 
 ## API
 
-_**Effect**_ creates a reaction on various events, returns _cancelable_ _thenable_ _observable_ channel.
+- [**Effects**](#effects)
+  - [_**`$`**_](#$)
+  - [_**`on`**_](#on)
+  - [_**`fx`**_](#fx)
 
-[_**`$`**_](#$),
-[_**`fx`**_](#fx),
-[_**`on`**_](#on)
+- **Sources**
+  - [_**`state`**_](#state)
+  - [_**`calc`**_](#calc)
+  - [_**`store`**_](#store)
+  - [_**`list`**_](#list)
+  - [_**`attr`**_](#attr)
+  - [_**`prop`**_](#prop)
+  - [_**`input`**_](#input)
+  - [_**`html`**_](#html)
+  - [_**`ref`**_](#ref)
 
-_**Source**_ creates an observable for some underlying data source. with _AsyncIterable_ interface, representing underlying changeable data.
-
-[_**`state`**_](#state),
-[_**`calc`**_](#calc),
-[_**`store`**_](#store),
-[_**`list`**_](#list),
-[_**`attr`**_](#attr),
-[_**`prop`**_](#prop),
-[_**`input`**_](#input),
-[_**`html`**_](#html),
-[_**`ref`**_](#ref)
-
-<br/>
+## Effects
 
 ### _`$`_
 
-> $( scope? , selector | element, aspect )
+> $( scope? , selector | element, callback )
 
-_**`$`**_ is selector _effect_. Any time an `element` mathing the `selector` appears in DOM, it runs the `aspect` callback. An optional result is called when the element is unmounted.
+_**`$`**_ is selector-based _effect_. Any time an element mathing the `selector` appears in DOM, _**`$`**_ runs the `callback` (_aspect_). `callback` can return a teardown function that is called when the element is unmounted.
 
 * `selector` should be a valid CSS selector.
 * `element` can be an _HTMLElement_ or a list of elements (array or array-like).
-* `aspect` is a function with `target => teardown` signature, or an array of functions.
-* `scope` is optional container element to assign mutation observer to, by default that is `document`.
-
-Returns cancelable thenable.
+* `callback` is a function with `target => teardown` signature, or an array of functions.
+* `scope` is optional container element to observe, by default that is `document`.
 
 ```js
 import { $ } from 'spect'
 
-const timer = $('.timer', el => {
+$('foo', el => {
+  console.log('active')
+  return () => {
+    console.log('inactive')
+  }
+})
+
+let el = document.createElement('foo')
+document.body.appendChild(el)
+
+// logs "active"
+
+el.replaceWith(null)
+
+// logs "inactive"
+```
+
+#### Example
+
+```js
+import { $ } from 'spect'
+
+const timers = $('.timer', el => {
   let count = 0
 
   let id = setInterval(() => {
@@ -253,26 +271,74 @@ const timer = $('.timer', el => {
   return () => clearInterval(id)
 })
 
-// await when the next `.timer` mounts to the tree
-await timer
+// await when the next `.timer` element mounts to the tree
+await timers
 
 // dispose `.timer` aspect
-timer.cancel()
+timers.cancel()
 ```
 
 <br/>
 
+### _`on`_
+
+> on( scope?, target | selector, eventName, callback? )
+
+_**`on`**_ is event _effect_. It registers a listener for a `target` or `selector`. For the `selector` case it delegates events to `scope` container.
+
+```js
+import { $, on } from 'spect'
+
+// direct listeners
+$('button', el => {
+  const clicks = on(el, 'click', e => {
+    console.log('clicked')
+  })
+
+  return () => click.cancel()
+})
+
+// delegate events
+const submit = on('form', 'submit', e => console.log(e))
+
+// await any form submit event
+const e = await submit
+
+// cancel submit listener
+submit.cancel()
+```
+
+#### Example
+
+```js
+import { on } from 'spect'
+
+on('.timer', 'change', e => {
+  console.log('Seconds', e.detail.count)
+})
+
+const timer = document.querySelector('.timer')
+let count = 0
+setInterval(() => {
+  timer.dispatchEvent(new CustomEvent('change', { detail: ++count}))
+}, 1000)
+
+```
+
+<br/>
+
+
 ### _`fx`_
 
-> fx( callback, deps = [ nextTick ] )
+> fx( callback, args = [ nextTick ] )
 
-_**`fx`**_ is generic effect. It reacts to changes in `deps` and runs `callback`, much like _useEffect_.
+_**`fx`**_ is generic _effect_. It reacts to changes in `args` and runs `callback`, much like _useEffect_.
 
 <!-- _**`dfx`**_ is delta _**`fx`**_ it reacts only to changed state. -->
 
 `callback` is a function with `(...args) => teardown` signature.
 
-`deps` list expects:
+`args` list expects:
 
 * _Async Generator_ / _Async Iterable_ / object with [`Symbol.asyncIterator`](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Symbol/asyncIterator) method;
 * _Promise_ / _Thenable_;
@@ -280,8 +346,7 @@ _**`fx`**_ is generic effect. It reacts to changes in `deps` and runs `callback`
 * _Function_ is considered an [observable](https://ghub.io) / [observ](https://ghub.io) / [mutant](https://ghub.io/mutant);
 * any other value is wrapped as `Promise.resolve(value)`.
 
-When any dep resolves, effect invokes the `callback` with resolved deps values as arguments. Returned `teardown` function can be used as destructor of the previous state.
-Omitted deps run effect only once as microtask.
+When any argument updates, the `callback` runs with the new args values. If `callback` returns a `teardown` function, it is called before the new `callback`. Omitted `args` makes `callback` run only once as microtask.
 
 ```js
 import { state, fx } from 'spect'
@@ -289,18 +354,25 @@ import { time } from 'wait-please'
 
 let count = state(0)
 
-// triggers whenever `count` changes
+// runs when `count` changes
 fx((count) => {
-  console.log(count)
+  console.log('Count', count)
 }, [count])
+
 count(1)
 setTimeout(() => count(2), 1000)
 
-// called once
+// runs only once
 fx(() => {})
 
-// never called
+// never runs
 fx(() => {}, [])
+```
+
+#### Example
+
+```js
+import { fx } from 'spect'
 
 // timer
 const timer = fx(async c => {
@@ -312,69 +384,12 @@ const timer = fx(async c => {
 // await next count
 await timer
 
-// close timer effect
+// cancel effect
 timer.cancel()
 ```
 
 <br/>
 
-
-### _`on`_
-
-> on( scope?, target | selector, eventName, callback )
-
-Event-based effect. Registers listener for a `target` or `selector`. In case of `selector`, creates a delegated event listener on `scope`. Returns thenable cancelable.
-
-```js
-import { $, on, calc, fx } from 'spect'
-
-// direct listeners
-$('input', el => {
-  let click = on(el, 'click', e => {
-    console.log('clicked')
-  })
-
-  let focus = on(el, 'focus', e => {
-    console.log('focused')
-  })
-
-  return () => {
-    click.cancel()
-    focus.cancel()
-  }
-})
-
-// delegate events
-on('input', 'change', e => {
-  console.log(e.target.value)
-})
-```
-
-<br/>
-
-### _`html`_
-
-> let el = html`<tag ...${ props }>${ content }</>`
-
-HTML template observable. Connects observables or constants to html as template fields. Returns an element that is updated whenever any of insertions change. That way _**`html`**_ doesn't require additional calls to rerender content.
-_**`html`**_ syntax is compatible with [htm](https://ghub.io/htm).
-
-```js
-import { html, fx } from 'spect'
-
-// create new observable element
-const foo = html`<foo ${bar}=${baz} ...${qux}>${ xyzzy }</foo>`
-
-// hydrate existing element with `foo` as content
-const bat = html`<${document.querySelector('#bat')} ${bar}=${baz}>${ foo }</>`
-
-// trigger effect whenever `foo` or `bat` updates
-fx(bat => {
-  console.log('updated', bat)
-}, [bat])
-```
-
-<br/>
 
 ### _`state`_
 
@@ -547,6 +562,30 @@ arr.unshift('qux')
 for await (const items of arr) {
   console.log(items)
 }
+```
+
+<br/>
+
+### _`html`_
+
+> let el = html`<tag ...${ props }>${ content }</>`
+
+HTML template observable. Connects observables or constants to html as template fields. Returns an element that is updated whenever any of insertions change. That way _**`html`**_ doesn't require additional calls to rerender content.
+_**`html`**_ syntax is compatible with [htm](https://ghub.io/htm).
+
+```js
+import { html, fx } from 'spect'
+
+// create new observable element
+const foo = html`<foo ${bar}=${baz} ...${qux}>${ xyzzy }</foo>`
+
+// hydrate existing element with `foo` as content
+const bat = html`<${document.querySelector('#bat')} ${bar}=${baz}>${ foo }</>`
+
+// trigger effect whenever `foo` or `bat` updates
+fx(bat => {
+  console.log('updated', bat)
+}, [bat])
 ```
 
 <br/>
