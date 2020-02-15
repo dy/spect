@@ -207,24 +207,24 @@ Pending...
 
 ## API
 
-[**Effects**](#effects)
-⋅ [_**`$`**_](#$)
-⋅ [_**`on`**_](#on)
-⋅ [_**`fx`**_](#fx)
+**Effects:**
+[_**`$`**_](#$) ⋅ 
+[_**`on`**_](#on) ⋅ 
+[_**`fx`**_](#fx)
 
-[**Sources**](#sources)
-⋅ [_**`state`**_](#state)
-⋅ [_**`store`**_](#store)
-⋅ [_**`list`**_](#list)
-⋅ [_**`attr`**_](#attr)
-⋅ [_**`prop`**_](#prop)
-⋅ [_**`calc`**_](#calc)
-⋅ [_**`input`**_](#input)
-⋅ [_**`html`**_](#html)
+**Sources:**
+[_**`state`**_](#state) ⋅ 
+[_**`store`**_](#store) ⋅ 
+[_**`list`**_](#list) ⋅ 
+[_**`attr`**_](#attr) ⋅ 
+[_**`prop`**_](#prop) ⋅ 
+[_**`calc`**_](#calc) ⋅ 
+[_**`input`**_](#input) ⋅ 
+[_**`html`**_](#html)
 
-[**Utility**](#utility)
-⋅ [_**`ref`**_](#ref)
-⋅ [_**`channel`**_](#channel)
+[**Util:**](#utility)
+[_**`ref`**_](#ref) ⋅ 
+[_**`channel`**_](#channel)
 
 
 ## Effects
