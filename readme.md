@@ -207,13 +207,13 @@ Pending...
 
 ## API
 
-_Effect_ creates a reaction on various events, returns _Cancelable_ _Thenable_.
+_**Effect**_ creates a reaction on various events, returns _cancelable_ _thenable_ _observable_ channel.
 
 [_**`$`**_](#$),
 [_**`fx`**_](#fx),
 [_**`on`**_](#on)
 
-_Observable_ create an object with _AsyncIterable_ interface, representing underlying changeable data.
+_**Source**_ creates an observable for some underlying data source. with _AsyncIterable_ interface, representing underlying changeable data.
 
 [_**`state`**_](#state),
 [_**`calc`**_](#calc),
@@ -231,7 +231,7 @@ _Observable_ create an object with _AsyncIterable_ interface, representing under
 
 > $( scope? , selector | element, aspect )
 
-_**`$`**_ is selector observer _effect_. It assigns an `aspect` callback to `selector` or `element`. The `aspect` is triggered when an element matching the `selector` is mounted, and optional returned callback is called when unmounted.
+_**`$`**_ is selector _effect_. Any time an `element` mathing the `selector` appears in DOM, it runs the `aspect` callback. An optional result is called when the element is unmounted.
 
 * `selector` should be a valid CSS selector.
 * `element` can be an _HTMLElement_ or a list of elements (array or array-like).

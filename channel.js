@@ -1,4 +1,5 @@
 // events bus - cancelable, thenable
+// useful as foundation for effects
 import Cancelable from './cancelable.js'
 
 export default function channel(callback, teardown) {
