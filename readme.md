@@ -26,12 +26,11 @@
   $('#clock', el => {
     const date = state(new Date())
 
-    fx(() => {
-      el.innerHTML = date().toLocaleTimeString()
-      el.setAttribute('datetime', date().toISOString())
+    fx(() => setTimeout(() => date(new Date()), 1000), [date])
 
-      setTimeout(() => date(new Date()), 1000)
-    }, [date])
+    html`<${el} datetime=${calc(date => date.toISOString(), [date])}>
+      ${ date().toLocaleTimeString() }
+    </>`
   })
 </script>
 -->

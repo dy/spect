@@ -82,8 +82,13 @@ t('html: dynamic list', async t => {
   t.is(a.outerHTML, `<a><foo></foo>bar<baz></baz></a>`)
 })
 
-t.todo('html: mount to another element', async t => {
+t('html: mount to another element', async t => {
+  const a = html`<a></a>`
+  const c = state(0)
+  const b = html`<${a}>${ c }</>`
 
+  t.is(a, b)
+  t.is(b.outerHTML, `<a>0</a>`)
 })
 
 t.skip('html: core', async t => {

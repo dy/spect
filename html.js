@@ -54,7 +54,9 @@ export default function htm (statics) {
             }
             else if (!i) {
               // current = [current, evaluate(part), null]
-              current.appendChild(current = document.createElement(part))
+              calc(([tag]) => {
+                current.appendChild(current = typeof tag === 'string' ? document.createElement(tag) : tag)
+              }, [evaluate(part)])
             }
             else if (part) {
               // let props = current[2] || (current[2] = {})
