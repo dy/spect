@@ -378,8 +378,8 @@ Similar to _useEffect_, but `args` are observables, any of:
 
 * _Source_
 * _AsyncGenerator_, _AsyncIterable_ or _object_ with [`Symbol.asyncIterator`](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Symbol/asyncIterator)
-* _Promise_ or _Thenable_
-* _Observable_ or an _object_ with `.subscribe` method, eg. [rxjs](https://ghub.io/rxjs), [es-observable](https://ghub.io/es-observable), [zen-observable](https://ghub.io/zen-observable) etc.
+* _Promise_ or _thenable_
+* _Observable_ or _subscribable_, eg. [rxjs](https://ghub.io/rxjs), [es-observable](https://ghub.io/es-observable), [zen-observable](https://ghub.io/zen-observable) etc.
 * _Function_ is considered an [observable](https://ghub.io), [observ](https://ghub.io) or [mutant](https://ghub.io/mutant)
 * other value is considered constant.
 
@@ -483,8 +483,7 @@ $('.timer', el => {
 
 > value = state( init? )
 
-_**`state`**_ is a value source. It is a getter/setter function with [_AsyncIterator_](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Symbol/asyncIterator) interface for observing changes.
-`init` can be an initial value or initializer function.
+_**`state`**_ is a value source. It is a getter/setter function with [_AsyncIterator_](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Symbol/asyncIterator) interface for observing changes. `init` is optional initial value.
 _**`state`**_ acts as _useState_ hook and has similar to [observable](https://ghub.io/observable) API. Useful as component state, eg. visibility etc.
 
 ```js

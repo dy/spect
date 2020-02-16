@@ -19,11 +19,10 @@ export default function fx(callback, deps=[ Promise.resolve().then() ]) {
   // observe changes
   deps.map(async (dep, i) => {
     // resolve primitive immediately
-    if (primitive(dep)) {
+    if (!changeable(dep)) {
       current[i] = dep
       notify()
     }
-
     // async iterator
     else if (Symbol.asyncIterator in dep) {
       for await (let value of dep) {
@@ -57,7 +56,11 @@ export default function fx(callback, deps=[ Promise.resolve().then() ]) {
   return fxChannel
 }
 
-function primitive(val) {
+export function changeable(dep) {
+  return dep && !primitive(dep) && (Symbol.asyncIterator in dep || 'then' in dep || 'subscribe' in dep || typeof dep === 'function')
+}
+
+export function primitive(val) {
   if (typeof val === 'object') return val === null
   return typeof val !== 'function'
 }

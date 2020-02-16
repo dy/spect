@@ -1,5 +1,6 @@
-import fx from './fx.js'
+import fx, { primitive } from './fx.js'
 import list from './list.js'
+import calc from './calc.js'
 
 const FIELD = '\ue000', QUOTES = '\ue001'
 
@@ -7,20 +8,32 @@ export default function htm (statics) {
   let h = this, prev = 0, current = document.createDocumentFragment(), field = 0, args, name, value, quotes = [], quote = 0
 
   // TODO: turn string into an observable
-  const evaluate = (str, fn = a => a || '', keepQuotes) => {
+  // const evaluate = (str, fn = a => a || '', keepQuotes) => {
+  const evaluate = (str, keepQuotes) => {
     let i = 0
-    if (!str[1] && str[0] === FIELD) return fn(arguments[++field])
-    str = str.replace(/\ue001/g, m => keepQuotes ? quotes[quote++] : quotes[quote++].slice(1, -1))
+    // if (!str[1] && str[0] === FIELD) return fn(arguments[++field])
+    if (!str[1] && str[0] === FIELD) return [arguments[++field]]
+
+    // str = str.replace(/\ue001/g, m => keepQuotes ? quotes[quote++] : quotes[quote++].slice(1, -1))
+    //   .replace(/\ue000/g, (match, idx, str) => {
+    //     if (idx) fn(str.slice(i, idx))
+    //     i = idx + 1
+    //     return fn(arguments[++field])
+    //   })
+    // if (i < str.length) fn(str.slice(i))
+    // return str
+
+    // deps is fixed-length list of [possible] subscribables
+    const deps = []
+    str.replace(/\ue001/g, m => keepQuotes ? quotes[quote++] : quotes[quote++].slice(1, -1))
       .replace(/\ue000/g, (match, idx, str) => {
-        if (idx) fn(str.slice(i, idx))
+        if (idx) deps.push(str.slice(i, idx))
         i = idx + 1
-        return fn(arguments[++field])
+        return deps.push(arguments[++field])
       })
-    if (i < str.length) fn(str.slice(i))
-    return str
-  }
-  const evaluable = (str) => {
-    if (!str[1] && str[0] === FIELD) return arguments[++field]
+    if (i < str.length) deps.push(str.slice(i))
+
+    return deps
   }
 
   statics
@@ -42,8 +55,6 @@ export default function htm (statics) {
             }
             else if (!i) {
               // current = [current, evaluate(part), null]
-              // FIXME: element here can be observable
-              // FIXME: part here can be a fragment
               current.appendChild(current = document.createElement(part))
             }
             else if (part) {
@@ -62,8 +73,11 @@ export default function htm (statics) {
                 // props[evaluate(name)] = value ? evaluate(value) : true
                 if (value) {
                   const el = current
-                  fx((name, value) => {
+                  fx((name, ...value) => {
                     const orig = el.getAttribute(name)
+
+                    if (value.length === 1) value = value[0]
+                    else value = value.filter(Boolean).join('')
 
                     if (value === true) el.setAttribute(name, '')
                     else if (value === false || value == null) el.removeAttribute(name)
@@ -72,7 +86,7 @@ export default function htm (statics) {
                     return () => {
                       el.setAttribute(name, orig)
                     }
-                  }, [name, evaluable(value)])
+                  }, [name, ...evaluate(value)])
                 }
                 else {
                   // fx(name => {
@@ -80,7 +94,7 @@ export default function htm (statics) {
                   //   return () => {
                   //     current.removeAttribute(name)
                   //   }
-                  // }, [evaluated(name)])
+                  // }, [evaluate(name)])
                 }
               }
             }
@@ -101,10 +115,19 @@ export default function htm (statics) {
       // if (prev < str.length || !idx) evaluate(text, part => current.push(part), true)
       if (prev < str.length || !idx) {
         if (text) {
-          const textNode = current.appendChild(document.createTextNode(''))
-          fx(text => {
-            textNode.textContent = text
-          }, [evaluable(text)])
+          const deps = evaluate(text, true)
+          const children = deps.map(dep => current.appendChild(document.createTextNode('')))
+          fx((...frags) => {
+            frags.map((frag, i) => {
+              if (primitive(frag)) {
+                if (children[i].nodeType !== 3) children[i].replaceWith(children[i] = document.createTextNode(''))
+                children[i].textContent = frag
+              }
+              else {
+                children[i].replaceWith(children[i] = frag)
+              }
+            })
+          }, deps)
         }
       }
     })

@@ -50,7 +50,31 @@ t('html: text content', async t => {
   t.is(el.outerHTML, `<div></div>`)
 })
 
-t.todo('html: children', async t => {
+t('html: child node', async t => {
+  const text = state(0)
+  const a = html`<a>${ text }</a>`
+  const b = html`<b>${ a }</b>`
+
+  await tick(8)
+  t.is(b.outerHTML, `<b><a>0</a></b>`)
+
+  text(1)
+  await tick(8)
+  t.is(b.outerHTML, `<b><a>1</a></b>`)
+})
+
+t('html: mixed static content', async t => {
+  const foo = html`<foo></foo>`
+  const bar = `bar`
+  const baz = html`<baz/>`
+
+  const a = html`<a> ${foo} ${bar} ${baz} </a>`
+
+  await tick(8)
+  t.is(a.outerHTML, `<a> <foo></foo> bar <baz></baz> </a>`)
+})
+
+t('html: mount to another element', async t => {
 
 })
 

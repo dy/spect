@@ -15,7 +15,9 @@ import createRef from './ref.js'
 //   flat: true
 // }
 
-export default function list(arr = {}) {
+// const subs = new WeakMap
+
+export default function list(arr = []) {
   const ref = createRef(arr)
 
   const proxy = new Proxy(arr, {
@@ -31,6 +33,10 @@ export default function list(arr = {}) {
       if (Object.is(arr[prop], value)) return true
       arr[prop] = value
       ref(arr)
+
+      // subscribe to updates?
+      // if (changeable(value) && !subs.has(value)) subs.add(fx(value => ref(arr), [value]))
+
       return true
     },
     deleteProperty(arr, prop) {

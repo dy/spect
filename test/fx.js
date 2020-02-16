@@ -183,3 +183,11 @@ t('fx: thenable', async t => {
   await tick(8)
   t.is(log, [0, 1, 'aw', 1])
 })
+t('fx: simple values', async t => {
+  const o = {x:1}, log = []
+  fx((o, x) => {
+    log.push(o, x)
+  }, [o, o.x])
+  await tick(8)
+  t.is(log, [{x: 1}, 1])
+})

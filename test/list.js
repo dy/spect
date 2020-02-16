@@ -70,3 +70,20 @@ t('list: must not expose internal props', async t => {
   }
   t.is(log, [])
 })
+
+t.skip('list: passes through internal item updates', async t => {
+  let l = list(), s = state(0)
+  l.push(s)
+
+  let log = []
+  fx(l => {
+    log.push(l)
+  }, [l])
+
+  await tick(8)
+  t.is(log, [[s]])
+
+  s(1)
+  await tick(8)
+  t.is(log, [[s], [s]])
+})

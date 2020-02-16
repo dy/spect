@@ -21,3 +21,13 @@ t('calc: core', async t => {
   await tick(8)
   t.is(fahren(), 68)
 })
+
+t('calc: must be sync', async t => {
+  const x = state(0)
+  const x2 = calc(x => x * 2, [x])
+  t.is(x2.current, 0)
+
+  x(1)
+  await tick(8)
+  t.is(x2.current, 2)
+})
