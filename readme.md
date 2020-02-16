@@ -689,7 +689,7 @@ $('input', el => {
 
 > value = calc( state => result, args = [] )
 
-Source computed from `args`. Similar to _**`fx`**_, but creates source as result. Analog of _useMemo_.
+Source computed from `args`. Similar to _**`fx`**_, but synchronous and creates _source_ as result. Analog of _useMemo_.
 
 ```js
 import { $, input, calc } from 'spect'

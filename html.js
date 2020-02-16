@@ -1,5 +1,4 @@
 import fx, { primitive } from './fx.js'
-import list from './list.js'
 import calc from './calc.js'
 
 const FIELD = '\ue000', QUOTES = '\ue001'
@@ -73,7 +72,7 @@ export default function htm (statics) {
                 // props[evaluate(name)] = value ? evaluate(value) : true
                 if (value) {
                   const el = current
-                  fx((name, ...value) => {
+                  calc((name, ...value) => {
                     const orig = el.getAttribute(name)
 
                     if (value.length === 1) value = value[0]
@@ -116,9 +115,9 @@ export default function htm (statics) {
       if (prev < str.length || !idx) {
         if (text) {
           const deps = evaluate(text, true)
-          const children = deps.map(dep => current.appendChild(document.createTextNode('')))
-          fx((...frags) => {
-            frags.map((frag, i) => {
+          const children = deps.flat().map(dep => current.appendChild(document.createTextNode('')))
+          calc((...frags) => {
+            frags.flat().map((frag, i) => {
               if (primitive(frag)) {
                 if (children[i].nodeType !== 3) children[i].replaceWith(children[i] = document.createTextNode(''))
                 children[i].textContent = frag

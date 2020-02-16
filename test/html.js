@@ -1,5 +1,5 @@
 import t from 'tst'
-import { $, state, fx, prop, store, calc, ref, attr, on, html } from '../index.js'
+import { $, state, fx, prop, store, calc, list, ref, attr, on, html } from '../index.js'
 import { tick, frame, idle, time } from 'wait-please'
 import { augmentor, useState, useEffect, useMemo } from 'augmentor'
 import Observable from 'zen-observable/esm'
@@ -21,7 +21,7 @@ t('html: single attribute', async t => {
 
   let el = html`<div a=${a}></div>`
 
-  await tick(8)
+  // await tick(8)
   t.is(el.outerHTML, `<div a="0"></div>`)
 
   a(1)
@@ -38,7 +38,6 @@ t('html: text content', async t => {
 
   let el = html`<div>${ a }</div>`
 
-  await tick(8)
   t.is(el.outerHTML, `<div>0</div>`)
 
   a(1)
@@ -55,7 +54,6 @@ t('html: child node', async t => {
   const a = html`<a>${ text }</a>`
   const b = html`<b>${ a }</b>`
 
-  await tick(8)
   t.is(b.outerHTML, `<b><a>0</a></b>`)
 
   text(1)
@@ -70,11 +68,21 @@ t('html: mixed static content', async t => {
 
   const a = html`<a> ${foo} ${bar} ${baz} </a>`
 
-  await tick(8)
   t.is(a.outerHTML, `<a> <foo></foo> bar <baz></baz> </a>`)
 })
 
-t('html: mount to another element', async t => {
+t('html: dynamic list', async t => {
+  const foo = html`<foo></foo>`
+  const bar = `bar`
+  const baz = html`<baz/>`
+  const content = list([foo, bar, baz])
+
+  const a = html`<a>${ content }</a>`
+
+  t.is(a.outerHTML, `<a><foo></foo>bar<baz></baz></a>`)
+})
+
+t.todo('html: mount to another element', async t => {
 
 })
 
