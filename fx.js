@@ -1,6 +1,8 @@
 import channel from './channel.js'
 
-export default function fx(callback, deps=[ Promise.resolve().then() ]) {
+export default fx
+
+export function fx(callback, deps=[ Promise.resolve().then() ]) {
   let current = [], prev = []
   let changed = false, destroy
 
@@ -31,14 +33,14 @@ export default function fx(callback, deps=[ Promise.resolve().then() ]) {
       }
     }
     // promise
-    else if ('then' in dep) {
+    else if (dep.then) {
       dep.then(value => {
         current[i] = value
         notify()
       })
     }
     // Observable
-    else if ('subscribe' in dep) {
+    else if (dep.subscribe) {
       dep.subscribe(value => {
         current[i] = value
         notify()

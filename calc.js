@@ -1,5 +1,5 @@
 import state from './state.js'
-import fx, { primitive, changeable } from './fx.js'
+import { fx, primitive, changeable } from './fx.js'
 
 export default function calc(fn, deps) {
   const value = state(fn(...deps.map(v => {
@@ -10,9 +10,15 @@ export default function calc(fn, deps) {
     if (!changeable(v)) return v
   })))
 
+  const set = value.set
+  value.set = () => {
+    throw Error('setting read-only source')
+  }
+
   fx((...current) => {
-    value(fn(...current))
+    set(fn(...current))
   }, deps)
+
 
   return value
 }

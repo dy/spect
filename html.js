@@ -12,7 +12,6 @@ export default function htm (statics) {
     let i = 0
     // if (!str[1] && str[0] === FIELD) return fn(arguments[++field])
     if (!str[1] && str[0] === FIELD) return [arguments[++field]]
-
     // str = str.replace(/\ue001/g, m => keepQuotes ? quotes[quote++] : quotes[quote++].slice(1, -1))
     //   .replace(/\ue000/g, (match, idx, str) => {
     //     if (idx) fn(str.slice(i, idx))
@@ -24,8 +23,8 @@ export default function htm (statics) {
 
     // deps is fixed-length list of [possible] subscribables
     const deps = []
-    str.replace(/\ue001/g, m => keepQuotes ? quotes[quote++] : quotes[quote++].slice(1, -1))
-      .replace(/\ue000/g, (match, idx, str) => {
+    str = str.replace(/\ue001/g, m => keepQuotes ? quotes[quote++] : quotes[quote++].slice(1, -1))
+    str.replace(/\ue000/g, (match, idx, str) => {
         if (idx) deps.push(str.slice(i, idx))
         i = idx + 1
         return deps.push(arguments[++field])
@@ -38,8 +37,9 @@ export default function htm (statics) {
   statics
     .join(FIELD)
     .replace(/('|")[^\1]*?\1/g, match => (quotes.push(match), QUOTES))
-    .replace(/\s+/g, ' ')
     .replace(/<!--.*-->/g, '')
+    .replace(/\s+/g, ' ')
+    .replace(/^\s*\n\s*|\s*\n\s*$/g,'')
 
     // ...>text<... sequence
     .replace(/(?:^|>)([^<]*)(?:$|<)/g, (match, text, idx, str) => {
@@ -54,9 +54,18 @@ export default function htm (statics) {
             }
             else if (!i) {
               // current = [current, evaluate(part), null]
-              calc(([tag]) => {
-                current.appendChild(current = typeof tag === 'string' ? document.createElement(tag) : tag)
-              }, [evaluate(part)])
+              calc(tag => {
+                if (!tag) {
+                  current._fragment = (current._fragment || 0) + 1
+                  current.appendChild(document.createTextNode(''))
+                }
+                else if (typeof tag === 'string') {
+                  current.appendChild(current = document.createElement(tag))
+                }
+                else {
+                  current.appendChild(current = tag)
+                }
+              }, evaluate(part))
             }
             else if (part) {
               // let props = current[2] || (current[2] = {})
@@ -109,7 +118,12 @@ export default function htm (statics) {
             // discard all previous effects
             // insert new nodes
           // }, observableList)
-          current = current.parentNode
+          if (current._fragment) {
+            current._fragment--
+          }
+          else {
+            current = current.parentNode
+          }
         }
       }
       prev = idx + match.length

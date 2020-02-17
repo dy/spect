@@ -267,7 +267,7 @@ Pending...
 
 > $( scope? , selector | element, callback )
 
-Selector effect. Any time an element matching the `selector` appears in DOM, _**`$`**_ runs the `callback` function. The `callback` can return a teardown function that runs when the element is unmounted.
+Selector effect. Any time an element matching the `selector` appears in DOM, _**`$`**_ runs the `callback` function. The `callback` can return a teardown function that runs when the element is unmatched.
 
 * `selector` is a valid CSS selector.
 * `element` is _HTMLElement_ or a list of elements (array or array-like).
@@ -320,7 +320,7 @@ timer.cancel()
 
 > on( scope?, target | selector, event, callback? )
 
-Event effect. Reacts to events on `target` or `selector`. For the `selector` case it delegates events to `scope` container, by default `document`.
+Event effect. Runs `callback` by events on a `target` element or `selector`. For the `selector` case it delegates events to `scope` container, by default `document`.
 
 ```js
 import { on } from 'spect'

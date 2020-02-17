@@ -91,39 +91,10 @@ t('html: mount to another element', async t => {
   t.is(b.outerHTML, `<a>0</a>`)
 })
 
-t.skip('html: core', async t => {
-  const content = state('')
-  const props = store({x: 0})
-  const prop = state('')
-  const tag = state('foo')
-
-  let el = html`<div ${prop} ...${props}>${content}</div>`
-
-  fx(el => {
-    log.push(el.outerHTML)
-  }, [el])
-})
-
-
-t.skip('html: apply direct props', async t => {
-  let a = document.createElement('a')
-  let el = html`<${a}#x.y.z/>`
-  t.is(el.className, 'y z')
-  t.is(el.id, 'x')
-})
-
-t.skip('html: render new children', async t => {
+t('html: render new children to mounted element', async t => {
   let a = document.createElement('a')
   let el = html`<${a}>foo <bar><baz class="qux"/></></>`
   t.is(el.outerHTML, `<a>foo <bar><baz class="qux"></baz></bar></a>`)
-})
-
-t.skip('html: render existing children', async t => {
-  let a = document.createElement('a')
-  let baz = document.createElement('baz')
-  let qux = document.createElement('qux')
-  let el = html`<${a}>foo <bar>${baz}</>${qux}</>`
-  t.is(el.outerHTML, `<a>foo <bar><baz></baz></bar><qux></qux></a>`)
 })
 
 t.skip('html: function renders external component', async t => {
@@ -165,21 +136,12 @@ t.skip('html: rerendering with props: must persist', async t => {
   t.is(el.firstChild.items, [])
 })
 
-t.skip('html: must not lose attributes', async t => {
+t('html: must not lose attributes', async t => {
   let a = html`<tr colspan=2/>`
   t.is(a.getAttribute('colspan'), "2")
 })
 
-t.skip('html: must not redefine class', async t => {
-  let el = html`<a.foo.bar/>`
-  t.is(el.className,'foo bar')
-  html`<${el}.baz/>`
-  t.is(el.className, 'foo bar baz')
-  html`<${el}.qux/>`
-  t.is(el.className, 'foo bar baz qux')
-})
-
-t.skip('html: fragments', async t => {
+t('html: fragments', async t => {
   let el = html`<foo/><bar/>`
   t.is(el.childNodes.length, 2)
 
@@ -190,7 +152,7 @@ t.skip('html: fragments', async t => {
   t.is(el3.textContent, 'foo')
 })
 
-t.skip('html: reinsert self content', t => {
+t('html: reinsert self content', t => {
   let el = document.createElement('div')
   el.innerHTML = 'a <b>c <d>e <f></f> g</d> h</b> i'
 
@@ -201,30 +163,26 @@ t.skip('html: reinsert self content', t => {
   t.is(el.outerHTML, `<div>a <b>c <d>e <f></f> g</d> h</b> i</div>`)
 })
 
-t.skip('html: wrapping', async t => {
+t('html: wrapping', async t => {
   let root = document.createElement('div')
   root.innerHTML = '<foo/>'
   let foo = root.firstChild
   foo.x = 1
 
-  let wrapped = html`<div>
-    <${foo}.foo><bar/></>
-  </div>`
+  let wrapped = html`<div><${foo} class="foo"><bar/></></div>`
 
   t.is(wrapped.outerHTML, '<div><foo class="foo"><bar></bar></foo></div>')
   t.is(wrapped.firstChild, foo)
   t.is(wrapped.firstChild.x, 1)
 })
 
-t.skip('html: wrapping with children', async t => {
+t('html: wrapping with children', async t => {
   let root = document.createElement('div')
   root.innerHTML = '<foo><bar></bar><baz></baz></foo>'
   let foo = root.firstChild
   foo.x = 1
 
-  let wrapped = html`<div>
-    <${foo}.foo>${ [...foo.childNodes] }</>
-  </div>`
+  let wrapped = html`<div><${foo} class=foo>${ [...foo.childNodes] }</></div>`
 
   t.is(wrapped.outerHTML, '<div><foo class="foo"><bar></bar><baz></baz></foo></div>')
   t.is(wrapped.firstChild, foo)
@@ -232,15 +190,13 @@ t.skip('html: wrapping with children', async t => {
 })
 
 t.skip('html: select case', async t => {
-  let w = html`
-    <>
+  let w = html`<>
     <select>
       <option value="a"></option>
     </select>
-  </>
-  `
-  await Promise.resolve().then()
-  t.is(w.outerHTML, `<><select><option value="a"></option></select></>`)
+  </>`
+  await tick(8)
+  t.is(w.outerHTML, `<> <select> <option value="a"></option> </select> </>`)
 })
 
 t.skip('html: promises', async t => {
