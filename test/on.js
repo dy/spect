@@ -53,6 +53,10 @@ t('on: delegated events', t => {
 	t.end()
 });
 
+t('on: events list', async t => {
+  on('x', ['x', 'y'], e => {})
+})
+
 t.skip('on: observable', async t => {
   let el = document.createElement('div')
   let clicks = on(el, 'click')

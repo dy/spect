@@ -10,7 +10,7 @@ export default function on (scope, target, event, callback) {
 
   const eventChannel = channel(callback, r => evts.map(event => target.removeEventListener(event, eventChannel)))
 
-  const evts = event.split(/\s+/)
+  const evts = Array.isArray(event) ? event : event.split(/\s+/)
   evts.map(event => target.addEventListener(event, eventChannel))
 
   return eventChannel
@@ -32,7 +32,7 @@ export function delegate (scope, selector, event, callback) {
 		}
   }
 
-  const evts = event.split(/\s+/)
+  const evts = Array.isArray(event) ? event : event.split(/\s+/)
   evts.map(event => scope.addEventListener(event, delegate))
 
   const delegateChannel = channel(callback, () => evts.map(event => scope.removeEventListener(event, delegate)))
