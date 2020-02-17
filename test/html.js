@@ -82,6 +82,12 @@ t('html: dynamic list', async t => {
   t.is(a.outerHTML, `<a><foo></foo>bar<baz></baz></a>`)
 })
 
+t('html: 2-level fragment', async t => {
+  let w = html`<> <x> <y> </y> </x> </>`
+  await tick(8)
+  t.is(w.outerHTML, `<> <x> <y> </y> </x> </>`)
+})
+
 t('html: mount to another element', async t => {
   const a = html`<a></a>`
   const c = state(0)
@@ -189,7 +195,7 @@ t('html: wrapping with children', async t => {
   t.is(wrapped.firstChild.x, 1)
 })
 
-t.skip('html: select case', async t => {
+t('html: select case', async t => {
   let w = html`<>
     <select>
       <option value="a"></option>

@@ -67,8 +67,7 @@ export function primitive(val) {
   return typeof val !== 'function'
 }
 
-export function dfx(callback, deps) {
-  let prev = []
+export function dfx(callback, deps, prev = []) {
   return fx((...values) => {
     if (values.every((value, i) => Object.is(value, prev[i]))) return
     prev = values

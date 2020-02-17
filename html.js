@@ -147,5 +147,5 @@ export default function htm (statics) {
       }
     })
   // return current.length > 1 ? current : current[0]
-  return current.childNodes.length > 1 ? current : current.firstChild
+  return current.childNodes.length > 1 || current._fragment === 0 ? current : current.firstChild
 }
