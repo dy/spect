@@ -2,6 +2,8 @@ import fx, { primitive } from './fx.js'
 import calc from './calc.js'
 
 const FIELD = '\ue000', QUOTES = '\ue001'
+const _fragment = Symbol('fragment')
+const _fragmentParent = Symbol('fragmentParent')
 
 export default function htm (statics) {
   let h = this, prev = 0, current = document.createDocumentFragment(), field = 0, args, name, value, quotes = [], quote = 0
@@ -56,11 +58,17 @@ export default function htm (statics) {
               // current = [current, evaluate(part), null]
               calc(tag => {
                 if (!tag) {
-                  current._fragment = (current._fragment || 0) + 1
+                  current[_fragment] = (current[_fragment] || 0) + 1
+                  // FIXME: use ranges maybe?
                   current.appendChild(document.createTextNode(''))
                 }
                 else if (typeof tag === 'string') {
                   current.appendChild(current = document.createElement(tag))
+                }
+                else if (tag.nodeType === Node.DOCUMENT_FRAGMENT_NODE) {
+                  // emulate parent node for fragments
+                  tag[_fragmentParent] = current
+                  current = tag
                 }
                 else {
                   current.appendChild(current = tag)
@@ -118,11 +126,11 @@ export default function htm (statics) {
             // discard all previous effects
             // insert new nodes
           // }, observableList)
-          if (current._fragment) {
-            current._fragment--
+          if (current[_fragment]) {
+            current[_fragment]--
           }
           else {
-            current = current.parentNode
+            current = current[_fragmentParent] || current.parentNode
           }
         }
       }
@@ -147,5 +155,5 @@ export default function htm (statics) {
       }
     })
   // return current.length > 1 ? current : current[0]
-  return current.childNodes.length > 1 || current._fragment === 0 ? current : current.firstChild
+  return (current.childNodes.length > 1 || current[_fragment] === 0) ? current : current.firstChild
 }

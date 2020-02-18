@@ -5,9 +5,8 @@ export default function calc(fn, deps) {
   let prevDeps = deps.map(v => {
     if (!v || primitive(v)) return v
     if ('current' in v) return v.current
+    if (Symbol.toPrimitive in v) return v[Symbol.toPrimitive]()
     if (changeable(v)) return
-    if ('valueOf' in v) return v.valueOf()
-    if (Symbol.toPrimitive in v) return v[Symbol.toPrimitive]
     return v
   })
   const value = state(fn(...prevDeps))

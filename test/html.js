@@ -222,7 +222,7 @@ t('html: promises', async t => {
   return p
 })
 
-t.only('html: render to fragment', t => {
+t('html: render to fragment', t => {
   let frag = document.createDocumentFragment()
   html`<${frag}>1</>`
   t.is(frag.outerHTML, '<>1</>')
