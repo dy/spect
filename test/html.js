@@ -366,30 +366,32 @@ t('html: preserves hidden attribute', t => {
   t.is(el.innerHTML, '<div hidden="" class="foo"></div>')
 })
 
-t.skip('html: falsey prev attrs', t => {
+t('html: falsey prev attrs', t => {
   let el = html`<div hidden=${true}/>`
   t.is(el.hidden, true)
   html`<${el} hidden=${false}/>`
   t.is(el.hidden, false)
 })
 
-t.skip('html: initial content should be morphed', t => {
+t.only('html: initial content should be morphed/hydrated', t => {
   let el = document.createElement('div')
   el.innerHTML = '<foo></foo><bar></bar>'
   let foo = el.firstChild
   let bar = el.lastChild
 
-  html`<${el}><foo/><bar/></>`
-
+  const res = html`<${el}><foo/><bar/></>`
+console.log(el)
+  t.equal(res, el)
+  t.equal(el.childNodes.length, 2)
   t.equal(el.firstChild, foo)
   t.equal(el.lastChild, bar)
 
-  let foo1 = html`<foo/>`
-  html`<${el}>${foo1}<bar/></>`
+  // let foo1 = html`<foo/>`
+  // html`<${el}>${foo1}<bar/></>`
 
-  t.notEqual(el.firstChild, foo)
-  t.equal(el.firstChild, foo1)
-  t.equal(el.lastChild, bar)
+  // t.notEqual(el.firstChild, foo)
+  // t.equal(el.firstChild, foo1)
+  // t.equal(el.lastChild, bar)
 })
 
 t.todo('html: newline nodes should have space in between', t => {

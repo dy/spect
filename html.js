@@ -2,7 +2,6 @@ import fx, { primitive } from './fx.js'
 import calc from './calc.js'
 
 const FIELD = '\ue000', QUOTES = '\ue001'
-const _fragment = Symbol('fragment')
 const _parentNode = Symbol('parentNode')
 
 export default function htm (statics) {
@@ -56,18 +55,10 @@ export default function htm (statics) {
               calc(tag => {
                 if (!tag) {
                   current.appendChild(current = document.createDocumentFragment())
-                  // current[_fragment] = (current[_fragment] || 0) + 1
-                  // FIXME: use ranges maybe?
-                  // current.appendChild(document.createTextNode(''))
                 }
                 else if (typeof tag === 'string') {
                   current.appendChild(current = document.createElement(tag))
                 }
-                // else if (tag.nodeType === Node.DOCUMENT_FRAGMENT_NODE) {
-                //   // emulate parent node for fragments
-                //   tag[_parentNode] = current
-                //   current = tag
-                // }
                 else {
                   current.appendChild(current = tag)
                 }
@@ -120,12 +111,7 @@ export default function htm (statics) {
         if (close) {
           // [current, tag, props, ...children] = current
 
-          // if (current[_fragment]) {
-          //   current[_fragment]--
-          // }
-          // else {
-            current = current[_parentNode] || current.parentNode
-          // }
+          current = current[_parentNode] || current._parentNode
         }
       }
       prev = idx + match.length
@@ -149,5 +135,5 @@ export default function htm (statics) {
       }
     })
   // return current.length > 1 ? current : current[0]
-  return (current.length > 1 || current[_fragment] === 0) ? current : current[0]
+  return (current.length > 1) ? current : current[0]
 }
