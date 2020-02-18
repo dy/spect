@@ -205,7 +205,7 @@ t('html: select case', async t => {
   t.is(w.outerHTML, `<> <select> <option value="a"></option> </select> </>`)
 })
 
-t.skip('html: promises', async t => {
+t('html: promises', async t => {
   let p = new Promise(ok => setTimeout(async () => {
     ok('123')
     await Promise.resolve().then()
@@ -222,14 +222,7 @@ t.skip('html: promises', async t => {
   return p
 })
 
-t.todo('html: thenable', async t => {
-  let thenable = html`Loading...`
-  thenable.then(e => new Promise(ok => setTimeout(() => ok(html`Loaded!`), 1000)))
-
-  html`<${el}>${thenable}</>`
-})
-
-t.skip('html: render to fragment', t => {
+t.only('html: render to fragment', t => {
   let frag = document.createDocumentFragment()
   html`<${frag}>1</>`
   t.is(frag.outerHTML, '<>1</>')

@@ -31,3 +31,11 @@ t('calc: must be sync', async t => {
   await tick(8)
   t.is(x2.current, 2)
 })
+
+t('calc: promises/changeables must return undefined', async t => {
+  const p = Promise.resolve(1)
+  const log = []
+  calc(x => log.push(x), [p])
+  await tick()
+  t.is(log, [undefined, 1])
+})
