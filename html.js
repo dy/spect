@@ -3,25 +3,22 @@ import calc from './calc.js'
 
 const FIELD = '\ue000', QUOTES = '\ue001'
 const _fragment = Symbol('fragment')
-const _fragmentParent = Symbol('fragmentParent')
+const _parentNode = Symbol('parentNode')
 
 export default function htm (statics) {
-  let h = this, prev = 0, current = document.createDocumentFragment(), field = 0, args, name, value, quotes = [], quote = 0
+  let h = this, prev = 0, current = [], field = 0, args, name, value, quotes = [], quote = 0
+
+  // simulate node
+  current.appendChild = function (item) {
+    item[_parentNode] = this
+    this.push(item)
+    return item
+  }
 
   // TODO: turn string into an observable
-  // const evaluate = (str, fn = a => a || '', keepQuotes) => {
   const evaluate = (str, keepQuotes) => {
     let i = 0
-    // if (!str[1] && str[0] === FIELD) return fn(arguments[++field])
     if (!str[1] && str[0] === FIELD) return [arguments[++field]]
-    // str = str.replace(/\ue001/g, m => keepQuotes ? quotes[quote++] : quotes[quote++].slice(1, -1))
-    //   .replace(/\ue000/g, (match, idx, str) => {
-    //     if (idx) fn(str.slice(i, idx))
-    //     i = idx + 1
-    //     return fn(arguments[++field])
-    //   })
-    // if (i < str.length) fn(str.slice(i))
-    // return str
 
     // deps is fixed-length list of [possible] subscribables
     const deps = []
@@ -58,18 +55,19 @@ export default function htm (statics) {
               // current = [current, evaluate(part), null]
               calc(tag => {
                 if (!tag) {
-                  current[_fragment] = (current[_fragment] || 0) + 1
+                  current.appendChild(current = document.createDocumentFragment())
+                  // current[_fragment] = (current[_fragment] || 0) + 1
                   // FIXME: use ranges maybe?
-                  current.appendChild(document.createTextNode(''))
+                  // current.appendChild(document.createTextNode(''))
                 }
                 else if (typeof tag === 'string') {
                   current.appendChild(current = document.createElement(tag))
                 }
-                else if (tag.nodeType === Node.DOCUMENT_FRAGMENT_NODE) {
-                  // emulate parent node for fragments
-                  tag[_fragmentParent] = current
-                  current = tag
-                }
+                // else if (tag.nodeType === Node.DOCUMENT_FRAGMENT_NODE) {
+                //   // emulate parent node for fragments
+                //   tag[_parentNode] = current
+                //   current = tag
+                // }
                 else {
                   current.appendChild(current = tag)
                 }
@@ -100,6 +98,7 @@ export default function htm (statics) {
                     if (value === true) el.setAttribute(name, '')
                     else if (value === false || value == null) el.removeAttribute(name)
                     else el.setAttribute(name, value)
+                    el[name] = value
 
                     return () => {
                       el.setAttribute(name, orig)
@@ -120,18 +119,13 @@ export default function htm (statics) {
 
         if (close) {
           // [current, tag, props, ...children] = current
-          // current.push(h(tag, props, ...children))
-          // fx((tag, props, ...children) => {
-            // remove all previous nodes
-            // discard all previous effects
-            // insert new nodes
-          // }, observableList)
-          if (current[_fragment]) {
-            current[_fragment]--
-          }
-          else {
-            current = current[_fragmentParent] || current.parentNode
-          }
+
+          // if (current[_fragment]) {
+          //   current[_fragment]--
+          // }
+          // else {
+            current = current[_parentNode] || current.parentNode
+          // }
         }
       }
       prev = idx + match.length
@@ -155,5 +149,5 @@ export default function htm (statics) {
       }
     })
   // return current.length > 1 ? current : current[0]
-  return (current.childNodes.length > 1 || current[_fragment] === 0) ? current : current.firstChild
+  return (current.length > 1 || current[_fragment] === 0) ? current : current[0]
 }

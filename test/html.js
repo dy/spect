@@ -149,7 +149,7 @@ t('html: must not lose attributes', async t => {
 
 t('html: fragments', async t => {
   let el = html`<foo/><bar/>`
-  t.is(el.childNodes.length, 2)
+  t.is(el.length, 2)
 
   let el2 = html`<>foo</>`
   t.is(el2.textContent, 'foo')
@@ -264,20 +264,7 @@ t('html: async generator', async t => {
   t.is(el.outerHTML, `<div>2</div>`)
 })
 
-t.todo('html: react-component compatible', t => {
-
-})
-
-t.skip('html: selector elements', t => {
-  let el = document.createElement('div')
-  el.classList.add('sel')
-  document.body.appendChild(el)
-  html`<.sel>123</>`
-  t.is(el.textContent, '123')
-  document.body.removeChild(el)
-})
-
-t.skip('html: put data directly to props', async t => {
+t('html: put data directly to props', async t => {
   let x = {}
   let el = html`<div x=${x}/>`
   t.is(el.x, x)
@@ -323,24 +310,28 @@ t.skip('html: preserve rendering target classes/ids/attribs', t => {
   t.is(el.w, '2')
 })
 
-t.skip('html: does not duplicate classes for container', t => {
+t('html: does not duplicate classes for container', t => {
   let el = document.createElement('div')
   el.classList.add('x')
-  html`<${el}.x/>`
+  html`<${el} class=x/>`
   t.is(el.outerHTML, '<div class="x"></div>')
 })
 
-t.todo('legacy html: readme default', async t => {
+t.todo('html: secondary rendering must dispose previous effects')
+
+t.todo('html: mapped list rendering case')
+
+t('legacy html: readme default', async t => {
   let div = document.createElement('div')
 
-  html`<${div}><div#id.class foo=bar>baz</div></div>`
+  html`<${div}><div id=id class=class foo=bar>baz</div></div>`
 
-  t.is(div.outerHTML, '<div><div foo="bar" id="id" class="class">baz</div></div>')
+  t.is(div.outerHTML, '<div><div id="id" class="class" foo="bar">baz</div></div>')
   t.is(div.firstChild.foo, 'bar')
   t.is(div.firstChild.id, 'id')
 })
 
-t.todo('legacy html: attributes', t => {
+t('legacy html: attributes', t => {
   let div = document.createElement('div')
 
   html`<${div}><a href='/' foo=bar>baz</a></>`
@@ -361,16 +352,16 @@ t.skip('legacy html: component static props', async t => {
   t.is(log, ['C-0', 'x', 'y z'])
 })
 
-t.skip('html: classes must recognize false props', t => {
-  let el = html`<div class="${false} ${null} ${undefined} ${'foo'} ${false}"/>`
+t('html: classes must recognize false props', t => {
+  let el = html`<div class="${false}${null}${undefined}${'foo'}${false}"/>`
   t.is(el.outerHTML, `<div class="foo"></div>`)
 })
 
-t.skip('html: preserves hidden attribute', t => {
+t('html: preserves hidden attribute', t => {
   let el = document.createElement('div')
   el.innerHTML = '<div hidden></div>'
 
-  html`<${el.firstChild}.foo/>`
+  html`<${el.firstChild} class="foo"/>`
 
   t.is(el.innerHTML, '<div hidden="" class="foo"></div>')
 })
