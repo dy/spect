@@ -111,7 +111,7 @@ export default function htm (statics) {
         if (close) {
           // [current, tag, props, ...children] = current
 
-          current = current[_parentNode] || current._parentNode
+            current = current[_parentNode] || current.parentNode
         }
       }
       prev = idx + match.length
