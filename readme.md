@@ -12,7 +12,7 @@
   <img src="https://img.shields.io/badge/stability-unstable-yellowgreen"/>
 </p>
 
-<p align="center"><img src="/preview.png" width="642"/></p>
+<p align="center"><img src="/preview.png" width="582"/></p>
 <p align="center">▶ <a href="https://codepen.io/dyv/pen/oNXXZEb" target="_blank"><strong>Run</strong></a></p>
 <br/>
 
@@ -20,23 +20,26 @@
 <time id="clock"></time>
 
 <script type="module">
-  import { $, fx, state } from "https://unpkg.com/spect?module"
   import { $, fx, state } from "https://unpkg.com/spect"
 
   $('#clock', el => {
     const date = state(new Date())
 
-    fx(() => setTimeout(() => date(new Date()), 1000), [date])
-
-    html`<${el} datetime=${calc(date => date.toISOString(), [date])}>
+    html`<${el} datetime=${date}>
       ${ date().toLocaleTimeString() }
     </>`
+
+    const interval = setInterval(() => {
+      date(new Date())
+    }, 1000)
+
+    return () => clearInterval(interval)
   })
 </script>
 -->
 
 
-_Spect_ is alternative framework, inspired by [_react hooks_](https://reactjs.org/docs/hooks-intro.html), [_observables_](https://www.npmjs.com/package/observable) and [_aspect-oriented-programming_](https://en.wikipedia.org/wiki/Aspect-oriented_programming).
+_Spect_ is state-of-the-art DOM framework, incorporating best parts of [_react hooks_](https://reactjs.org/docs/hooks-intro.html), [_observables_](https://www.npmjs.com/package/observable) and [_aspect-oriented-programming_](https://en.wikipedia.org/wiki/Aspect-oriented_programming) with simplicity of [jquery](https://ghub.io/jquery).
 
 ## Principles
 
