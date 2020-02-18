@@ -383,7 +383,7 @@ Similar to _useEffect_, but `args` are observables, any of:
 * _Promise_ or _thenable_
 * _Observable_ or _subscribable_, eg. [rxjs](https://ghub.io/rxjs), [es-observable](https://ghub.io/es-observable), [zen-observable](https://ghub.io/zen-observable) etc.
 * [observable](https://ghub.io), [observ](https://ghub.io) or [mutant](https://ghub.io/mutant)
-* _Stream_ [implementation pending]
+* Node [_stream_](https://nodejs.org/api/stream.html)
 * _Function_ is called whenever any other dependency change
 * other value is considered constant.
 
