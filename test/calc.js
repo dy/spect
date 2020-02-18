@@ -39,3 +39,16 @@ t('calc: promises/changeables must return undefined', async t => {
   await tick(8)
   t.is(log, [undefined, 1])
 })
+
+t('calc: async generator is fine', async t => {
+  const ag = async function* () {
+    yield 1
+    yield 2
+  }
+  let log = []
+  calc(x => {
+    log.push(x)
+  }, [ag])
+  await tick(8)
+  t.is(log, [undefined, 1, 2])
+})

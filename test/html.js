@@ -250,7 +250,7 @@ t.skip('html: generator', async t => {
   // t.is(el.outerHTML, `<div>3</div>`)
 })
 
-t.only('html: async generator', async t => {
+t('html: async generator', async t => {
   let el = html`<div>${async function* () {
     await tick(4)
     yield 1

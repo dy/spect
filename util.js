@@ -1,5 +1,5 @@
 export function changeable(dep) {
-  return dep && !primitive(dep) && (Symbol.asyncIterator in dep || 'then' in dep || 'subscribe' in dep || observable(dep))
+  return dep && !primitive(dep) && (Symbol.asyncIterator in dep || 'next' in dep || 'then' in dep || 'subscribe' in dep || observable(dep))
 }
 
 export function primitive(val) {

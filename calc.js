@@ -8,7 +8,11 @@ export default function calc(fn, deps) {
     if ('current' in v) return v.current
     if (Symbol.toPrimitive in v) return v[Symbol.toPrimitive]()
     if (changeable(v)) return
-    if (typeof v === 'function') return v()
+    if (typeof v === 'function') {
+      const result = v()
+      if (changeable(result)) return
+      v = result
+    }
     return v
   })
   const value = state(fn(...prevDeps))
