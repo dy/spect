@@ -1,5 +1,5 @@
 import channel from './channel.js'
-import { changeable, observable } from './util.js'
+import { changeable, observable, stream } from './util.js'
 
 export default fx
 
@@ -70,6 +70,13 @@ export function fx(callback, deps=[ Promise.resolve().then() ]) {
     // observable / observ / mutant
     else if (observable(dep)) {
       dep(value => {
+        current[i] = value
+        notify()
+      })
+    }
+    // node streams
+    else if (stream(dep)) {
+      dep.on('data', value => {
         current[i] = value
         notify()
       })
