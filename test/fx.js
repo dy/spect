@@ -205,3 +205,18 @@ t('fx: async generator', async t => {
   await tick(10)
   t.is(log, [1,1,2,2])
 })
+t('fx: function deps', async t => {
+  const log = []
+  let i = 0
+  const a = state(0)
+  fx((a, b) => {
+    log.push(a, b)
+  }, [a, () => i++])
+
+  await tick(8)
+  t.is(log, [0, 0])
+
+  // state(1)
+  // await tick(8)
+  // t.is(log, [0, 0, 1, 1])
+})

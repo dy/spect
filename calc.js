@@ -1,5 +1,6 @@
 import state from './state.js'
-import { fx, primitive, changeable } from './fx.js'
+import fx from './fx.js'
+import { primitive, changeable } from './util.js'
 
 export default function calc(fn, deps) {
   let prevDeps = deps.map(v => {
@@ -7,6 +8,7 @@ export default function calc(fn, deps) {
     if ('current' in v) return v.current
     if (Symbol.toPrimitive in v) return v[Symbol.toPrimitive]()
     if (changeable(v)) return
+    if (typeof v === 'function') return v()
     return v
   })
   const value = state(fn(...prevDeps))

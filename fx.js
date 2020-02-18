@@ -1,29 +1,50 @@
 import channel from './channel.js'
+import { changeable, observable } from './util.js'
 
 export default fx
 
 export function fx(callback, deps=[ Promise.resolve().then() ]) {
   let current = [], prev = []
-  let changed = false, destroy
+  let changePlanned = null, destroy
 
   const fxChannel = channel(callback)
   const notify = () => {
-    if (changed) return
-    changed = true
-    Promise.resolve().then(() => {
-      changed = false
+    if (changePlanned) return changePlanned
+    current = current.map((arg, i) => typeof arg === 'function' ? arg(prev[i]) : arg)
+
+    // extra tick to skip sync deps
+    return changePlanned = Promise.resolve().then().then(() => {
+      changePlanned = null
       if (destroy && destroy.call) destroy(...prev)
-      prev = [...current]
+      prev = current
       destroy = fxChannel(...current)
     })
   }
 
   // observe changes
   deps.map(async (dep, i) => {
-    // resolve primitive immediately
     if (!changeable(dep)) {
-      current[i] = dep
-      notify()
+      if (typeof dep === 'function') {
+        const result = dep()
+        // regular fn is called any time deps change
+        if (!changeable(result)) {
+          current[i] = result
+          await notify()
+          current[i] = dep
+        }
+        // [async] generator is awaited
+        else {
+          for await (let value of result) {
+            current[i] = value
+            notify()
+          }
+        }
+      }
+      // constant value
+      else {
+        current[i] = dep
+        notify()
+      }
     }
     // async iterator
     else if (Symbol.asyncIterator in dep) {
@@ -47,33 +68,15 @@ export function fx(callback, deps=[ Promise.resolve().then() ]) {
       })
     }
     // observable / observ / mutant
-    else if (typeof dep === 'function') {
-      // [async] generator
-      if (dep.prototype.next) {
-        for await (let value of dep()) {
-          current[i] = value
-          notify()
-        }
-      }
-      else {
-        dep(value => {
-          current[i] = value
-          notify()
-        })
-      }
+    else if (observable(dep)) {
+      dep(value => {
+        current[i] = value
+        notify()
+      })
     }
   })
 
   return fxChannel
-}
-
-export function changeable(dep) {
-  return dep && !primitive(dep) && (Symbol.asyncIterator in dep || 'then' in dep || 'subscribe' in dep || typeof dep === 'function')
-}
-
-export function primitive(val) {
-  if (typeof val === 'object') return val === null
-  return typeof val !== 'function'
 }
 
 export function dfx(callback, deps, prev = []) {

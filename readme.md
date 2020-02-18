@@ -12,7 +12,7 @@
   <img src="https://img.shields.io/badge/stability-unstable-yellowgreen"/>
 </p>
 
-<p align="center"><img src="/preview.png" width="683"/></p>
+<p align="center"><img src="/preview.png" width="633"/></p>
 <p align="center">▶ <a href="https://codepen.io/dyv/pen/oNXXZEb" target="_blank"><strong>Run</strong></a></p>
 <br/>
 
@@ -20,13 +20,13 @@
 <time id="clock"></time>
 
 <script type="module">
-  import { $, html, state, calc, fx } from "https://unpkg.com/spect"
+  import { $, html, state, fx } from "https://unpkg.com/spect"
 
   $('#clock', el => {
     const date = state(new Date())
 
-    html`<${el} datetime=${date}>
-      ${ calc(date => date.toLocaleTimeString(), [date]) }
+    html`<${el} datetime=${ date }>
+      ${() => date().toLocaleTimeString()}
     </>`
 
     fx(() => {
@@ -382,8 +382,9 @@ Similar to _useEffect_, but `args` are observables, any of:
 * _AsyncGenerator_, _AsyncIterable_ or _object_ with [`Symbol.asyncIterator`](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Symbol/asyncIterator)
 * _Promise_ or _thenable_
 * _Observable_ or _subscribable_, eg. [rxjs](https://ghub.io/rxjs), [es-observable](https://ghub.io/es-observable), [zen-observable](https://ghub.io/zen-observable) etc.
-* _Function_ is considered an [observable](https://ghub.io), [observ](https://ghub.io) or [mutant](https://ghub.io/mutant)
+* [observable](https://ghub.io), [observ](https://ghub.io) or [mutant](https://ghub.io/mutant)
 * _Stream_ [implementation pending]
+* _Function_ is called whenever any other dependency change
 * other value is considered constant.
 
 When any member of `args` updates, the `callback` runs with new state, disposing previous state with `teardown` function. Omitted `args` trigger `callback` as microtask.
@@ -440,7 +441,7 @@ timer.cancel()
 
 > let el = html\`<tag ...${ props }>${ content }</>\`
 
-HTML effect. Renders markup automatically when input sources update.
+HTML effect. Renders markup automatically when input sources update. Input sources can be the same as _**`fx`**_ arguments.
 Syntax is compatible with [htm](https://ghub.io/htm).
 
 ```js

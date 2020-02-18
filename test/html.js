@@ -208,7 +208,7 @@ t('html: select case', async t => {
 t('html: promises', async t => {
   let p = new Promise(ok => setTimeout(async () => {
     ok('123')
-    await Promise.resolve().then()
+    await tick(8)
     t.is(el.outerHTML, '<div>123</div>')
     el.remove()
   }, 50))
@@ -250,7 +250,7 @@ t.skip('html: generator', async t => {
   // t.is(el.outerHTML, `<div>3</div>`)
 })
 
-t('html: async generator', async t => {
+t.only('html: async generator', async t => {
   let el = html`<div>${async function* () {
     await tick(4)
     yield 1
@@ -373,14 +373,14 @@ t('html: falsey prev attrs', t => {
   t.is(el.hidden, false)
 })
 
-t.only('html: initial content should be morphed/hydrated', t => {
+t.todo('html: initial content should be morphed/hydrated', t => {
   let el = document.createElement('div')
   el.innerHTML = '<foo></foo><bar></bar>'
   let foo = el.firstChild
   let bar = el.lastChild
 
   const res = html`<${el}><foo/><bar/></>`
-console.log(el)
+
   t.equal(res, el)
   t.equal(el.childNodes.length, 2)
   t.equal(el.firstChild, foo)

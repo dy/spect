@@ -1,5 +1,5 @@
-import fx, { primitive } from './fx.js'
 import calc from './calc.js'
+import { changeable, primitive } from './util.js'
 
 const FIELD = '\ue000', QUOTES = '\ue001'
 const _parentNode = Symbol('parentNode')

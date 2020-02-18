@@ -36,6 +36,6 @@ t('calc: promises/changeables must return undefined', async t => {
   const p = Promise.resolve(1)
   const log = []
   calc(x => log.push(x), [p])
-  await tick()
+  await tick(8)
   t.is(log, [undefined, 1])
 })
