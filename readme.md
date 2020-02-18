@@ -380,6 +380,7 @@ Similar to _useEffect_, but `args` are observables, any of:
 * _Promise_ or _thenable_
 * _Observable_ or _subscribable_, eg. [rxjs](https://ghub.io/rxjs), [es-observable](https://ghub.io/es-observable), [zen-observable](https://ghub.io/zen-observable) etc.
 * _Function_ is considered an [observable](https://ghub.io), [observ](https://ghub.io) or [mutant](https://ghub.io/mutant)
+* _Stream_ [implementation pending]
 * other value is considered constant.
 
 When any member of `args` updates, the `callback` runs with new state, disposing previous state with `teardown` function. Omitted `args` trigger `callback` as microtask.

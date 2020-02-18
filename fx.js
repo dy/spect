@@ -48,10 +48,19 @@ export function fx(callback, deps=[ Promise.resolve().then() ]) {
     }
     // observable / observ / mutant
     else if (typeof dep === 'function') {
-      dep(value => {
-        current[i] = value
-        notify()
-      })
+      // [async] generator
+      if (dep.prototype.next) {
+        for await (let value of dep()) {
+          current[i] = value
+          notify()
+        }
+      }
+      else {
+        dep(value => {
+          current[i] = value
+          notify()
+        })
+      }
     }
   })
 

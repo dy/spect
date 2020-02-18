@@ -222,23 +222,19 @@ t('html: promises', async t => {
   return p
 })
 
-t('html: render to fragment', t => {
+t('html: render to fragment', async t => {
   let frag = document.createDocumentFragment()
   html`<${frag}>1</>`
   t.is(frag.outerHTML, '<>1</>')
 })
 
-t.skip('html: function', t => {
-  let el = html`<div x=1>${function ({ element }) {
-    html`<${element}>1</>`
-    return element
-  }}</div>`
-  t.is(el.outerHTML, `<div x="1">1</div>`)
+t('html: observable', async t => {
+  let v = observable(1)
 
-  let el2 = html`<div x=2>${function ({ element }) {
-    return 2
-  }}</div>`
-  t.is(el2.outerHTML, `<div x="2">2</div>`)
+  let el = html`<div x=1>${v}</div>`
+
+  await tick(8)
+  t.is(el.outerHTML, `<div x="1">1</div>`)
 })
 
 t.skip('html: generator', async t => {
@@ -254,21 +250,18 @@ t.skip('html: generator', async t => {
   // t.is(el.outerHTML, `<div>3</div>`)
 })
 
-t.skip('html: async generator', async t => {
+t('html: async generator', async t => {
   let el = html`<div>${async function* () {
-    await Promise.resolve().then()
+    await tick(4)
     yield 1
-    await Promise.resolve().then()
+    await tick(4)
     yield 2
-    await Promise.resolve().then()
-    // return 3
+    await tick(4)
   }}</div>`
-  await Promise.resolve().then().then().then().then()
+  await tick(8)
   t.is(el.outerHTML, `<div>1</div>`)
-  await Promise.resolve().then().then().then().then()
+  await tick(8)
   t.is(el.outerHTML, `<div>2</div>`)
-  // await Promise.resolve().then().then().then().then()
-  // t.is(el.outerHTML, `<div>3</div>`)
 })
 
 t.todo('html: react-component compatible', t => {

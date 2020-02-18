@@ -191,3 +191,17 @@ t('fx: simple values', async t => {
   await tick(8)
   t.is(log, [{x: 1}, 1])
 })
+t('fx: async generator', async t => {
+  async function* x () {
+    yield 1
+    await tick(3)
+    yield 2
+  }
+  const log = []
+  fx((x1, x2) => {
+    log.push(x1, x2)
+  }, [x(), x])
+
+  await tick(10)
+  t.is(log, [1,1,2,2])
+})
