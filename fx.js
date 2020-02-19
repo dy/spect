@@ -1,16 +1,15 @@
 import channel from './channel.js'
-import { changeable, observable, stream } from './util.js'
+import { changeable, observable, stream, getval } from './util.js'
 
 export default fx
 
-export function fx(callback, deps=[ Promise.resolve().then() ]) {
+export function fx(callback, deps=[Promise.resolve().then()], sync=false) {
   let current = [], prev = []
   let changePlanned = null, destroy
 
   const fxChannel = channel(callback)
   const notify = () => {
     if (changePlanned) return changePlanned
-    current = current.map((arg, i) => typeof arg === 'function' ? arg(prev[i]) : arg)
 
     // extra tick to skip sync deps
     return changePlanned = Promise.resolve().then().then(() => {
@@ -21,30 +20,18 @@ export function fx(callback, deps=[ Promise.resolve().then() ]) {
     })
   }
 
+  // instant run
+  if (sync) {
+    current = deps.map(getval)
+    destroy = fxChannel(...current)
+  }
+
   // observe changes
   deps.map(async (dep, i) => {
+    // constant value
     if (!changeable(dep)) {
-      if (typeof dep === 'function') {
-        const result = dep()
-        // regular fn is called any time deps change
-        if (!changeable(result)) {
-          current[i] = result
-          await notify()
-          current[i] = dep
-        }
-        // [async] generator is awaited
-        else {
-          for await (let value of result) {
-            current[i] = value
-            notify()
-          }
-        }
-      }
-      // constant value
-      else {
-        current[i] = dep
-        notify()
-      }
+      current[i] = dep
+      notify()
     }
     // async iterator
     else if (Symbol.asyncIterator in dep) {
@@ -86,6 +73,7 @@ export function fx(callback, deps=[ Promise.resolve().then() ]) {
   return fxChannel
 }
 
+// effect run only when state changes
 export function dfx(callback, deps, prev = []) {
   return fx((...values) => {
     if (values.every((value, i) => Object.is(value, prev[i]))) return

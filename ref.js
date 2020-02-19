@@ -1,4 +1,4 @@
-import Cancelable from './cancelable.js'
+import { Cancelable } from './util.js'
 
 // observable value with notification on every set
 export const _n = Symbol.for('__spect.notify')
@@ -6,10 +6,12 @@ export const _p = Symbol.for('__spect.promise')
 
 export default function ref(value) {
   let resolve, changed
+
   function ref(value) {
     if (arguments.length) ref.set(value)
     return ref.get()
   }
+
   Object.assign(ref, {
     [_p]: new Cancelable(r => resolve = r),
 

@@ -25,12 +25,12 @@ t('html: single attribute', async t => {
   t.is(el.outerHTML, `<div a="0"></div>`)
 
   a(1)
-  await tick(8)
+  await tick(58)
   t.is(el.outerHTML, `<div a="1"></div>`)
 
-  a(null)
-  await tick(8)
-  t.is(el.outerHTML, `<div></div>`)
+  // a(null)
+  // await tick(8)
+  // t.is(el.outerHTML, `<div></div>`)
 })
 
 t('html: text content', async t => {
@@ -321,7 +321,7 @@ t.todo('html: secondary rendering must dispose previous effects')
 
 t.todo('html: mapped list rendering case')
 
-t('legacy html: readme default', async t => {
+t('html: legacy readme default', async t => {
   let div = document.createElement('div')
 
   html`<${div}><div id=id class=class foo=bar>baz</div></div>`
@@ -331,7 +331,7 @@ t('legacy html: readme default', async t => {
   t.is(div.firstChild.id, 'id')
 })
 
-t('legacy html: attributes', t => {
+t('html: attributes', t => {
   let div = document.createElement('div')
 
   html`<${div}><a href='/' foo=bar>baz</a></>`
@@ -636,16 +636,17 @@ t.todo('legacy html: insert self/array of nodes', t => {
   t.equal($el[0].innerHTML, `<a id="x"></a><a id="y"></a>`)
 })
 
-t.todo('legacy html: child function as modifier', async t => {
-  let $el = html`<div/>`
-  $el.html`<a>${ el => {
-    t.is(el.tagName, 'A')
-    $(el).html`<span/>`
-  }}</a>`
+t.todo('html: functional insertions', async t => {
+  const c = state(0)
+  let i = 0, j = 0
+  const log = []
+  let el = html`<a foo=${ip => (log.push(ip), i++)} c=${c}>${jp => (log.push(jp), j++)}</a>`
 
-  await Promise.resolve().then()
+  t.is(el.outerHTML, `<a foo="0" c="0">0</a>`)
+  t.is(i, 1, 'prop fn is called once')
+  t.is(j, 1, 'content fn is called once')
+  t.is(log, [undefined, undefined], 'prev values')
 
-  t.equal($el[0].innerHTML, `<a><span></span></a>`)
 })
 
 t.todo('legacy html: child function as reducer', async t => {

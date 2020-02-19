@@ -372,22 +372,22 @@ ticks.cancel()
 
 ### _`fx`_
 
-> fx( callback, args = [ tick ] )
+> fx( callback, deps = [ tick ] )
 
-Generic effect. Reacts to `args` and runs `callback` function with `(...argValues) => teardown` signature.
-Similar to _useEffect_, but `args` are observables, any of:
+Generic effect. Reacts to `deps` and runs `callback` function with `(...args) => teardown` signature.
+Similar to _useEffect_, but `deps` are changeables, any of:
 <!-- _**`dfx`**_ is delta _**`fx`**_ it reacts only to changed state. -->
 
 * _Source_
-* _AsyncGenerator_, _AsyncIterable_ or _object_ with [`Symbol.asyncIterator`](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Symbol/asyncIterator)
+* _AsyncGenerator_ or [_async iterable_](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Symbol/asyncIterator)
 * _Promise_ or _thenable_
 * _Observable_ or _subscribable_, eg. [rxjs](https://ghub.io/rxjs), [es-observable](https://ghub.io/es-observable), [zen-observable](https://ghub.io/zen-observable) etc.
 * [observable](https://ghub.io), [observ](https://ghub.io) or [mutant](https://ghub.io/mutant)
-* Node [_stream_](https://nodejs.org/api/stream.html)
-* _Function_ is called whenever any other dependency change
+* [_Stream_](https://nodejs.org/api/stream.html)
+* _Function_, that is called when other dependencies change
 * other value is considered constant.
 
-When any member of `args` updates, the `callback` runs with new state, disposing previous state with `teardown` function. Omitted `args` trigger `callback` as microtask.
+When any dependency updates, the `callback` runs with new arguments, invoking previous `teardown` function. Omitted `deps` trigger `callback` only once as microtask.
 
 ```js
 import { state, fx } from 'spect'
@@ -441,7 +441,7 @@ timer.cancel()
 
 > let el = html\`<tag ...${ props }>${ content }</>\`
 
-HTML effect. Renders markup automatically when input sources update. Input sources can be the same as _**`fx`**_ arguments.
+HTML effect. Renders markup automatically when input fields update. Fields can be the same as _**`fx`**_ arguments.
 Syntax is compatible with [htm](https://ghub.io/htm).
 
 ```js
@@ -500,6 +500,7 @@ count()
 
 // set
 count(1)
+count(prev => prev + 1)
 
 // observe changes
 for await (let value of count) {
