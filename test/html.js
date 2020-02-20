@@ -17,7 +17,7 @@ Object.defineProperty(DocumentFragment.prototype, 'outerHTML', {
   }
 })
 
-t.only('html: single attribute', async t => {
+t('html: single attribute', async t => {
   const a = state(0)
 
   let el = html`<div a=${a}></div>`
@@ -79,11 +79,10 @@ t('html: dynamic list', async t => {
   const content = list([foo, bar, baz])
 
   const a = html`<a>${ content }</a>`
-
   t.is(a.outerHTML, `<a><foo></foo>bar<baz></baz></a>`)
 })
 
-t.only('html: 2-level fragment', async t => {
+t('html: 2-level fragment', async t => {
   let w = html`<> <x> <y> </y> </x> </>`
   await tick(8)
   t.is(w.outerHTML, `<> <x> <y> </y> </x> </>`)

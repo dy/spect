@@ -101,7 +101,7 @@ export default function htm (statics) {
         if (tag !== undefined) {
           tag = getval(tag)
           if (typeof tag === 'string') tag = !tag ? document.createDocumentFragment() : document.createElement(tag)
-          if (props) tag.id = props.id
+          if (props && props.id) tag.id = props.id
           current = tag = allocNode(current, tag)
           current[_ptr] = 0
 
@@ -130,10 +130,12 @@ export default function htm (statics) {
       if (prev < str.length || !idx) {
         if (text) {
           const deps = evaluable(text, true)
-          console.group(deps)
           const children = deps.map(dep => allocNode(current, getval(dep)))
-          fx((...frags) => frags.map((frag, i) => morph(children[i], frag)), deps, true)
-          console.groupEnd()
+          fx((...frags) => {
+            frags.map((frag, i) => {
+              morph(children[i], frag)
+            })
+          }, deps, true)
         }
       }
     })
@@ -198,12 +200,17 @@ function allocNode(parent, tag) {
 
 // replace with regards to array-like insertions
 function morph(from, to) {
-  if (primitive(to)) to = document.createTextNode(to)
+  if (Array.isArray(to)) {
+    const [el, ...nodes] = to
+    el[_related] = nodes
+    to = el
+  }
+  if (primitive(to)) to = document.createTextNode(to == null ? '' : to)
+  if (from === to) return to
   if (from.nodeType === to.nodeType && from.nodeType === Node.TEXT_NODE) {
     from.textContent = to.textContent
     return from
   }
-
   if (from[_related]) from[_related].map(node => node.remove())
   if (to[Symbol.iterator] && !to.nodeType) {
     const [el, ...related] = to
@@ -211,6 +218,12 @@ function morph(from, to) {
     to = el
   }
   from.replaceWith(to)
-  if (to[_related]) to[_related].map(node => to.insertAdjacentElement('afterend', node))
+  if (to[_related]) {
+    for (let i = to[_related].length; i--;) {
+      const node = to[_related][i]
+      primitive(node) ? to.insertAdjacentText('afterend', node == null ? '' : node) :
+      to.insertAdjacentElement('afterend', node)
+    }
+  }
   return to
 }
