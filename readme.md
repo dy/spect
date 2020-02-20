@@ -1,7 +1,7 @@
 <div align="center"><img src="https://avatars3.githubusercontent.com/u/53097200?s=200&v=4" width=108 /></div>
 <p align="center"><h1 align="center">spect</h1></p>
 <p align="center">
-  Micro DOM <em>aspects</em> with <em>observables</em> and <em>effects</em>.<br/>
+  <em>Aspect-oriented</em> DOM framework with _effects_ and _observables_.<br/>
   <!-- Build reactive UIs with rules, similar to CSS.<br/> -->
   <!-- Each rule specifies an <em>aspect</em> function, carrying a piece of logic.<br/> -->
 </p>
@@ -39,21 +39,21 @@
 -->
 
 
-_Spect_ is state-of-the-art DOM framework, incorporating best parts of [_react hooks_](https://reactjs.org/docs/hooks-intro.html), [_observables_](https://www.npmjs.com/package/observable) and [_aspect-oriented-programming_](https://en.wikipedia.org/wiki/Aspect-oriented_programming) with simplicity of [jquery](https://ghub.io/jquery).
+_Spect_ is state-of-the-art DOM framework, putting together _aspects_, _observables_ and _effects_ in symbiotic way. It is inspired by the best parts of [_react hooks_](https://reactjs.org/docs/hooks-intro.html), [_observables_](https://www.npmjs.com/package/observable) and [_aspect-oriented programming_](https://en.wikipedia.org/wiki/Aspect-oriented_programming), with simplicity of [jquery](https://ghub.io/jquery).
 
 ## Principles
 
-:gem: **Separation of concerns** − _aspects_ are compartmental pieces of logic, declared in CSS-like fashion.
+:gem: **Separation of concerns** − comes naturally with _aspects_ − small pieces of logic assigned to elements.
 
-:deciduous_tree: **Native first** − semantic HTML, clean tree, vanilla friendly.
+:deciduous_tree: **Native first** − keeps semantic HTML, clean tree without wrappers, vanilla-components friendly.
 
-:ocean: **Progressive enhancement** − multiple layered aspects organically augment features.
+:ocean: **Progressive enhancement** − aspect combinations provide additional functionality.
 
 :baby_chick: **Low entry barrier** − no complexity victims or hostages.
 
-:dizzy: **0** bundling, **0** server, **0** template − single script with imports is enough.
+:dizzy: **0** bundling, **0** server, **0** template − an html page with `<script>` is enough to get started.
 
-:shipit: **Low-profile** − doesn't force structure or stack, can be used as utility.
+:shipit: **Low-profile** − doesn’t force structure or stack, can be used as utility.
 
 
 ## Installation
@@ -83,7 +83,26 @@ _Spect_ plays perfectly with [snowpack](https://www.snowpack.dev/), but any othe
 
 ## Usage
 
-Work in progress.
+Let's start with simple user welcoming example.
+
+```js
+<div class="user">Loading...</div>
+
+<script type="module">
+import { $, html, state } from 'spect'
+
+$('.user', async el => {
+  const username = state()
+  html`<${el}>Hello, ${ username }!</>`
+
+  const user = await (await fetch('/user')).json()
+  username(user.name)
+})
+</script>
+```
+
+Here, the _**`$`**_ assigns an aspect function to the `.user` element. That function awaits `username` to be loaded from the server and displays it as the element's inner html. _**`state`**_ here acts as _useState_, but creates an observable `username` value. _**`html`**_ is reactive − it rerenders automatically whenever `username` changes.
+
 
 <!--
 Here comes intoductory example.
