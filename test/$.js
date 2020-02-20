@@ -191,6 +191,8 @@ t('$: changed attribute matches new nodes', async t => {
   await frame(2)
 
   t.is(log, [])
+  await frame(2)
+  t.is(log, [])
 
   el.querySelector('b').classList.add('b')
   await frame(2)
@@ -233,11 +235,12 @@ t('$: contextual query with self-matching', async t => {
   await tick(8)
   t.same(log, ['y', 'x', '-', ' y'])
 })
-t.skip('$: adding/removing attribute with attribute selector', async t => {
+t('$: adding/removing attribute with attribute selector, mixed with direct selector', async t => {
   let el = document.createElement('div')
   const log = []
   el.innerHTML = '<x></x>'
   const x = el.firstChild
+  $(el, 'x', e => {})
   $(el, 'x[y]', e => {
     log.push(1)
     return () => log.push(2)
@@ -248,7 +251,7 @@ t.skip('$: adding/removing attribute with attribute selector', async t => {
   await tick(8)
   t.is(log, [1])
   x.removeAttribute('y')
-  await tick(8)
+  await frame(2)
   t.is(log, [1, 2])
 })
 t('$: matching nodes in added subtrees', async t => {

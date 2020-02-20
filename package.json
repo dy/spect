@@ -46,6 +46,7 @@
   },
   "homepage": "https://github.com/spectjs/spect#readme",
   "dependencies": {
+    "immutable-tuple": "^0.4.10",
     "selector-set": "^1.1.5"
   },
   "devDependencies": {

@@ -1,10 +1,11 @@
 import SelectorSet from 'selector-set'
 import channel from './channel.js'
+import tuple from 'immutable-tuple'
 
 const _callbacks = Symbol.for('__spect.callbacks')
 const _destroyPlanned = Symbol.for('__spect.destroyPlanned')
 const _observer = Symbol.for('__spect.observer')
-const _attrTargets = Symbol.for('__spect.attrTargets')
+const _attrAspects = Symbol.for('__spect.attrAspects')
 const set = new SelectorSet
 
 // element-based aspect
@@ -71,30 +72,31 @@ function $(scope, selector, fn) {
         }
         else if (mutation.type === 'attributes') {
           const attrName = mutation.attributeName
-          if (!target[_attrTargets]) target[_attrTargets] = {}
-          if (!target[_attrTargets][attrName]) target[_attrTargets][attrName] = new Map
+          if (!target[_attrAspects]) target[_attrAspects] = new Set
 
           const active = new WeakSet()
           set.matches(target).forEach(rule => {
             initCallback(target, rule.data)
-            target[_attrTargets][attrName].set(target, rule.data)
-            active.add(target)
+            const t = tuple(target, attrName, rule.selector, rule.data)
+            target[_attrAspects].add(t)
+            active.add(t)
           })
 
           set.queryAll(target).forEach(rule => {
             rule.elements.forEach(el => {
               initCallback(el, rule.data)
-              target[_attrTargets][attrName].set(el, rule.data)
-              active.add(el)
+              const t = tuple(el, attrName, rule.selector, rule.data)
+              target[_attrAspects].add(t)
+              active.add(t)
             })
           })
 
           // remove selectors not matching attr rules anymore
-          for (let [el, aspect] of target[_attrTargets][attrName]) {
-            if (active.has(el)) continue
-            destroyCallback(el, aspect)
-            target[_attrTargets][attrName].delete(el)
-            if (!target[_attrTargets][attrName].size) delete target[_attrTargets][attrName]
+          for (let t of target[_attrAspects]) {
+            if (active.has(t)) continue
+            destroyCallback(t[0], t[3])
+            target[_attrAspects].delete(t)
+            if (!target[_attrAspects].size) delete target[_attrAspects]
           }
         }
       }
