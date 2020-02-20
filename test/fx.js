@@ -216,7 +216,7 @@ t('fx: function deps', async t => {
   await tick(8)
   t.is(log, [0, 0])
 
-  // state(1)
-  // await tick(8)
-  // t.is(log, [0, 0, 1, 1])
+  a(1)
+  await tick(8)
+  t.is(log, [0, 0, 1, 1])
 })
