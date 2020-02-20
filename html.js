@@ -6,7 +6,6 @@ import { primitive, getval } from './util.js'
 const FIELD = '\ue000', QUOTES = '\ue001'
 const _parentNode = Symbol('parentNode')
 const _ptr = Symbol('ptr')
-const _group = Symbol('related')
 
 // xhtm base supercharged with observables
 export default function htm (statics) {
@@ -19,6 +18,7 @@ export default function htm (statics) {
     return item
   }
   current.childNodes = current
+  current[_ptr] = 0
 
   // get string with fields, return observable state string
   const evaluable = (str, textContent) => {
@@ -139,8 +139,12 @@ export default function htm (statics) {
         }
       }
     })
+
   // return current.length > 1 ? current : current[0]
-  return (current.length > 1) ? current : current[0]
+  if (current.length < 2) return current[0]
+  const frag = document.createDocumentFragment()
+  frag.append(...current)
+  return frag
 }
 
 // locate or allocate node. if `tag` is primitive - allocates text node, otherwise `tag` is either node or list of nodes
@@ -210,7 +214,9 @@ function morph(from, to) {
   else {
     from.replaceWith(placeholder)
   }
+
   from = placeholder
+
   if (Array.isArray(to)) {
     const parent = from.parentNode
     to = to.map(to => {
@@ -224,5 +230,6 @@ function morph(from, to) {
     if (primitive(to)) to = document.createTextNode(to == null ? '' : to)
     from.replaceWith(to)
   }
+
   return to
 }

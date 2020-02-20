@@ -163,7 +163,7 @@ t('html: must not lose attributes', async t => {
 
 t('html: fragments', async t => {
   let el = html`<foo/><bar/>`
-  t.is(el.length, 2)
+  t.is(el.childNodes.length, 2)
 
   let el2 = html`<>foo</>`
   t.is(el2.textContent, 'foo')
@@ -284,7 +284,7 @@ t('html: put data directly to props', async t => {
   t.is(el.x, x)
 })
 
-t.skip('html: rerender real dom', t => {
+t.todo('html: rerender real dom', t => {
   let real = document.createElement('div')
   let virt = html`<div/>`
   let el = document.createElement('div')
@@ -292,32 +292,33 @@ t.skip('html: rerender real dom', t => {
 
   html`<${el}>${real}</>`
   t.is(el.outerHTML, '<div><div></div></div>')
-  t.is(el.firstChild, real)
+  t.is(el.firstElementChild, real)
 
   html`<${el}>${virt}</>`
   t.is(el.outerHTML, '<div><div></div></div>')
-  t.is(el.firstChild, real)
+  t.is(el.firstElementChild, real)
 
   html`<${el}>${virt}</>`
   t.is(el.outerHTML, '<div><div></div></div>')
-  t.is(el.firstChild, real)
+  t.is(el.firstElementChild, real)
 
   html`<${el}>${real}</>`
   t.is(el.outerHTML, '<div><div></div></div>')
-  t.is(el.firstChild, real)
+  t.is(el.firstElementChild, real)
 
   html`<${el}>${virt}</>`
   t.is(el.outerHTML, '<div><div></div></div>')
-  t.is(el.firstChild, real)
+  t.is(el.firstElementChild, real)
 })
 
-t.skip('html: preserve rendering target classes/ids/attribs', t => {
+t('html: preserve rendering target classes/ids/attribs', t => {
   let el = document.createElement('div')
   el.setAttribute('x', 1)
   el.classList.add('x')
   el.id = 'x'
+  el.x = '1'
 
-  html`<${el}#y.z.w w=2/>`
+  html`<${el} id="y" class="x z w" w=2/>`
 
   t.is(el.outerHTML, `<div x="1" class="x z w" id="y" w="2"></div>`)
   t.is(el.x, '1')
@@ -408,12 +409,12 @@ t.todo('html: initial content should be morphed/hydrated', t => {
   // t.equal(el.lastChild, bar)
 })
 
-t.todo('html: newline nodes should have space in between', t => {
+t('html: newline nodes should have space in between', t => {
   let el = html`
     ${'a'}
     ${'b'}
   `
-  t.is(el.textContent, 'a b')
+  t.is(el.textContent, ' a b ')
 })
 
 t.todo('legacy html: direct component rerendering should keep children', async t => {
