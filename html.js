@@ -5,6 +5,8 @@ import { primitive, getval } from './util.js'
 
 const FIELD = '\ue000', QUOTES = '\ue001'
 const _parentNode = Symbol('parentNode')
+const _ptr = Symbol('ptr')
+const _related = Symbol('related')
 
 // xhtm base supercharged with observables
 export default function htm (statics) {
@@ -16,6 +18,7 @@ export default function htm (statics) {
     this.push(item)
     return item
   }
+  current.childNodes = current
 
   // get string with fields, return observable state string
   const evaluable = (str, textContent) => {
@@ -64,20 +67,7 @@ export default function htm (statics) {
             }
             else if (!i) {
               // current = [current, evaluate(part), null]
-              // FIXME: tag is not observable
-              tag = getval(evaluable(part))
-              if (!tag) { current.appendChild(current = document.createDocumentFragment()) }
-              else {
-                if (typeof tag === 'string') tag = tag.toUpperCase()
-                // find first child matching the tag
-                while (current.firstChild) {
-                  if (current.firstChild !== tag && current.firstChild.tagName !== tag) current.firstChild.remove()
-                }
-                // if not found - create a new tag
-                if (current.firstChild) current = current.firstChild
-                else current.appendChild(current = typeof tag === 'string' ? document.createElement(tag) : tag)
-              }
-              tag = current
+              tag = evaluable(part)
             }
             else if (part) {
               // let props = current[2] || (current[2] = {})
@@ -108,21 +98,30 @@ export default function htm (statics) {
             }
           })
 
-        if (props) {
-          // apply-diff collected props to complete tag
-          fx(props => {
-            for (let p in props) {
-              const value = props[p]
-              if (value === true) tag.setAttribute(p, '')
-              else if (value === false || value == null) tag.removeAttribute(p)
-              else tag.setAttribute(p, value)
-              tag[p] = value
-            }
-          }, [props], true)
+        if (tag !== undefined) {
+          tag = getval(tag)
+          if (typeof tag === 'string') tag = !tag ? document.createDocumentFragment() : document.createElement(tag)
+          if (props) tag.id = props.id
+          current = tag = allocNode(current, tag)
+          current[_ptr] = 0
+
+          if (props) {
+            fx(props => {
+              for (let p in props) {
+                const value = props[p]
+                if (value === true) tag.setAttribute(p, '')
+                else if (value === false || value == null) tag.removeAttribute(p)
+                else tag.setAttribute(p, value)
+                tag[p] = value
+              }
+            }, [props], true)
+          }
         }
 
         if (close) {
           // [current, tag, props, ...children] = current
+          // trim unused content
+          while (current.childNodes[current[_ptr]]) current.childNodes[current[_ptr]].remove()
           current = current[_parentNode] || current.parentNode
         }
       }
@@ -131,21 +130,87 @@ export default function htm (statics) {
       if (prev < str.length || !idx) {
         if (text) {
           const deps = evaluable(text, true)
-          const children = deps.flat().map(dep => current.appendChild(document.createTextNode('')))
-          fx((...frags) => {
-            frags.flat().map((frag, i) => {
-              if (primitive(frag)) {
-                if (children[i].nodeType !== 3) children[i].replaceWith(children[i] = document.createTextNode(''))
-                children[i].textContent = frag
-              }
-              else {
-                children[i].replaceWith(children[i] = frag)
-              }
-            })
-          }, deps, true)
+          console.group(deps)
+          const children = deps.map(dep => allocNode(current, getval(dep)))
+          fx((...frags) => frags.map((frag, i) => morph(children[i], frag)), deps, true)
+          console.groupEnd()
         }
       }
     })
   // return current.length > 1 ? current : current[0]
   return (current.length > 1) ? current : current[0]
+}
+
+// locate or allocate node. if `tag` is primitive - allocates text node, otherwise `tag` is either node or list of nodes
+function allocNode(parent, tag) {
+  let i, nextNode = parent.childNodes[parent[_ptr]], match
+
+  // locate all elements of the array, return first tag with [_related] stash
+  if (Array.isArray(tag)) {
+    let nodes = []
+    for (let i = 0; i < tag.length; i++ ) nodes.push(allocNode(parent, tag[i]));
+    [match, ...nodes] = nodes
+    match[_related] = nodes
+    return match
+  }
+
+  if (primitive(tag)) tag = document.createTextNode(tag)
+
+  // if no available nodes to locate - append new nodes
+  if (!nextNode) {
+    parent[_ptr]++
+    return parent.appendChild(tag)
+  }
+
+  // find matching node somewhere in the tree
+  for (i = parent[_ptr]; i < parent.childNodes.length; i++) {
+    const node = parent.childNodes[i]
+    if (
+      node === tag ||
+      (node.isSameNode && node.isSameNode(tag)) ||
+      (node.tagName === tag.tagName && (
+        (node.id && (node.id === tag.id)) ||
+        (node.nodeType === Node.TEXT_NODE && node.nodeValue === tag.nodeValue)
+      ))
+    ) {
+      match = node
+      break
+    }
+  }
+
+  // if there is match in the tree - insert it at the curr pointer
+  if (match) {
+    if (match !== nextNode) parent.insertBefore(match, nextNode)
+    parent[_ptr]++
+    return match
+  }
+
+  if (!nextNode.id && !tag.id) {
+    parent[_ptr]++
+    return morph(nextNode, tag)
+  }
+
+  parent.insertBefore(tag, nextNode)
+  parent[_ptr]++
+
+  return tag
+}
+
+// replace with regards to array-like insertions
+function morph(from, to) {
+  if (primitive(to)) to = document.createTextNode(to)
+  if (from.nodeType === to.nodeType && from.nodeType === Node.TEXT_NODE) {
+    from.textContent = to.textContent
+    return from
+  }
+
+  if (from[_related]) from[_related].map(node => node.remove())
+  if (to[Symbol.iterator] && !to.nodeType) {
+    const [el, ...related] = to
+    el[_related] = related
+    to = el
+  }
+  from.replaceWith(to)
+  if (to[_related]) to[_related].map(node => to.insertAdjacentElement('afterend', node))
+  return to
 }

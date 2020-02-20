@@ -74,6 +74,7 @@ export function fx(callback, deps=[Promise.resolve().then()], sync=false) {
 }
 
 // effect run only when state changes
+// NOTE: not suitable for store, list - it is mutable but same ref
 export function dfx(callback, deps, prev = []) {
   return fx((...values) => {
     if (values.every((value, i) => Object.is(value, prev[i]))) return

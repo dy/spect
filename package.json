@@ -54,6 +54,7 @@
     "es-dev-server": "^1.32.0",
     "esm": "^3.2.25",
     "jsdom": "^16.1.0",
+    "nanomorph": "^5.4.0",
     "observable": "^2.1.4",
     "tst": "^5.3.3",
     "unihooks": "^1.4.5",

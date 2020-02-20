@@ -4,6 +4,7 @@ import { tick, frame, idle, time } from 'wait-please'
 import { augmentor, useState, useEffect, useMemo } from 'augmentor'
 import Observable from 'zen-observable/esm'
 import observable from './observable.js'
+import morph from './nanomorph.js'
 
 Object.defineProperty(DocumentFragment.prototype, 'outerHTML', {
   get() {
@@ -16,7 +17,7 @@ Object.defineProperty(DocumentFragment.prototype, 'outerHTML', {
   }
 })
 
-t('html: single attribute', async t => {
+t.only('html: single attribute', async t => {
   const a = state(0)
 
   let el = html`<div a=${a}></div>`
@@ -82,7 +83,7 @@ t('html: dynamic list', async t => {
   t.is(a.outerHTML, `<a><foo></foo>bar<baz></baz></a>`)
 })
 
-t('html: 2-level fragment', async t => {
+t.only('html: 2-level fragment', async t => {
   let w = html`<> <x> <y> </y> </x> </>`
   await tick(8)
   t.is(w.outerHTML, `<> <x> <y> </y> </x> </>`)
