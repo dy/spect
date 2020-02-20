@@ -77,7 +77,7 @@ export default function htm (statics) {
                 fx(obj => {
                   // FIXME: keys list must persist between updates
                   Object.assign(props, obj)
-                }, [evaluable(part)], true)
+                }, [evaluable(part[3])], true)
               }
               else {
                 [name, value] = part.split('=')

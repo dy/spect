@@ -1,3 +1,5 @@
+// nanomorph adapted to comparing lists
+
 var events = [
   // attribute events (can be set with attributes)
   'onclick',
