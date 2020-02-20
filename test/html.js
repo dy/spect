@@ -26,12 +26,13 @@ t('html: single attribute', async t => {
   t.is(el.outerHTML, `<div a="0"></div>`)
 
   a(1)
-  await tick(58)
+  // FIXME: why so big delay?
+  await tick(24)
   t.is(el.outerHTML, `<div a="1"></div>`)
 
-  // a(null)
-  // await tick(8)
-  // t.is(el.outerHTML, `<div></div>`)
+  a(null)
+  await tick(24)
+  t.is(el.outerHTML, `<div></div>`)
 })
 
 t('html: text content', async t => {
@@ -72,7 +73,7 @@ t('html: mixed static content', async t => {
   t.is(a.outerHTML, `<a> <foo></foo> bar <baz></baz> </a>`)
 })
 
-t('html: dynamic list', async t => {
+t.only('html: dynamic list', async t => {
   const foo = html`<foo></foo>`
   const bar = `bar`
   const baz = html`<baz/>`
