@@ -6,7 +6,7 @@ import { primitive, getval } from './util.js'
 const FIELD = '\ue000', QUOTES = '\ue001'
 const _parentNode = Symbol('parentNode')
 const _ptr = Symbol('ptr')
-const _related = Symbol('related')
+const _group = Symbol('related')
 
 // xhtm base supercharged with observables
 export default function htm (statics) {
@@ -133,7 +133,7 @@ export default function htm (statics) {
           const children = deps.map(dep => allocNode(current, getval(dep)))
           fx((...frags) => {
             frags.map((frag, i) => {
-              morph(children[i], frag)
+              children[i] = morph(children[i], frag)
             })
           }, deps, true)
         }
@@ -147,13 +147,11 @@ export default function htm (statics) {
 function allocNode(parent, tag) {
   let i, nextNode = parent.childNodes[parent[_ptr]], match
 
-  // locate all elements of the array, return first tag with [_related] stash
+  // locate all elements of the array, return first tag with [_group] stash
   if (Array.isArray(tag)) {
     let nodes = []
-    for (let i = 0; i < tag.length; i++ ) nodes.push(allocNode(parent, tag[i]));
-    [match, ...nodes] = nodes
-    match[_related] = nodes
-    return match
+    for (let i = 0; i < tag.length; i++ ) nodes.push(allocNode(parent, tag[i]))
+    return nodes
   }
 
   if (primitive(tag)) tag = document.createTextNode(tag)
@@ -200,30 +198,31 @@ function allocNode(parent, tag) {
 
 // replace with regards to array-like insertions
 function morph(from, to) {
-  if (Array.isArray(to)) {
-    const [el, ...nodes] = to
-    el[_related] = nodes
-    to = el
-  }
-  if (primitive(to)) to = document.createTextNode(to == null ? '' : to)
-  if (from === to) return to
-  if (from.nodeType === to.nodeType && from.nodeType === Node.TEXT_NODE) {
+  if (from && to && from.nodeType === to.nodeType && from.nodeType === Node.TEXT_NODE) {
     from.textContent = to.textContent
     return from
   }
-  if (from[_related]) from[_related].map(node => node.remove())
-  if (to[Symbol.iterator] && !to.nodeType) {
-    const [el, ...related] = to
-    el[_related] = related
-    to = el
+  const placeholder = document.createTextNode('')
+  if (Array.isArray(from)) {
+    from[0].replaceWith(placeholder)
+    from.map(node => node.remove())
   }
-  from.replaceWith(to)
-  if (to[_related]) {
-    for (let i = to[_related].length; i--;) {
-      const node = to[_related][i]
-      primitive(node) ? to.insertAdjacentText('afterend', node == null ? '' : node) :
-      to.insertAdjacentElement('afterend', node)
-    }
+  else {
+    from.replaceWith(placeholder)
+  }
+  from = placeholder
+  if (Array.isArray(to)) {
+    const parent = from.parentNode
+    to = to.map(to => {
+      if (primitive(to)) to = document.createTextNode(to == null ? '' : to)
+      parent.insertBefore(to,  from)
+      return to
+    })
+    from.remove()
+  }
+  else {
+    if (primitive(to)) to = document.createTextNode(to == null ? '' : to)
+    from.replaceWith(to)
   }
   return to
 }

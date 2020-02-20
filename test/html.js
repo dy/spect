@@ -80,6 +80,20 @@ t('html: dynamic list', async t => {
 
   const a = html`<a>${ content }</a>`
   t.is(a.outerHTML, `<a><foo></foo>bar<baz></baz></a>`)
+  await tick(8)
+  t.is(a.outerHTML, `<a><foo></foo>bar<baz></baz></a>`)
+
+  content.push(html`qux`)
+  await tick(8)
+  t.is(a.outerHTML, `<a><foo></foo>bar<baz></baz>qux</a>`)
+
+  content.shift()
+  await tick(8)
+  t.is(a.outerHTML, `<a>bar<baz></baz>qux</a>`)
+
+  content.length = 0
+  await tick(8)
+  t.is(a.outerHTML, `<a></a>`)
 })
 
 t('html: 2-level fragment', async t => {
