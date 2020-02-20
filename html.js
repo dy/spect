@@ -1,6 +1,7 @@
 import calc from './calc.js'
 import fx from './fx.js'
 import store from './store.js'
+import list from './list.js'
 import { primitive, getval } from './src/util.js'
 import morph from './src/morph.js'
 
