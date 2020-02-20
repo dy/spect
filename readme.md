@@ -20,7 +20,7 @@
 <time id="clock"></time>
 
 <script type="module">
-  import { $, html, state, fx } from "https://unpkg.com/spect"
+  import { $, html, state } from "https://unpkg.com/spect"
 
   $('#clock', el => {
     const date = state(new Date())
@@ -29,25 +29,25 @@
       ${() => date().toLocaleTimeString()}
     </>`
 
-    fx(() => {
-      setTimeout(() => {
-        date(new Date())
-      }, 1000)
-    }, [date])
+    let interval = setInterval(() => {
+      date(new Date())
+    }, 1000)
+
+    return () => clearInterval(interval)
   })
 </script>
 -->
 
 
-_Spect_ is state-of-the-art DOM framework, putting together _aspects_, _observables_ and _effects_ in symbiotic way. It is inspired by the best parts of [_react hooks_](https://reactjs.org/docs/hooks-intro.html), [_observables_](https://www.npmjs.com/package/observable) and [_aspect-oriented programming_](https://en.wikipedia.org/wiki/Aspect-oriented_programming), with simplicity of [jquery](https://ghub.io/jquery).
+_Spect_ is state-of-the-art DOM framework, putting together _aspects_, _observables_ and _effects_ in symbiotic way. It is inspired by [_react hooks_](https://reactjs.org/docs/hooks-intro.html), [_observables_](https://www.npmjs.com/package/observable) and [_aspect-oriented programming_](https://en.wikipedia.org/wiki/Aspect-oriented_programming), with simplicity of [jquery](https://ghub.io/jquery).
 
 ## Principles
 
-:gem: **Separation of concerns** − comes naturally with _aspects_ − small pieces of logic assigned to elements.
+:gem: **Separation of concerns** − comes with _aspects_, small pieces of logic assigned to elements.
 
-:deciduous_tree: **Native first** − keeps semantic HTML, clean tree without wrappers, vanilla-components friendly.
+:deciduous_tree: **Native first** − encourages semantic clean tree and native API; API is vanilla-components friendly.
 
-:ocean: **Progressive enhancement** − aspect combinations provide additional functionality.
+:ocean: **Progressive enhancement** − layering aspects provide additional functionality.
 
 :baby_chick: **Low entry barrier** − no complexity victims or hostages.
 
@@ -101,21 +101,45 @@ $('.user', async el => {
 </script>
 ```
 
-Here, the _**`$`**_ assigns an aspect function to the `.user` element. That function awaits `username` to be loaded from the server and displays it as the element's inner html. _**`state`**_ here acts as _useState_, but creates an observable `username` value. _**`html`**_ is reactive − it rerenders automatically whenever `username` changes.
+Here, the _**`$`**_ assigns an _aspect function_ to the `.user` element. _**`state`**_ here acts as _useState_, but creates an observable `username`. _**`html`**_ is reactive − it rerenders automatically whenever `username` changes.
 
+Let's implement simple todo app.
+
+```js
+<form class="todo">
+  <label for="add-todo">
+    <span>Add Todo</span>
+    <input name="text" required/>
+  </label>
+  <button type="submit">Add</button>
+  <ul class="todo-list"><ul>
+</form>
+
+<script type="module">
+import { $, html, on, list } from 'spect'
+
+const todos = list([])
+
+$('.todo-list', el => html`<${el}>${ todos }</>`)
+
+$('.todo-form', el => on(el, 'submit', e => {
+  e.preventDefault()
+  if (!el.checkValidity()) return
+  todos.push({ text: e.elements.text.value })
+  el.reset()
+}))
+</script>
+```
+
+Unlike in react-ish frameworks, input element here is uncontrolled and logic closely follows native js to provide _progressive enhancement_ principle. _**`list`**_ creates an observable array `todos` - mutating it automatically rerenders _**`html`**_.
 
 <!--
-Here comes intoductory example.
-
 Maybe validation / sending form? (better for cases, eg. forms (all react cases))
 
 Or familiar examples of another framework, rewritten with spect? (better for docs, as spect vs N)
 
 Something showcasing wow features, like composable streaming and how that restructures waterfall rendering?
 Yes, makes more sense. The very natural flow, where with HTML you can prototype, then naturally upgrade to UI-framework, then add actions. Minimize design - code distance.
-
-
-!? Maybe hello, world user as starter?
 --!>
 
 <!--
@@ -159,11 +183,6 @@ $('#articles', el => {
 })
 </script>
 ```
-
-!Showcase how easy that is to render with `html` effect.
---!>
-
-<!--
 
 _Spect_ doesn't make any guess about storage, actions, renderer or tooling setup and can be used with different flavors.
 
