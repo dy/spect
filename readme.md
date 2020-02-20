@@ -131,9 +131,13 @@ $('.todo-form', el => on(el, 'submit', e => {
 </script>
 ```
 
-Unlike in react-ish frameworks, input element here is uncontrolled and logic closely follows native js to provide _progressive enhancement_ principle. _**`list`**_ creates an observable array `todos` - mutating it automatically rerenders _**`html`**_.
+Input element here is uncontrolled and logic closely follows native js to provide _progressive enhancement_. _**`list`**_ creates an observable array `todos`, mutating it automatically rerenders _**`html`**_.
+
+For more examples, see [/examples](examples).
 
 <!--
+See all examples...
+
 Maybe validation / sending form? (better for cases, eg. forms (all react cases))
 
 Or familiar examples of another framework, rewritten with spect? (better for docs, as spect vs N)
