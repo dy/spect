@@ -28,45 +28,36 @@ export function fx(callback, deps=[Promise.resolve().then()], sync=false) {
 
   // observe changes
   deps.map(async (dep, i) => {
+    const set = value => {
+      current[i] = value
+      notify()
+    }
+
     // constant value
     if (!changeable(dep)) {
-      current[i] = dep
-      notify()
+      set(dep)
     }
     // async iterator
     else if (Symbol.asyncIterator in dep) {
       for await (let value of dep) {
-        current[i] = value
-        notify()
+        set(value)
       }
     }
     // promise
     else if (dep.then) {
-      dep.then(value => {
-        current[i] = value
-        notify()
-      })
+      dep.then(set)
     }
     // Observable
     else if (dep.subscribe) {
-      dep.subscribe(value => {
-        current[i] = value
-        notify()
-      })
+      dep.subscribe(set)
     }
     // observable / observ / mutant
     else if (observable(dep)) {
-      dep(value => {
-        current[i] = value
-        notify()
-      })
+      dep(set)
     }
     // node streams
     else if (stream(dep)) {
-      dep.on('data', value => {
-        current[i] = value
-        notify()
-      })
+      dep.on('data', set)
     }
   })
 
