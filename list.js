@@ -1,4 +1,4 @@
-import createRef from './ref.js'
+import createRef from './src/ref.js'
 
 // not needed since array internally accesses index
 // const mutators = {

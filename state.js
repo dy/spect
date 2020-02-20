@@ -1,5 +1,5 @@
-import ref from './ref.js'
-import { getval } from './util.js'
+import ref from './src/ref.js'
+import { getval } from './src/util.js'
 
 // Observable with notifications only about changed values
 export default function state (value) {

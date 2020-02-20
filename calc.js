@@ -1,6 +1,6 @@
 import state from './state.js'
 import fx from './fx.js'
-import { getval } from './util.js'
+import { getval } from './src/util.js'
 
 export default function calc(fn, deps) {
   let prevDeps = deps.map(getval)

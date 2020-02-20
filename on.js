@@ -1,4 +1,4 @@
-import channel from './channel.js'
+import channel from './src/channel.js'
 
 export default function on (scope, target, event, callback) {
   if (arguments.length < 4) {

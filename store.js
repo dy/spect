@@ -1,4 +1,4 @@
-import createRef from './ref.js'
+import createRef from './src/ref.js'
 
 export default function store(obj = {}) {
   const ref = createRef(obj)

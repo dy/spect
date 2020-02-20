@@ -274,6 +274,7 @@ Pending...
         <a href="#calc"><strong><em><code>calc</code></em></strong></a>
       </td>
     </tr>
+    <!--
     <tr>
       <td><strong>Utils:</strong></td>
       <td>
@@ -281,6 +282,7 @@ Pending...
         <a href="#channel"><strong><em><code>channel</code></em></strong></a>
       </td>
     </tr>
+    -->
   </tbody>
   </table>
 
@@ -751,7 +753,7 @@ fahren() // 32
 
 <br/>
 
-
+<!--
 ## Utils
 
 
@@ -811,6 +813,7 @@ foobus.cancel()
 ```
 
 <br/>
+-->
 
 
 ## Inspiration / R&D

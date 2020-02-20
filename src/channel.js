@@ -1,6 +1,6 @@
 // events bus - cancelable, thenable
 // useful as foundation for effects
-import { Cancelable } from './util.js'
+import Cancelable from './cancelable.js'
 
 export default function channel(callback, teardown) {
   let resolve, promise = new Cancelable(r => resolve = r)

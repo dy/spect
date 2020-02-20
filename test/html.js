@@ -4,7 +4,7 @@ import { tick, frame, idle, time } from 'wait-please'
 import { augmentor, useState, useEffect, useMemo } from 'augmentor'
 import Observable from 'zen-observable/esm'
 import observable from './observable.js'
-import morph from './nanomorph.js'
+import morph from '../src/morph.js'
 
 Object.defineProperty(DocumentFragment.prototype, 'outerHTML', {
   get() {
@@ -935,26 +935,11 @@ t.todo('legacy html: removing aspected element should trigger destructor', async
 t.todo('legacy html: 50+ elements shouldnt invoke recursion', t => {
   let data = Array(100).fill({x:1})
 
-  let el = $`${data.map(item => html`<${fn} ...${item}/>`)}`
+  let el = html`${ data.map(item => html`<${fn} ...${item}/>`) }`
 
-  function fn ({html, x}) {
-    html`x: ${x}`
+  function fn ({x}) {
+    return html`x: ${x}`
   }
 
   t.is(el.length, 100)
-})
-
-t.todo('legacy html: templates', async t => {
-  // html`<${C}></>`
-  // let { default: htm } = await import('htm')
-
-  htm = htm.bind((...args) => console.log(args))
-
-  htm`<a class="${x} c d"/>`
-
-  function x () {}
-  // function C (target) {
-  //   console.log(target)
-  //   target.html`foo`
-  // }
 })

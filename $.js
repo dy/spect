@@ -1,5 +1,5 @@
 import SelectorSet from 'selector-set'
-import channel from './channel.js'
+import channel from './src/channel.js'
 import tuple from 'immutable-tuple'
 
 const _callbacks = Symbol.for('__spect.callbacks')

@@ -1,5 +1,5 @@
-import channel from './channel.js'
-import { changeable, observable, stream, getval } from './util.js'
+import channel from './src/channel.js'
+import { changeable, observable, stream, getval } from './src/util.js'
 
 export default fx
 

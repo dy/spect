@@ -43,9 +43,9 @@ var events = [
 
 var eventsLength = events.length
 
-var ELEMENT_NODE = 1
-var TEXT_NODE = 3
-var COMMENT_NODE = 8
+const ELEMENT_NODE = 1
+const TEXT_NODE = 3
+const COMMENT_NODE = 8
 
 // diff elements and apply the resulting patch to the old node
 // (obj, obj) -> null
@@ -204,13 +204,6 @@ function updateAttribute (newNode, oldNode, name) {
 }
 
 
-
-
-var TEXT_NODE = 3
-// var DEBUG = false
-
-export default nanomorph
-
 // Morph one tree into another tree
 //
 // no parent
@@ -224,39 +217,19 @@ export default nanomorph
 //   -> diff nodes and apply patch to old node
 // nodes are the same
 //   -> walk all child nodes and append to old node
-function nanomorph (oldTree, newTree, options) {
-  // if (DEBUG) {
-  //   console.log(
-  //   'nanomorph\nold\n  %s\nnew\n  %s',
-  //   oldTree && oldTree.outerHTML,
-  //   newTree && newTree.outerHTML
-  // )
-  // }
-
-  if (options && options.childrenOnly) {
-    updateChildren(newTree, oldTree)
-    return oldTree
-  }
-
+export default function nanomorph (oldTree, newTree) {
   return walk(newTree, oldTree)
 }
 
 // Walk and morph a dom tree
 function walk (newNode, oldNode) {
-  // if (DEBUG) {
-  //   console.log(
-  //   'walk\nold\n  %s\nnew\n  %s',
-  //   oldNode && oldNode.outerHTML,
-  //   newNode && newNode.outerHTML
-  // )
-  // }
   if (!oldNode) {
     return newNode
   } else if (!newNode) {
     return null
   } else if (newNode.isSameNode && newNode.isSameNode(oldNode)) {
     return oldNode
-  } else if (newNode.tagName !== oldNode.tagName || getComponentId(newNode) !== getComponentId(oldNode)) {
+  } else if (newNode.tagName !== oldNode.tagName) {
     return newNode
   } else {
     morph(newNode, oldNode)
@@ -265,20 +238,9 @@ function walk (newNode, oldNode) {
   }
 }
 
-function getComponentId (node) {
-  return node.dataset ? node.dataset.nanomorphComponentId : undefined
-}
-
 // Update the children of elements
 // (obj, obj) -> null
 function updateChildren (newNode, oldNode) {
-  // if (DEBUG) {
-  //   console.log(
-  //   'updateChildren\nold\n  %s\nnew\n  %s',
-  //   oldNode && oldNode.outerHTML,
-  //   newNode && newNode.outerHTML
-  // )
-  // }
   var oldChild, newChild, morphed, oldMatch
 
   // The offset is only ever increased, and used for [i - offset] in the loop
@@ -287,13 +249,7 @@ function updateChildren (newNode, oldNode) {
   for (var i = 0; ; i++) {
     oldChild = oldNode.childNodes[i]
     newChild = newNode.childNodes[i - offset]
-    // if (DEBUG) {
-    //   console.log(
-    //   '===\n- old\n  %s\n- new\n  %s',
-    //   oldChild && oldChild.outerHTML,
-    //   newChild && newChild.outerHTML
-    // )
-    // }
+
     // Both nodes are empty, do nothing
     if (!oldChild && !newChild) {
       break
@@ -307,14 +263,6 @@ function updateChildren (newNode, oldNode) {
     } else if (!oldChild) {
       oldNode.appendChild(newChild)
       offset++
-
-    // Both nodes are the same, morph
-    } else if (same(newChild, oldChild)) {
-      morphed = walk(newChild, oldChild)
-      if (morphed !== oldChild) {
-        oldNode.replaceChild(morphed, oldChild)
-        offset++
-      }
 
     // Both nodes do not share an ID or a placeholder, try reorder
     } else {

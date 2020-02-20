@@ -1,4 +1,4 @@
-import { Cancelable } from './util.js'
+import Cancelable from './cancelable.js'
 
 // observable value with notification on every set
 export const _n = Symbol.for('__spect.notify')

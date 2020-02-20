@@ -1,7 +1,7 @@
 import calc from './calc.js'
 import fx from './fx.js'
 import store from './store.js'
-import { primitive, getval } from './util.js'
+import { primitive, getval } from './src/util.js'
 
 const FIELD = '\ue000', QUOTES = '\ue001'
 const _parentNode = Symbol('parentNode')

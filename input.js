@@ -1,4 +1,4 @@
-import ref from './ref.js'
+import ref from './src/ref.js'
 
 export default function input (el) {
   const value = ref()

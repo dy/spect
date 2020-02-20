@@ -1,4 +1,4 @@
-import ref, { _n, _p } from './ref.js'
+import ref, { _n, _p } from './src/ref.js'
 
 const cache = new WeakMap
 
