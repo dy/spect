@@ -31,6 +31,9 @@ export function getval(v, prev) {
   // stateless changeables have no state
   if (changeable(v)) return
 
+  // curiously, functional dep value is unavoidable due to this
+  // to detect dep as async generator, we must call the function
+  // which as a side-effect calls the regular function
   if (typeof v === 'function') {
     const result = v(prev)
     if (changeable(result)) return
