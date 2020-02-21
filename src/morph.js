@@ -231,14 +231,14 @@ export default function walk (oldNode, newNode) {
     return newNode
   } else {
     morph(newNode, oldNode)
-    updateChildren(newNode, oldNode)
+    morphChildren(newNode, oldNode)
     return oldNode
   }
 }
 
 // Update the children of elements
 // (obj, obj) -> null
-function updateChildren (newNode, oldNode) {
+export function morphChildren (newNode, oldNode) {
   var oldChild, newChild, morphed, oldMatch
 
   // The offset is only ever increased, and used for [i - offset] in the loop

@@ -22,7 +22,29 @@ t('html: single attribute', async t => {
 
   let el = html`<div a=${a}></div>`
 
-  // await tick(8)
+  t.is(el.outerHTML, `<div a="0"></div>`)
+  await tick(28)
+  t.is(el.outerHTML, `<div a="0"></div>`)
+
+  a(1)
+  // FIXME: why so big delay?
+  await tick(24)
+  t.is(el.outerHTML, `<div a="1"></div>`)
+
+  a(null)
+  await tick(24)
+  t.is(el.outerHTML, `<div></div>`)
+})
+
+t('html: single attribute on mounted node', async t => {
+  const a = state(0)
+  let div = document.createElement('div')
+
+  let el = html`<${div} a=${a}></>`
+
+  t.is(el, div)
+  t.is(el.outerHTML, `<div a="0"></div>`)
+  await tick(28)
   t.is(el.outerHTML, `<div a="0"></div>`)
 
   a(1)
@@ -73,7 +95,7 @@ t('html: mixed static content', async t => {
   t.is(a.outerHTML, `<a> <foo></foo> bar <baz></baz> </a>`)
 })
 
-t.only('html: dynamic list', async t => {
+t('html: dynamic list', async t => {
   const foo = html`<foo></foo>`
   const bar = `bar`
   const baz = html`<baz/>`
@@ -97,10 +119,17 @@ t.only('html: dynamic list', async t => {
   t.is(a.outerHTML, `<a></a>`)
 })
 
+t('html: delayed init', async t => {
+  let w = html`<x></x>`
+  t.is(w.outerHTML, `<x></x>`)
+  await tick(28)
+  t.is(w.outerHTML, `<x></x>`)
+})
 t('html: 2-level fragment', async t => {
-  let w = html`<> <x> <y> </y> </x> </>`
-  await tick(8)
-  t.is(w.outerHTML, `<> <x> <y> </y> </x> </>`)
+  let w = html`<x> <y> </y> </x>`
+  t.is(w.outerHTML, `<x> <y> </y> </x>`)
+  await tick(28)
+  t.is(w.outerHTML, `<x> <y> </y> </x>`)
 })
 
 t('html: mount to another element', async t => {
@@ -109,6 +138,8 @@ t('html: mount to another element', async t => {
   const b = html`<${a}>${ c }</>`
 
   t.is(a, b)
+  t.is(b.outerHTML, `<a>0</a>`)
+  await tick(8)
   t.is(b.outerHTML, `<a>0</a>`)
 })
 
@@ -173,7 +204,7 @@ t('html: fragments', async t => {
   t.is(el3.textContent, 'foo')
 })
 
-t('html: reinsert self content', t => {
+t('html: reinsert self content', async t => {
   let el = document.createElement('div')
   el.innerHTML = 'a <b>c <d>e <f></f> g</d> h</b> i'
 
@@ -182,6 +213,9 @@ t('html: reinsert self content', t => {
   html`<${el}>${ childNodes }</>`
 
   t.is(el.outerHTML, `<div>a <b>c <d>e <f></f> g</d> h</b> i</div>`)
+
+  // await tick(28)
+  // t.is(el.outerHTML, `<div>a <b>c <d>e <f></f> g</d> h</b> i</div>`)
 })
 
 t('html: wrapping', async t => {
@@ -211,11 +245,11 @@ t('html: wrapping with children', async t => {
 })
 
 t('html: select case', async t => {
-  let w = html`<>
+  let w = html`
     <select>
       <option value="a"></option>
     </select>
-  </>`
+  `
   await tick(8)
   t.is(w.outerHTML, `<> <select> <option value="a"></option> </select> </>`)
 })
@@ -237,9 +271,11 @@ t('html: promises', async t => {
   return p
 })
 
-t('html: render to fragment', async t => {
+t.skip('html: render to fragment', async t => {
   let frag = document.createDocumentFragment()
-  html`<${frag}>1</>`
+  let el = html`<${frag}>1</>`
+  t.is(frag, el)
+  t.is(el.outerHTML, '<>1</>')
   t.is(frag.outerHTML, '<>1</>')
 })
 
@@ -266,13 +302,13 @@ t.skip('html: generator', async t => {
 })
 
 t('html: async generator', async t => {
-  let el = html`<div>${async function* () {
+  let el = html`<div>${(async function* () {
     await tick(4)
     yield 1
     await tick(4)
     yield 2
     await tick(4)
-  }}</div>`
+  })()}</div>`
   await tick(8)
   t.is(el.outerHTML, `<div>1</div>`)
   await tick(8)
@@ -373,7 +409,7 @@ t('html: classes must recognize false props', t => {
   t.is(el.outerHTML, `<div class="foo"></div>`)
 })
 
-t('html: preserves hidden attribute', t => {
+t.only('html: preserves hidden attribute', t => {
   let el = document.createElement('div')
   el.innerHTML = '<div hidden></div>'
 
