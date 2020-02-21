@@ -1,3 +1,4 @@
+// nanomorph stripped & adapted for esm
 var events = [
   // attribute events (can be set with attributes)
   'onclick',
@@ -49,7 +50,7 @@ const COMMENT_NODE = 8
 
 // diff elements and apply the resulting patch to the old node
 // (obj, obj) -> null
-function morph (newNode, oldNode) {
+export function updateAttributes (newNode, oldNode) {
   var nodeType = newNode.nodeType
   var nodeName = newNode.nodeName
 
@@ -217,12 +218,8 @@ function updateAttribute (newNode, oldNode, name) {
 //   -> diff nodes and apply patch to old node
 // nodes are the same
 //   -> walk all child nodes and append to old node
-export default function nanomorph (oldTree, newTree) {
-  return walk(newTree, oldTree)
-}
-
 // Walk and morph a dom tree
-function walk (newNode, oldNode) {
+export default function morph (oldNode, newNode) {
   if (!oldNode) {
     return newNode
   } else if (!newNode) {
@@ -232,7 +229,7 @@ function walk (newNode, oldNode) {
   } else if (newNode.tagName !== oldNode.tagName) {
     return newNode
   } else {
-    morph(newNode, oldNode)
+    updateAttributes(newNode, oldNode)
     updateChildren(newNode, oldNode)
     return oldNode
   }
@@ -240,7 +237,7 @@ function walk (newNode, oldNode) {
 
 // Update the children of elements
 // (obj, obj) -> null
-function updateChildren (newNode, oldNode) {
+export function updateChildren (newNode, oldNode) {
   var oldChild, newChild, morphed, oldMatch
 
   // The offset is only ever increased, and used for [i - offset] in the loop
@@ -278,13 +275,13 @@ function updateChildren (newNode, oldNode) {
 
       // If there was a node with the same ID or placeholder in the old list
       if (oldMatch) {
-        morphed = walk(newChild, oldMatch)
+        morphed = morph(oldMatch, newChild)
         if (morphed !== oldMatch) offset++
         oldNode.insertBefore(morphed, oldChild)
 
       // It's safe to morph two nodes in-place if neither has an ID
       } else if (!newChild.id && !oldChild.id) {
-        morphed = walk(newChild, oldChild)
+        morphed = morph(oldChild, newChild)
         if (morphed !== oldChild) {
           oldNode.replaceChild(morphed, oldChild)
           offset++

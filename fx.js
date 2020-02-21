@@ -4,16 +4,12 @@ import { changeable, observable, stream, getval } from './src/util.js'
 export default fx
 
 export function fx(callback, deps=[Promise.resolve().then()], sync=false) {
-  let current = [], prev = []
+  let current = deps.map(getval), prev = []
   let changePlanned = null, destroy
-  const fndeps = []
 
   const fxChannel = channel(callback)
   const notify = () => {
     if (changePlanned) return changePlanned
-
-    // read all fn deps values
-    fndeps.map((fn, i) => fn && (current[i] = fn()))
 
     // extra tick to skip sync deps
     return changePlanned = Promise.resolve().then().then(() => {
@@ -26,7 +22,6 @@ export function fx(callback, deps=[Promise.resolve().then()], sync=false) {
 
   // instant run
   if (sync) {
-    current = deps.map(getval)
     destroy = fxChannel(...current)
   }
 
@@ -39,18 +34,7 @@ export function fx(callback, deps=[Promise.resolve().then()], sync=false) {
 
     // constant value
     if (!changeable(dep)) {
-      // generator or simple function
-      if (typeof dep === 'function') {
-        const gen = dep()
-        if (gen.next) for await (let value of gen) set(value)
-        else {
-          await set(gen)
-          fndeps[i] = dep
-        }
-      }
-      else {
-        set(dep)
-      }
+      set(dep)
     }
     // async iterator
     else if (Symbol.asyncIterator in dep) {

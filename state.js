@@ -8,7 +8,7 @@ export default function state (value) {
   const set = state.set
   state.set = (value) => {
     let current = state.get()
-    value = getval(value, current)
+    value = getval(value)
     if (value === current) return current
     return set(value)
   }

@@ -45,9 +45,9 @@ _Spect_ is state-of-the-art DOM framework, putting together _aspects_, _observab
 
 :gem: **Separation of concerns** − comes with _aspects_, small pieces of logic assigned to elements.
 
-:deciduous_tree: **Native first** − encourages semantic clean tree and native API; API is vanilla-components friendly.
+:deciduous_tree: **Native first** − encourages semantic clean tree and native API. Vanilla-components friendly.
 
-:ocean: **Progressive enhancement** − layering aspects provide additional functionality.
+:ocean: **Progressive enhancement** − multiple aspects provide extendable functionality.
 
 :baby_chick: **Low entry barrier** − no complexity victims or hostages.
 
@@ -423,12 +423,11 @@ Similar to _useEffect_, but `deps` are changeables, any of:
 <!-- _**`dfx`**_ is delta _**`fx`**_ it reacts only to changed state. -->
 
 * _Source_
-* _AsyncGenerator_ or [_async iterable_](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Symbol/asyncIterator)
+* _AsyncIterator or [_async iterable_](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Symbol/asyncIterator)
 * _Promise_ or _thenable_
 * _Observable_ or _subscribable_, eg. [rxjs](https://ghub.io/rxjs), [es-observable](https://ghub.io/es-observable), [zen-observable](https://ghub.io/zen-observable) etc.
 * [observable](https://ghub.io), [observ](https://ghub.io) or [mutant](https://ghub.io/mutant)
 * [_Stream_](https://nodejs.org/api/stream.html)
-* _Function_, that is called when other dependencies change
 * other value is considered constant.
 
 When any dependency updates, the `callback` runs with new arguments, invoking previous `teardown` function. Omitted `deps` trigger `callback` only once as microtask.
@@ -496,13 +495,14 @@ const text = state('foobar')
 // create element
 const foo = html`<foo>${ text }</foo>`
 
+// create multiple elements
+const [foo1, foo2] = html`<foo>1</foo><foo>2</foo>`
+
+// create document fragment
+const foof = html`<><foo/></>`
+
 // hydrate element with `foo` as content
 const bar = html`<${document.querySelector('#bar')}>${ foo }</>`
-
-// runs when `bar` updates
-fx(bar => {
-  console.log('updated', bar.innerHTML)
-}, [bar])
 
 // update
 text('bazqux')

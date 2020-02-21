@@ -48,7 +48,7 @@ t('calc: async generator is fine', async t => {
   let log = []
   calc(x => {
     log.push(x)
-  }, [ag])
+  }, [ag()])
   await tick(8)
   t.is(log, [undefined, 1, 2])
 })
