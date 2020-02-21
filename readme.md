@@ -45,9 +45,9 @@ _Spect_ is state-of-the-art DOM framework, putting together _aspects_, _observab
 
 :gem: **Separation of concerns** − comes with _aspects_, small pieces of logic assigned to elements.
 
-:deciduous_tree: **Native first** − encourages semantic clean tree and native API; API is vanilla-components friendly.
+:deciduous_tree: **Native first** − encourages semantic clean tree and native API. Vanilla-components friendly.
 
-:ocean: **Progressive enhancement** − layering aspects provide additional functionality.
+:ocean: **Progressive enhancement** − multiple aspects provide extendable functionality.
 
 :baby_chick: **Low entry barrier** − no complexity victims or hostages.
 

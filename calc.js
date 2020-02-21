@@ -3,22 +3,20 @@ import fx from './fx.js'
 import { getval } from './src/util.js'
 
 export default function calc(fn, deps) {
-  let prevDeps = deps.map(getval)
-
-  // make first sync call
-  const value = state(fn(...prevDeps))
+  let init = deps.map(v => getval(v))
+  const value = state(fn(...init))
 
   const set = value.set
   value.set = () => {
     throw Error('Setting calculated value')
   }
 
-  // dfx logic, with initial prevDeps
-  fx((...deps) => {
-    // make recalcs only if deps change
-    if (deps.every((dep, i) => Object.is(dep, prevDeps[i]))) return
-    prevDeps = deps
-    set(fn(...deps))
+  // dfx logic, with initial prev
+  fx((...args) => {
+    // some deps may keep reference, so avoid change check
+    // if (args.every((dep, i) => Object.is(dep, prev[i]))) return
+    // prev = args
+    set(fn(...args))
   }, deps)
 
   return value

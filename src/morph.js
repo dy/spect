@@ -219,12 +219,8 @@ function updateAttribute (newNode, oldNode, name) {
 //   -> diff nodes and apply patch to old node
 // nodes are the same
 //   -> walk all child nodes and append to old node
-export default function nanomorph (oldTree, newTree) {
-  return walk(newTree, oldTree)
-}
-
 // Walk and morph a dom tree
-function walk (newNode, oldNode) {
+export default function walk (oldNode, newNode) {
   if (!oldNode) {
     return newNode
   } else if (!newNode) {
@@ -280,13 +276,13 @@ function updateChildren (newNode, oldNode) {
 
       // If there was a node with the same ID or placeholder in the old list
       if (oldMatch) {
-        morphed = walk(newChild, oldMatch)
+        morphed = walk(oldMatch, newChild)
         if (morphed !== oldMatch) offset++
         oldNode.insertBefore(morphed, oldChild)
 
       // It's safe to morph two nodes in-place if neither has an ID
       } else if (!newChild.id && !oldChild.id) {
-        morphed = walk(newChild, oldChild)
+        morphed = walk(oldChild, newChild)
         if (morphed !== oldChild) {
           oldNode.replaceChild(morphed, oldChild)
           offset++
