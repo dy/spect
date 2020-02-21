@@ -3,7 +3,7 @@ import fx from './fx.js'
 import { getval } from './src/util.js'
 
 export default function calc(fn, deps) {
-  let init = deps.map(v => getval(v))
+  let init = deps.map(getval)
   const value = state(fn(...init))
 
   const set = value.set

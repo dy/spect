@@ -200,12 +200,12 @@ t('fx: async generator', async t => {
   const log = []
   fx((x1, x2) => {
     log.push(x1, x2)
-  }, [x(), x])
+  }, [x(), x()])
 
   await tick(10)
   t.is(log, [1,1,2,2])
 })
-t('fx: function deps', async t => {
+t.skip('fx: function deps', async t => {
   const log = []
   let i = 0
   const a = state(0)
