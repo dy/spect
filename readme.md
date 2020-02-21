@@ -495,13 +495,14 @@ const text = state('foobar')
 // create element
 const foo = html`<foo>${ text }</foo>`
 
+// create multiple elements
+const [foo1, foo2] = html`<foo>1</foo><foo>2</foo>`
+
+// create document fragment
+const foof = html`<><foo/></>`
+
 // hydrate element with `foo` as content
 const bar = html`<${document.querySelector('#bar')}>${ foo }</>`
-
-// runs when `bar` updates
-fx(bar => {
-  console.log('updated', bar.innerHTML)
-}, [bar])
 
 // update
 text('bazqux')

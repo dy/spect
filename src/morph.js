@@ -1,5 +1,4 @@
-// nanomorph adapted to comparing lists
-
+// nanomorph stripped & adapted for esm
 var events = [
   // attribute events (can be set with attributes)
   'onclick',
@@ -51,7 +50,7 @@ const COMMENT_NODE = 8
 
 // diff elements and apply the resulting patch to the old node
 // (obj, obj) -> null
-function morph (newNode, oldNode) {
+export function updateAttributes (newNode, oldNode) {
   var nodeType = newNode.nodeType
   var nodeName = newNode.nodeName
 
@@ -220,7 +219,7 @@ function updateAttribute (newNode, oldNode, name) {
 // nodes are the same
 //   -> walk all child nodes and append to old node
 // Walk and morph a dom tree
-export default function walk (oldNode, newNode) {
+export default function morph (oldNode, newNode) {
   if (!oldNode) {
     return newNode
   } else if (!newNode) {
@@ -230,15 +229,15 @@ export default function walk (oldNode, newNode) {
   } else if (newNode.tagName !== oldNode.tagName) {
     return newNode
   } else {
-    morph(newNode, oldNode)
-    morphChildren(newNode, oldNode)
+    updateAttributes(newNode, oldNode)
+    updateChildren(newNode, oldNode)
     return oldNode
   }
 }
 
 // Update the children of elements
 // (obj, obj) -> null
-export function morphChildren (newNode, oldNode) {
+export function updateChildren (newNode, oldNode) {
   var oldChild, newChild, morphed, oldMatch
 
   // The offset is only ever increased, and used for [i - offset] in the loop
@@ -276,13 +275,13 @@ export function morphChildren (newNode, oldNode) {
 
       // If there was a node with the same ID or placeholder in the old list
       if (oldMatch) {
-        morphed = walk(oldMatch, newChild)
+        morphed = morph(oldMatch, newChild)
         if (morphed !== oldMatch) offset++
         oldNode.insertBefore(morphed, oldChild)
 
       // It's safe to morph two nodes in-place if neither has an ID
       } else if (!newChild.id && !oldChild.id) {
-        morphed = walk(oldChild, newChild)
+        morphed = morph(oldChild, newChild)
         if (morphed !== oldChild) {
           oldNode.replaceChild(morphed, oldChild)
           offset++

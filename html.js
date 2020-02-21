@@ -1,14 +1,13 @@
 import calc from './calc.js'
 import fx from './fx.js'
-import store from './store.js'
 import { primitive, getval } from './src/util.js'
-import morph, { morphChildren } from './src/morph.js'
+import { updateChildren, updateAttributes } from './src/morph.js'
 
 const FIELD = '\ue000', QUOTES = '\ue001'
 
 // xhtm base supercharged with observables
 export default function htm (statics) {
-  let prev = 0, current = [null, document.createDocumentFragment(), null], field = 0, name, value, quotes = [], quote = 0
+  let prev = 0, current = [], field = 0, name, value, quotes = [], quote = 0
 
   // get string with fields, return observable state string
   const evaluable = (str, raw) => {
@@ -59,36 +58,35 @@ export default function htm (statics) {
               current = [current, evaluable(part), null]
             }
             else if (part) {
-              let props = current[2] || (current[2] = store({}))
+              let props = current[2] || (current[2] = [])
               if (part.slice(0, 3) === '...') {
                 // Object.assign(props, arguments[++field])
-                fx(obj => {
-                  // FIXME: keys list must persist between updates
-                  Object.assign(props, obj)
-                }, [arguments[++field]], true)
+                props.push('...', arguments[++field])
               }
               else {
                 [name, value] = part.split('=')
                 // props[evaluate(name)] = value ? evaluate(value) : true
                 if (value) {
-                  fx((name, value) => {
-                    // FIXME: changing name is bad practice. Waiting for the first bug.
-                    props[name] = value
-                  }, [evaluable(name), evaluable(value)], true)
+                  props.push(evaluable(name), evaluable(value))
                 }
                 else {
-                  fx(name => {
-                    // FIXME: changed name is bad practice.
-                    props[name] = true
-                  }, [evaluable(name)], true)
+                  props.push(evaluable(name), true)
                 }
               }
             }
           })
 
         if (close) {
-          current[0].push(level(current))
-          current = current[0]
+          // current level length doesn't change
+          let [parent, tag, props, ...children] = current
+          tag = getval(tag)
+          const el = tag.nodeType ? tag : !tag ? document.createDocumentFragment() : document.createElement(tag)
+
+          if (props) observeProps(el, props)
+          if (children.length) observeChildren(el, children)
+
+          parent.push(el)
+          current = parent
         }
       }
       prev = idx + match.length
@@ -96,18 +94,18 @@ export default function htm (statics) {
         if (text) current.push(...evaluable(text, true))
       }
     })
-
-  let el = level(current)
-  return el.childNodes.length > 1 ? el : el.childNodes[0]
+  let els = current.map(nodify)
+  return els.length > 1 ? els : els[0]
 }
 
-function level(current, x) {
-  let el
-
-  fx((parent, tag, props, ...children) => {
-    if (!el) {
-      if (tag.nodeType) el = tag
-      else el = !tag ? document.createDocumentFragment() : document.createElement(tag)
+function observeProps(el, props) {
+  // props morpher is independent from children for performance
+  fx((...keyValue) => {
+    const props = {}
+    for (let i = 0; i < keyValue.length; i += 2) {
+      let key = keyValue[i], value = keyValue[i+1]
+      if (key === '...') Object.assign(props, value)
+      else props[key] = value
     }
 
     // save orig children/props
@@ -116,7 +114,6 @@ function level(current, x) {
       origAttrs[p] = el.getAttribute(p)
       origProps[p] = el[p]
     }
-    let origChildren = [...el.childNodes]
 
     // apply new props/children
     for (let p in props) {
@@ -124,32 +121,26 @@ function level(current, x) {
       el[p] = props[p]
     }
 
-    let frag = document.createDocumentFragment()
-    children.forEach(function add(child) {
-      if (child == null) return
-      // can be text/primitive
-      else if (primitive(child)) frag.appendChild(document.createTextNode(child))
-      // can be node
-      else if (child.nodeType) frag.appendChild(child)
-      // can be an array
-      else if (Array.isArray(child)) child.forEach(child => add(child))
-      // function/generatora
-      else if (typeof child === 'function') add(child())
-      // an observable or other
-      else frag.appendChild(getval(child))
-    })
-    morphChildren(frag, el)
-
     // revert level to the initial state whenever it changes
     return () => {
       for (let p in origProps) {
         attr(el, p, origAttrs[p])
         el[p] = origProps[p]
       }
-      while (el.firstChild) el.firstChild.remove()
-      origChildren.map(child => el.appendChild(child))
     }
-  }, current, true)
+  }, props, true)
+}
+
+function observeChildren(el, children) {
+  // children morpher
+  fx((...children) => {
+    let frag = document.createDocumentFragment()
+    children.map(child => child != null && frag.appendChild(nodify(child)))
+    // morphing cases:
+    // - initial hydration
+    // - avoiding losing refs if html is used in regular non-reactive way
+    updateChildren(frag, el)
+  }, children, true)
 
   return el
 }
@@ -158,4 +149,22 @@ function attr(el, p, value) {
   if (value === true) el.setAttribute(p, '')
   else if (value === false || value == null) el.removeAttribute(p)
   else el.setAttribute(p, value)
+}
+
+function nodify(child) {
+  if (child == null) return
+  // can be text/primitive
+  if (primitive(child)) return document.createTextNode(child)
+  // can be node/fragment
+  if (child.nodeType) return child
+  // can be an array
+  if (Array.isArray(child)) {
+    let frag = document.createDocumentFragment()
+    child.forEach(child => frag.appendChild(nodify(child)))
+    return frag
+  }
+  // function
+  if (typeof child === 'function') return nodify(child())
+  // an observable or other
+  return getval(child)
 }

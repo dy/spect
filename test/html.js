@@ -63,6 +63,8 @@ t('html: text content', async t => {
   let el = html`<div>${ a }</div>`
 
   t.is(el.outerHTML, `<div>0</div>`)
+  await tick(8)
+  t.is(el.outerHTML, `<div>0</div>`)
 
   a(1)
   await tick(8)
@@ -195,7 +197,7 @@ t('html: must not lose attributes', async t => {
 
 t('html: fragments', async t => {
   let el = html`<foo/><bar/>`
-  t.is(el.childNodes.length, 2)
+  t.is(el.length, 2)
 
   let el2 = html`<>foo</>`
   t.is(el2.textContent, 'foo')
@@ -245,11 +247,11 @@ t('html: wrapping with children', async t => {
 })
 
 t('html: select case', async t => {
-  let w = html`
+  let w = html`<>
     <select>
       <option value="a"></option>
     </select>
-  `
+  </>`
   await tick(8)
   t.is(w.outerHTML, `<> <select> <option value="a"></option> </select> </>`)
 })
@@ -409,12 +411,13 @@ t('html: classes must recognize false props', t => {
   t.is(el.outerHTML, `<div class="foo"></div>`)
 })
 
-t.only('html: preserves hidden attribute', t => {
+t('html: preserves hidden attribute', t => {
   let el = document.createElement('div')
   el.innerHTML = '<div hidden></div>'
 
-  html`<${el.firstChild} class="foo"/>`
+  let elr = html`<${el.firstChild} class="foo"/>`
 
+  t.is(elr.outerHTML, '<div hidden="" class="foo"></div>')
   t.is(el.innerHTML, '<div hidden="" class="foo"></div>')
 })
 
@@ -447,10 +450,10 @@ t.todo('html: initial content should be morphed/hydrated', t => {
 })
 
 t('html: newline nodes should have space in between', t => {
-  let el = html`
+  let el = html`<>
     ${'a'}
     ${'b'}
-  `
+  </>`
   t.is(el.textContent, ' a b ')
 })
 
