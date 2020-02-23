@@ -4,7 +4,7 @@ import { changeable, observable, stream, getval } from './src/util.js'
 export default fx
 
 export function fx(callback, deps=[Promise.resolve().then()], sync=false) {
-  let current = deps.map(getval), prev = []
+  let current = deps.map(getval)
   let changePlanned = null, destroy
 
   const fxChannel = channel(callback)
@@ -14,8 +14,7 @@ export function fx(callback, deps=[Promise.resolve().then()], sync=false) {
     // extra tick to skip sync deps
     return changePlanned = Promise.resolve().then().then(() => {
       changePlanned = null
-      if (destroy && destroy.call) destroy(...prev)
-      prev = current
+      if (destroy && destroy.call) destroy()
       destroy = fxChannel(...current)
     })
   }
