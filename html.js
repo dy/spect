@@ -98,6 +98,9 @@ export default function htm (statics) {
             if (!currentEl) return currentEl = alloc(!current[0].root && current[0][1](), { tag, id: props().id })
             if (typeof tag !== 'string' || tag.toLowerCase() !== currentEl.tagName.toLowerCase()) {
               let newNode = create({ tag, id: props().id })
+              // ensure children safety
+              for (let i = 0; i < currentEl.childNodes.length; i++) appendChild(newNode, currentEl.childNodes[i])
+
               replaceWith(currentEl, currentEl = newNode)
             }
             return currentEl
@@ -133,6 +136,7 @@ export default function htm (statics) {
           // trim unused content
           let el = current[1]()
           while (el.childNodes[el[_ptr]]) el.childNodes[el[_ptr]].remove()
+
           current[0].push(current)
           current = current[0]
         }
@@ -145,7 +149,7 @@ export default function htm (statics) {
           // argumentation: external nodes may have logic/listeners attached on them, whereas internals are just static hydration case
           const children = evaluable(text, true).map(child => {
             let el
-            return calc(child => {
+            return calc((child, i) => {
               if (!el) {
                 el = alloc(current.root ? null : current[1](), child)
               } else {
@@ -179,7 +183,11 @@ function create(arg) {
   if (primitive(arg)) return document.createTextNode(arg)
 
   // can be node/fragment
-  if (arg.nodeType) return arg
+  if (arg.nodeType) {
+    // reset pointer - the element is considered re-allocatable
+    arg[_ptr] = 0
+    return arg
+  }
 
   // can be an array
   if (Array.isArray(arg)) {
@@ -202,6 +210,7 @@ function create(arg) {
 
 // locate/allocate node in parent node
 function alloc(parent, arg) {
+  // FIXME: avoid creating fake element here
   let el = create(arg)
   if (!parent) return el
 
@@ -211,10 +220,10 @@ function alloc(parent, arg) {
   // look up for good candidate
   let nextNode = parent.childNodes[parent[_ptr]], match
 
-  // locate groups (skip for now)
+  // FIXME: locate groups
   if (el[_group]) {
     // let nodes = []
-    // for (let i = 0; i < tag.length; i++ ) nodes.push(alloc(parent, tag[i]))
+    // for (let i = 0; i < el[_group].length; i++ ) nodes.push(alloc(parent, el[_group][i]))
     // return nodes
     appendChild(parent, el)
     return el

@@ -225,8 +225,12 @@ t('html: reinsert self content', async t => {
 
   t.is(el.outerHTML, `<div>a <b>c <d>e <f></f> g</d> h</b> i</div>`)
 
-  // await tick(28)
-  // t.is(el.outerHTML, `<div>a <b>c <d>e <f></f> g</d> h</b> i</div>`)
+  await tick(28)
+  t.is(el.outerHTML, `<div>a <b>c <d>e <f></f> g</d> h</b> i</div>`)
+})
+
+t.todo('html: changeable tag preserves/remounts children', t => {
+
 })
 
 t('html: wrapping', async t => {
@@ -282,7 +286,7 @@ t('html: promises', async t => {
   return p
 })
 
-t.skip('html: render to fragment', async t => {
+t('html: render to fragment', async t => {
   let frag = document.createDocumentFragment()
   let el = html`<${frag}>1</>`
   t.is(frag, el)
@@ -332,7 +336,7 @@ t('html: put data directly to props', async t => {
   t.is(el.x, x)
 })
 
-t.todo('html: rerender real dom', t => {
+t('html: rerender real dom', async t => {
   let real = document.createElement('div')
   let virt = html`<div/>`
   let el = document.createElement('div')
@@ -343,12 +347,13 @@ t.todo('html: rerender real dom', t => {
   t.is(el.firstElementChild, real)
 
   html`<${el}>${virt}</>`
+  await tick(8)
   t.is(el.outerHTML, '<div><div></div></div>')
-  t.is(el.firstElementChild, real)
+  t.is(el.firstElementChild, virt)
 
   html`<${el}>${virt}</>`
   t.is(el.outerHTML, '<div><div></div></div>')
-  t.is(el.firstElementChild, real)
+  t.is(el.firstElementChild, virt)
 
   html`<${el}>${real}</>`
   t.is(el.outerHTML, '<div><div></div></div>')
@@ -356,7 +361,7 @@ t.todo('html: rerender real dom', t => {
 
   html`<${el}>${virt}</>`
   t.is(el.outerHTML, '<div><div></div></div>')
-  t.is(el.firstElementChild, real)
+  t.is(el.firstElementChild, virt)
 })
 
 t('html: preserve rendering target classes/ids/attribs', t => {
