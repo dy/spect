@@ -13,6 +13,7 @@ export function fx(callback, deps=[Promise.resolve().then()], sync=false) {
 
     // extra tick to skip sync deps
     return changePlanned = Promise.resolve().then().then(() => {
+      sync = false
       changePlanned = null
       if (destroy && destroy.call) destroy()
       destroy = fxChannel(...current)
@@ -20,13 +21,12 @@ export function fx(callback, deps=[Promise.resolve().then()], sync=false) {
   }
 
   // instant run
-  if (sync) {
-    destroy = fxChannel(...current)
-  }
+  if (sync) destroy = fxChannel(...(sync = current))
 
   // observe changes
   deps.map(async (dep, i) => {
     const set = value => {
+      if (sync && value === sync[i]) return
       current[i] = value
       return notify()
     }

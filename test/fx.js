@@ -233,3 +233,26 @@ t.skip('fx: deps length change', async t => {
   await tick(8)
   t.is(log, [[1], [1,2]])
 })
+
+t('fx: sync must not call twice init const', async t => {
+  let log = []
+  fx((v) => {
+    log.push(v)
+  }, ['x'], true)
+
+  t.is(log, ['x'])
+  await tick(28)
+  t.is(log, ['x'])
+})
+
+t('fx: sync must not call twice init state', async t => {
+  let log = [],
+  s = state('x')
+  fx((v) => {
+    log.push(v)
+  }, [s], true)
+
+  t.is(log, ['x'])
+  await tick(28)
+  t.is(log, ['x'])
+})
