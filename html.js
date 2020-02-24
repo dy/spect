@@ -251,11 +251,19 @@ function alloc(parent, arg) {
   for (let i = parent[_ptr]; i < parent.childNodes.length; i++) {
     const node = parent.childNodes[i]
     if (
+      // same node
       node === el ||
       (node.isSameNode && node.isSameNode(el)) ||
+
       (node.tagName === el.tagName && (
+        // same-key node
         (node.id && (node.id === el.id)) ||
-        (node.nodeType === Node.TEXT_NODE && node.nodeValue === el.nodeValue && !node[_group])
+
+        // same-content text node
+        (node.nodeType === Node.TEXT_NODE && node.nodeValue === el.nodeValue && !node[_group]) ||
+
+        // just blank-ish tag matching by signature and no need morphing
+        (node.nodeType === Node.ELEMENT_NODE && !node.id && !el.id && node.tagName === el.tagName && !el.childNodes.length)
       ))
     ) {
       match = node

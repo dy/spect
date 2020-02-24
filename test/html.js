@@ -337,10 +337,10 @@ t('html: put data directly to props', async t => {
 })
 
 t('html: rerender real dom', async t => {
-  let real = document.createElement('div')
   let virt = html`<div/>`
   let el = document.createElement('div')
   el.innerHTML = '<div></div>'
+  let real = el.firstElementChild
 
   html`<${el}>${real}</>`
   t.is(el.outerHTML, '<div><div></div></div>')
@@ -349,11 +349,11 @@ t('html: rerender real dom', async t => {
   html`<${el}>${virt}</>`
   await tick(8)
   t.is(el.outerHTML, '<div><div></div></div>')
-  t.is(el.firstElementChild, virt)
+  t.is(el.firstElementChild, real)
 
   html`<${el}>${virt}</>`
   t.is(el.outerHTML, '<div><div></div></div>')
-  t.is(el.firstElementChild, virt)
+  t.is(el.firstElementChild, real)
 
   html`<${el}>${real}</>`
   t.is(el.outerHTML, '<div><div></div></div>')
@@ -361,7 +361,7 @@ t('html: rerender real dom', async t => {
 
   html`<${el}>${virt}</>`
   t.is(el.outerHTML, '<div><div></div></div>')
-  t.is(el.firstElementChild, virt)
+  t.is(el.firstElementChild, real)
 })
 
 t('html: preserve rendering target classes/ids/attribs', t => {
@@ -440,7 +440,7 @@ t('html: falsey prev attrs', t => {
   t.is(el.hidden, false)
 })
 
-t.todo('html: initial content should be morphed/hydrated', t => {
+t('html: initial content should be morphed/hydrated', t => {
   let el = document.createElement('div')
   el.innerHTML = '<foo></foo><bar></bar>'
   let foo = el.firstChild
@@ -453,12 +453,13 @@ t.todo('html: initial content should be morphed/hydrated', t => {
   t.equal(el.firstChild, foo)
   t.equal(el.lastChild, bar)
 
-  // let foo1 = html`<foo/>`
-  // html`<${el}>${foo1}<bar/></>`
+  let foo1 = html`<foo/>`
+  html`<${el}>${foo1}<bar/></>`
 
   // t.notEqual(el.firstChild, foo)
   // t.equal(el.firstChild, foo1)
-  // t.equal(el.lastChild, bar)
+  t.equal(el.firstChild, foo)
+  t.equal(el.lastChild, bar)
 })
 
 t('html: newline nodes should have space in between', t => {
