@@ -161,11 +161,16 @@ export default function htm (statics) {
       }
     })
 
-    let els = []
-    current.map(el => Array.isArray(el) ? el[1]() : el()).forEach(el => {
-      els.push(el)
-      if (el[_group]) el[_group].map(el => els.push(el))
-    })
+  let els = [], prevEl
+  current.map(el => Array.isArray(el) ? el[1]() : el()).forEach(el => {
+    if (prevEl && prevEl.nodeType === Node.TEXT_NODE && el.nodeType === Node.TEXT_NODE) return prevEl.nodeValue += el.nodeValue
+    els.push(el)
+    prevEl = el
+    if (el[_group]) el[_group].map(el => els.push(el))
+  })
+
+  // FIXME: seems to be an outside/symptomatic effect
+  if (!els.length) return document.createTextNode('')
 
   return els.length > 1 ? els : els[0]
 }

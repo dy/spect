@@ -626,7 +626,7 @@ t.todo('legacy html: fake gl layers', t => {
   </canvas>`
 })
 
-t('legacy html: insert nodes list', t => {
+t('html: insert nodes list', t => {
   let el = document.createElement('div')
   el.innerHTML = '|bar <baz></baz>|'
 
@@ -678,35 +678,6 @@ t.todo('html: functional insertions', async t => {
   t.is(log, [undefined, undefined], 'prev values')
 })
 
-t.todo('legacy html: child function as reducer', async t => {
-  let log = []
-  let target = document.createElement('div')
-
-  $(target).$(el => {
-    $(el).html`<a foo=bar>${a}</a>`
-    t.is(log, ['a'])
-  })
-
-  function a(el) {
-    log.push('a')
-    t.equal(el.tagName, 'A')
-    t.equal(el.foo, 'bar')
-    return 'xyz'
-  }
-
-  await Promise.resolve().then()
-
-  t.is(target.innerHTML, `<a>xyz</a>`)
-})
-
-t.todo('legacy html: $ inside of html', t => {
-  let $el = $(document.createElement('div'))
-
-  $el.html`<foo>${html`<bar>${html`<baz></baz>`}</bar>qux`}</foo>`
-
-  t.equal($el[0].innerHTML, '<foo><bar><baz></baz></bar>qux</foo>')
-})
-
 t.todo('legacy html: re-rendering inner nodes shouldn\'t trigger mount callback', async t => {
   let log = []
   let $a = html`<div.a><div.b use=${fn}/></>`
@@ -736,199 +707,23 @@ t.todo('legacy html: re-rendering inner nodes shouldn\'t trigger mount callback'
   t.is(log, [0, 1, 2, 0, 1, 2])
 })
 
-t.todo('legacy html: h plain node', t => {
-  let target = document.createElement('div')
-
-  $(target).html(
-    $('x', { foo: 'bar' },
-      'Text content', ' ',
-    )
-  )
-
-  t.equal(target.innerHTML, '<x>Text content </x>')
-})
-
-t.todo('legacy html: init aspects on fragments', t => {
-  let log = []
-  let $a = html`< is=${fn}/>`
-
-  function fn(frag) {
-    log.push(frag.nodeType)
-  }
-
-  t.is(log, [11])
-})
-
-t.todo('legacy html: text content', t => {
-  let $el = $(document.createElement('div'))
-
-  $el.html`foo`
-  t.equal($el[0].innerHTML, 'foo')
-
-  $el.html('bar')
-  t.equal($el[0].innerHTML, 'bar')
-})
-
-t.todo('legacy html: object insertions', t => {
-  let $a = html`<div>${ {x:1} }</div>`
-  t.is($a[0].outerHTML, '<div>[object Object]</div>')
-})
-
-t.todo('legacy html: reducers', t => {
-  let $el = html`<div><bar/></>`
-
-  // append/prepend
-  $el.html(el => {
-    el.append(...html`<foo/>`, ...el.childNodes, document.createElement('baz'))
-  })
-
-  t.is($el[0].outerHTML, '<div><foo></foo><bar></bar><baz></baz></div>')
-
-  // wrap
-  // $el.html(el => html`<div.foo>${ el }</div>`)
-  // t.is($el[0].outerHTML, '<div class="foo"><div><foo></foo><bar></bar><baz></baz></div></div>')
-
-  // unwrap
-  // $el.html(el => el.children[0].children)
-  // t.is($el[0].outerHTML, '<div><foo></foo><bar></bar><baz></baz></div>')
-})
-
-t.todo('legacy html: deps', t => {
-  let $el = html`<div.foo/>`
-})
-
-t.todo('legacy html: other element directly', t => {
-  let $el = html`<div/>`
-  let $a = html`<a/>`
-  $el.html($a[0])
-
-  t.is($el[0].outerHTML, `<div><a></a></div>`)
-})
-
-t.todo('legacy html: direct array', t => {
-  $(document.createElement('div'), el => {
-    $(el, el => {
-      let [foo, bar, baz, qux] = html(['foo', ['bar', 'baz'], h('qux')])
-
-      t.equal(el.innerHTML, 'foobarbaz<qux></qux>')
-      t.ok(foo instanceof Node)
-      t.ok(bar instanceof Node)
-      t.ok(baz instanceof Node)
-      t.ok(qux instanceof Element)
-    })
-  })
-})
-
-t.todo('legacy html: nested fragments', t => {
-  $(document.createElement('div'), el => {
-    html`<><a>a</a><b><>b<c/></></b></>`
-    t.equal(el.innerHTML, '<a>a</a><b>b<c></c></b>')
-  })
-})
-
-t.todo('legacy html: two wrapping aspects', async t => {
-  function b(el) {
-    html`<div#b>${el.childNodes}</div>`
-  }
-
-  let el = document.createElement('div')
-  el.innerHTML = 'content'
-  $(el, a)
-  $(el, b)
-
-  function a(el) {
-    html`<div#a>${el.childNodes}</div>`
-  }
-
-  t.equal(el.innerHTML, `<div id="b"><div id="a">content</div></div>`)
-})
-
-t.skip('html: <host> tag')
-
-t.todo('legacy html: direct components case', async t => {
-  let $c = html`<${C} x y=1 z=${2} />`
-
-  function C($el) {
-    t.is({ x: $el.x, y: $el.y, z: $el.z }, { x: true, y: '1', z: 2 })
-
-    $el.html`<div></div>`
-  }
-
-  await Promise.resolve().then()
-  t.equal($c[0].innerHTML, '<div></div>')
-})
-
-t.skip('html: connecting aspect as array spread', t => {
-  let log = []
-  let target = document.createElement('div')
-
-  $(target, el => {
-    html`<a foo=bar ...${[a]}/>`
-    t.deepEqual(log, ['a'])
-  })
-
-  function a(el) {
-    log.push('a')
-    el.innerHTML = el.foo
-  }
-
-  t.equal(target.firstChild.tagName, 'A')
-  t.equal(target.textContent, 'bar')
-  t.deepEqual(log, ['a'])
+t.todo('html: nested fragments', t => {
+  let el = html`<><a>a</a><b><>b<c/></></b></>`
+  t.equal(el.outerHTML, '<><a>a</a><b>b<c></c></b></>')
 })
 
 t.todo('legacy html: class components')
 
-t.skip('html: duplicate id warning', t => {
-  let el = document.createElement('div')
-  el.innerHTML = '<div id="a"></div>'
-
-  t.throws(() => {
-    $(el, el => html`<div id="a"></div><...>`)
-  })
-})
-
-t.skip('html: null-like insertions', t => {
+t('html: null-like insertions', t => {
   let a = html`<a>foo ${ null } ${ undefined } ${ false } ${0}</a>`
 
-  t.is(a.innerHTML, 'foo    0')
+  t.is(a.innerHTML, 'foo   false 0')
 
   let b = html`${ null } ${ undefined } ${ false } ${0}`
-  t.is(b.textContent, '   0')
+  t.is(b.textContent, '  false 0')
   let c = html``
   t.is(c.textContent, '')
 })
-
-t.todo('legacy html: parent props must rerender nested components', async t => {
-  let $x = html`<div x=0/>`
-
-  $x.$(x => {
-    $x.html`<div is=${y} value=${ $x.prop('x') }/>`
-  })
-  function y ({ value }) {
-    $(this).html`value: ${ value }`
-  }
-
-  await $x
-
-  t.is($x[0].firstChild.innerHTML, `value: 0`)
-
-  $x.prop('x', 1)
-
-  await $x
-
-  t.is($x[0].firstChild.innerHTML, `value: 1`)
-})
-
-t.todo('legacy html: html effect', async t => {
-  let $el = html`<a html=${'<span>foo</span>'}/>`
-
-  await $el
-
-  t.is($el[0].innerHTML, `<span>foo</span>`)
-})
-
-t.todo('legacy html: it microtasks dom diffing, not applies instantly')
 
 t.todo('legacy html: removing aspected element should trigger destructor', async t => {
   let log = []
