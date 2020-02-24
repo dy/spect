@@ -193,10 +193,10 @@ function create(arg) {
     return arg
   }
 
-  // can be an array
-  if (Array.isArray(arg)) {
+  // can be an array / array-like
+  if (Array.isArray(arg) || arg[Symbol.iterator]) {
     let marker = document.createTextNode('')
-    marker[_group] = arg.map(arg => create(arg))
+    marker[_group] = [...arg].map(arg => create(arg))
     return marker
   }
 
@@ -232,18 +232,18 @@ function alloc(parent, arg) {
   // look up for good candidate
   let nextNode = parent.childNodes[parent[_ptr]], match
 
+  // if no available nodes to locate - append new nodes
+  if (!nextNode) {
+    appendChild(parent, el)
+    return el
+  }
+
   // FIXME: locate groups
   if (el[_group]) {
     // let nodes = []
     // for (let i = 0; i < el[_group].length; i++ ) nodes.push(alloc(parent, el[_group][i]))
     // return nodes
-    appendChild(parent, el)
-    return el
-  }
-
-  // if no available nodes to locate - append new nodes
-  if (!nextNode) {
-    appendChild(parent, el)
+    insertBefore(parent, el, nextNode)
     return el
   }
 
@@ -290,7 +290,11 @@ function appendChild(parent, el) {
 }
 function insertBefore(parent, el, before) {
   parent.insertBefore(el, before)
-  if (el[_group]) el[_group].map(el => parent.insertBefore(el, before))
+  if (el[_group]) {
+    el[_group].map(gel => parent.insertBefore(gel, el))
+    // swap group pointer to the beginning
+    parent.insertBefore(el, el[_group][el[_group].length - 1])
+  }
   parent[_ptr] += 1 + (el[_group] ? el[_group].length : 0)
 }
 function replaceWith(from, to) {

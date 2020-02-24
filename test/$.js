@@ -431,3 +431,5 @@ t('$: init on list of elements', async t => {
   t.deepEqual(log, ['1', '2', 'un1', 'un2'])
 })
 t('$: init/destroy in body of web-component')
+
+t('$: await $(target, fn) should not block')

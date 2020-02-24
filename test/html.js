@@ -470,14 +470,14 @@ t('html: newline nodes should have space in between', t => {
   t.is(el.textContent, ' a b ')
 })
 
-t.todo('legacy html: direct component rerendering should keep children', async t => {
+t('legacy html: direct component rerendering should keep children', async t => {
   let el = html`<div><${fn}/></div>`
   let abc = el.firstChild
 
   t.is(el.outerHTML, '<div><abc></abc></div>')
 
-  html`<${el}><${fn}.foo/></>`
-  t.is(el.outerHTML, '<div><abc></abc></div>')
+  html`<${el}><${fn} class="foo"/></>`
+  t.is(el.outerHTML, '<div><abc class="foo"></abc></div>')
   let abc1 = el.firstChild
   t.equal(abc1, abc)
 
@@ -493,7 +493,7 @@ t.todo('legacy html: extended component rerendering should not destroy instance'
   function fn(el) { }
 })
 
-t.skip('html: functional components create element', t => {
+t('html: functional components create element', t => {
   let log = []
   let el = html`<${el => {
     let e = document.createElement('a')
@@ -518,25 +518,17 @@ t.todo('html: is=string works fine', t => {
   let a = html`<a is=superA />`
 })
 
-t.skip('html: props passed to use are actual object', t => {
-  let a = html`<foo use=${bar} x=${1}/>`
-
-  function bar(el, props) {
-    t.is(props, {x: 1, use: bar})
-  }
-})
-
-t.skip('html: assigned id must be accessible', async t => {
+t('html: assigned id must be accessible', async t => {
   let el = html`<x id=x1 />`
   t.is(el.id, 'x1')
 
-  $(el, (el, props) => {
+  $(el, (el) => {
     t.is(el.id, 'x1')
     // t.is(props.id, 'x1')
   })
 })
 
-t.skip('html: must update text content', async t => {
+t('html: must update text content', async t => {
   const foo = html`foo`
   const bar = html`bar`
 
@@ -560,7 +552,7 @@ t.skip('html: must update text content', async t => {
   t.is(bar.textContent, 'bar')
 })
 
-t.skip('html: must not morph inserted nodes', async t => {
+t('html: must not morph inserted nodes', async t => {
   const foo = html`<p>foo</p>`
   const bar = html`<p>bar</p>`
 
@@ -586,20 +578,10 @@ t.skip('html: must not morph inserted nodes', async t => {
   t.is(bar.outerHTML, '<p>bar</p>')
 })
 
-t.skip('html: update own children', t => {
+t('html: update own children', t => {
   let el = html`<div>123</div>`
   html`<${el}>${ el.childNodes }</>`
   t.is(el.outerHTML, '<div>123</div>')
-})
-
-t.skip('html: render to props', t => {
-  let el = html`<${X} x=1/>`
-
-  function X (props) {
-    html`<${props}>${props.x}</>`
-  }
-
-  t.is(el.outerHTML, '<x x="1">1</x>')
 })
 
 t.skip('html: must not replace self', t => {
@@ -611,28 +593,26 @@ t.skip('html: must not replace self', t => {
   t.is(el.outerHTML, '<x></x>')
 })
 
-t.skip('html: externally assigned props must be available', async t => {
+t('html: externally assigned props must be available', async t => {
   let el = html`<x x=${1}/>`
   document.body.appendChild(el)
-  await Promise.resolve().then()
   $('x', (el) => {
     t.is(el.x, 1)
   })
 })
 
-t.skip('html: streams must update values dynamically', async t => {
+t('html: streams must update values dynamically', async t => {
   let obj = { x: 1 }
   let el = html`<div>${ prop(obj, 'x') }</div>`
 
-  await Promise.resolve().then()
   t.is(el.outerHTML, '<div>1</div>')
 
   obj.x = 2
-  await Promise.resolve().then().then()
+  await tick(8)
   t.is(el.outerHTML, '<div>2</div>')
 })
 
-t.skip('html: direct value', async t => {
+t('html: direct value', async t => {
   let x = html`${1}`
   t.is(x.nodeType, 3)
 })
@@ -646,20 +626,19 @@ t.todo('legacy html: fake gl layers', t => {
   </canvas>`
 })
 
-t.todo('legacy html: insert nodes list', t => {
+t('legacy html: insert nodes list', t => {
   let el = document.createElement('div')
   el.innerHTML = '|bar <baz></baz>|'
 
-  let $el = $(el)
   let orig = [...el.childNodes]
 
-  $el.html`<div.prepended /> foo ${ el.childNodes } qux <div.appended />`
+  html`<${el}><div class="prepended" /> foo ${ el.childNodes } qux <div class="appended" /></>`
   t.equal(el.innerHTML, `<div class="prepended"></div> foo |bar <baz></baz>| qux <div class="appended"></div>`)
 
-  $el.html`foo ${ orig } qux`
+  html`<${el}>foo ${ orig } qux</>`
   t.equal(el.innerHTML, `foo |bar <baz></baz>| qux`)
 
-  $el.html`<div.prepended /> foo ${ orig } qux <div.appended />`
+  html`<${el}><div class="prepended" /> foo ${ orig } qux <div class="appended" /></>`
   t.equal(el.innerHTML, `<div class="prepended"></div> foo |bar <baz></baz>| qux <div class="appended"></div>`)
 })
 
