@@ -4,7 +4,7 @@ import { tick, frame, idle, time } from 'wait-please'
 import { augmentor, useState, useEffect, useMemo } from 'augmentor'
 import Observable from 'zen-observable/esm'
 import observable from './observable.js'
-import morph from '../src/morph.js'
+import morph from './morph.js'
 
 Object.defineProperty(DocumentFragment.prototype, 'outerHTML', {
   get() {
@@ -95,6 +95,8 @@ t('html: mixed static content', async t => {
   const a = html`<a> ${foo} ${bar} ${baz} </a>`
 
   t.is(a.outerHTML, `<a> <foo></foo> bar <baz></baz> </a>`)
+  await tick(28)
+  t.is(a.outerHTML, `<a> <foo></foo> bar <baz></baz> </a>`)
 })
 
 t('html: dynamic list', async t => {
@@ -147,6 +149,13 @@ t('html: mount to another element', async t => {
 
 t('html: render new children to mounted element', async t => {
   let a = document.createElement('a')
+  let el = html`<${a}>foo <bar><baz class="qux"/></></>`
+  t.is(el.outerHTML, `<a>foo <bar><baz class="qux"></baz></bar></a>`)
+})
+
+t('html: simple hydrate', async t => {
+  let a = document.createElement('a')
+  a.innerHTML = 'foo '
   let el = html`<${a}>foo <bar><baz class="qux"/></></>`
   t.is(el.outerHTML, `<a>foo <bar><baz class="qux"></baz></bar></a>`)
 })
