@@ -234,7 +234,7 @@ function alloc(parent, arg) {
       (node.isSameNode && node.isSameNode(el)) ||
       (node.tagName === el.tagName && (
         (node.id && (node.id === el.id)) ||
-        (node.nodeType === Node.TEXT_NODE && node.nodeValue === el.nodeValue)
+        (node.nodeType === Node.TEXT_NODE && node.nodeValue === el.nodeValue && !node[_group])
       ))
     ) {
       match = node
@@ -247,13 +247,6 @@ function alloc(parent, arg) {
     if (match !== nextNode) insertBefore(parent, match, nextNode)
     else parent[_ptr]++
     return match
-  }
-
-  // take noname next node (that's fine)
-  if (!nextNode.id && !el.id) {
-    parent[_ptr]++
-    // FIXME: should clear html?
-    return nextNode
   }
 
   insertBefore(parent, el, nextNode)
