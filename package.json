@@ -71,6 +71,7 @@
   },
   "files": [
     "readme.md",
+    "src",
     "test",
     "dist",
     "*.js"
