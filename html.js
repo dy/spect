@@ -146,6 +146,7 @@ export default function htm (statics) {
           // argumentation: external nodes may have logic/listeners attached on them, whereas internals are just static hydration case
           const children = evaluable(text, true).map(child => {
             let el
+            // FIXME: there can be an optimization for simple constants to avoid bunch of calcs
             return calc((child, i) => {
               if (!el) {
                 el = alloc(current.root ? null : current[1](), child)
@@ -160,7 +161,12 @@ export default function htm (statics) {
       }
     })
 
-  let els = current.map(el => Array.isArray(el) ? el[1]() : el())
+    let els = []
+    current.map(el => Array.isArray(el) ? el[1]() : el()).forEach(el => {
+      els.push(el)
+      if (el[_group]) el[_group].map(el => els.push(el))
+    })
+
   return els.length > 1 ? els : els[0]
 }
 
@@ -207,7 +213,7 @@ function create(arg) {
   if (typeof arg === 'object') {
     let { tag, props } = arg, el
     if (typeof tag === 'function') {
-      el = tag(props) || document.createTextNode('')
+      el = create(tag(props))
     }
     else if (typeof tag !== 'string') el = create(tag)
     else {

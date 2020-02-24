@@ -656,31 +656,14 @@ t.todo('legacy html: handle collections', t => {
   document.body.removeChild(b)
 })
 
-t.todo('legacy html: insert single Node', t => {
-  let $el = $(document.createElement('div'))
-  let a = document.createElement('a')
-  $el.html`<x>${ a }</x>`
-  t.equal($el[0].innerHTML, `<x><a></a></x>`)
-})
-
-t.todo('legacy html: insert node directly', t => {
-  let $el = $(document.createElement('div'))
-  let a = document.createElement('a')
-  let frag = document.createDocumentFragment()
-  frag.appendChild(a)
-  $el.html(frag)
-  t.equal($el[0].innerHTML, `<a></a>`)
-})
-
-t.todo('legacy html: insert self/array of nodes', t => {
-  let $el = $(document.createElement('div'))
+t('legacy html: insert self/array of nodes', t => {
+  let el = document.createElement('div')
   let a1 = document.createElement('a')
   let a2 = document.createElement('a')
   a1.id = 'x'
   a2.id = 'y'
-  let $a = $([a1, a2])
-  $el.html($a)
-  t.equal($el[0].innerHTML, `<a id="x"></a><a id="y"></a>`)
+  html`<${el}>${[ a1, a2 ]}</>`
+  t.equal(el.innerHTML, `<a id="x"></a><a id="y"></a>`)
 })
 
 t.todo('html: functional insertions', async t => {
@@ -693,7 +676,6 @@ t.todo('html: functional insertions', async t => {
   t.is(i, 1, 'prop fn is called once')
   t.is(j, 1, 'content fn is called once')
   t.is(log, [undefined, undefined], 'prev values')
-
 })
 
 t.todo('legacy html: child function as reducer', async t => {
@@ -973,5 +955,7 @@ t.todo('legacy html: 50+ elements shouldnt invoke recursion', t => {
     return html`x: ${x}`
   }
 
-  t.is(el.length, 100)
+  // FIXME: first extra text item is group marker. Instead, first group element can be group marker.
+  t.is(el[0].textContent === 'x: 1')
+  t.is(el.length, 101)
 })
