@@ -1,6 +1,5 @@
 import createRef from './src/ref.js'
 
-// not needed since array internally accesses index
 // const mutators = {
 //   push: true,
 //   copyWithin: true,
@@ -20,6 +19,11 @@ import createRef from './src/ref.js'
 export default function list(arr = []) {
   const ref = createRef(arr)
 
+  // for (let m in mutators) {
+  //   let orig = arr[m].bind(arr)
+  //   arr[m] = (...args) => (orig(...args), ref(arr))
+  // }
+
   const proxy = new Proxy(arr, {
     get(arr, prop) {
       if (prop === Symbol.toPrimitive) return ref[Symbol.toPrimitive]
@@ -35,10 +39,6 @@ export default function list(arr = []) {
       if (Object.is(arr[prop], value)) return true
       arr[prop] = value
       ref(arr)
-
-      // subscribe to updates?
-      // if (changeable(value) && !subs.has(value)) subs.add(fx(value => ref(arr), [value]))
-
       return true
     },
     deleteProperty(arr, prop) {

@@ -1,5 +1,5 @@
 import channel from './src/channel.js'
-import { changeable, observable, stream, getval } from './src/util.js'
+import { changeable, observable, stream, getval, primitive } from './src/util.js'
 
 export default fx
 
@@ -13,7 +13,6 @@ export function fx(callback, deps=[Promise.resolve().then()], sync=false) {
 
     // extra tick to skip sync deps
     return changePlanned = Promise.resolve().then().then(() => {
-      sync = false
       changePlanned = null
       if (destroy && destroy.call) destroy()
       destroy = fxChannel(...current)
@@ -21,7 +20,10 @@ export function fx(callback, deps=[Promise.resolve().then()], sync=false) {
   }
 
   // instant run
-  if (sync) destroy = fxChannel(...(sync = current))
+  if (sync) {
+    destroy = fxChannel(...(sync = current))
+    Promise.resolve().then().then().then(() => sync = false)
+  }
 
   // observe changes
   deps.map(async (dep, i) => {

@@ -71,7 +71,7 @@ t('list: must not expose internal props', async t => {
   t.is(log, [])
 })
 
-t.skip('list: passes through internal item updates', async t => {
+t.skip('list: bubbles up internal item updates', async t => {
   let l = list(), s = state(0)
   l.push(s)
 
@@ -86,4 +86,18 @@ t.skip('list: passes through internal item updates', async t => {
   s(1)
   await tick(8)
   t.is(log, [[s], [s]])
+})
+
+t('list: pushing items should result in correct effect', async t => {
+  let l = list()
+  let log = []
+  fx(item => log.push(item.slice()), [l], true)
+
+  t.is(log, [[]])
+  await tick(8)
+  t.is(log, [[]])
+
+  l.push(1)
+  await tick(8)
+  t.is(log, [[], [1]])
 })
