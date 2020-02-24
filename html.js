@@ -95,9 +95,9 @@ export default function htm (statics) {
           current[1] = calc(tag => {
             // fixme: how much sense does it make to alloc here?
             // only hydrating existing target
-            if (!currentEl) return currentEl = alloc(!current[0].root && current[0][1](), { tag, id: props().id })
+            if (!currentEl) return currentEl = alloc(!current[0].root && current[0][1](), { tag, props: props() })
             if (typeof tag !== 'string' || tag.toLowerCase() !== currentEl.tagName.toLowerCase()) {
-              let newNode = create({ tag, id: props().id })
+              let newNode = create({ tag, props: props() })
               // ensure children safety
               for (let i = 0; i < currentEl.childNodes.length; i++) appendChild(newNode, currentEl.childNodes[i])
 
@@ -109,23 +109,20 @@ export default function htm (statics) {
           // reset/assign props when element or props list changes
           // FIXME: find out should we reset element attribs when element changes
           fx((el, props) => {
-            // save orig children/props
             let origProps = {}, origAttrs = {}
             for (let p in props) {
-              origAttrs[p] = el.getAttribute(p)
               origProps[p] = el[p]
-            }
-
-            // apply new props/children
-            for (let p in props) {
-              attr(el, p, props[p])
               el[p] = props[p]
+              if (el.getAttribute) {
+                origAttrs[p] = attr(el, p)
+                attr(el, p, props[p])
+              }
             }
 
             // revert level to the initial state whenever it changes
             return () => {
               for (let p in origProps) {
-                attr(el, p, origAttrs[p])
+                if (el.getAttribute) attr(el, p, origAttrs[p])
                 el[p] = origProps[p]
               }
             }
@@ -168,6 +165,13 @@ export default function htm (statics) {
 }
 
 function attr(el, p, value) {
+  if (arguments.length === 2) {
+    if (!el.hasAttribute(p)) return null
+    value = el.getAttribute(p)
+    if (value === '') return true
+    return value
+  }
+
   if (value === true) el.setAttribute(p, '')
   else if (value === false || value == null) el.removeAttribute(p)
   else el.setAttribute(p, value)
@@ -199,10 +203,18 @@ function create(arg) {
   // function
   if (typeof arg === 'function') return create(arg())
 
-  // can be { tag, id } object for tag creation
-  if (arg.tag !== undefined) {
-    if (typeof arg.tag !== 'string') return create(arg.tag)
-    return arg.tag ? document.createElement(arg.tag) : document.createDocumentFragment()
+  // can be { tag, props } object for tag creation
+  if (typeof arg === 'object') {
+    let { tag, props } = arg, el
+    if (typeof tag === 'function') {
+      el = tag(props) || document.createTextNode('')
+    }
+    else if (typeof tag !== 'string') el = create(tag)
+    else {
+      el = tag ? document.createElement(tag) : document.createDocumentFragment()
+      if (props.id) el.id = props.id
+    }
+    return el
   }
 
   return arg

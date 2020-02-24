@@ -407,17 +407,15 @@ t('html: attributes', t => {
   t.is(div.firstChild.foo, 'bar')
 })
 
-t.skip('legacy html: component static props', async t => {
+t('legacy html: component static props', async t => {
   let log = []
-  let el = html`<div><${C}#x.y.z/></>`
+  let el = html`<div><${C} id="x" class="y z"/></>`
 
-  function C (e) {
-    let [element] = e
-    log.push(element.tagName, element.id, element.className)
+  function C (props) {
+    log.push(props.id, props.class)
   }
 
-  await Promise.resolve()
-  t.is(log, ['C-0', 'x', 'y z'])
+  t.is(log, ['x', 'y z'])
 })
 
 t('html: classes must recognize false props', t => {
