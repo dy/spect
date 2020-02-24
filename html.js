@@ -1,10 +1,8 @@
 import calc from './calc.js'
 import fx from './fx.js'
-import { primitive, getval } from './src/util.js'
+import { primitive } from './src/util.js'
 
 const FIELD = '\ue000', QUOTES = '\ue001'
-
-const _group = Symbol('group')
 
 // xhtm base supercharged with observables
 export default function htm (statics) {
@@ -80,7 +78,7 @@ export default function htm (statics) {
 
         // create tag instantly, children will come up
         if (tag) {
-          current[2] = calc((...keyValue) => {
+          const props = current[2] = calc((...keyValue) => {
             const props = {}
             for (let i = 0; i < keyValue.length; i += 2) {
               let key = keyValue[i], value = keyValue[i+1]
@@ -97,13 +95,13 @@ export default function htm (statics) {
           current[1] = calc(tag => {
             // fixme: how much sense does it make to alloc here?
             // only hydrating existing target
-            // if (!currentEl) currentEl = alloc(parent, { tag, id: props.id })
-            if (!currentEl) return currentEl = create(tag)
-            let newNode = create(tag)
-            currentEl.replaceWith(newNode)
-            return currentEl = newNode
+            if (!currentEl) return currentEl = alloc(!current[0].root && current[0][1](), { tag, id: props().id })
+            if (typeof tag !== 'string' || tag.toLowerCase() !== currentEl.tagName.toLowerCase()) {
+              let newNode = create({ tag, id: props().id })
+              replaceWith(currentEl, currentEl = newNode)
+            }
+            return currentEl
           }, [current[1]])
-          if (!current[0].root) current[0][1]().appendChild(currentEl)
 
           // reset/assign props when element or props list changes
           // FIXME: find out should we reset element attribs when element changes
@@ -133,8 +131,8 @@ export default function htm (statics) {
 
         if (close) {
           // trim unused content
-          // let el = current.element()
-          // while (el.firstChild) el.firstChild.remove()
+          let el = current[1]()
+          while (el.childNodes[el[_ptr]]) el.childNodes[el[_ptr]].remove()
           current[0].push(current)
           current = current[0]
         }
@@ -149,10 +147,9 @@ export default function htm (statics) {
             let el
             return calc(child => {
               if (!el) {
-                el = createChild(child)
-                if (!current.root) appendChild(current[1](), el)
+                el = alloc(current.root ? null : current[1](), child)
               } else {
-                replaceWith(el, el = createChild(child))
+                replaceWith(el, el = create(child))
               }
               return el
             }, [child])
@@ -172,47 +169,72 @@ function attr(el, p, value) {
   else el.setAttribute(p, value)
 }
 
-function create(tag) {
-    if (!tag) return document.createDocumentFragment()
-    if (tag.nodeType) return tag
-    if (typeof tag === 'string') return document.createElement(tag)
-    if (typeof tag === 'function') throw 'todo web-component'
-    if (Array.isArray(tag)) throw 'todo list of elements'
-}
+const _group = Symbol('group')
+const _ptr = Symbol('ptr')
 
-function alloc(parent, tag, props) {
-  if (!parent) {
-    return create(tag, props)
+function create(arg) {
+  if (arg == null) return document.createTextNode('')
+
+  // can be text/primitive
+  if (primitive(arg)) return document.createTextNode(arg)
+
+  // can be node/fragment
+  if (arg.nodeType) return arg
+
+  // can be an array
+  if (Array.isArray(arg)) {
+    let marker = document.createTextNode('')
+    marker[_group] = arg.map(arg => create(arg))
+    return marker
   }
 
+  // function
+  if (typeof arg === 'function') return create(arg())
+
+  // can be { tag, id } object for tag creation
+  if (arg.tag !== undefined) {
+    if (typeof arg.tag !== 'string') return create(arg.tag)
+    return arg.tag ? document.createElement(arg.tag) : document.createDocumentFragment()
+  }
+
+  return arg
+}
+
+// locate/allocate node in parent node
+function alloc(parent, arg) {
+  let el = create(arg)
+  if (!parent) return el
+
+  // track passed children
+  if (!parent[_ptr]) parent[_ptr] = 0
+
   // look up for good candidate
-  let parentEl = parent.element(), ptr = parent.length - 3
-  let i, nextNode = parentEl.childNodes[ptr], match
+  let nextNode = parent.childNodes[parent[_ptr]], match
 
-  // locate all elements of the array, return first tag with [_group] stash
-  // if (Array.isArray(tag)) {
-  //   let nodes = []
-  //   for (let i = 0; i < tag.length; i++ ) nodes.push(alloc(parent, tag[i]))
-  //   return nodes
-  // }
-
-  if (primitive(tag)) tag = document.createTextNode(tag)
+  // locate groups (skip for now)
+  if (el[_group]) {
+    // let nodes = []
+    // for (let i = 0; i < tag.length; i++ ) nodes.push(alloc(parent, tag[i]))
+    // return nodes
+    appendChild(parent, el)
+    return el
+  }
 
   // if no available nodes to locate - append new nodes
   if (!nextNode) {
-    parent[_ptr]++
-    return parent.appendChild(tag)
+    appendChild(parent, el)
+    return el
   }
 
   // find matching node somewhere in the tree
-  for (i = parent[_ptr]; i < parent.childNodes.length; i++) {
+  for (let i = parent[_ptr]; i < parent.childNodes.length; i++) {
     const node = parent.childNodes[i]
     if (
-      node === tag ||
-      (node.isSameNode && node.isSameNode(tag)) ||
-      (node.tagName === tag.tagName && (
-        (node.id && (node.id === tag.id)) ||
-        (node.nodeType === Node.TEXT_NODE && node.nodeValue === tag.nodeValue)
+      node === el ||
+      (node.isSameNode && node.isSameNode(el)) ||
+      (node.tagName === el.tagName && (
+        (node.id && (node.id === el.id)) ||
+        (node.nodeType === Node.TEXT_NODE && node.nodeValue === el.nodeValue)
       ))
     ) {
       match = node
@@ -220,43 +242,34 @@ function alloc(parent, tag, props) {
     }
   }
 
- // if there is match in the tree - insert it at the curr pointer
+  // if there is match in the tree - insert it at the curr pointer
   if (match) {
-    if (match !== nextNode) parent.insertBefore(match, nextNode)
-    parent[_ptr]++
+    if (match !== nextNode) insertBefore(parent, match, nextNode)
+    else parent[_ptr]++
     return match
   }
 
-  if (!nextNode.id && !tag.id) {
+  // take noname next node (that's fine)
+  if (!nextNode.id && !el.id) {
     parent[_ptr]++
-    return morph(nextNode, tag)
+    // FIXME: should clear html?
+    return nextNode
   }
 
-  parent.insertBefore(tag, nextNode)
-  parent[_ptr]++
+  insertBefore(parent, el, nextNode)
+  return el
 }
 
-function createChild(child) {
-  if (child == null) return document.createTextNode('')
-  // can be text/primitive
-  if (primitive(child)) return document.createTextNode(child)
-  // can be node/fragment
-  if (child.nodeType) return child
-  // can be an array
-  if (Array.isArray(child)) {
-    let marker = document.createTextNode('')
-    marker[_group] = child.map(child => createChild(child))
-    return marker
-  }
-  // function
-  if (typeof child === 'function') return createChild(child())
 
-  return child
+function appendChild(parent, el) {
+  parent.appendChild(el)
+  if (el[_group]) el[_group].map(el => parent.appendChild(el))
+  parent[_ptr] += 1 + (el[_group] ? el[_group].length : 0)
 }
-
-function appendChild(root, el) {
-  root.appendChild(el)
-  if (el[_group]) el[_group].map(el => root.appendChild(el))
+function insertBefore(parent, el, before) {
+  parent.insertBefore(el, before)
+  if (el[_group]) el[_group].map(el => parent.insertBefore(el, before))
+  parent[_ptr] += 1 + (el[_group] ? el[_group].length : 0)
 }
 function replaceWith(from, to) {
   if (from[_group]) from[_group].map(el => el.remove())
