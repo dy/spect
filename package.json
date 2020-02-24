@@ -4,13 +4,15 @@
   "description": "Micro aspects with effects and observables",
   "main": "index.js",
   "module": "index.js",
+  "unpkg": "dist/spect.min.js",
   "type": "module",
   "scripts": {
     "start": "es-dev-server --app-index test/index.html --node-resolve --dedupe",
     "test": "node -r esm -r ./test/register.js test/index.js",
     "bundle": "rollup -c rollup.config.js",
-    "minify": "terser -c -m --module -- dist/spect.js > dist/spect.min.js",
-    "build": "npm run bundle && npm run minify"
+    "minify": "terser dist/spect.js -c -m --module --source-map -o dist/spect.min.js",
+    "build": "npm run bundle && npm run minify",
+    "prepublishOnly": "npm run build"
   },
   "repository": {
     "type": "git",
