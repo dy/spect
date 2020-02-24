@@ -39,7 +39,7 @@
 -->
 
 
-_Spect_ is state-of-the-art DOM framework, putting together _aspects_, _observables_ and _effects_ in symbiotic way. It is inspired by [_react hooks_](https://reactjs.org/docs/hooks-intro.html), [_observables_](https://www.npmjs.com/package/observable) and [_aspect-oriented programming_](https://en.wikipedia.org/wiki/Aspect-oriented_programming), with simplicity of [jquery](https://ghub.io/jquery).
+_Spect_ is state-of-the-art DOM framework, putting together symbiotically _aspects_, _observables_ and _effects_. It is inspired by [_react hooks_](https://reactjs.org/docs/hooks-intro.html), [_observ-_](https://www.npmjs.com/package/observable) and [_aspect-oriented programming_](https://en.wikipedia.org/wiki/Aspect-oriented_programming), with simplicity of [_jquery_](https://ghub.io/jquery).
 
 ## Principles
 
