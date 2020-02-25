@@ -1,5 +1,5 @@
 import SelectorSet from 'selector-set'
-import channel from './src/channel.js'
+import bus from './src/bus.js'
 import tuple from 'immutable-tuple'
 
 const _callbacks = Symbol.for('__spect.callbacks')
@@ -45,11 +45,12 @@ export default function spect(context, target, fn) {
 
   // spect(target, fn)
   else {
+    let channel = bus(null, null, e => destroyCallback(target, fn))
     initCallback(target, fn)
-    return channel(() => {}, e => destroyCallback(target, fn) )
+    return channel
   }
 
-  return channel(() => {}, e => offs.map($c => $c.cancel(e)))
+  return bus(null, null, e => offs.map($c => $c.cancel(e)))
 }
 
 // selector-based aspect
@@ -108,20 +109,22 @@ function $(scope, selector, fn) {
     })
   }
 
-  const $channel = channel(fn, () => {
+  const aspect = el => {let destroy = fn(el); channel(el); return destroy}
+  const channel = bus(null, null, () => {
     set.queryAll(scope).forEach(rule => rule.elements.forEach(el => destroyCallback(el, rule.data)))
-    set.remove(selector, $channel)
+    set.remove(selector, aspect)
     if (!set.size) {
       scope[_observer].disconnect()
       delete scope[_observer]
     }
   })
 
-  set.add(selector, $channel)
+  set.add(selector, aspect)
+  // set.add(selector, fn)
   // set.matches(scope).forEach(rule => initCallback(scope, rule.data))
   set.queryAll(scope).forEach(rule => rule.elements.forEach(el => initCallback(el, rule.data)))
 
-  return $channel
+  return channel
 }
 
 function initCallback(el, fn) {
@@ -132,7 +135,9 @@ function initCallback(el, fn) {
   }
   let cb = fn.bind(el)
   el[_callbacks].set(fn, cb)
-  try { cb.destroy = cb(el) }
+  try {
+    cb.destroy = cb(el)
+  }
   catch (e) { console.error(e) }
 }
 

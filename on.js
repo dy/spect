@@ -1,8 +1,8 @@
 import bus from './src/bus.js'
 
-export default function on (scope, target, event, callback = ()=>{}) {
+export default function on (scope, target, event, callback) {
   if (arguments.length < 4) {
-    [target, event, callback = ()=>{}] = arguments
+    [target, event, callback] = arguments
     scope = document
   }
 
@@ -17,9 +17,9 @@ export default function on (scope, target, event, callback = ()=>{}) {
 }
 
 
-export function delegate (scope, selector, event, callback = ()=>{}) {
+export function delegate (scope, selector, event, callback) {
   if (arguments.length < 4) {
-    [target, event, callback = ()=>{}] = arguments
+    [target, event, callback] = arguments
     scope = document
   }
 

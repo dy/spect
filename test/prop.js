@@ -23,28 +23,31 @@ t('prop: subscription', async t => {
   o.x = 1
   await tick()
   o.x = 2
-  await tick()
+  await tick(5)
+  t.is(log, [0, 2], 'updates to latest value')
   o.x = 3
+  await tick()
   o.x = 4
+  await tick()
   o.x = 5
   await tick(8)
-  t.is(log, [0, 2, 5], 'updates to latest value')
+  t.is(log, [0, 2, 4, 5], 'updates to latest value')
 
   o.x = 6
   t.is(o.x, 6, 'reading value')
   await tick(8)
-  t.is(log, [0, 2, 5, 6], 'reading has no side-effects')
+  t.is(log, [0, 2, 4, 5, 6], 'reading has no side-effects')
 
-  // o.x = 7
-  // o.x = 6
-  // await tick(8)
-  // t.is(log, [0, 2, 5, 6], 'changing and back does not cause trigger')
+  o.x = 7
+  o.x = 6
+  await tick(8)
+  t.is(log, [0, 2, 4, 5, 6, 6], 'changing and back does not trigger too many times')
 
   xs.cancel()
   o.x = 7
   t.is(o.x, 7, 'end destructs property')
   await tick(10)
-  t.is(log, [0, 2, 5, 6], 'end destructs property')
+  t.is(log, [0, 2, 4, 5, 6, 6], 'end destructs property')
 })
 t('prop: get/set', async t => {
   let o = { x: () => { t.fail('Should not be called') } }
