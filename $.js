@@ -120,7 +120,6 @@ function $(scope, selector, fn) {
   })
 
   set.add(selector, aspect)
-  // set.add(selector, fn)
   // set.matches(scope).forEach(rule => initCallback(scope, rule.data))
   set.queryAll(scope).forEach(rule => rule.elements.forEach(el => initCallback(el, rule.data)))
 

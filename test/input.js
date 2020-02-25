@@ -14,7 +14,7 @@ t.browser('input: core', async t => {
     console.log(v)
   }})();
 
-  document.body.removeChild(el)
+  // document.body.removeChild(el)
 })
 
 t('input: updates by changing value directly', async t => {
@@ -68,6 +68,18 @@ t('input: get/set', async t => {
   value(0)
   t.is(el.value, '0', 'set is ok')
   t.is(value(), '0', 'get is ok')
+  await tick(8)
+  t.is(el.value, '0', 'set is ok')
+  t.is(value(), '0', 'get is ok')
+})
+t.skip('input: should register on simple selectors', async t => {
+  let el = document.createElement('input')
+  document.body.appendChild(el)
+  let value = input('input')
+  await frame(2)
+  value(0)
+  t.is(el.value, '0', 'set is ok')
+  t.is(value(), '0', 'get is ok')
 })
 t.skip('input: multiple instances same? ref', async t => {
   const el = document.createElement('input')
@@ -77,7 +89,7 @@ t.skip('input: multiple instances same? ref', async t => {
   t.is(xs1, xs2, 'same ref')
 })
 t.skip('input: direct value set off-focus emits event', async t => {
-  // NS: not sure we have to track direct `el.value = 1` when not focused. Looks like deciding for user. Dispatching an event is not a big deal.
+  // NS: not sure we have to track direct `el.value = 1` when not focused. Looks like deciding for the user. Dispatching an event is not a big deal.
   let el = document.createElement('input')
   let i = input(el)
   let log = []

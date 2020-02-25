@@ -4,7 +4,7 @@ import Cancelable from './cancelable.js'
 // `get: () => value` is called to obtain current state, like `channel()`. It is called automatically on subscription.
 // If null - the channel is considered stateless and don't emit initial event.
 // `set: (value, prev) => changed?` - called to set/emit new state: resolves promise, pushes new value (unless returned false).
-// If null - the channel can just push stateless notifications.
+// If null - the channel can be just external-driven [stateful] notifications, like `input` observable.
 export default function bus(get, set, teardown) {
   let resolve, changed, promise = new Cancelable(r => resolve = r)
 
