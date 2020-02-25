@@ -13,7 +13,6 @@ t('state: core', async t => {
   ;(async () => { for await (let value of s) log.push(value) })()
 
   t.equal(+s, 0, 'toPrimitive')
-  t.equal(s.current, 0, 'current')
   t.equal(s.valueOf(), 0, 'valueOf')
   t.equal(s.toString(), 0, 'toString')
   t.equal(s(), 0, 's()')
@@ -21,8 +20,8 @@ t('state: core', async t => {
   await tick()
   t.deepEqual(log, [0], 'should publish the initial state')
 
-  s.current = 1
-  t.equal(+s, 1, 'state.current = value')
+  // s(1)
+  // t.equal(+s, 1, 'state.current = value')
 
   s(2)
   t.equal(+s, 2, 'state(value)')
@@ -54,7 +53,7 @@ t('state: core', async t => {
 t('state: should not expose technical symbols', async t => {
   let s = state({x: 1})
   let log = []
-  for(let p in s.current) {
+  for(let p in s()) {
     log.push(p)
   }
   t.is(log, ['x'])
