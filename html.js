@@ -3,6 +3,7 @@ import fx from './fx.js'
 import { primitive } from './src/util.js'
 
 const FIELD = '\ue000', QUOTES = '\ue001'
+const TEXT_NODE = 3, ELEMENT_NODE = 1
 
 // xhtm base supercharged with observables
 export default function htm (statics) {
@@ -163,7 +164,7 @@ export default function htm (statics) {
 
   let els = [], prevEl
   current.map(el => Array.isArray(el) ? el[1]() : el()).forEach(el => {
-    if (prevEl && prevEl.nodeType === Node.TEXT_NODE && el.nodeType === Node.TEXT_NODE) return prevEl.nodeValue += el.nodeValue
+    if (prevEl && prevEl.nodeType === TEXT_NODE && el.nodeType === TEXT_NODE) return prevEl.nodeValue += el.nodeValue
     els.push(el)
     prevEl = el
     if (el[_group]) el[_group].map(el => els.push(el))
@@ -271,10 +272,10 @@ function alloc(parent, arg) {
         (node.id && (node.id === el.id)) ||
 
         // same-content text node
-        (node.nodeType === Node.TEXT_NODE && node.nodeValue === el.nodeValue && !node[_group]) ||
+        (node.nodeType === TEXT_NODE && node.nodeValue === el.nodeValue && !node[_group]) ||
 
         // just blank-ish tag matching by signature and no need morphing
-        (node.nodeType === Node.ELEMENT_NODE && !node.id && !el.id && node.tagName === el.tagName && !el.childNodes.length)
+        (node.nodeType === ELEMENT_NODE && !node.id && !el.id && !el.name && node.tagName === el.tagName && !el.childNodes.length)
       ))
     ) {
       match = node
