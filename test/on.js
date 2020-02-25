@@ -57,7 +57,7 @@ t('on: events list', async t => {
   on('x', ['x', 'y'], e => {})
 })
 
-t.skip('on: observable', async t => {
+t('on: observable', async t => {
   let el = document.createElement('div')
   let clicks = on(el, 'click')
   let log = []

@@ -7,13 +7,13 @@ import Cancelable from './cancelable.js'
 export default function bus(get, set, teardown) {
   let resolve, changed, promise = new Cancelable(r => resolve = r)
 
-  let channel = function (value) {
+  const channel = function (value) {
     if (arguments.length) {
       if (!set) throw Error('Setting unsettable')
       if (promise.isCanceled) throw Error('Setting canceled')
-      let notify = get ? set(value) : set(value, get())
+      let notify = get ? set(value, get()) : set(value)
 
-      if (notify) {
+      if (notify !== false) {
         if (changed) return
         // need 2 ticks delay or else subscribed iterators possibly miss latest changed value
         changed = Promise.resolve().then().then(() => {

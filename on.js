@@ -1,25 +1,25 @@
-import channel from './src/channel.js'
+import bus from './src/bus.js'
 
-export default function on (scope, target, event, callback) {
+export default function on (scope, target, event, callback = ()=>{}) {
   if (arguments.length < 4) {
-    [target, event, callback] = arguments
+    [target, event, callback = ()=>{}] = arguments
     scope = document
   }
 
   if (typeof target === 'string') return delegate(scope, target, event, callback)
 
-  const eventChannel = channel(callback, r => evts.map(event => target.removeEventListener(event, eventChannel)))
+  const channel = bus(null, callback, () => evts.map(event => target.removeEventListener(event, channel)))
 
   const evts = Array.isArray(event) ? event : event.split(/\s+/)
-  evts.map(event => target.addEventListener(event, eventChannel))
+  evts.map(event => target.addEventListener(event, channel))
 
-  return eventChannel
+  return channel
 }
 
 
-export function delegate (scope, selector, event, callback) {
+export function delegate (scope, selector, event, callback = ()=>{}) {
   if (arguments.length < 4) {
-    [target, event, callback] = arguments
+    [target, event, callback = ()=>{}] = arguments
     scope = document
   }
 
@@ -35,7 +35,7 @@ export function delegate (scope, selector, event, callback) {
   const evts = Array.isArray(event) ? event : event.split(/\s+/)
   evts.map(event => scope.addEventListener(event, delegate))
 
-  const delegateChannel = channel(callback, () => evts.map(event => scope.removeEventListener(event, delegate)))
+  const delegateChannel = bus(null, callback, () => evts.map(event => scope.removeEventListener(event, delegate)))
 
   return delegateChannel
 }
