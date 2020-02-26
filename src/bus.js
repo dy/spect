@@ -2,25 +2,57 @@
 import Cancelable from './cancelable.js'
 
 // `get: () => value` is called to obtain current state, like `channel()`. It is called automatically on subscription.
-// If null - the channel is considered stateless and don't emit initial event.
+// If null - the channel is considered stateless and does't emit initial event.
+// If not null - bus is considered stateful
 // `set: (value, prev) => changed?` - called to set/emit new state: resolves promise, pushes new value (unless returned false).
 // If null - the channel can be just external-driven [stateful] notifications, like `input` observable.
 export default function bus(get, set, teardown) {
-  let resolve, changed, promise = new Cancelable(r => resolve = r)
+  let resolve, changed, promise = new Cancelable(r => resolve = r), lastValue
+
+  if (get) {
+    const _get = get
+    get = () => {
+      // get instantly applies planned value
+      if (changed && 'value' in changed) {
+        lastValue = changed.value
+        delete changed.value
+        if (set) set(lastValue)
+      }
+
+      return _get()
+    }
+  }
 
   const channel = function (value) {
     if (arguments.length) {
       if (promise.isCanceled) throw Error('Channel is canceled')
+
+      if (changed) {
+        if (value !== lastValue) changed.value = value
+        else delete changed.value
+        return
+      }
+
+      // main set
+      lastValue = value
       let notify = set ? set(value) : null
 
       if (notify !== false) {
-        if (changed) return
+        // throttle multiple changes within single tick
+        // FIXME: is that an issue for channel, that's supposed to send every event?
         // need 2 ticks delay or else subscribed iterators possibly miss latest changed value
         changed = Promise.resolve().then().then(() => {
+          // throttle multiple set calls between ticks
+          if ('value' in changed) {
+            lastValue = changed.value
+            if (set) set(lastValue)
+          }
+
           changed = null
-          // no need to check get() here - it's checked in asyncIterator
+
+          // no need to get() here - it's checked in asyncIterator
           // (there's a tick between resolve here and getting control back in asyncIterator)
-          resolve(value)
+          resolve(lastValue)
           promise = new Cancelable(r => resolve = r)
         })
       }
@@ -28,8 +60,7 @@ export default function bus(get, set, teardown) {
       return notify
     }
 
-    if (!get) throw Error('Getting ungettable')
-    return get()
+    return get && get()
   }
 
   Object.assign(channel, {
@@ -42,7 +73,8 @@ export default function bus(get, set, teardown) {
             yield get()
           }
           else {
-            yield await promise
+            let res = await promise
+            yield res
           }
         }
       } catch (e) {
@@ -61,8 +93,8 @@ export default function bus(get, set, teardown) {
       channel.isCanceled = true
       return promise.cancel()
     },
-    then(...args) {
-      return promise.then(...args)
+    then(y, n) {
+      return promise.then(value => y(get ? get() : value), n)
     },
     map(fn) {
       let curr

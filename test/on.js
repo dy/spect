@@ -18,17 +18,19 @@ t('on: core', t => {
 	t.end()
 });
 
-t('on: space-separated events', t => {
+t('on: space-separated events', async t => {
 	var x = document.createElement('div'), log = []
 
   let xs = on(x, 'x y', e => log.push(e.type))
   x.dispatchEvent(new Event('x'))
   x.dispatchEvent(new Event('y'))
+  await tick(8)
   t.is(log, ['x', 'y'])
 
   xs.cancel()
   x.dispatchEvent(new Event('x'))
   x.dispatchEvent(new Event('y'))
+  await tick(8)
   t.is(log, ['x', 'y'])
 
 	t.end()

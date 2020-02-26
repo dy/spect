@@ -5,11 +5,7 @@ export default function input (el) {
   el.addEventListener('change', update)
   el.addEventListener('input', update)
 
-  const channel = bus(() => el.value, value => {
-    let prevValue = prev
-    prev = el.value = value
-    if (prevValue !== value) el.dispatchEvent(new Event('change'))
-  }, () => {
+  const channel = bus(() => el.value, value => el.value = value, () => {
     el.removeEventListener('change', update)
     el.removeEventListener('input', update)
   })

@@ -9,7 +9,7 @@ import attr from './attr.js'
 import on from './on.js'
 import input from './input.js'
 import html from './html.js'
-import ref from './src/ref.js'
+import ref from './ref.js'
 
 export default $
 
