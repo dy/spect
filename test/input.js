@@ -47,20 +47,20 @@ t('input: updates by changing value directly', async t => {
   el.value = 5
   el.dispatchEvent(new Event('change'))
   await tick(8)
-  t.is(log, ['0', '2', '5'], 'updates to latest value')
+  t.is(log, ['0', '1', '2', '5'], 'updates to latest value')
 
   el.value = 6
   el.dispatchEvent(new Event('change'))
   t.is(el.value, '6', 'reading value')
   await tick(8)
-  t.is(log, ['0', '2', '5', '6'], 'reading has no side-effects')
+  t.is(log, ['0', '1', '2', '5', '6'], 'reading has no side-effects')
 
   value.cancel()
   el.value = 7
   el.dispatchEvent(new Event('change'))
   t.is(el.value, '7', 'end destructs inputerty')
   await tick(10)
-  t.is(log, ['0', '2', '5', '6'], 'end destructs inputerty')
+  t.is(log, ['0', '1', '2', '5', '6'], 'end destructs inputerty')
 })
 t('input: get/set', async t => {
   let el = document.createElement('input')

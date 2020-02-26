@@ -7,12 +7,18 @@ import observable from './observable.js'
 
 
 t('on: core', t => {
+  var y = document.createElement('div')
 	var x = document.createElement('div'), log = []
+  y.appendChild(x)
+  y.addEventListener('x', e => {
+    t.fail('should prevent events')
+  })
 
   on(x, 'x', e => {
+    e.stopPropagation()
     log.push('x')
   })
-  x.dispatchEvent(new Event('x'))
+  x.dispatchEvent(new Event('x', { bubbles: true }))
   t.is(log, ['x'])
 
 	t.end()

@@ -9,7 +9,6 @@ export default function input (el) {
     el.removeEventListener('change', update)
     el.removeEventListener('input', update)
   })
-  let prev = channel()
 
   return channel
 }

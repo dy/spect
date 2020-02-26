@@ -24,9 +24,8 @@ export default function attr(el, name) {
   // FIXME: observer notifies unchanged attributes too
   const observer = new MutationObserver(rx => {
     rx.forEach(rec => {
-      if (rec.oldValue !== el.getAttribute(name)) {
-        attr(attr())
-      }
+      let newValue = el.getAttribute(name)
+      if (rec.oldValue !== newValue) attr(newValue)
     })
   })
   observer.observe(el, { attributes: true, attributeFilter: [name], attributeOldValue: true })

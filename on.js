@@ -1,5 +1,6 @@
 import bus from './src/bus.js'
 
+
 export default function on (scope, target, event, callback) {
   if (arguments.length < 4) {
     [target, event, callback] = arguments
@@ -8,7 +9,8 @@ export default function on (scope, target, event, callback) {
 
   if (typeof target === 'string') return delegate(scope, target, event, callback)
 
-  const channel = bus(null, callback, () => evts.map(event => target.removeEventListener(event, channel)))
+  const channel = bus(null, null, () => evts.map(event => target.removeEventListener(event, channel)))
+  if (callback) channel.subscribe(callback)
 
   const evts = Array.isArray(event) ? event : event.split(/\s+/)
   evts.map(event => target.addEventListener(event, channel))

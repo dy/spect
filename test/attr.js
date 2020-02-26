@@ -62,7 +62,6 @@ t('attr: get/set', async t => {
   t.is(xs(), null)
 
   xs.cancel()
-  t.throws(() => xs('abc'))
   await tick(8)
   t.is(xs(), null)
 })

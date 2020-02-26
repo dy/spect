@@ -36,16 +36,17 @@ t('state: core', async t => {
   ;(async () => { for await (let value of s) log2.push(value) })()
 
   await tick(8)
-  t.deepEqual(log, [0, 3], 'should track and notify first tick changes')
+  t.deepEqual(log.slice(-1), [3], 'should track and notify first tick changes')
   await frame(10)
+  t.deepEqual(log2, [3], 'should properly init set')
   s(4)
   await tick(8) // why 4 ticks delay?
-  t.deepEqual(log, [0, 3, 4], 'arbitrary change 1')
+  t.deepEqual(log.slice(-1), [4], 'arbitrary change 1')
   s(5)
   await tick(8)
-  t.deepEqual(log, [0, 3, 4, 5], 'arbitrary change 2')
+  t.deepEqual(log.slice(-1), [5], 'arbitrary change 2')
 
-  t.deepEqual(log2, [3, 4, 5], 'secondary observer is fine')
+  t.deepEqual(log2.slice(-1), [5], 'secondary observer is fine')
 
   t.end()
 })

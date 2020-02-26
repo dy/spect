@@ -2,59 +2,27 @@
 import Cancelable from './cancelable.js'
 
 // `get: () => value` is called to obtain current state, like `channel()`. It is called automatically on subscription.
-// If null - the channel is considered stateless and does't emit initial event.
-// If not null - bus is considered stateful
-// `set: (value, prev) => changed?` - called to set/emit new state: resolves promise, pushes new value (unless returned false).
-// If null - the channel can be just external-driven [stateful] notifications, like `input` observable.
+// The main purpose - provide getter for user.
+// If null - the channel is considered stateless, does't emit initial event and returns always null.
+//
+// `set: (value, prev) => changed?` - intended to set value by user.
+// Emit new state: resolves promise, pushes new value (unless returned false).
+// If null - the channel can be just external-driven [stateful] notifications, like `input`, `on`, `from` etc.
 export default function bus(get, set, teardown) {
-  let resolve, changed, promise = new Cancelable(r => resolve = r), lastValue
-
-  if (get) {
-    const _get = get
-    get = () => {
-      // get instantly applies planned value
-      if (changed && 'value' in changed) {
-        lastValue = changed.value
-        delete changed.value
-        if (set) set(lastValue)
-      }
-
-      return _get()
-    }
-  }
+  let resolve, promise = new Cancelable(r => resolve = r), subs = [], stacks = []
 
   const channel = function (value) {
     if (arguments.length) {
-      if (promise.isCanceled) throw Error('Channel is canceled')
+      if (promise.canceled) throw Error('Channel is canceled')
 
-      if (changed) {
-        if (value !== lastValue) changed.value = value
-        else delete changed.value
-        return
-      }
-
-      // main set
-      lastValue = value
       let notify = set ? set(value) : null
 
       if (notify !== false) {
-        // throttle multiple changes within single tick
-        // FIXME: is that an issue for channel, that's supposed to send every event?
-        // need 2 ticks delay or else subscribed iterators possibly miss latest changed value
-        changed = Promise.resolve().then().then(() => {
-          // throttle multiple set calls between ticks
-          if ('value' in changed) {
-            lastValue = changed.value
-            if (set) set(lastValue)
-          }
-
-          changed = null
-
-          // no need to get() here - it's checked in asyncIterator
-          // (there's a tick between resolve here and getting control back in asyncIterator)
-          resolve(lastValue)
-          promise = new Cancelable(r => resolve = r)
-        })
+        resolve(value = get ? get() : value)
+        subs.map(sub => sub(value))
+        // (we throttle intermediates and emit only the last value)
+        stacks.map(stack => stack[0] = value)
+        promise = new Cancelable(r => resolve = r)
       }
 
       return notify
@@ -66,15 +34,16 @@ export default function bus(get, set, teardown) {
   Object.assign(channel, {
     async *[Symbol.asyncIterator]() {
       if (get) yield get()
+      let stack = []
+      stacks.push(stack)
       try {
         while (1) {
-          if (get) {
-            await promise
-            yield get()
-          }
-          else {
-            let res = await promise
-            yield res
+          await promise
+          // from the moment promise was resolved until now, other values could've been set to bus, that's for we need stack
+          while (stack.length) {
+            let value = stack.pop()
+            yield value
+            // from the moment yield got control back, the stack could've been topped up again
           }
         }
       } catch (e) {
@@ -89,16 +58,17 @@ export default function bus(get, set, teardown) {
 
     // Promise
     cancel() {
+      subs.length = 0
       if (teardown) teardown()
-      channel.isCanceled = true
+      channel.canceled = true
       return promise.cancel()
     },
     then(y, n) {
-      return promise.then(value => y(get ? get() : value), n)
+      return promise.then(y, n)
     },
     map(fn) {
       let curr
-      let mapped = bus(() => curr, value => curr = value)
+      let mapped = bus(() => curr, null)
       channel.subscribe(bus)
       return mapped
     },
@@ -109,11 +79,7 @@ export default function bus(get, set, teardown) {
 
     // Observable
     subscribe(fn) {
-      if (get) fn(get())
-      promise.then(function emit(value) {
-        fn(value)
-        promise.then(emit)
-      })
+      subs.push(fn)
     }
   })
 
