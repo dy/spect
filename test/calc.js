@@ -25,11 +25,11 @@ t('calc: core', async t => {
 t('calc: must be sync', async t => {
   const x = state(0)
   const x2 = calc(x => x * 2, [x])
-  t.is(x2.current, 0)
+  t.is(x2(), 0)
 
   x(1)
   await tick(8)
-  t.is(x2.current, 2)
+  t.is(x2(), 2)
 })
 
 t('calc: promises/changeables must return undefined', async t => {
@@ -37,18 +37,19 @@ t('calc: promises/changeables must return undefined', async t => {
   const log = []
   calc(x => log.push(x), [p])
   await tick(8)
-  t.is(log, [undefined, 1])
+  t.is(log, [1])
 })
 
 t('calc: async generator is fine', async t => {
   const ag = async function* () {
     yield 1
+    await tick()
     yield 2
   }
   let log = []
   calc(x => {
     log.push(x)
   }, [ag()])
-  await tick(8)
-  t.is(log, [undefined, 1, 2])
+  await tick(12)
+  t.is(log, [1, 2])
 })
