@@ -1,6 +1,5 @@
 import t from 'tst'
 import { $, state, fx, prop, store, calc, ref, attr, on, list } from '../index.js'
-import { dfx } from '../fx.js'
 import { tick, frame, idle, time } from 'wait-please'
 import { augmentor, useState, useEffect, useMemo } from 'augmentor'
 import Observable from 'zen-observable/esm'
@@ -31,30 +30,6 @@ t('fx: core', async t => {
   await tick(8)
   t.is(log, [0, 1, 2, 1, 2, 2, 2, 2], 'unchanged prop')
 })
-t('dfx: core', async t => {
-  let a = state(0)
-  let o = { b: 1 }
-  let b = prop(o, 'b')
-
-  let log = []
-  dfx((a, b) => {
-    log.push(a, b)
-  }, [a, b])
-
-  await tick(8)
-  t.is(log, [0, 1], 'initial state')
-  a(1)
-  a(2)
-  await tick(7)
-  t.is(log, [0, 1, 2, 1], 'changed state')
-  o.b = 2
-  await tick(7)
-  t.is(log, [0, 1, 2, 1, 2, 2], 'changed prop')
-  o.b = 2
-  a(2)
-  await tick(7)
-  t.is(log, [0, 1, 2, 1, 2, 2], 'unchanged prop')
-})
 t('fx: destructor', async t => {
   let log = []
   let a = state(0), b = state(0)
@@ -75,20 +50,6 @@ t('fx: destructor', async t => {
   t.is(log, ['out', 0, 0, 'in', 1, 1], 'destructor is ok')
 })
 t.todo('fx: disposed by unmounted element automatically')
-t('dfx: doesn\'t run unchanged', async t => {
-  let a = ref(0)
-  let log = []
-  dfx(a => {
-    log.push(a)
-  }, [a])
-
-  await tick(8)
-  t.is(log, [0])
-  a(1)
-  a(0)
-  await tick(8)
-  t.is(log, [0], 'does not run unchanged')
-})
 t('fx: runs unchanged', async t => {
   let a = ref(0)
   let log = []
@@ -120,7 +81,7 @@ t('fx: no-deps/empty deps runs once after deps', async t => {
   }, [c])
 
   await tick(8)
-  t.is(log, [0, 2, 0])
+  t.is(log, [0, 0, 2])
 })
 t('fx: async fx', async t => {
   let count = state(0)
@@ -173,10 +134,10 @@ t('fx: thenable', async t => {
   const sx = fx(s => {
     log.push(s)
   }, [s])
-  await tick(8)
+  await tick(10)
   t.is(log, [0])
 
-  sx.then(x => log.push('aw', x))
+  sx.then(x => log.push('aw', ...x))
   s(1)
   // await tick(6)
   // t.is(log, [0, 1])
@@ -202,7 +163,7 @@ t('fx: async generator', async t => {
     log.push(x1, x2)
   }, [x(), x()])
 
-  await tick(10)
+  await tick(12)
   t.is(log, [1,1,2,2])
 })
 t.skip('fx: function deps', async t => {
@@ -255,4 +216,8 @@ t('fx: sync must not call twice init state', async t => {
   t.is(log, ['x'])
   await tick(28)
   t.is(log, ['x'])
+})
+
+t.todo('fx: streams', async t => {
+
 })

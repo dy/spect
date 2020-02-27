@@ -1,4 +1,4 @@
-// [ex]ref + channel = bus
+// ref + channel = bus
 import Cancelable from './cancelable.js'
 
 // `get: () => value` is called to obtain current state, like `channel()`. It is called automatically on subscription.
@@ -50,12 +50,6 @@ export default function bus(get, set, teardown) {
       } finally {
       }
     },
-
-    // let [value, setValue] = ref
-    *[Symbol.iterator]() {
-      if (get) yield get()
-    },
-
     // Promise
     cancel() {
       subs.length = 0
@@ -73,10 +67,6 @@ export default function bus(get, set, teardown) {
       return mapped
     },
 
-    valueOf: get,
-    toString: get,
-    [Symbol.toPrimitive]: get,
-
     // Observable
     subscribe(fn) {
       subs.push(fn)
@@ -84,7 +74,11 @@ export default function bus(get, set, teardown) {
   })
 
   // value[0]
-  if (get) Object.defineProperties(channel, { [0]: { enumerable: false, get } })
+  if (get) {
+    channel.valueOf = channel.toString = channel[Symbol.toPrimitive] = get
+    Object.defineProperties(channel, { [0]: { enumerable: false, get } })
+    channel[Symbol.iterator] = function*() { if (get) yield get() }
+  }
 
   return channel
 }

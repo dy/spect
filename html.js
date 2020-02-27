@@ -1,6 +1,5 @@
 import calc from './calc.js'
 import fx from './fx.js'
-import { primitive } from './src/util.js'
 
 const FIELD = '\ue000', QUOTES = '\ue001'
 const TEXT_NODE = 3, ELEMENT_NODE = 1
@@ -323,4 +322,10 @@ function replaceWith(from, to) {
   }
 
   return to
+}
+
+
+function primitive(val) {
+  if (typeof val === 'object') return val === null
+  return typeof val !== 'function'
 }
