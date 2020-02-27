@@ -52,7 +52,8 @@
   "homepage": "https://github.com/spectjs/spect#readme",
   "dependencies": {
     "immutable-tuple": "^0.4.10",
-    "selector-set": "^1.1.5"
+    "selector-set": "^1.1.5",
+    "symbol-observable": "^1.2.0"
   },
   "devDependencies": {
     "@rollup/plugin-node-resolve": "^7.1.1",

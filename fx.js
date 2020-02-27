@@ -1,5 +1,5 @@
 import bus from './src/bus.js'
-
+import _observable from 'symbol-observable'
 
 export default function fx(callback, deps=[Promise.resolve().then()]) {
   deps = deps.map(from)
@@ -7,10 +7,10 @@ export default function fx(callback, deps=[Promise.resolve().then()]) {
   const channel = bus(), current = deps.map(dep => dep())
   let changed = null, destroy
 
-  channel.subscribe(current => {
+  channel[_observable]().subscribe({ next: current => {
     if (destroy && destroy.call) destroy()
     destroy = callback(...current)
-  })
+  }})
 
   const notify = () => {
     if (changed) return changed
@@ -22,7 +22,7 @@ export default function fx(callback, deps=[Promise.resolve().then()]) {
     })
   }
 
-  deps.map((from, i) => from.subscribe(value => notify(current[i] = value, i)))
+  deps.map((from, i) => from[_observable]().subscribe({next: value => notify(current[i] = value, i)}))
 
   // instant run, if there are immediate inputs
   if (current.some(value => value != null)) {
@@ -37,21 +37,21 @@ export default function fx(callback, deps=[Promise.resolve().then()]) {
 export function from(src) {
   let channel
 
+  // bus (any)
+  if (typeof src === 'function' && src[_observable]) {
+    return src
+  }
   // constant (stateful)
-  if (primitive(src)) {
+  else if (primitive(src)) {
     channel = bus(() => src)
   }
   // observable / observ / mutant (stateful)
   else if (observ(src)) {
     src(channel = bus(src))
   }
-  // Observable, xstream (stateless)
-  else if (src.subscribe) {
-    if (typeof src !== 'function') {
-      src.subscribe(channel = bus())
-    }
-    // bus
-    else channel = src
+  // Observable, xstream, rxjs etc (stateless)
+  else if (observable(src)) {
+    src[_observable]().subscribe({next: channel = bus()})
   }
   // async iterator (stateful, initial undefined)
   else if (src.next || src[Symbol.asyncIterator]) {
@@ -82,4 +82,14 @@ function primitive(val) {
 
 function observ(dep) {
   return typeof dep === 'function' && 'set' in dep && !('get' in dep)
+}
+
+function observable(value) {
+	if (value[_observable] && value === value[_observable]()) {
+		return true;
+	}
+
+	if (value['@@observable'] && value === value['@@observable']()) {
+		return true;
+	}
 }

@@ -1,5 +1,6 @@
 // ref + channel = bus
 import Cancelable from './cancelable.js'
+import _observable from 'symbol-observable'
 
 // `get: () => value` is called to obtain current state, like `channel()`. It is called automatically on subscription.
 // The main purpose - provide getter for user.
@@ -9,7 +10,7 @@ import Cancelable from './cancelable.js'
 // Emit new state: resolves promise, pushes new value (unless returned false).
 // If null - the channel can be just external-driven [stateful] notifications, like `input`, `on`, `from` etc.
 export default function bus(get, set, teardown) {
-  let resolve, promise = new Cancelable(r => resolve = r), subs = [], stacks = []
+  let resolve, promise = new Cancelable(r => resolve = r), subs = [], ibufs = []
 
   const channel = function (value) {
     if (arguments.length) {
@@ -20,8 +21,7 @@ export default function bus(get, set, teardown) {
       if (notify !== false) {
         resolve(value = get ? get() : value)
         subs.map(sub => sub(value))
-        // (we throttle intermediates and emit only the last value)
-        stacks.map(stack => stack[0] = value)
+        ibufs.map(buf => buf[0] = value)
         promise = new Cancelable(r => resolve = r)
       }
 
@@ -34,15 +34,14 @@ export default function bus(get, set, teardown) {
   Object.assign(channel, {
     async *[Symbol.asyncIterator]() {
       if (get) yield get()
-      let stack = []
-      stacks.push(stack)
+      let buf = []
+      ibufs.push(buf)
       try {
         while (1) {
           await promise
-          // from the moment promise was resolved until now, other values could've been set to bus, that's for we need stack
-          while (stack.length) {
-            let value = stack.pop()
-            yield value
+          // from the moment promise was resolved until now, other values could've been set to bus, that's for we need buf
+          while (buf.length) {
+            yield buf.pop()
             // from the moment yield got control back, the stack could've been topped up again
           }
         }
@@ -50,6 +49,22 @@ export default function bus(get, set, teardown) {
       } finally {
       }
     },
+
+    [_observable]() {
+      return {
+        subscribe(o) {
+          const handle = value => o.next(value)
+          subs.push(handle)
+          return {
+            unsubscribe() {
+              subs.splice(subs.indexOf(handle) >>> 0, 1)
+            }
+          }
+        },
+        [_observable](){ return this }
+      }
+    },
+
     // Promise
     cancel() {
       subs.length = 0
@@ -63,13 +78,8 @@ export default function bus(get, set, teardown) {
     map(fn) {
       let curr
       let mapped = bus(() => curr, null)
-      channel.subscribe(bus)
+      channel[_observable]().subscribe(bus)
       return mapped
-    },
-
-    // Observable
-    subscribe(fn) {
-      subs.push(fn)
     }
   })
 

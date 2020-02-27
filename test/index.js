@@ -6,7 +6,7 @@ import './attr.js'
 import './input.js'
 import './fx.js'
 import './calc.js'
-import './store.js'
+// import './store.js'
 // import './list.js'
 // import './html.js'
 

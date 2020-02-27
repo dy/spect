@@ -88,10 +88,10 @@ t.skip('list: bubbles up internal item updates', async t => {
   t.is(log, [[s], [s]])
 })
 
-t.only('list: pushing items should result in correct effect', async t => {
+t.only('list: fx sync init', async t => {
   let l = list()
   let log = []
-  fx(item => log.push(item.slice()), [l], true)
+  fx(item => log.push(item.slice()), [l])
 
   t.is(log, [[]])
   await tick(8)
