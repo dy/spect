@@ -1,4 +1,4 @@
-import bus from './src/bus.js'
+import bus, { _bus } from './src/bus.js'
 import _observable from 'symbol-observable'
 
 export default function fx(callback, deps=[Promise.resolve().then()]) {
@@ -37,20 +37,19 @@ export default function fx(callback, deps=[Promise.resolve().then()]) {
 export function from(src) {
   let channel
 
-  // bus (any)
-  if (typeof src === 'function' && src[_observable]) {
-    return src
-  }
   // constant (stateful)
-  else if (primitive(src)) {
+  if (primitive(src)) {
     channel = bus(() => src)
+  }
+  else if (src[_bus]) {
+    return src[_bus]()
   }
   // observable / observ / mutant (stateful)
   else if (observ(src)) {
     src(channel = bus(src))
   }
   // Observable, xstream, rxjs etc (stateless)
-  else if (observable(src)) {
+  else if (src[_observable]) {
     src[_observable]().subscribe({next: channel = bus()})
   }
   // async iterator (stateful, initial undefined)
@@ -82,14 +81,4 @@ function primitive(val) {
 
 function observ(dep) {
   return typeof dep === 'function' && 'set' in dep && !('get' in dep)
-}
-
-function observable(value) {
-	if (value[_observable] && value === value[_observable]()) {
-		return true;
-	}
-
-	if (value['@@observable'] && value === value['@@observable']()) {
-		return true;
-	}
 }

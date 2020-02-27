@@ -1,19 +1,14 @@
-import bus from './src/bus.js'
+import bus, { _bus } from './src/bus.js'
+import _observable from 'symbol-observable'
 
 export default function list(arr = []) {
-  const channel = bus()
+  const channel = bus(() => arr)
 
-  // arr[Symbol.asyncIterator] = channel[Symbol.asyncIterator]
+  arr[_bus] = () => channel
+  arr[_observable] = channel[_observable]
+  arr[Symbol.asyncIterator] = channel[Symbol.asyncIterator]
 
   const proxy = new Proxy(arr, {
-    get(arr, prop) {
-      if (prop === Symbol.asyncIterator) return channel[Symbol.asyncIterator]
-      return arr[prop]
-    },
-    has(arr, prop) {
-      if (prop === Symbol.asyncIterator) return true
-      return prop in arr
-    },
     set(arr, prop, value) {
       if (Object.is(arr[prop], value)) return true
       arr[prop] = value

@@ -88,7 +88,7 @@ t.skip('list: bubbles up internal item updates', async t => {
   t.is(log, [[s], [s]])
 })
 
-t.only('list: fx sync init', async t => {
+t('list: fx sync init', async t => {
   let l = list()
   let log = []
   fx(item => log.push(item.slice()), [l])

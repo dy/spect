@@ -2,6 +2,8 @@
 import Cancelable from './cancelable.js'
 import _observable from 'symbol-observable'
 
+export const _bus = Symbol.for('@@spect.bus')
+
 // `get: () => value` is called to obtain current state, like `channel()`. It is called automatically on subscription.
 // The main purpose - provide getter for user.
 // If null - the channel is considered stateless, does't emit initial event and returns always null.
@@ -32,6 +34,8 @@ export default function bus(get, set, teardown) {
   }
 
   Object.assign(channel, {
+    [_bus]() { return channel },
+
     async *[Symbol.asyncIterator]() {
       if (get) yield get()
       let buf = []

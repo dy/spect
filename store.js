@@ -1,12 +1,14 @@
-import bus from './src/bus.js'
+import bus, { _bus } from './src/bus.js'
+import _observable from 'symbol-observable'
 
 export default function store(obj = {}) {
   const channel = bus(() => obj)
 
-  const proxy = new Proxy(
-    obj = Object.assign(Object.create({
-      [Symbol.asyncIterator]: channel[Symbol.asyncIterator]
-    }), obj), {
+  obj[_bus] = () => channel
+  obj[_observable] = channel[_observable]
+  obj[Symbol.asyncIterator] = channel[Symbol.asyncIterator]
+
+  const proxy = new Proxy(obj, {
     set(obj, prop, value) {
       if (Object.is(obj[prop], value)) return true
       obj[prop] = value
