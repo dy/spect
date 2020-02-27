@@ -81,7 +81,7 @@ t('fx: no-deps/empty deps runs once after deps', async t => {
   }, [c])
 
   await tick(8)
-  t.is(log, [0, 0, 2])
+  t.is(log, [0, 1, 2, 0])
 })
 t('fx: async fx', async t => {
   let count = state(0)
@@ -142,7 +142,7 @@ t('fx: thenable', async t => {
   // await tick(6)
   // t.is(log, [0, 1])
   await tick(8)
-  t.is(log, [0, 1, 'aw', 1])
+  t.any(log, [[0, 'aw', 1, 1], [0, 1, 'aw', 1]])
 })
 t('fx: simple values', async t => {
   const o = {x:1}, log = []

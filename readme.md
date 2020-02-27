@@ -416,7 +416,7 @@ ticks.cancel()
 
 ### _`fx`_
 
-> fx( callback, deps = [ tick ] )
+> fx( callback, deps=[] )
 
 Generic effect. Reacts to `deps` and runs `callback` function with `(...args) => teardown` signature.
 Similar to _useEffect_, but `deps` are changeables, any of:
@@ -430,7 +430,7 @@ Similar to _useEffect_, but `deps` are changeables, any of:
 * [_Stream_](https://nodejs.org/api/stream.html)
 * other value is considered constant.
 
-When any dependency updates, the `callback` runs with new arguments, invoking previous `teardown` function. Omitted `deps` trigger `callback` only once as microtask. If deps have value immediately available value, then `fx` is run synchronously.
+When any dependency updates, the `callback` runs with new arguments, invoking previous `teardown` function. Note: if deps value is immediately available, `fx` is run synchronously with current state. Skipped `deps` runs `fx` immediately once.
 
 ```js
 import { state, fx } from 'spect'
@@ -452,9 +452,6 @@ setTimeout(() => (a(1), b('bar')), 1000)
 
 // runs only once
 fx(() => {})
-
-// never runs
-fx(() => {}, [])
 ```
 
 #### Example

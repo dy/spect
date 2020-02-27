@@ -1,12 +1,24 @@
 import bus from './src/bus.js'
 import fx from './fx.js'
+import _observable from 'symbol-observable'
 
 export default function calc(fn, deps) {
-  let channel = bus(() => value), value
+  let channel = bus(() => {
+    if (changed) {
+      value = fn(...changed)
+      changed = null
+    }
+    return value
+  }), value, changed
 
-  fx((...args) => {
+  let fxc = fx((...args) => {
+    changed = null
     channel(value = fn(...args))
   }, deps)
 
+  // sync channel to track sync getter
+  fxc[_observable]().subscribe((args) => changed = args)
+
   return channel
 }
+

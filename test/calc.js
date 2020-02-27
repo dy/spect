@@ -53,3 +53,27 @@ t('calc: async generator is fine', async t => {
   await tick(12)
   t.is(log, [1, 2])
 })
+
+t('calc: empty-deps case calls calc once', async t => {
+  let v = calc(() => 1, [])
+  t.is(v(), 1)
+})
+
+t('calc: reading recalcs value', async t => {
+  let x = state(1)
+  let v = calc((x) => x * 2, [x])
+  t.is(v(), 2)
+  x(2)
+  t.is(x(), 2)
+  t.is(v(), 4)
+})
+
+t('calc: promises must be resolved fine', async t => {
+  let p = new Promise(ok => setTimeout(() => ok(2)))
+  let x = calc(value => {
+    return value
+  }, [p])
+  t.is(x(), undefined)
+  await time()
+  t.is(x(), 2)
+})

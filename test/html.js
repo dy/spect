@@ -325,9 +325,9 @@ t('html: async generator', async t => {
     yield 2
     await tick(4)
   })()}</div>`
-  await tick(8)
+  await tick(12)
   t.is(el.outerHTML, `<div>1</div>`)
-  await tick(8)
+  await tick(28)
   t.is(el.outerHTML, `<div>2</div>`)
 })
 

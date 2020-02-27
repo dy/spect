@@ -56,12 +56,12 @@ export default function bus(get, set, teardown) {
 
     [_observable]() {
       return {
-        subscribe(o) {
-          const handle = value => o.next(value)
-          subs.push(handle)
+        subscribe(next) {
+          if (next.next) next = next.next
+          subs.push(next)
           return {
             unsubscribe() {
-              subs.splice(subs.indexOf(handle) >>> 0, 1)
+              subs.splice(subs.indexOf(next) >>> 0, 1)
             }
           }
         },

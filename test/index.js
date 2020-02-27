@@ -8,5 +8,5 @@ import './fx.js'
 import './calc.js'
 import './store.js'
 import './list.js'
-// import './html.js'
+import './html.js'
 

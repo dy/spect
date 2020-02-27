@@ -10,7 +10,7 @@ export default function on (scope, target, event, callback) {
   if (typeof target === 'string') return delegate(scope, target, event, callback)
 
   const channel = bus(null, null, () => evts.map(event => target.removeEventListener(event, channel)))
-  if (callback) channel[_observable]().subscribe({next: callback})
+  if (callback) channel[_observable]().subscribe(callback)
 
   const evts = Array.isArray(event) ? event : event.split(/\s+/)
   evts.map(event => target.addEventListener(event, channel))
@@ -38,7 +38,7 @@ export function delegate (scope, selector, event, callback) {
   evts.map(event => scope.addEventListener(event, delegate))
 
   const channel = bus(null, null, () => evts.map(event => scope.removeEventListener(event, delegate)))
-  if (callback) channel[_observable]().subscribe({next: callback})
+  if (callback) channel[_observable]().subscribe(callback)
 
   return channel
 }

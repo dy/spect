@@ -1,32 +1,29 @@
 import bus, { _bus } from './src/bus.js'
 import _observable from 'symbol-observable'
 
-export default function fx(callback, deps=[Promise.resolve().then()]) {
+export default function fx(callback, deps=[]) {
   deps = deps.map(from)
 
   const channel = bus(), current = deps.map(dep => dep())
   let changed = null, destroy
 
-  channel[_observable]().subscribe({ next: current => {
-    if (destroy && destroy.call) destroy()
-    destroy = callback(...current)
-  }})
-
   const notify = () => {
+    channel(current)
     if (changed) return changed
 
     // extra tick to skip sync deps
     return changed = Promise.resolve().then().then().then().then(() => {
       changed = null
-      channel(current)
+      if (destroy && destroy.call) destroy()
+      destroy = callback(...current)
     })
   }
 
-  deps.map((from, i) => from[_observable]().subscribe({next: value => notify(current[i] = value, i)}))
+  deps.map((from, i) => from[_observable]().subscribe(value => notify(current[i] = value, i)))
 
   // instant run, if there are immediate inputs
-  if (current.some(value => value != null)) {
-    channel(current)
+  if (!deps.length || current.some(value => value != null)) {
+    destroy = callback(...current)
   }
 
   return channel
@@ -74,11 +71,11 @@ export function from(src) {
   return channel
 }
 
-function primitive(val) {
+export function primitive(val) {
   if (typeof val === 'object') return val === null
   return typeof val !== 'function'
 }
 
-function observ(dep) {
+export function observ(dep) {
   return typeof dep === 'function' && 'set' in dep && !('get' in dep)
 }

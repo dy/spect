@@ -1,5 +1,5 @@
 import calc from './calc.js'
-import fx from './fx.js'
+import fx, { primitive } from './fx.js'
 
 const FIELD = '\ue000', QUOTES = '\ue001'
 const TEXT_NODE = 3, ELEMENT_NODE = 1
@@ -126,7 +126,7 @@ export default function htm (statics) {
                 el[p] = origProps[p]
               }
             }
-          }, current.slice(1, 3), true)
+          }, current.slice(1, 3))
         }
 
         if (close) {
@@ -147,14 +147,14 @@ export default function htm (statics) {
           const children = evaluable(text, true).map(child => {
             let el
             // FIXME: there can be an optimization for simple constants to avoid bunch of calcs
-            return calc((child, i) => {
+            return calc((child) => {
               if (!el) {
                 el = alloc(current.root ? null : current[1](), child)
               } else {
                 replaceWith(el, el = create(child))
               }
               return el
-            }, [child])
+            }, [child, true]) // true guarantees sync init
           })
           current.push(...children)
         }
@@ -322,10 +322,4 @@ function replaceWith(from, to) {
   }
 
   return to
-}
-
-
-function primitive(val) {
-  if (typeof val === 'object') return val === null
-  return typeof val !== 'function'
 }
