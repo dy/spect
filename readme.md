@@ -39,13 +39,13 @@
 -->
 
 
-_Spect_ is state-of-the-art DOM framework, putting together symbiotically _aspects_, _observables_ and _effects_. It is inspired by [_react hooks_](https://reactjs.org/docs/hooks-intro.html), [_observ-_](https://www.npmjs.com/package/observable) and [_aspect-oriented programming_](https://en.wikipedia.org/wiki/Aspect-oriented_programming), with simplicity of [_jquery_](https://ghub.io/jquery).
+_Spect_ is state-of-the-art DOM framework, putting together _aspects_, _observables_ and _effects_. It is inspired by [_react hooks_](https://reactjs.org/docs/hooks-intro.html), [_observ-*_](https://www.npmjs.com/package/observable) and [_aspect-oriented programming_](https://en.wikipedia.org/wiki/Aspect-oriented_programming), with simplicity of [_jquery_](https://ghub.io/jquery).
 
 ## Principles
 
-:gem: **Separation of concerns** − comes with _aspects_, small pieces of logic assigned to elements.
+:gem: **Separation of concerns** comes with _aspects_ − fragments of logic assigned to elements.
 
-:deciduous_tree: **Native first** − encourages semantic clean tree and native API. Vanilla-components friendly.
+:deciduous_tree: **Native first** − encourages semantic clean tree and native API, vanilla-components friendly.
 
 :ocean: **Progressive enhancement** − multiple aspects provide extendable functionality.
 
@@ -83,7 +83,7 @@ _Spect_ plays perfectly with [snowpack](https://www.snowpack.dev/), but any othe
 
 ## Usage
 
-Let's start with simple user welcoming example.
+Consider simple user welcoming example.
 
 ```js
 <div class="user">Loading...</div>
@@ -101,9 +101,10 @@ $('.user', async el => {
 </script>
 ```
 
-Here, the _**`$`**_ assigns an _aspect function_ to the `.user` element. _**`state`**_ here acts as _useState_, but creates an observable `username`. _**`html`**_ is reactive − it rerenders automatically whenever `username` changes.
+The `$` assigns an _aspect function_ to the `.user` element. `state` here acts as _useState_, but creates an observable `username`. `html` is reactive − it rerenders automatically whenever `username` changes.
 
-Let's implement simple todo app.
+<!--
+Consider simple todo app.
 
 ```js
 <form class="todo">
@@ -132,8 +133,9 @@ $('.todo-form', el => on(el, 'submit', e => {
 ```
 
 Input element here is uncontrolled and logic closely follows native js to provide _progressive enhancement_. _**`list`**_ creates an observable array `todos`, mutating it automatically rerenders _**`html`**_.
+-->
 
-For more examples, see [/examples](examples).
+See all [/examples](examples).
 
 <!--
 See all examples...
