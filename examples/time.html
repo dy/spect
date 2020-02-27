@@ -1,16 +1,18 @@
 <time id="current-time"></time>
 
 <script type="module">
-  import { $, fx, state } from "https://unpkg.com/spect?module"
+  // import { $, fx, state } from "https://unpkg.com/spect@latest/index.js?module"
+  import { $, fx, state } from "../index.js"
 
   $('#current-time', el => {
     const date = state(new Date())
 
     fx(() => {
-      el.innerHTML = date().toLocaleString('en-CA', { timeStyle: 'medium' })
-      el.setAttribute('datetime', date().toISOString('en-CA'))
+      el.innerHTML = date().toLocaleTimeString()
+      el.setAttribute('datetime', date().toISOString())
 
       setTimeout(() => date(new Date()), 1000)
     }, [date])
   })
 </script>
+
