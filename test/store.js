@@ -10,7 +10,7 @@ t('store: core', async t => {
   let s = store({x: 1})
   let log = []
   fx(s => {
-    log.push(s)
+    log.push({...s})
   }, [s])
 
   await tick(8)

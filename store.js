@@ -1,23 +1,22 @@
-// import createRef, { _current } from './src/ref.js'
+import bus from './src/bus.js'
 
 export default function store(obj = {}) {
-  const ref = createRef(obj)
+  const channel = bus(() => obj)
 
   const proxy = new Proxy(
-    Object.assign(Object.create({
-      [Symbol.asyncIterator]: ref[Symbol.asyncIterator],
-      [_current]: ref[_current]
+    obj = Object.assign(Object.create({
+      [Symbol.asyncIterator]: channel[Symbol.asyncIterator]
     }), obj), {
     set(obj, prop, value) {
       if (Object.is(obj[prop], value)) return true
       obj[prop] = value
-      ref(obj)
+      channel(obj)
       return true
     },
     deleteProperty(obj, prop) {
       if (prop in obj) {
         delete obj[prop]
-        ref(obj)
+        channel(obj)
         return true
       }
       else {
