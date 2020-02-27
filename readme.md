@@ -26,7 +26,7 @@
     const date = state(new Date())
 
     html`<${el} datetime=${ date }>
-      ${() => date().toLocaleTimeString()}
+      ${ date.toLocaleTimeString() }
     </>`
 
     let interval = setInterval(() => {
@@ -426,11 +426,11 @@ Similar to _useEffect_, but `deps` are changeables, any of:
 * _AsyncIterator or [_async iterable_](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Symbol/asyncIterator)
 * _Promise_ or _thenable_
 * _Observable_ or _subscribable_, eg. [rxjs](https://ghub.io/rxjs), [es-observable](https://ghub.io/es-observable), [zen-observable](https://ghub.io/zen-observable) etc.
-* [observable](https://ghub.io), [observ](https://ghub.io) or [mutant](https://ghub.io/mutant)
+* [observ-*](https://ghub.io/observ), [observable](https://ghub.io/observable) or [mutant](https://ghub.io/mutant)
 * [_Stream_](https://nodejs.org/api/stream.html)
 * other value is considered constant.
 
-When any dependency updates, the `callback` runs with new arguments, invoking previous `teardown` function. Omitted `deps` trigger `callback` only once as microtask.
+When any dependency updates, the `callback` runs with new arguments, invoking previous `teardown` function. Omitted `deps` trigger `callback` only once as microtask. If deps have value immediately available value, then `fx` is run synchronously.
 
 ```js
 import { state, fx } from 'spect'
