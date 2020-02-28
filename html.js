@@ -110,12 +110,14 @@ export default function htm (statics) {
           // FIXME: find out should we reset element attribs when element changes
           fx((el, props) => {
             let origProps = {}, origAttrs = {}
+
             for (let p in props) {
+              let value = props[p]
               origProps[p] = el[p]
-              el[p] = props[p]
+              el[p] = value
               if (el.getAttribute) {
                 origAttrs[p] = attr(el, p)
-                attr(el, p, props[p])
+                attr(el, p, typeof value === 'function' ? value() : value)
               }
             }
 
@@ -162,10 +164,11 @@ export default function htm (statics) {
     })
 
   let els = [], prevEl
+
   current.map(el => Array.isArray(el) ? el[1]() : el()).forEach(el => {
-    if (prevEl && prevEl.nodeType === TEXT_NODE && el.nodeType === TEXT_NODE) return prevEl.nodeValue += el.nodeValue
+    // if (prevEl && prevEl.nodeType === TEXT_NODE && el.nodeType === TEXT_NODE) return prevEl.nodeValue += el.nodeValue
+    // prevEl = el
     els.push(el)
-    prevEl = el
     if (el[_group]) el[_group].map(el => els.push(el))
   })
 
@@ -207,7 +210,7 @@ function create(arg) {
   // can be an array / array-like
   if (Array.isArray(arg) || arg[Symbol.iterator]) {
     let marker = document.createTextNode('')
-    marker[_group] = [...arg].map(arg => create(arg))
+    marker[_group] = [...arg].flat().map(arg => create(arg))
     return marker
   }
 

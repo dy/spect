@@ -2,10 +2,10 @@ import SelectorSet from 'selector-set'
 import bus from './src/bus.js'
 import tuple from 'immutable-tuple'
 
-const _callbacks = Symbol.for('__spect.callbacks')
-const _destroyPlanned = Symbol.for('__spect.destroyPlanned')
-const _observer = Symbol.for('__spect.observer')
-const _attrAspects = Symbol.for('__spect.attrAspects')
+const _callbacks = Symbol.for('@@spect.callbacks')
+const _destroyPlanned = Symbol.for('@@spect.destroyPlanned')
+const _observer = Symbol.for('@@spect.observer')
+const _attrAspects = Symbol.for('@@spect.attrAspects')
 const set = new SelectorSet
 
 // element-based aspect
