@@ -12,7 +12,7 @@
   <img src="https://img.shields.io/badge/stability-unstable-yellowgreen"/>
 </p>
 
-<p align="center"><img src="/preview.png" width="633"/></p>
+<p align="center"><img src="/preview.png" width="649"/></p>
 <p align="center">▶ <a href="https://codepen.io/dyv/pen/oNXXZEb" target="_blank"><strong>Run</strong></a></p>
 <br/>
 
@@ -20,20 +20,18 @@
 <time id="clock"></time>
 
 <script type="module">
-  import { $, html, state } from "https://unpkg.com/spect"
+  import { $, html, state, calc } from "https://unpkg.com/spect"
 
   $('#clock', el => {
     const date = state(new Date())
 
     html`<${el} datetime=${ date }>
-      ${ date.toLocaleTimeString() }
+      ${ calc(d => d.toLocaleTimeString(), [date]) }
     </>`
 
-    let interval = setInterval(() => {
-      date(new Date())
-    }, 1000)
+    let id = setInterval(() => date(new Date()), 1000)
 
-    return () => clearInterval(interval)
+    return () => clearInterval(id)
   })
 </script>
 -->

@@ -78,12 +78,6 @@ export default function bus(get, set, teardown) {
     },
     then(y, n) {
       return promise.then(y, n)
-    },
-    map(fn) {
-      let curr
-      let mapped = bus(() => curr, null)
-      channel[_observable]().subscribe(bus)
-      return mapped
     }
   })
 

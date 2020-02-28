@@ -1,18 +1,17 @@
-<time id="current-time"></time>
+<time id="clock"></time>
 
 <script type="module">
-  // import { $, fx, state } from "https://unpkg.com/spect@latest/index.js?module"
-  import { $, fx, state } from "../index.js"
+  import { $, html, state, calc } from "https://unpkg.com/spect"
 
-  $('#current-time', el => {
+  $('#clock', el => {
     const date = state(new Date())
 
-    fx(() => {
-      el.innerHTML = date().toLocaleTimeString()
-      el.setAttribute('datetime', date().toISOString())
+    html`<${el} datetime=${ date }>
+      ${ calc(d => d.toLocaleTimeString(), [date]) }
+    </>`
 
-      setTimeout(() => date(new Date()), 1000)
-    }, [date])
+    let id = setInterval(() => date(new Date()), 1000)
+
+    return () => clearInterval(id)
   })
 </script>
-
