@@ -130,6 +130,7 @@ t('html: delayed init', async t => {
   await tick(28)
   t.is(w.outerHTML, `<x></x>`)
 })
+
 t('html: 2-level fragment', async t => {
   let w = html`<x> <y> </y> </x>`
   t.is(w.outerHTML, `<x> <y> </y> </x>`)
@@ -161,18 +162,17 @@ t('html: simple hydrate', async t => {
   t.is(el.outerHTML, `<a>foo <bar><baz class="qux"></baz></bar></a>`)
 })
 
-t.skip('html: function renders external component', async t => {
+t('html: function renders external component', async t => {
   let el = html`<a>foo <${bar}/></><b/>`
 
   function bar () {
     return html`<bar/><baz/>`
   }
-
-  t.is(el.firstChild.outerHTML, `<a>foo <bar></bar><baz></baz></a>`)
-  t.is(el.lastChild.outerHTML, `<b></b>`)
+  t.is(el[0].outerHTML, `<a>foo <bar></bar><baz></baz></a>`)
+  t.is(el[1].outerHTML, `<b></b>`)
 })
 
-t.skip('html: rerendering with props: must persist', async t => {
+t('html: rerendering with props: must persist', async t => {
   let el = document.createElement('x')
   let div = document.createElement('div')
 
@@ -230,8 +230,19 @@ t('html: reinsert self content', async t => {
   t.is(el.outerHTML, `<div>a <b>c <d>e <f></f> g</d> h</b> i</div>`)
 })
 
-t.todo('html: changeable tag preserves/remounts children', t => {
-
+t('html: changeable tag preserves/remounts children', async t => {
+  let tag = state('a')
+  let frag = html`<><${tag}/></>`
+  t.is(frag.outerHTML, '<><a></a></>')
+  await tick(8)
+  t.is(frag.outerHTML, '<><a></a></>')
+  tag('b')
+  t.is(frag.outerHTML, '<><a></a></>')
+  await tick(8)
+  t.is(frag.outerHTML, '<><b></b></>')
+  tag(null)
+  await tick(8)
+  t.is(frag.outerHTML, '<></>')
 })
 
 t('html: wrapping', async t => {
@@ -386,9 +397,21 @@ t('html: does not duplicate classes for container', t => {
   t.is(el.outerHTML, '<div class="x"></div>')
 })
 
-t.todo('html: secondary rendering must dispose previous effects')
+t('html: multiple rendered observables', async t => {
+  let a = state(0), b = state(1)
 
-t.todo('html: mapped list rendering case')
+  let el = document.createElement('a')
+  html`<${el}>${ a }</>`
+  html`<${el}>${ b }</>`
+
+  t.is(el.outerHTML, `<a>1</a>`)
+  a(2)
+  await tick(8)
+  t.is(el.outerHTML, `<a>1</a>`)
+  b(3)
+  await tick(8)
+  t.is(el.outerHTML, `<a>3</a>`)
+})
 
 t('html: legacy readme default', async t => {
   let div = document.createElement('div')
@@ -485,15 +508,6 @@ t('legacy html: direct component rerendering should keep children', async t => {
   function fn () { return html`<abc/>` }
 })
 
-t.todo('legacy html: extended component rerendering should not destroy instance', async t => {
-  let el = html`<div><div is=${fn}/></div>`
-  let child = el.firstChild
-  html`<${el}><div.foo is=${fn}/></>`
-  let child1 = el.firstChild
-  t.equal(child1, child)
-  function fn(el) { }
-})
-
 t('html: functional components create element', t => {
   let log = []
   let el = html`<${el => {
@@ -502,21 +516,6 @@ t('html: functional components create element', t => {
     return e
   }}/>`
   t.is(log, [el])
-})
-
-t.skip('html: use assigned via prop', t => {
-  let log = []
-  let el = html`<a use=${el => {
-    log.push(el.tagName.toLowerCase())
-    let e = document.createElement('b')
-    return e
-  }}/>`
-  t.is(log, ['a'])
-  t.is(el.tagName.toLowerCase(), 'b')
-})
-
-t.todo('html: is=string works fine', t => {
-  let a = html`<a is=superA />`
 })
 
 t('html: assigned id must be accessible', async t => {
@@ -585,15 +584,6 @@ t('html: update own children', t => {
   t.is(el.outerHTML, '<div>123</div>')
 })
 
-t.skip('html: must not replace self', t => {
-  let el = html`<x is=${x} />`
-  t.is(el.outerHTML, '<x></x>')
-  function x ({element}) {
-    return html`<${element}/>`
-  }
-  t.is(el.outerHTML, '<x></x>')
-})
-
 t('html: externally assigned props must be available', async t => {
   let el = html`<x x=${1}/>`
   document.body.appendChild(el)
@@ -616,15 +606,6 @@ t('html: streams must update values dynamically', async t => {
 t('html: direct value', async t => {
   let x = html`${1}`
   t.is(x.nodeType, 3)
-})
-
-t.todo('legacy html: rerendering extended component should not register anonymous function')
-
-t.todo('legacy html: fake gl layers', t => {
-  html`<canvas is=${GlCanvas}>
-    <${GlLayer}>${gl => { }}<//>
-    <${GlLayer}>${gl => { }}<//>
-  </canvas>`
 })
 
 t('html: insert nodes list', t => {
@@ -712,7 +693,9 @@ t.todo('html: nested fragments', t => {
   t.equal(el.outerHTML, '<><a>a</a><b>b<c></c></b></>')
 })
 
-t.todo('legacy html: class components')
+t.skip('html: class components', async t => {
+  // doesn't seem like registering web-component is spect's concern
+})
 
 t('html: null-like insertions', t => {
   let a = html`<a>foo ${ null } ${ undefined } ${ false } ${0}</a>`
@@ -725,23 +708,7 @@ t('html: null-like insertions', t => {
   t.is(c.textContent, '')
 })
 
-t.todo('legacy html: removing aspected element should trigger destructor', async t => {
-  let log = []
-  let $el = html`<foo><bar use=${fn} /></foo>`
-
-  function fn (el) {
-    log.push(1)
-    return () => log.push(2)
-  }
-
-  await $el
-  t.is(log, [1])
-
-  $el.html`<baz/>`
-  await $el
-})
-
-t('legacy html: 50+ elements shouldnt invoke recursion', t => {
+t('html: 50+ elements shouldnt invoke recursion', t => {
   let data = Array(100).fill({x:1})
 
   let el = html`${ data.map(item => html`<${fn} ...${item}/>`) }`

@@ -95,7 +95,10 @@ export default function htm (statics) {
           current[1] = calc(tag => {
             // fixme: how much sense does it make to alloc here?
             // only hydrating existing target
-            if (!currentEl) return currentEl = alloc(!current[0].root && current[0][1](), { tag, props: props() })
+            if (!currentEl) {
+              currentEl = alloc(!current[0].root && current[0][1](), { tag, props: props() })
+              return currentEl
+            }
             if (typeof tag !== 'string' || tag.toLowerCase() !== currentEl.tagName.toLowerCase()) {
               let newNode = create({ tag, props: props() })
               // ensure children safety
