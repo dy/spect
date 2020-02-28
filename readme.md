@@ -423,9 +423,9 @@ Similar to _useEffect_, but `deps` are changeables, any of:
 <!-- _**`dfx`**_ is delta _**`fx`**_ it reacts only to changed state. -->
 
 * _Source_
-* _AsyncIterator or [_async iterable_](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Symbol/asyncIterator)
+* _AsyncIterator_ or [_async iterable_](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Symbol/asyncIterator)
 * _Promise_ or _thenable_
-* _Observable_ or _subscribable_, eg. [rxjs](https://ghub.io/rxjs), [es-observable](https://ghub.io/es-observable), [zen-observable](https://ghub.io/zen-observable) etc.
+* _Observable_ ([rxjs](https://ghub.io/rxjs), [es-observable](https://ghub.io/es-observable), [zen-observable](https://ghub.io/zen-observable) etc.)
 * [observ-*](https://ghub.io/observ), [observable](https://ghub.io/observable) or [mutant](https://ghub.io/mutant)
 * [_Stream_](https://nodejs.org/api/stream.html)
 * other value is considered constant.
@@ -492,6 +492,9 @@ const text = state('foobar')
 // create element
 const foo = html`<foo>${ text }</foo>`
 
+// update
+text('bazqux')
+
 // create multiple elements
 const [foo1, foo2] = html`<foo>1</foo><foo>2</foo>`
 
@@ -500,9 +503,6 @@ const foof = html`<><foo/></>`
 
 // hydrate element with `foo` as content
 const bar = html`<${document.querySelector('#bar')}>${ foo }</>`
-
-// update
-text('bazqux')
 ```
 
 #### Example
