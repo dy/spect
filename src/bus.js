@@ -1,6 +1,7 @@
 // ref + channel = bus
 import Cancelable from './cancelable.js'
 import _observable from 'symbol-observable'
+import from, { subscribable } from './from.js'
 
 export const _bus = Symbol.for('@@spect.bus')
 
@@ -17,6 +18,19 @@ export default function bus(get, set, teardown) {
   const channel = function (value) {
     if (arguments.length) {
       if (promise.canceled) throw Error('Channel is canceled')
+
+      // if (subscribable(value)) {
+      //   let observer = from(value)
+      //   observer.subscribe(value => channel(value))
+      //   console.log(observer)
+      //   return observer
+      // }
+
+      // if (typeof value === 'function') {
+      //   let output = bus(() => channel())
+      //   channel.subscribe(output)
+      //   return output
+      // }
 
       let notify = set ? set(value) : null
 
@@ -54,20 +68,17 @@ export default function bus(get, set, teardown) {
       }
     },
 
-    [_observable]() {
+    subscribe(next) {
+      if (next.next) next = next.next
+      subs.push(next)
       return {
-        subscribe(next) {
-          if (next.next) next = next.next
-          subs.push(next)
-          return {
-            unsubscribe() {
-              subs.splice(subs.indexOf(next) >>> 0, 1)
-            }
-          }
-        },
-        [_observable](){ return this }
+        unsubscribe() {
+          subs.splice(subs.indexOf(next) >>> 0, 1)
+        }
       }
     },
+
+    [_observable]() { return channel },
 
     // Promise
     cancel() {

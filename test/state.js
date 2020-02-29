@@ -1,9 +1,9 @@
 import t from 'tst'
-import { $, state, fx, prop, store, calc, ref, attr, on } from '../index.js'
+import { $, state, fx, prop, store, calc, attr, on } from '../index.js'
 import { tick, frame, idle, time } from 'wait-please'
 import { augmentor, useState, useEffect, useMemo } from 'augmentor'
 import Observable from 'zen-observable/esm'
-import observable from './observable.js'
+import observable, { bind2, bind1 } from './observable.js'
 
 t('state: core', async t => {
   let s = state(0)
@@ -58,4 +58,14 @@ t('state: should not expose technical symbols', async t => {
     log.push(p)
   }
   t.is(log, ['x'])
+})
+
+t.skip('state: function/other state gets subscribed', async t => {
+  let s = state(1)
+  let s2 = state(s)
+  console.log(s2())
+
+  t.is(s2(), 1)
+  s(2)
+  t.is(s2(), 2)
 })

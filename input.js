@@ -1,7 +1,9 @@
 import bus from './src/bus.js'
 
 export default function input (el) {
-  const update = e => channel(el.value)
+  const update = e => {
+    channel(el.value)
+  }
   el.addEventListener('change', update)
   el.addEventListener('input', update)
 

@@ -1,5 +1,6 @@
 import calc from './calc.js'
-import fx, { primitive } from './fx.js'
+import fx from './fx.js'
+import { primitive } from './src/from.js'
 
 const FIELD = '\ue000', QUOTES = '\ue001'
 const TEXT_NODE = 3, ELEMENT_NODE = 1

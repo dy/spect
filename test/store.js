@@ -1,5 +1,5 @@
 import t from 'tst'
-import { $, state, fx, prop, store, calc, ref, attr, on } from '../index.js'
+import { $, state, fx, prop, store, calc, attr, on } from '../index.js'
 import { tick, frame, idle, time } from 'wait-please'
 import { augmentor, useState, useEffect, useMemo } from 'augmentor'
 import Observable from 'zen-observable/esm'
@@ -15,7 +15,6 @@ t('store: core', async t => {
 
   await tick(8)
   t.is(log, [{x: 1}], 'init state')
-
   s.x = 2
   await tick(8)
   t.is(log, [{x: 1}, {x: 2}], 'change prop')

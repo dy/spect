@@ -26,7 +26,7 @@
     const date = state(new Date())
 
     html`<${el} datetime=${ date }>
-      ${ calc(d => d.toLocaleTimeString(), [date]) }
+      ${ date(d => d.toLocaleTimeString()) }
     </>`
 
     let id = setInterval(() => date(new Date()), 1000)

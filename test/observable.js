@@ -1,9 +1,9 @@
 // bind a to b -- One Way Binding
-function bind1(a, b) {
+export function bind1(a, b) {
   a(b()); b(a)
 }
 //bind a to b and b to a -- Two Way Binding
-function bind2(a, b) {
+export function bind2(a, b) {
   b(a()); a(b); b(a);
 }
 

@@ -1,5 +1,5 @@
 import t from 'tst'
-import { $, state, fx, prop, store, calc, ref, attr, on, list } from '../index.js'
+import { $, state, fx, prop, store, calc, attr, on, list } from '../index.js'
 import { tick, frame, idle, time } from 'wait-please'
 import { augmentor, useState, useEffect, useMemo } from 'augmentor'
 import Observable from 'zen-observable/esm'
@@ -51,7 +51,7 @@ t('fx: destructor', async t => {
 })
 t.todo('fx: disposed by unmounted element automatically')
 t('fx: runs unchanged', async t => {
-  let a = ref(0)
+  let a = state(0)
   let log = []
   fx(a => {
     log.push(a)

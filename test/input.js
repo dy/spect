@@ -1,5 +1,5 @@
 import t from 'tst'
-import { $, state, fx, input, store, calc, ref, attr, on } from '../index.js'
+import { $, state, fx, input, store, calc, attr, on } from '../index.js'
 import { tick, frame, idle, time } from 'wait-please'
 import { augmentor, useState, useEffect, useMemo } from 'augmentor'
 import Observable from 'zen-observable/esm'
