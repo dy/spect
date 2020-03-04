@@ -10,11 +10,12 @@ t('state: core', async t => {
 
   // observer 1
   let log = []
-  ;(async () => { for await (let value of s) log.push(value) })()
+  // ;(async () => { for await (let value of s) log.push(value) })()
+  s(value => log.push(value))
 
-  t.equal(+s, 0, 'toPrimitive')
-  t.equal(s.valueOf(), 0, 'valueOf')
-  t.equal(s.toString(), 0, 'toString')
+  // t.equal(+s, 0, 'toPrimitive')
+  // t.equal(s.valueOf(), 0, 'valueOf')
+  // t.equal(s.toString(), 0, 'toString')
   t.equal(s(), 0, 's()')
 
   await tick()
@@ -24,16 +25,18 @@ t('state: core', async t => {
   // t.equal(+s, 1, 'state.current = value')
 
   s(2)
-  t.equal(+s, 2, 'state(value)')
+  // t.equal(+s, 2, 'state(value)')
+  t.equal(s(), 2, 'state(value)')
 
   // DEPRECATED: functional setter is deprecated
   // s(c => (t.equal(c, 2, 'state(old => )'), 3))
-  s(s + 1)
-  t.equal(+s, 3, 'state(state + value)')
+  s(s() + 1)
+  t.equal(s(), 3, 'state(state + value)')
 
   // observer 2
   let log2 = []
-  ;(async () => { for await (let value of s) log2.push(value) })()
+  // ;(async () => { for await (let value of s) log2.push(value) })()
+  s(value => log2.push(value))
 
   await tick(8)
   t.deepEqual(log.slice(-1), [3], 'should track and notify first tick changes')
