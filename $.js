@@ -1,5 +1,5 @@
 import SelectorSet from 'selector-set'
-import bus from './src/bus.js'
+import channel from './channel.js'
 import tuple from 'immutable-tuple'
 
 const _callbacks = Symbol.for('@@spect.callbacks')
@@ -7,6 +7,8 @@ const _destroyPlanned = Symbol.for('@@spect.destroyPlanned')
 const _observer = Symbol.for('@@spect.observer')
 const _attrAspects = Symbol.for('@@spect.attrAspects')
 const set = new SelectorSet
+
+const CANCEL = null
 
 // element-based aspect
 export default function spect(context, target, fn) {
@@ -22,7 +24,7 @@ export default function spect(context, target, fn) {
     return $(context, target, fn)
   }
 
-  let offs = []
+  let offs = [], chan = channel()
 
   // spect({'.x': a, '.y': b})
   if (arguments.length === 1) {
@@ -45,12 +47,11 @@ export default function spect(context, target, fn) {
 
   // spect(target, fn)
   else {
-    let channel = bus(null, null, e => destroyCallback(target, fn))
     initCallback(target, fn)
-    return channel
+    return (...args) => args[0] === CANCEL ? destroyCallback(target, fn) : chan(...args)
   }
 
-  return bus(null, null, e => offs.map($c => $c.cancel(e)))
+  return (...args) => args[0] === CANCEL ? offs.map(c => c(CANCEL)) : chan(...args)
 }
 
 // selector-based aspect
@@ -109,21 +110,22 @@ function $(scope, selector, fn) {
     })
   }
 
-  const aspect = el => {let destroy = fn(el); channel(el); return destroy}
-  const channel = bus(null, null, () => {
+  const chan = channel(), aspect = el => {let destroy = fn(el); chan(el); return destroy}
+
+  const off = () => {
     set.queryAll(scope).forEach(rule => rule.elements.forEach(el => destroyCallback(el, rule.data)))
     set.remove(selector, aspect)
     if (!set.size) {
       scope[_observer].disconnect()
       delete scope[_observer]
     }
-  })
+  }
 
   set.add(selector, aspect)
   // set.matches(scope).forEach(rule => initCallback(scope, rule.data))
   set.queryAll(scope).forEach(rule => rule.elements.forEach(el => initCallback(el, rule.data)))
 
-  return channel
+  return (...args) => args[0] === CANCEL ? off() : chan(...args)
 }
 
 function initCallback(el, fn) {
