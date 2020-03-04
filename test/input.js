@@ -5,16 +5,23 @@ import { augmentor, useState, useEffect, useMemo } from 'augmentor'
 import Observable from 'zen-observable/esm'
 import observable from './observable.js'
 
-t.browser('input: core', async t => {
+t.browser('input: text', async t => {
   let el = document.createElement('input')
   document.body.appendChild(el)
-  let value = input(el)
+  let text = input(el)
 
-  ;(async () => { for await (const v of value) {
-    console.log(v)
-  }})();
+  // ;(async () => { for await (const v of value) {
+    // console.log(v)
+  // }})();
+  text(v => console.log(v))
 
   // document.body.removeChild(el)
+
+  let cb = document.createElement('input')
+  cb.setAttribute('type', 'checkbox')
+  document.body.appendChild(cb)
+  let bool = input(cb)
+  bool(v => console.log(v))
 })
 
 t('input: updates by changing value directly', async t => {
@@ -25,9 +32,12 @@ t('input: updates by changing value directly', async t => {
 
   // observer 1
   let log = []
-  ;(async () => { for await (const v of value) {
-    log.push(v)
-  }})();
+  ;(async () => {
+    // for await (const v of value) {
+    //   log.push(v)
+    // }
+    value(v => log.push(v))
+  })();
 
   await tick(2)
   t.is(log, ['0'], 'initial value notification')
@@ -47,20 +57,20 @@ t('input: updates by changing value directly', async t => {
   el.value = 5
   el.dispatchEvent(new Event('change'))
   await tick(8)
-  t.is(log, ['0', '1', '2', '5'], 'updates to latest value')
+  t.is(log.slice(-1), ['5'], 'updates to latest value')
 
   el.value = 6
   el.dispatchEvent(new Event('change'))
   t.is(el.value, '6', 'reading value')
   await tick(8)
-  t.is(log, ['0', '1', '2', '5', '6'], 'reading has no side-effects')
+  t.is(log.slice(-1), ['6'], 'reading has no side-effects')
 
-  value.cancel()
+  value(null)
   el.value = 7
   el.dispatchEvent(new Event('change'))
   t.is(el.value, '7', 'end destructs inputerty')
   await tick(10)
-  t.is(log, ['0', '1', '2', '5', '6'], 'end destructs inputerty')
+  t.is(log.slice(-1), ['6'], 'end destructs inputerty')
 })
 t('input: get/set', async t => {
   let el = document.createElement('input')
@@ -103,4 +113,31 @@ t.skip('input: direct value set off-focus emits event', async t => {
   await tick(8)
   t.is(log, ['', '1'])
   t.is(i(), '1')
+})
+
+t('input: checkboxes', async t => {
+  let el = document.createElement('input')
+  el.type = 'checkbox'
+  // document.body.appendChild(el)
+  let bool = input(el)
+  t.is(bool(), false)
+  t.is(el.checked, false)
+  t.is(el.value, '')
+
+  el.checked = true
+  el.dispatchEvent(new Event('change'))
+  t.is(bool(), true)
+  t.is(el.checked, true)
+  t.is(el.value, 'on')
+
+  bool(false)
+  t.is(bool(), false)
+  t.is(el.checked, false)
+  t.is(el.value, '')
+
+  bool(null)
+  bool(true)
+  t.is(bool(), false)
+  t.is(el.checked, false)
+  t.is(el.value, '')
 })
