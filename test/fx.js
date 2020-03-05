@@ -1,7 +1,6 @@
 import t from 'tst'
-import { $, state, fx, prop, store, calc, attr, on, list } from '../index.js'
+import { $, state, fx, prop, on } from '../index.js'
 import { tick, frame, idle, time } from 'wait-please'
-import { augmentor, useState, useEffect, useMemo } from 'augmentor'
 import Observable from 'zen-observable/esm'
 import observable from './observable.js'
 
@@ -183,7 +182,7 @@ t.skip('fx: function deps', async t => {
   t.is(log, [0, 0, 1, 1])
 })
 t.skip('fx: deps length change', async t => {
-  let deps = [1]
+  let deps = [state(1)]
   let log = []
   fx((...args) => {
     log.push(args)
@@ -191,7 +190,7 @@ t.skip('fx: deps length change', async t => {
   await tick(8)
   t.is(log, [[1]])
 
-  deps.push(2)
+  deps.push(state(2))
   await tick(8)
   t.is(log, [[1], [1,2]])
 })

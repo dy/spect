@@ -10,7 +10,8 @@ import on from './on.js'
 import input from './input.js'
 import html from './html.js'
 import value from './value.js'
+import from from './from.js'
 
 export default $
 
-export { $, fx, state, prop, attr, value, list, store, calc, on, input, html }
+export { $, fx, state, prop, attr, value, list, store, calc, on, input, html, from }
