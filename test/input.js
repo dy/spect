@@ -148,7 +148,7 @@ t('input: checkbox', async t => {
 t('input: select', async t => {
   let el = document.createElement('select')
   el.innerHTML = '<option value=1 selected>A</option><option value=2>B</option>'
-  document.body.appendChild(el)
+  // document.body.appendChild(el)
   let value = input(el)
   t.is(value(), '1')
   t.is(el.value, '1')
@@ -170,3 +170,8 @@ t('input: select', async t => {
   t.is(el.innerHTML, '<option value="1" selected="">A</option><option value="2">B</option>')
   t.is(el.value, '1')
 })
+
+t.todo('input: radio')
+t.todo('input: range')
+t.todo('input: date')
+t.todo('input: multiselect')
