@@ -5,22 +5,25 @@ import { augmentor, useState, useEffect, useMemo } from 'augmentor'
 import Observable from 'zen-observable/esm'
 import observable from './observable.js'
 
-t.browser('input: text', async t => {
+t('input: text', async t => {
   let el = document.createElement('input')
   document.body.appendChild(el)
   let text = input(el)
-
   // ;(async () => { for await (const v of value) {
     // console.log(v)
   // }})();
   text(v => console.log(v))
 
-  // document.body.removeChild(el)
-
   let cb = document.createElement('input')
   cb.setAttribute('type', 'checkbox')
   document.body.appendChild(cb)
   let bool = input(cb)
+  bool(v => console.log(v))
+
+  let sel = document.createElement('select')
+  sel.innerHTML = `<option value=1>A</option><option value=2>B</option>`
+  document.body.appendChild(sel)
+  let enm = input(sel)
   bool(v => console.log(v))
 })
 
@@ -115,7 +118,7 @@ t.skip('input: direct value set off-focus emits event', async t => {
   t.is(i(), '1')
 })
 
-t('input: checkboxes', async t => {
+t('input: checkbox', async t => {
   let el = document.createElement('input')
   el.type = 'checkbox'
   // document.body.appendChild(el)
@@ -140,4 +143,30 @@ t('input: checkboxes', async t => {
   t.is(bool(), false)
   t.is(el.checked, false)
   t.is(el.value, '')
+})
+
+t('input: select', async t => {
+  let el = document.createElement('select')
+  el.innerHTML = '<option value=1 selected>A</option><option value=2>B</option>'
+  document.body.appendChild(el)
+  let value = input(el)
+  t.is(value(), '1')
+  t.is(el.value, '1')
+
+  el.value = '2'
+  el.dispatchEvent(new Event('change'))
+  t.is(value(), '2')
+  t.is(el.value, '2')
+  t.is(el.innerHTML, '<option value="1">A</option><option value="2" selected="">B</option>')
+
+  value('1')
+  t.is(value(), '1')
+  t.is(el.innerHTML, '<option value="1" selected="">A</option><option value="2">B</option>')
+  t.is(el.value, '1')
+
+  value(null)
+  value('2')
+  t.is(value(), '1')
+  t.is(el.innerHTML, '<option value="1" selected="">A</option><option value="2">B</option>')
+  t.is(el.value, '1')
 })
