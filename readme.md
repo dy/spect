@@ -1,7 +1,7 @@
 <div align="center"><img src="https://avatars3.githubusercontent.com/u/53097200?s=200&v=4" width=108 /></div>
 <p align="center"><h1 align="center">spect</h1></p>
 <p align="center">
-  Micro DOM <em>aspects</em> with <em>effects</em> and <em>observables</em>.<br/>
+  Modern _observable_ with _aspects_ and _hooks_.<br/>
   <!-- Build reactive UIs with rules, similar to CSS.<br/> -->
   <!-- Each rule specifies an <em>aspect</em> function, carrying a piece of logic.<br/> -->
 </p>
@@ -37,21 +37,21 @@
 -->
 
 
-_Spect_ is state-of-the-art DOM framework, putting together _aspects_, _observables_ and _effects_. It is inspired by [_react hooks_](https://reactjs.org/docs/hooks-intro.html), [_observ-*_](https://www.npmjs.com/package/observable) and [_aspect-oriented programming_](https://en.wikipedia.org/wiki/Aspect-oriented_programming), with simplicity of [_jquery_](https://ghub.io/jquery).
+_Spect_ is modern remake on [_observable_](https://www.npmjs.com/package/observable) (underrated library, providing the most elegant and expressive UI code), inspirited by [_react hooks_](https://reactjs.org/docs/hooks-intro.html), [_aspect-oriented programming_](https://en.wikipedia.org/wiki/Aspect-oriented_programming) and [_jquery_](https://ghub.io/jquery). It is compatible with [observable](https://ghub.io/observable), [observ](https://ghub.io/observ), [mutant](https://ghub.io/mutant).
 
 ## Principles
 
-:gem: **Separation of concerns** comes with _aspects_ − fragments of logic assigned to elements.
+:gem: **Separation of cross-cutting concerns** via _aspects_ − fragments of logic assigned to elements.
 
-:deciduous_tree: **Native first** − encourages semantic clean tree and native API, vanilla-components friendly.
+:deciduous_tree: **Native first** − cares about semantic clean tree and encourages native API, vanilla friendly.
 
-:ocean: **Progressive enhancement** − multiple aspects provide extendable functionality.
+:ocean: **Progressive enhancement** − multiple aspects provide layers of functionality.
 
-:baby_chick: **Low entry barrier** − no complexity victims or hostages.
+:baby_chick: **Low entry barrier** − no complexity hostages and bureacratic code.
 
-:dizzy: **0** bundling, **0** server, **0** template − an html page with `<script>` is enough to get started.
+:dizzy: **0** bundling, **0** server, **0** template − an html page with `<script>` is enough.
 
-:shipit: **Low-profile** − doesn’t force structure or stack, can be used as utility.
+:shipit: **Low-profile** − doesn’t force stack and can be used as utility.
 
 
 ## Installation
@@ -254,17 +254,19 @@ Pending...
 <table>
   <tbody>
     <tr>
-      <td><strong>Effects:</strong></td>
+      <!-- <td><strong>Effects:</strong></td> -->
       <td>
         <a href="#$"><strong><em><code>$</code></em></strong></a> ⋅
         <a href="#on"><strong><em><code>on</code></em></strong></a> ⋅
         <a href="#fx"><strong><em><code>fx</code></em></strong></a> ⋅
-        <a href="#html"><strong><em><code>html</code></em></strong></a>
+        <a href="#html"><strong><em><code>html</code></em></strong></a> ⋅
+        <!--
       </td>
     </tr>
     <tr>
       <td><strong>Sources:</strong></td>
       <td>
+      -->
         <a href="#state"><strong><em><code>state</code></em></strong></a> ⋅
         <a href="#store"><strong><em><code>store</code></em></strong></a> ⋅
         <a href="#list"><strong><em><code>list</code></em></strong></a> ⋅
@@ -306,9 +308,6 @@ Pending...
 [_**`ref`**_](#ref) ⋅
 [_**`channel`**_](#channel)
 -->
-
-
-## Effects
 
 ### _`$`_
 
@@ -419,18 +418,7 @@ ticks.cancel()
 > fx( callback, deps=[] )
 
 Generic effect. Reacts to `deps` and runs `callback` function with `(...args) => teardown` signature.
-Similar to _useEffect_, but `deps` are changeables, any of:
-<!-- _**`dfx`**_ is delta _**`fx`**_ it reacts only to changed state. -->
-
-* _Source_
-* _AsyncIterator_ or [_async iterable_](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Symbol/asyncIterator)
-* _Promise_ or _thenable_
-* _Observable_ ([rxjs](https://ghub.io/rxjs), [es-observable](https://ghub.io/es-observable), [zen-observable](https://ghub.io/zen-observable) etc.)
-* [observ-*](https://ghub.io/observ), [observable](https://ghub.io/observable) or [mutant](https://ghub.io/mutant)
-* [_Stream_](https://nodejs.org/api/stream.html)
-* other value is considered constant.
-
-When any dependency updates, the `callback` runs with new arguments, invoking previous `teardown` function. Note: if deps value is immediately available, `fx` is run synchronously with current state. Skipped `deps` runs `fx` immediately once.
+Similar to _useEffect_, but `deps` are observables.
 
 ```js
 import { state, fx } from 'spect'
@@ -517,12 +505,35 @@ $('.timer', el => {
 })
 ```
 
+<br/>
+
+### _`from`_
+
+> obv = from( source, map? )
+
+Create a read-only observable from any source, one of:
+
+* _Function_ with subscription support or observable ([observ-*](https://ghub.io/observ), [observable](https://ghub.io/observable) or [mutant](https://ghub.io/mutant))
+* _AsyncIterator_ or [_async iterable_](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Symbol/asyncIterator)
+* _Promise_ or _thenable_
+* _Observable_ ([rxjs](https://ghub.io/rxjs), [es-observable](https://ghub.io/es-observable), [zen-observable](https://ghub.io/zen-observable) etc.)
+* [_Stream_](https://nodejs.org/api/stream.html)
+* any other value is considered constant.
+
+Direct analog of `transform`, can be useful to organize mapped observable values from existing observables.
+
+#### Example
+
+```js
+import { from } from 'spect'
+
+let date = state(new Date())
+setInterval(() => date(new Date()), 1000)
+from(date, date => date.toISOString())(date => console.log(date))
+```
 
 <br/>
 
-
-
-## Sources
 
 ### _`state`_
 
@@ -558,7 +569,6 @@ fx(c => {
 ```
 
 <br/>
-
 
 ### _`store`_
 
@@ -709,7 +719,7 @@ loading.close()
 
 > value = input( element )
 
-Input element current value source. Useful to track user input.
+Input element current value source. Useful to track user input. Works with text inputs, checkboxes, radio and select.
 
 ```js
 import { $, fx, input } from 'spect'
