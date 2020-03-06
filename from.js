@@ -17,7 +17,10 @@ export default function from(src, map) {
   }
   // Observable, xstream, rxjs etc (stateless)
   else if (src[_observable]) {
-    src[_observable]().subscribe({next: curr = channel()})
+    // WARN: we use value instead of channel here
+    // it has no-init call prevention, but further subscriptions will fire prev value
+    // so ideally use `from` for a single consumer
+    src[_observable]().subscribe({next: curr = value()})
   }
   // async iterator (stateful, initial undefined)
   else if (src.next || src[Symbol.asyncIterator]) {

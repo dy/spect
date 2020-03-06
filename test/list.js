@@ -1,17 +1,12 @@
 import t from 'tst'
 import { $, state, fx, list, prop, store, calc, attr, on } from '../index.js'
 import { tick, frame, idle, time } from 'wait-please'
-import { augmentor, useState, useEffect, useMemo } from 'augmentor'
-import Observable from 'zen-observable/esm'
-import observable from './observable.js'
 
 
 t('list: core', async t => {
   let s = list([1])
   let l
-  fx(s => {
-    l = s
-  }, [s])
+  fx(s => l = s, [s])
 
   await tick(8)
   t.is(l, [1], 'init state')
