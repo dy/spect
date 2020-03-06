@@ -251,7 +251,7 @@ Pending...
 
 ## API
 
-<details><summary><strong>$</trong></summary>
+<details><summary><strong>$</strong></summary>
 
 > $( scope? , selector | element, callback )
 
