@@ -69,7 +69,8 @@ t('attr: get/set', async t => {
   t.is(xs(), undefined)
 })
 
-t('attr: correct cleanup', async t => {
+t.skip('attr: correct cleanup', async t => {
+  // nope: user may clean up himself if needed. Not always resetting to orig value is required, mb temporary setter.
   let el = document.createElement('div')
   el.setAttribute('x', 1)
   let xs = attr(el, 'x')
