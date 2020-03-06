@@ -251,7 +251,7 @@ Pending...
 
 ## API
 
-<details><summary><strong><em><code>$</code></em></strong></summary>
+<details><summary><strong>$</trong></summary>
 
 > $( scope? , selector | element, callback )
 
@@ -304,7 +304,7 @@ timer.cancel()
 </details>
 
 
-<details><summary><strong><em><code>on</code></em></strong></summary>
+<details><summary><strong>on</strong></summary>
 
 > on( scope?, target | selector, event, callback? )
 
@@ -355,7 +355,7 @@ ticks.cancel()
 </details>
 
 
-<details><summary><strong><em><code>fx</code></em></strong></summary>
+<details><summary><strong>fx</strong></summary>
 
 > fx( callback, deps=[] )
 
@@ -407,7 +407,7 @@ timer.cancel()
 </details>
 
 
-<details><summary><strong><em><code>html</code></em></strong></summary>
+<details><summary><strong>html</strong></summary>
 
 > let el = html\`<tag ...${ props }>${ content }</>\`
 
@@ -450,7 +450,7 @@ $('.timer', el => {
 </details>
 
 
-<details><summary><strong><em><code>from</code></em></strong></summary>
+<details><summary><strong>from</strong></summary>
 
 > obv = from( source, map? )
 
@@ -478,7 +478,7 @@ from(date, date => date.toISOString())(date => console.log(date))
 </details>
 
 
-<details><summary><strong><em><code>state</code></em></strong></summary>
+<details><summary><strong>state</strong></summary>
 
 > value = state( init? )
 
@@ -514,7 +514,7 @@ fx(c => {
 </details>
 
 
-<details><summary><strong><em><code>store</code></em></strong></summary>
+<details><summary><strong>store</strong></summary>
 
 > obj = store( init = {} )
 
@@ -569,7 +569,7 @@ $('.likes-count', el => {
 
 </details>
 
-<details><summary><strong><em><code>list</code></em></strong></summary>
+<details><summary><strong>list</strong></summary>
 
 > arr = list([ ...items ])
 
@@ -599,7 +599,7 @@ let mapped = arr.map(x => x * 2)
 </details>
 
 
-<details><summary><strong><em><code>prop</code></em></strong></summary>
+<details><summary><strong>prop</strong></summary>
 
 > value = prop( target, name )
 
@@ -627,7 +627,7 @@ foos.cancel()
 
 </details>
 
-<details><summary><strong><em><code>attr</code></em></strong></summary>
+<details><summary><strong>attr</strong></summary>
 
 > value = attr( element, name )
 
@@ -659,7 +659,7 @@ loading.close()
 </details>
 
 
-<details><summary><strong><em><code>input</code></em></strong></summary>
+<details><summary><strong>input</strong></summary>
 
 > value = input( element )
 
@@ -685,7 +685,7 @@ $('input', el => {
 </details>
 
 
-<details><summary><strong><em><code>calc</code></em></strong></summary>
+<details><summary><strong>calc</strong></summary>
 
 > value = calc( state => result, args = [] )
 
