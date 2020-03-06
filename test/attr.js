@@ -61,10 +61,21 @@ t('attr: get/set', async t => {
 
   xs(undefined)
   await tick(8)
-  t.is(xs(), undefined)
+  t.is(xs(), null)
 
   // xs.cancel()
   xs(undefined)
   await tick(8)
   t.is(xs(), undefined)
+})
+
+t('attr: correct cleanup', async t => {
+  let el = document.createElement('div')
+  el.setAttribute('x', 1)
+  let xs = attr(el, 'x')
+  t.is(xs(), '1')
+  xs(2)
+  t.is(el.getAttribute('x'), '2')
+  xs(null)
+  t.is(el.getAttribute('x'), '1')
 })
