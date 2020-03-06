@@ -8,8 +8,7 @@ export default function from(src, map) {
 
   // constant (stateful)
   if (primitive(src)) {
-    const c = value(src)
-    curr = (...args) => typeof args[0] === 'function' ? c(...args) : c()
+    curr = (...args) => typeof args[0] === 'function' ? args[0](src) : src
   }
   // observable / observ / mutant (stateful)
   else if (typeof src === 'function') {
@@ -50,4 +49,9 @@ export default function from(src, map) {
 export function primitive(val) {
   if (typeof val === 'object') return val === null
   return typeof val !== 'function'
+}
+
+export function observable(arg) {
+  if (primitive(arg)) return false
+  return !!(typeof arg === 'function' || arg[_observable] || arg[Symbol.asyncIterator] || arg.next || arg.then || arg.pipe)
 }

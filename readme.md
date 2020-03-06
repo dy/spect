@@ -251,65 +251,7 @@ Pending...
 
 ## API
 
-<table>
-  <tbody>
-    <tr>
-      <!-- <td><strong>Effects:</strong></td> -->
-      <td>
-        <a href="#$"><strong><em><code>$</code></em></strong></a> ⋅
-        <a href="#on"><strong><em><code>on</code></em></strong></a> ⋅
-        <a href="#fx"><strong><em><code>fx</code></em></strong></a> ⋅
-        <a href="#html"><strong><em><code>html</code></em></strong></a> ⋅
-        <!--
-      </td>
-    </tr>
-    <tr>
-      <td><strong>Sources:</strong></td>
-      <td>
-      -->
-        <a href="#state"><strong><em><code>state</code></em></strong></a> ⋅
-        <a href="#store"><strong><em><code>store</code></em></strong></a> ⋅
-        <a href="#list"><strong><em><code>list</code></em></strong></a> ⋅
-        <a href="#prop"><strong><em><code>prop</code></em></strong></a> ⋅
-        <a href="#attr"><strong><em><code>attr</code></em></strong></a> ⋅
-        <a href="#input"><strong><em><code>input</code></em></strong></a> ⋅
-        <a href="#calc"><strong><em><code>calc</code></em></strong></a>
-      </td>
-    </tr>
-    <!--
-    <tr>
-      <td><strong>Utils:</strong></td>
-      <td>
-        <a href="#ref"><strong><em><code>ref</code></em></strong></a> ⋅
-        <a href="#channel"><strong><em><code>channel</code></em></strong></a>
-      </td>
-    </tr>
-    -->
-  </tbody>
-  </table>
-
-<!--
-**Effects:**
-[_**`$`**_](#$) ⋅
-[_**`on`**_](#on) ⋅
-[_**`fx`**_](#fx)
-
-**Sources:**
-[_**`state`**_](#state) ⋅
-[_**`store`**_](#store) ⋅
-[_**`list`**_](#list) ⋅
-[_**`attr`**_](#attr) ⋅
-[_**`prop`**_](#prop) ⋅
-[_**`calc`**_](#calc) ⋅
-[_**`input`**_](#input) ⋅
-[_**`html`**_](#html)
-
-**Util:**
-[_**`ref`**_](#ref) ⋅
-[_**`channel`**_](#channel)
--->
-
-### _`$`_
+<details><summary><strong><em><code>$</code></em></strong></summary>
 
 > $( scope? , selector | element, callback )
 
@@ -359,10 +301,10 @@ await timer
 // dispose `.timer` aspect
 timer.cancel()
 ```
+</details>
 
-<br/>
 
-### _`on`_
+<details><summary><strong><em><code>on</code></em></strong></summary>
 
 > on( scope?, target | selector, event, callback? )
 
@@ -410,10 +352,10 @@ await ticks
 ticks.cancel()
 ```
 
-<br/>
+</details>
 
 
-### _`fx`_
+<details><summary><strong><em><code>fx</code></em></strong></summary>
 
 > fx( callback, deps=[] )
 
@@ -462,10 +404,10 @@ await timer
 timer.cancel()
 ```
 
-<br/>
+</details>
 
 
-### _`html`_
+<details><summary><strong><em><code>html</code></em></strong></summary>
 
 > let el = html\`<tag ...${ props }>${ content }</>\`
 
@@ -505,9 +447,10 @@ $('.timer', el => {
 })
 ```
 
-<br/>
+</details>
 
-### _`from`_
+
+<details><summary><strong><em><code>from</code></em></strong></summary>
 
 > obv = from( source, map? )
 
@@ -532,10 +475,10 @@ setInterval(() => date(new Date()), 1000)
 from(date, date => date.toISOString())(date => console.log(date))
 ```
 
-<br/>
+</details>
 
 
-### _`state`_
+<details><summary><strong><em><code>state</code></em></strong></summary>
 
 > value = state( init? )
 
@@ -568,9 +511,10 @@ fx(c => {
 }, [count])
 ```
 
-<br/>
+</details>
 
-### _`store`_
+
+<details><summary><strong><em><code>store</code></em></strong></summary>
 
 > obj = store( init = {} )
 
@@ -623,10 +567,9 @@ $('.likes-count', el => {
 ```
 -->
 
-<br/>
+</details>
 
-
-### _`list`_
+<details><summary><strong><em><code>list</code></em></strong></summary>
 
 > arr = list([ ...items ])
 
@@ -653,10 +596,10 @@ for await (const items of arr) {
 let mapped = arr.map(x => x * 2)
 ```
 
-<br/>
+</details>
 
 
-### _`prop`_
+<details><summary><strong><em><code>prop</code></em></strong></summary>
 
 > value = prop( target, name )
 
@@ -682,9 +625,9 @@ foos() // qux
 foos.cancel()
 ```
 
-<br/>
+</details>
 
-### _`attr`_
+<details><summary><strong><em><code>attr</code></em></strong></summary>
 
 > value = attr( element, name )
 
@@ -713,9 +656,10 @@ loading(null)
 loading.close()
 ```
 
-<br/>
+</details>
 
-### _`input`_
+
+<details><summary><strong><em><code>input</code></em></strong></summary>
 
 > value = input( element )
 
@@ -738,10 +682,10 @@ $('input', el => {
 
 ```
 
-<br/>
+</details>
 
 
-### _`calc`_
+<details><summary><strong><em><code>calc</code></em></strong></summary>
 
 > value = calc( state => result, args = [] )
 
@@ -758,7 +702,7 @@ celsius() // 0
 fahren() // 32
 ```
 
-<br/>
+</details>
 
 <!--
 ## Utils
