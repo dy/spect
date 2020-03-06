@@ -1,10 +1,11 @@
 import value from './value.js'
+import from from './from.js'
 
 export default function fx(fn, deps=[]) {
   const args = value([])
 
   deps.map((dep, i) =>
-    dep(value =>
+    from(dep)(value =>
       (args()[i] = value, args(args()))
     )
   )

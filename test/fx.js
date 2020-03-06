@@ -96,7 +96,7 @@ t('fx: async fx', async t => {
   await tick(70)
   t.is(log, [0, 1, 2, 3, 4])
 })
-t.skip('fx: promise / observable / direct dep', async t => {
+t('fx: promise / observable / direct dep', async t => {
   let p = new Promise(r => setTimeout(() => r(2), 10))
   let O = new Observable(obs => setTimeout(() => obs.next(3), 20))
   let o = observable(); setTimeout(() => o(4), 30)
@@ -144,7 +144,7 @@ t.skip('fx: thenable', async t => {
   await tick(8)
   t.any(log, [[0, 'aw', 1, 1], [0, 1, 'aw', 1]])
 })
-t.skip('fx: simple values', async t => {
+t('fx: simple values', async t => {
   const o = {x:1}, log = []
   fx((o, x) => {
     log.push(o, x)
@@ -152,7 +152,7 @@ t.skip('fx: simple values', async t => {
   await tick(8)
   t.is(log, [{x: 1}, 1])
 })
-t.skip('fx: async generator', async t => {
+t('fx: async generator', async t => {
   async function* x () {
     yield 1
     await tick(3)
@@ -164,7 +164,7 @@ t.skip('fx: async generator', async t => {
   }, [x(), x()])
 
   await tick(12)
-  t.is(log, [1,1,2,2])
+  t.is(log, [1,undefined,1,1,2,1,2,2])
 })
 t.skip('fx: function deps', async t => {
   const log = []
@@ -195,7 +195,7 @@ t.skip('fx: deps length change', async t => {
   t.is(log, [[1], [1,2]])
 })
 
-t.skip('fx: sync must not call twice init const', async t => {
+t('fx: sync must not call twice init const', async t => {
   let log = []
   fx((v) => {
     log.push(v)
