@@ -304,6 +304,41 @@ timer.cancel()
 </details>
 
 
+<details><summary><strong>h</strong></summary>
+
+> let el = h('tag', props, ...children)
+
+Hyperscript constructor, base for [_**`html`**_](#html) effect. Creates DOM element. Compatible with JSX / [hyperscript](https://ghub.io/hyperscript) / etc.
+
+```js
+import { h, fx, text } from 'spect'
+
+const text = state('foobar')
+
+/* jsx h */
+// create element
+const foo = <foo>{ text }</foo>
+
+// update
+text('bazqux')
+```
+
+#### Example
+
+```js
+import { $, state, h, render } from 'spect'
+
+$('.timer', el => {
+  const count = state(0)
+  setInterval(() => count(count + 1))
+  render(<el></el>, h)
+  html`<${el}>Seconds: ${ count }</>`
+})
+```
+
+</details>
+
+
 <details><summary><strong>html</strong></summary>
 
 > let el = html\`<tag ...${ props }>${ content }</>\`
@@ -346,40 +381,6 @@ $('.timer', el => {
 
 </details>
 
-
-<details><summary><strong>h</strong></summary>
-
-> let el = h('tag', props, ...children)
-
-Hyperscript effect, base for _**`html`**_. Creates real DOM element. Compatible with JSX / [hyperscript](https://ghub.io/hyperscript).
-
-```js
-import { h, fx, text } from 'spect'
-
-/* jsx h */
-const text = state('foobar')
-
-// create element
-const foo = <foo>{ text }</foo>
-
-// update
-text('bazqux')
-```
-
-#### Example
-
-```js
-import { $, state, h, render } from 'spect'
-
-$('.timer', el => {
-  const count = state(0)
-  setInterval(() => count(count + 1))
-  render(<el></el>, h)
-  html`<${el}>Seconds: ${ count }</>`
-})
-```
-
-</details>
 
 
 <details><summary><strong>state</strong></summary>
@@ -471,6 +472,27 @@ timer.cancel()
 </details>
 
 
+<details><summary><strong>calc</strong></summary>
+
+> value = calc( state => result, args = [] )
+
+Source computed from `args`. Similar to _**`fx`**_, but synchronous and creates _source_ as result. Analog of _useMemo_.
+
+```js
+import { $, input, calc } from 'spect'
+
+const f = state(32), c = state(0)
+const celsius = calc(f => (f - 32) / 1.8, [f])
+const fahren = calc(c => (c * 9) / 5 + 32, [c])
+
+celsius() // 0
+fahren() // 32
+```
+
+</details>
+
+
+
 <details><summary><strong>from</strong></summary>
 
 > obv = from( source, map? )
@@ -498,26 +520,6 @@ from(date, date => date.toISOString())(date => console.log(date))
 
 </details>
 
-
-
-<details><summary><strong>calc</strong></summary>
-
-> value = calc( state => result, args = [] )
-
-Source computed from `args`. Similar to _**`fx`**_, but synchronous and creates _source_ as result. Analog of _useMemo_.
-
-```js
-import { $, input, calc } from 'spect'
-
-const f = state(32), c = state(0)
-const celsius = calc(f => (f - 32) / 1.8, [f])
-const fahren = calc(c => (c * 9) / 5 + 32, [c])
-
-celsius() // 0
-fahren() // 32
-```
-
-</details>
 
 
 
