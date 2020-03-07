@@ -1,7 +1,7 @@
 {
   "name": "spect",
   "version": "15.1.1",
-  "description": "Micro aspects with effects and observables",
+  "description": "Alternative reactive aspect-oriented framework",
   "main": "index.js",
   "module": "index.js",
   "unpkg": "dist/spect.min.js",
