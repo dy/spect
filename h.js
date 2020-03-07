@@ -1,18 +1,10 @@
 import attr from './attr.js'
 import from, { observable, primitive } from './from.js'
+import fx from './fx.js'
+import prop from './prop.js'
 
-let cleanupFuncs = []
-
-const _group = Symbol('group'),
-    _ptr = Symbol('ptr')
+const _group = Symbol('group'), _ptr = Symbol('ptr'), _props = Symbol('props'), _cleanup = Symbol('cleanup')
 const TEXT = 3, ELEMENT = 1
-
-h.cleanup = function () {
-  for (let i = 0; i < cleanupFuncs.length; i++){
-    cleanupFuncs[i]()
-  }
-  cleanupFuncs.length = 0
-}
 
 export default function h(tag, props, ...children) {
   if (!props) props = {}
@@ -20,29 +12,27 @@ export default function h(tag, props, ...children) {
   if (tag == null) return document.createTextNode('')
 
   // element
-  let el = null
-  if (tag == null) el = document.createTextNode('')
-  else if (tag.nodeType) el = tag
-  else if (typeof tag === 'string') {
-    el = tag ? document.createElement(tag) : document.createDocumentFragment()
-  }
-  else if (typeof tag === 'function') el = tag(props) || document.createTextNode('')
-  else if (tag[Symbol.iterator]) {
-    el = document.createTextNode('')
-    el[_group] = [...tag].map(el => el.nodeType ? el : document.createTextNode(el == null ? '' : el))
-  }
+  let el
+  if (typeof tag === 'string') el = tag ? document.createElement(tag) : document.createDocumentFragment()
+  else if (typeof tag === 'function') el = createChild(tag(props))
+  else el = createChild(tag)
 
-  // props
-  for (let name in props) {
-    let value = props[name]
-    if(observable(value)) {
-      cleanupFuncs.push(from(value)(value => (attr.set(el, name, value), el[name] = value)))
+  // props (dynamic)
+  el[_props] = props
+  fx((props) => {
+    const cleanup = []
+    for (let name in props) {
+      let value = props[name]
+      if(observable(value)) {
+        cleanup.push(from(value)(value => (attr.set(el, name, value), el[name] = value)))
+      }
+      else {
+        attr.set(el, name, value)
+        el[name] = value
+      }
     }
-    else {
-      attr.set(el, name, value)
-      el[name] = value
-    }
-  }
+    return () => cleanup.map(off => off())
+  }, [prop(el, _props)])
 
   // children
   render(children, el)
@@ -51,21 +41,30 @@ export default function h(tag, props, ...children) {
 }
 
 export function render(children, el) {
-  return children.map((child) => {
+  el[_ptr] = 0
+
+  // clean up prev observers
+  if (el[_cleanup]) el[_cleanup].map(off => off())
+  el[_cleanup] = []
+
+  children.map((child) => {
     if (observable(child)) {
       let cur
-      cleanupFuncs.push(
+      el[_cleanup].push(
         from(child)(child => {
           cur = !cur ? alloc(el, createChild(child)) : replaceWith(cur, createChild(child))
         })
       )
       // if sync init did not hit - create placeholder, no hydration posible
       if (!cur) alloc(el, createChild(''))
-      return cur
     }
-
-    return alloc(el, createChild(child))
+    else {
+      alloc(el, createChild(child))
+    }
   })
+
+  // trim unused nodes
+  while(el.childNodes[el[_ptr]]) el.childNodes[el[_ptr]].remove()
 }
 
 function createChild(arg) {
@@ -76,7 +75,7 @@ function createChild(arg) {
 
   // can be node/fragment
   // reset pointer - the element is considered re-allocatable
-  if (arg.nodeType) return (arg[_ptr] = 0, arg)
+  if (arg.nodeType) return arg
 
   // can be an array / array-like
   if (arg[Symbol.iterator]) {
@@ -116,23 +115,24 @@ function alloc(parent, el) {
   // find matching node somewhere in the tree
   for (let i = parent[_ptr]; i < parent.childNodes.length; i++) {
     const node = parent.childNodes[i]
-    if (
-      // same node
-      node === el ||
-      (node.isSameNode && node.isSameNode(el)) ||
-      (node[_group] && el[_group]) ||
-      (node.tagName === el.tagName && (
+    // same node
+    if (node === el
+      || (node.isSameNode && node.isSameNode(el))
+      || (node[_group] && el[_group])
+      || (node.tagName === el.tagName && (
         // same-key node
-        (node.id && (node.id === el.id)) ||
+        (node.id && (node.id === el.id))
 
         // same-content text node
-        (node.nodeType === TEXT && node.nodeValue === el.nodeValue && !node[_group]) ||
+        || (node.nodeType === TEXT && node.nodeValue === el.nodeValue && !node[_group])
 
         // just blank-ish tag matching by signature and no need morphing
-        (node.nodeType === ELEMENT && !node.id && !el.id && !el.name && !node.childNodes.length)
+        || (node.nodeType === ELEMENT && !node.id && !el.id && !el.name && !node.childNodes.length)
       ))
     ) {
       match = node
+      // migrate props
+      match[_props] = el[_props]
       break
     }
     else if (node[_group]) {

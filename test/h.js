@@ -155,37 +155,35 @@ t('h: simple hydrate', async t => {
 })
 
 t('h: function renders external component', async t => {
-  let el = html`<a>foo <${bar}/></><b/>`
+  let el = h('a', null, 'foo ', h(bar))
 
   function bar () {
-    return html`<bar/><baz/>`
+    return [h('bar'), h('baz')]
   }
-  t.is(el[0].outerHTML, `<a>foo <bar></bar><baz></baz></a>`)
-  t.is(el[1].outerHTML, `<b></b>`)
+  t.is(el.outerHTML, `<a>foo <bar></bar><baz></baz></a>`)
 })
 
 t('h: rerendering with props: must persist', async t => {
-  let el = document.createElement('x')
+  let el = document.createElement('root')
   let div = document.createElement('div')
 
-  html`<${el}>${div}<x/></>`
+  h(el, null, div, h('x'))
   t.equal(el.firstChild, div)
   t.equal(el.childNodes.length, 2)
 
-  html`<${el}><${div}/><x/></>`
+  h(el, null, h(div), h('x'))
   t.equal(el.firstChild, div)
   t.equal(el.childNodes.length, 2)
 
-  html`<${el}><${div}/><x/></>`
+  h(el, null, h(div), h('x'))
   t.equal(el.firstChild, div)
   t.equal(el.childNodes.length, 2)
 
-  html`<${el}><div/><x/></>`
-  // FIXME: this is being cloned by preact
+  h(el, null, h('div'), h('x'))
   t.equal(el.firstChild, div)
   t.equal(el.childNodes.length, 2)
 
-  html`<${el}><div class="foo" items=${[]}/><x/></>`
+  h(el, null, h('div', {class:'foo', items:[]}), h('x'))
   t.equal(el.firstChild, div)
   t.equal(el.childNodes.length, 2)
   t.equal(el.firstChild.className, 'foo')
