@@ -1,3 +1,5 @@
+import './hyperscript.js'
+
 import t from 'tst'
 import { $, state, fx, prop, h, list } from '../index.js'
 // import { $, state, fx, prop, store, calc, list, ref, attr, on, html } from '../dist/spect.min.js'
@@ -145,7 +147,7 @@ t('h: render new children to mounted element', async t => {
   t.is(el.outerHTML, `<a>foo <bar><baz class="qux"></baz></bar></a>`)
 })
 
-t.only('h: simple hydrate', async t => {
+t('h: simple hydrate', async t => {
   let a = document.createElement('a')
   a.innerHTML = 'foo '
   let el = h(a, null, 'foo ', h('bar', null, h('baz', {class:'qux'})))
@@ -699,3 +701,4 @@ t('h: 50+ elements shouldnt invoke recursion', t => {
   t.is(el[2].textContent, 'x: ')
   t.ok(el.length >= 100, 'many els created')
 })
+
