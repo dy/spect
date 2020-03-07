@@ -36,7 +36,7 @@
 -->
 
 
-_Spect_ is remake of [_observable_](https://www.npmjs.com/package/observable) (underrated classic elegant UI framework), inspired by [_react hooks_](https://reactjs.org/docs/hooks-intro.html), [_aspect-oriented programming_](https://en.wikipedia.org/wiki/Aspect-oriented_programming) and [_jquery_](https://ghub.io/jquery). It's compatible with [observ](https://ghub.io/observ)-[*](https://ghub.io/mutant) and interoperable with [observables](https://github.com/tc39/proposal-observable).
+_Spect_ is remake on [_observable_](https://www.npmjs.com/package/observable) (underrated classic elegant UI framework), inspired by [_react hooks_](https://reactjs.org/docs/hooks-intro.html), [_aspect-oriented programming_](https://en.wikipedia.org/wiki/Aspect-oriented_programming) and [_jquery_](https://ghub.io/jquery). It's compatible with [observ](https://ghub.io/observ)-[*](https://ghub.io/mutant) and interoperable with [observables](https://github.com/tc39/proposal-observable).
 
 ## Principles
 
