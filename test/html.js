@@ -7,18 +7,7 @@ import Observable from 'zen-observable/esm'
 import observable from './observable.js'
 import morph from './morph.js'
 
-Object.defineProperty(DocumentFragment.prototype, 'outerHTML', {
-  get() {
-    let s = '<>'
-    this.childNodes.forEach(n => {
-      s += n.nodeType === 3 ? n.textContent : n.outerHTML
-    })
-    s+='</>'
-    return s
-  }
-})
-
-t('html: single attribute', async t => {
+t.only('html: single attribute', async t => {
   const a = state(0)
 
   let el = html`<div a=${a}></div>`

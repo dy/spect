@@ -32,3 +32,15 @@ export default function prop(target, name) {
       prop(...args) :
       set(...args)
 }
+
+export function props (obj) {
+  let props = []
+  for (let name in obj) {
+    props.push(prop(obj, name))
+  }
+
+  return calc((...props) => {
+
+  }, props)
+}
+

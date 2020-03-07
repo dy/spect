@@ -1,4 +1,4 @@
-import value from './value.js'
+import value from '../core/value.js'
 
 const CANCEL = null
 

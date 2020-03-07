@@ -5,11 +5,12 @@ const CANCEL = null
 export default function on (scope, target, event, callback) {
   if (arguments.length < 4) {
     [target, event, callback] = arguments
-    scope = document
+    scope = null
   }
 
   // delegate
   if (typeof target === 'string') {
+    if (!scope) scope = document
     const selector = target, orig = callback
     callback = e => {
       const delegateTarget = e.target.closest(selector)

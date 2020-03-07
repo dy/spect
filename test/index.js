@@ -9,8 +9,8 @@ import './calc.js'
 import './from.js'
 import './store.js'
 import './list.js'
-// import './html.js'
 import './h.js'
+// import './html.js'
 
 
 Object.defineProperty(DocumentFragment.prototype, 'outerHTML', {

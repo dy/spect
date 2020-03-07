@@ -1,4 +1,4 @@
-import state from './state.js'
+import state from '../core/state.js'
 
 const CANCEL = null
 
@@ -21,4 +21,9 @@ attr.get = (el, name, value) => ((value = el.getAttribute(name)) === '' ? true :
 attr.set = (el, name, value) => {
   if (value === false || value == null) el.removeAttribute(name)
   else el.setAttribute(name, value === true ? '' : value)
+}
+
+
+export function attrs() {
+
 }
