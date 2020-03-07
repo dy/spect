@@ -14,7 +14,20 @@ export default function h(tag, props, ...children) {
 
   // element
   let el
-  if (typeof tag === 'string') el = tag ? document.createElement(tag) : document.createDocumentFragment()
+  if (typeof tag === 'string') {
+    if (!tag) el = document.createDocumentFragment()
+    else {
+      let [beforeId, afterId = ''] = tag.split('#')
+      let beforeClx = beforeId.split('.')
+      tag = beforeClx.shift()
+      let afterClx = afterId.split('.')
+      let id = afterClx.shift()
+      let clx = [...beforeClx, ...afterClx]
+      if (!props.id && id) props.id = id
+      if (!props.class && clx.length) props.class = clx
+      el = document.createElement(tag)
+    }
+  }
   else if (typeof tag === 'function') el = createChild(tag(props))
   else el = createChild(tag)
 
@@ -30,9 +43,16 @@ export default function h(tag, props, ...children) {
         }
         // class=[a, b, ...c] - possib observables
         else if (Array.isArray(value)) {
-          calc((...values) => values.filter(v => v).join(' '), [...value])
-          (value => (attr.set(el, name, value)))
           el[name] = value
+          cleanup.push(calc((...values) => values.filter(v => v).join(' '), [...value])
+          (value => (attr.set(el, name, value))))
+        }
+        // style={}
+        else if (typeof value === 'object') {
+          el[name] = value
+          let keys = Object.keys(value)
+          cleanup.push(calc((...values) => keys.map((key, i) => `${key}: ${values[i]};`).join(' '), Object.values(value))
+          (value => (attr.set(el, name, value))))
         }
         else {
           attr.set(el, name, value)

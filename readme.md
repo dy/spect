@@ -478,6 +478,70 @@ from(date, date => date.toISOString())(date => console.log(date))
 </details>
 
 
+
+<details><summary><strong>h</strong></summary>
+
+> let el = h('tag', props, ...children)
+
+Hyperscript effect, base for _**`html`**_. Creates real DOM element. Compatible with JSX / [hyperscript](https://ghub.io/hyperscript).
+
+```js
+import { h, fx, text } from 'spect'
+
+/* jsx h */
+const text = state('foobar')
+
+// create element
+const foo = <foo>{ text }</foo>
+
+// update
+text('bazqux')
+```
+
+#### Example
+
+```js
+import { $, state, h, render } from 'spect'
+
+$('.timer', el => {
+  const count = state(0)
+  setInterval(() => count(count + 1))
+  render(<el></el>, h)
+  html`<${el}>Seconds: ${ count }</>`
+})
+```
+
+</details>
+
+
+<details><summary><strong>from</strong></summary>
+
+> obv = from( source, map? )
+
+Create a read-only observable from any source, one of:
+
+* _Function_ with subscription support or observable ([observ-*](https://ghub.io/observ), [observable](https://ghub.io/observable) or [mutant](https://ghub.io/mutant))
+* _AsyncIterator_ or [_async iterable_](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Symbol/asyncIterator)
+* _Promise_ or _thenable_
+* _Observable_ ([rxjs](https://ghub.io/rxjs), [es-observable](https://ghub.io/es-observable), [zen-observable](https://ghub.io/zen-observable) etc.)
+* [_Stream_](https://nodejs.org/api/stream.html)
+* any other value is considered constant.
+
+Optional `map` transforms value.
+
+#### Example
+
+```js
+import { from } from 'spect'
+
+let date = state(new Date())
+setInterval(() => date(new Date()), 1000)
+from(date, date => date.toISOString())(date => console.log(date))
+```
+
+</details>
+
+
 <details><summary><strong>state</strong></summary>
 
 > value = state( init? )

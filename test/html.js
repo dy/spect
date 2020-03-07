@@ -397,7 +397,7 @@ t('html: does not duplicate classes for container', t => {
   t.is(el.outerHTML, '<div class="x"></div>')
 })
 
-t('legacy html: component static props', async t => {
+t('html: component static props', async t => {
   let log = []
   let el = html`<div><${C} id="x" class="y z"/></>`
 
