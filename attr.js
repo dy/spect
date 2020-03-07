@@ -1,4 +1,4 @@
-import state from '../core/state.js'
+import state from './state.js'
 
 const CANCEL = null
 
