@@ -20,24 +20,23 @@
 <time id="clock"></time>
 
 <script type="module">
-  import { $, html, state, calc } from "https://unpkg.com/spect"
+  import { $, h, from, state, calc } from "https://unpkg.com/spect"
 
   $('#clock', el => {
     const date = state(new Date())
 
-    html`<${el} datetime=${ date }>
-      ${ date(d => d.toLocaleTimeString()) }
-    </>`
+    h(el, { datetime: date },
+      from( date, d => d.toLocaleTimeString())
+    )
 
     let id = setInterval(() => date(new Date()), 1000)
-
     return () => clearInterval(id)
   })
 </script>
 -->
 
 
-_Spect_ is remake of [_observable_](https://www.npmjs.com/package/observable) (underrated super-elegant classic UI framework), inspired by [_react hooks_](https://reactjs.org/docs/hooks-intro.html), [_aspect-oriented programming_](https://en.wikipedia.org/wiki/Aspect-oriented_programming) and [_jquery_](https://ghub.io/jquery). It is compatible with [observable](https://ghub.io/observable)/[observ](https://ghub.io/observ)/[mutant](https://ghub.io/mutant) and [Observables](https://github.com/tc39/proposal-observable) ([rxjs](https://github.com/ReactiveX/rxjs)/[mobx-utils](https://github.com/mobxjs/mobx-utils)/[zen-observable](https://ghub.io/zen-observable) etc).
+_Spect_ is remake of [_observable_](https://www.npmjs.com/package/observable) (underrated classic elegant UI framework), taking into spin best from [_react hooks_](https://reactjs.org/docs/hooks-intro.html), [_aspect-oriented programming_](https://en.wikipedia.org/wiki/Aspect-oriented_programming) and [_jquery_](https://ghub.io/jquery). It's compatible with [observ](https://ghub.io/observ)-[*](https://ghub.io/mutant) and interoperable with [observables](https://github.com/tc39/proposal-observable).
 
 ## Principles
 
