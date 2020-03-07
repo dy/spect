@@ -156,7 +156,7 @@ function alloc(parent, el) {
         || (node.nodeType === TEXT && node.nodeValue === el.nodeValue && !node[_group])
 
         // just blank-ish tag matching by signature and no need morphing
-        || (node.nodeType === ELEMENT && !node.id && !el.id && !el.name && !node.childNodes.length)
+        || (node.nodeType === ELEMENT && !node.id && !el.id && !node.name && !node.childNodes.length)
       ))
     ) {
       match = node
