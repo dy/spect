@@ -304,6 +304,283 @@ timer.cancel()
 </details>
 
 
+<details><summary><strong>html</strong></summary>
+
+> let el = html\`<tag ...${ props }>${ content }</>\`
+
+HTML effect. Renders markup automatically when input fields update. Fields can be any observables or direct values.
+Syntax is compatible with [htm](https://ghub.io/htm). For JSX see [_**`h`**_](#h).
+
+```js
+import { html, fx, text } from 'spect'
+
+const text = state('foobar')
+
+// create element
+const foo = html`<foo>${ text }</foo>`
+
+// update
+text('bazqux')
+
+// create multiple elements
+const [foo1, foo2] = html`<foo>1</foo><foo>2</foo>`
+
+// create document fragment
+const foof = html`<><foo/></>`
+
+// hydrate element with `foo` as content
+const bar = html`<${document.querySelector('#bar')}>${ foo }</>`
+```
+
+#### Example
+
+```js
+import { $, state, html } from 'spect'
+
+$('.timer', el => {
+  const count = state(0)
+  setInterval(() => count(count + 1))
+  html`<${el}>Seconds: ${ count }</>`
+})
+```
+
+</details>
+
+
+<details><summary><strong>h</strong></summary>
+
+> let el = h('tag', props, ...children)
+
+Hyperscript effect, base for _**`html`**_. Creates real DOM element. Compatible with JSX / [hyperscript](https://ghub.io/hyperscript).
+
+```js
+import { h, fx, text } from 'spect'
+
+/* jsx h */
+const text = state('foobar')
+
+// create element
+const foo = <foo>{ text }</foo>
+
+// update
+text('bazqux')
+```
+
+#### Example
+
+```js
+import { $, state, h, render } from 'spect'
+
+$('.timer', el => {
+  const count = state(0)
+  setInterval(() => count(count + 1))
+  render(<el></el>, h)
+  html`<${el}>Seconds: ${ count }</>`
+})
+```
+
+</details>
+
+
+<details><summary><strong>state</strong></summary>
+
+> value = state( init? )
+
+_**`state`**_ is a value source. It is a getter/setter function with [_AsyncIterator_](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Symbol/asyncIterator) interface for observing changes. `init` is optional initial value.
+_**`state`**_ acts as _useState_ hook and has similar to [observable](https://ghub.io/observable) API. Useful as component state, eg. visibility etc.
+
+```js
+import { state, fx } from 'spect'
+
+let count = state(0)
+
+// get
+count()
+
+// set
+count(1)
+count(prev => prev + 1)
+
+// observe changes
+for await (let value of count) {
+  // 0, 1, ...
+}
+
+// current value
+count.current
+
+// run effect
+fx(c => {
+  console.log(c)
+}, [count])
+```
+
+</details>
+
+
+
+<details><summary><strong>fx</strong></summary>
+
+> fx( callback, deps=[] )
+
+Generic effect. Reacts to `deps` and runs `callback` function with `(...args) => teardown` signature.
+Similar to _useEffect_, but `deps` are observables, detected by [_**`from`**_](#from).
+
+```js
+import { state, fx } from 'spect'
+import { time } from 'wait-please'
+
+let a = state(0), b = state('foo')
+
+fx((a, b) => {
+  console.log('in', a, b)
+  return () => console.log('out', a, b)
+}, [a, b])
+
+setTimeout(() => (a(1), b('bar')), 1000)
+
+// 'in' 0 'foo'
+// ...
+// 'out' 0 'foo'
+// 'in' 1 'bar'
+
+// runs only once
+fx(() => {})
+```
+
+#### Example
+
+```js
+import { fx } from 'spect'
+import { time } from 'wait-please'
+
+// timer
+const timer = fx(async c => {
+  console.log('Seconds', c)
+  await time(1000)
+  count(c + 1)
+}, [count])
+
+// await next count
+await timer
+
+// cancel effect
+timer.cancel()
+```
+
+</details>
+
+
+<details><summary><strong>from</strong></summary>
+
+> obv = from( source, map? )
+
+Create a read-only observable from any source, one of:
+
+* _Function_ with subscription support or observable ([observ-*](https://ghub.io/observ), [observable](https://ghub.io/observable) or [mutant](https://ghub.io/mutant))
+* _AsyncIterator_ or [_async iterable_](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Symbol/asyncIterator)
+* _Promise_ or _thenable_
+* _Observable_ ([rxjs](https://ghub.io/rxjs), [es-observable](https://ghub.io/es-observable), [zen-observable](https://ghub.io/zen-observable) etc.)
+* [_Stream_](https://nodejs.org/api/stream.html)
+* any other value is considered constant.
+
+Optional `map` transforms value.
+
+#### Example
+
+```js
+import { from } from 'spect'
+
+let date = state(new Date())
+setInterval(() => date(new Date()), 1000)
+from(date, date => date.toISOString())(date => console.log(date))
+```
+
+</details>
+
+
+
+<details><summary><strong>calc</strong></summary>
+
+> value = calc( state => result, args = [] )
+
+Source computed from `args`. Similar to _**`fx`**_, but synchronous and creates _source_ as result. Analog of _useMemo_.
+
+```js
+import { $, input, calc } from 'spect'
+
+const f = state(32), c = state(0)
+const celsius = calc(f => (f - 32) / 1.8, [f])
+const fahren = calc(c => (c * 9) / 5 + 32, [c])
+
+celsius() // 0
+fahren() // 32
+```
+
+</details>
+
+
+
+<details><summary><strong>prop</strong></summary>
+
+> value = prop( target, name )
+
+_**`prop`**_ is target property accessor/source. _**`prop`**_ keeps safe target's own getter/setter, if defined. Useful to react to element properties changes.
+
+```js
+import { prop, fx } from 'spect'
+
+let obj = { foo: 'bar' }
+let foos = prop(obj, 'foo')
+
+// log changes
+fx(foo => console.log(foo), [foos])
+
+// set
+obj.foo = 'baz'
+foos('qux')
+
+// get
+foos() // qux
+
+// forget
+foos.cancel()
+```
+
+</details>
+
+<details><summary><strong>attr</strong></summary>
+
+> value = attr( element, name )
+
+_**`attr`**_ is element attribute accessor/source. Similar to _**`prop`**_, it provides access to attribute value and emits changes. Useful to access/react to element attribute values.
+
+```js
+import { fx, attr } from 'spect'
+
+const loading = attr(document.querySelector('button'), 'loading')
+
+// react to changes
+fx(loading => {
+  console.log(loading)
+}, [loading])
+
+// set
+loading(true)
+
+// get
+loading()
+
+// remove attribute
+loading(null)
+
+// dispose accessor
+loading.close()
+```
+
+</details>
+
+
 <details><summary><strong>on</strong></summary>
 
 > on( scope?, target | selector, event, callback? )
@@ -355,224 +632,28 @@ ticks.cancel()
 </details>
 
 
-<details><summary><strong>fx</strong></summary>
 
-> fx( callback, deps=[] )
+<details><summary><strong>input</strong></summary>
 
-Generic effect. Reacts to `deps` and runs `callback` function with `(...args) => teardown` signature.
-Similar to _useEffect_, but `deps` are observables.
+> value = input( element )
 
-```js
-import { state, fx } from 'spect'
-import { time } from 'wait-please'
-
-let a = state(0), b = state('foo')
-
-fx((a, b) => {
-  console.log('in', a, b)
-  return () => console.log('out', a, b)
-}, [a, b])
-
-setTimeout(() => (a(1), b('bar')), 1000)
-
-// 'in' 0 'foo'
-// ...
-// 'out' 0 'foo'
-// 'in' 1 'bar'
-
-// runs only once
-fx(() => {})
-```
-
-#### Example
+Input element current value source. Useful to track user input. Works with text inputs, checkboxes, radio and select.
 
 ```js
-import { fx } from 'spect'
-import { time } from 'wait-please'
+import { $, fx, input } from 'spect'
 
-// timer
-const timer = fx(async c => {
-  console.log('Seconds', c)
-  await time(1000)
-  count(c + 1)
-}, [count])
+$('input', el => {
+  const inputValue = input(el)
 
-// await next count
-await timer
+  fx(value => {
+    console.log(`Value`, value)
+  }, [inputValue]
 
-// cancel effect
-timer.cancel()
-```
-
-</details>
-
-
-<details><summary><strong>html</strong></summary>
-
-> let el = html\`<tag ...${ props }>${ content }</>\`
-
-HTML effect. Renders markup automatically when input fields update. Fields can be the same as _**`fx`**_ arguments.
-Syntax is compatible with [htm](https://ghub.io/htm).
-
-```js
-import { html, fx, text } from 'spect'
-
-const text = state('foobar')
-
-// create element
-const foo = html`<foo>${ text }</foo>`
-
-// update
-text('bazqux')
-
-// create multiple elements
-const [foo1, foo2] = html`<foo>1</foo><foo>2</foo>`
-
-// create document fragment
-const foof = html`<><foo/></>`
-
-// hydrate element with `foo` as content
-const bar = html`<${document.querySelector('#bar')}>${ foo }</>`
-```
-
-#### Example
-
-```js
-import { $, state, html } from 'spect'
-
-$('.timer', el => {
-  const count = state(0)
-  setInterval(() => count(count + 1))
-  html`<${el}>Seconds: ${ count }</>`
+  // to update `inputValue` dispatch event
+  el.value = 3
+  el.dispatch(new Event('change'))
 })
-```
 
-</details>
-
-
-<details><summary><strong>from</strong></summary>
-
-> obv = from( source, map? )
-
-Create a read-only observable from any source, one of:
-
-* _Function_ with subscription support or observable ([observ-*](https://ghub.io/observ), [observable](https://ghub.io/observable) or [mutant](https://ghub.io/mutant))
-* _AsyncIterator_ or [_async iterable_](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Symbol/asyncIterator)
-* _Promise_ or _thenable_
-* _Observable_ ([rxjs](https://ghub.io/rxjs), [es-observable](https://ghub.io/es-observable), [zen-observable](https://ghub.io/zen-observable) etc.)
-* [_Stream_](https://nodejs.org/api/stream.html)
-* any other value is considered constant.
-
-Direct analog of `transform`, can be useful to organize mapped observable values from existing observables.
-
-#### Example
-
-```js
-import { from } from 'spect'
-
-let date = state(new Date())
-setInterval(() => date(new Date()), 1000)
-from(date, date => date.toISOString())(date => console.log(date))
-```
-
-</details>
-
-
-
-<details><summary><strong>h</strong></summary>
-
-> let el = h('tag', props, ...children)
-
-Hyperscript effect, base for _**`html`**_. Creates real DOM element. Compatible with JSX / [hyperscript](https://ghub.io/hyperscript).
-
-```js
-import { h, fx, text } from 'spect'
-
-/* jsx h */
-const text = state('foobar')
-
-// create element
-const foo = <foo>{ text }</foo>
-
-// update
-text('bazqux')
-```
-
-#### Example
-
-```js
-import { $, state, h, render } from 'spect'
-
-$('.timer', el => {
-  const count = state(0)
-  setInterval(() => count(count + 1))
-  render(<el></el>, h)
-  html`<${el}>Seconds: ${ count }</>`
-})
-```
-
-</details>
-
-
-<details><summary><strong>from</strong></summary>
-
-> obv = from( source, map? )
-
-Create a read-only observable from any source, one of:
-
-* _Function_ with subscription support or observable ([observ-*](https://ghub.io/observ), [observable](https://ghub.io/observable) or [mutant](https://ghub.io/mutant))
-* _AsyncIterator_ or [_async iterable_](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Symbol/asyncIterator)
-* _Promise_ or _thenable_
-* _Observable_ ([rxjs](https://ghub.io/rxjs), [es-observable](https://ghub.io/es-observable), [zen-observable](https://ghub.io/zen-observable) etc.)
-* [_Stream_](https://nodejs.org/api/stream.html)
-* any other value is considered constant.
-
-Optional `map` transforms value.
-
-#### Example
-
-```js
-import { from } from 'spect'
-
-let date = state(new Date())
-setInterval(() => date(new Date()), 1000)
-from(date, date => date.toISOString())(date => console.log(date))
-```
-
-</details>
-
-
-<details><summary><strong>state</strong></summary>
-
-> value = state( init? )
-
-_**`state`**_ is a value source. It is a getter/setter function with [_AsyncIterator_](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Symbol/asyncIterator) interface for observing changes. `init` is optional initial value.
-_**`state`**_ acts as _useState_ hook and has similar to [observable](https://ghub.io/observable) API. Useful as component state, eg. visibility etc.
-
-```js
-import { state, fx } from 'spect'
-
-let count = state(0)
-
-// get
-count()
-
-// set
-count(1)
-count(prev => prev + 1)
-
-// observe changes
-for await (let value of count) {
-  // 0, 1, ...
-}
-
-// current value
-count.current
-
-// run effect
-fx(c => {
-  console.log(c)
-}, [count])
 ```
 
 </details>
@@ -663,110 +744,6 @@ let mapped = arr.map(x => x * 2)
 </details>
 
 
-<details><summary><strong>prop</strong></summary>
-
-> value = prop( target, name )
-
-_**`prop`**_ is target property accessor/source. _**`prop`**_ keeps safe target's own getter/setter, if defined. Useful to react to element properties changes.
-
-```js
-import { prop, fx } from 'spect'
-
-let obj = { foo: 'bar' }
-let foos = prop(obj, 'foo')
-
-// log changes
-fx(foo => console.log(foo), [foos])
-
-// set
-obj.foo = 'baz'
-foos('qux')
-
-// get
-foos() // qux
-
-// forget
-foos.cancel()
-```
-
-</details>
-
-<details><summary><strong>attr</strong></summary>
-
-> value = attr( element, name )
-
-_**`attr`**_ is element attribute accessor/source. Similar to _**`prop`**_, it provides access to attribute value and emits changes. Useful to access/react to element attribute values.
-
-```js
-import { fx, attr } from 'spect'
-
-const loading = attr(document.querySelector('button'), 'loading')
-
-// react to changes
-fx(loading => {
-  console.log(loading)
-}, [loading])
-
-// set
-loading(true)
-
-// get
-loading()
-
-// remove attribute
-loading(null)
-
-// dispose accessor
-loading.close()
-```
-
-</details>
-
-
-<details><summary><strong>input</strong></summary>
-
-> value = input( element )
-
-Input element current value source. Useful to track user input. Works with text inputs, checkboxes, radio and select.
-
-```js
-import { $, fx, input } from 'spect'
-
-$('input', el => {
-  const inputValue = input(el)
-
-  fx(value => {
-    console.log(`Value`, value)
-  }, [inputValue]
-
-  // to update `inputValue` dispatch event
-  el.value = 3
-  el.dispatch(new Event('change'))
-})
-
-```
-
-</details>
-
-
-<details><summary><strong>calc</strong></summary>
-
-> value = calc( state => result, args = [] )
-
-Source computed from `args`. Similar to _**`fx`**_, but synchronous and creates _source_ as result. Analog of _useMemo_.
-
-```js
-import { $, input, calc } from 'spect'
-
-const f = state(32), c = state(0)
-const celsius = calc(f => (f - 32) / 1.8, [f])
-const fahren = calc(c => (c * 9) / 5 + 32, [c])
-
-celsius() // 0
-fahren() // 32
-```
-
-</details>
 
 <!--
 ## Utils
