@@ -2,6 +2,7 @@ import attr from './attr.js'
 import from, { observable, primitive } from './from.js'
 import fx from './fx.js'
 import prop from './prop.js'
+import calc from './calc.js'
 
 const _group = Symbol('group'), _ptr = Symbol('ptr'), _props = Symbol('props'), _cleanup = Symbol('cleanup')
 const TEXT = 3, ELEMENT = 1
@@ -18,21 +19,29 @@ export default function h(tag, props, ...children) {
   else el = createChild(tag)
 
   // props (dynamic)
-  el[_props] = props
-  fx((props) => {
-    const cleanup = []
-    for (let name in props) {
-      let value = props[name]
-      if(observable(value)) {
-        cleanup.push(from(value)(value => (attr.set(el, name, value), el[name] = value)))
+  if (el.nodeType === ELEMENT) {
+    el[_props] = props
+    fx((props) => {
+      const cleanup = []
+      for (let name in props) {
+        let value = props[name]
+        if(observable(value)) {
+          cleanup.push(from(value)(value => (attr.set(el, name, value), el[name] = value)))
+        }
+        // class=[a, b, ...c] - possib observables
+        else if (Array.isArray(value)) {
+          calc((...values) => values.filter(v => v).join(' '), [...value])
+          (value => (attr.set(el, name, value)))
+          el[name] = value
+        }
+        else {
+          attr.set(el, name, value)
+          el[name] = value
+        }
       }
-      else {
-        attr.set(el, name, value)
-        el[name] = value
-      }
-    }
-    return () => cleanup.map(off => off())
-  }, [prop(el, _props)])
+      return () => cleanup.map(off => off())
+    }, [prop(el, _props)])
+  }
 
   // children
   render(children, el)

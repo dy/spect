@@ -397,40 +397,6 @@ t('html: does not duplicate classes for container', t => {
   t.is(el.outerHTML, '<div class="x"></div>')
 })
 
-t('html: multiple rendered observables', async t => {
-  let a = state(0), b = state(1)
-
-  let el = document.createElement('a')
-  html`<${el}>${ a }</>`
-  html`<${el}>${ b }</>`
-
-  t.is(el.outerHTML, `<a>1</a>`)
-  a(2)
-  await tick(8)
-  t.is(el.outerHTML, `<a>1</a>`)
-  b(3)
-  await tick(8)
-  t.is(el.outerHTML, `<a>3</a>`)
-})
-
-t('html: legacy readme default', async t => {
-  let div = document.createElement('div')
-
-  html`<${div}><div id=id class=class foo=bar>baz</div></div>`
-
-  t.is(div.outerHTML, '<div><div id="id" class="class" foo="bar">baz</div></div>')
-  t.is(div.firstChild.foo, 'bar')
-  t.is(div.firstChild.id, 'id')
-})
-
-t('html: attributes', t => {
-  let div = document.createElement('div')
-
-  html`<${div}><a href='/' foo=bar>baz</a></>`
-  t.is(div.firstChild.outerHTML, '<a href="/" foo="bar">baz</a>')
-  t.is(div.firstChild.foo, 'bar')
-})
-
 t('legacy html: component static props', async t => {
   let log = []
   let el = html`<div><${C} id="x" class="y z"/></>`
@@ -518,16 +484,6 @@ t('html: functional components create element', t => {
   t.is(log, [el])
 })
 
-t('html: assigned id must be accessible', async t => {
-  let el = html`<x id=x1 />`
-  t.is(el.id, 'x1')
-
-  $(el, (el) => {
-    t.is(el.id, 'x1')
-    // t.is(props.id, 'x1')
-  })
-})
-
 t('html: must update text content', async t => {
   const foo = html`foo`
   const bar = html`bar`
@@ -584,15 +540,7 @@ t('html: update own children', t => {
   t.is(el.outerHTML, '<div>123</div>')
 })
 
-t('html: externally assigned props must be available', async t => {
-  let el = html`<x x=${1}/>`
-  document.body.appendChild(el)
-  $('x', (el) => {
-    t.is(el.x, 1)
-  })
-})
-
-t('html: streams must update values dynamically', async t => {
+t('html: prop', async t => {
   let obj = { x: 1 }
   let el = html`<div>${ prop(obj, 'x') }</div>`
 
