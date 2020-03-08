@@ -59,14 +59,14 @@ t('attr: get/set', async t => {
   await tick(8)
   t.is(xs(), 'abc')
 
-  xs(undefined)
+  xs(null)
   await tick(8)
   t.is(xs(), null)
 
   // xs.cancel()
-  xs(undefined)
+  xs(123)
   await tick(8)
-  t.is(xs(), undefined)
+  t.is(xs(), null)
 })
 
 t.skip('attr: correct cleanup', async t => {
