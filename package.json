@@ -53,7 +53,8 @@
   "dependencies": {
     "immutable-tuple": "^0.4.10",
     "selector-set": "^1.1.5",
-    "symbol-observable": "^1.2.0"
+    "symbol-observable": "^1.2.0",
+    "xhtm": "^1.2.1"
   },
   "devDependencies": {
     "@rollup/plugin-node-resolve": "^7.1.1",
