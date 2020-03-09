@@ -1,7 +1,5 @@
 import value from './value.js'
 
-const CANCEL = null
-
 const cache = new WeakMap
 
 export default function prop(target, name) {
@@ -12,26 +10,21 @@ export default function prop(target, name) {
   const desc = Object.getOwnPropertyDescriptor(target, name)
 
   // prop is simply last-get value storage with subscriptions
-  const prop = value(target[name])
+  const prop = value(undefined), { next, cancel } = prop
 
-  const get = desc ? (desc.get ? desc.get.bind(target): () => desc.value) : prop
-  const set = desc ?
+  const get = prop.get = desc ? (desc.get ? desc.get.bind(target): () => desc.value) : prop.get
+  const set = prop.set = desc ?
     (desc.set ?
-      (value) => (desc.set.call(target, value), prop(get())) :
-      (value) => (desc.value = value, prop(get()))
-    ) : prop
+      (value) => (desc.set.call(target, value), next(get())) :
+      (value) => next(desc.value = value)
+    ) : prop.set
+  prop.cancel = () => (cancel(), Object.defineProperty(target, name, desc || { configurable: true, value: get() }))
 
   Object.defineProperty(target, name, { configurable: true, get, set })
 
-  return refs[name] = (...args) =>
-    !args.length ?
-      get() :
-    args[0] === CANCEL ?
-      Object.defineProperty(target, name, desc || { configurable: true, value: get() }) :
-    typeof args[0] === 'function' ?
-      prop(...args) :
-      set(...args)
+  return refs[name] = prop
 }
+
 
 export function props (obj) {
   let props = []
