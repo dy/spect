@@ -1,20 +1,17 @@
 import state from './state.js'
 
-const CANCEL = null
-
 export default function attr (el, name) {
-  const get = attr.get.bind(null, el, name)
-  const set = attr.set.bind(null, el, name)
-  const curr = state(get())
-  curr(set)
+  const curr = state(), { cancel } = curr
 
-  const mo = new MutationObserver(rx => rx.forEach(rec => rec.oldValue !== el.getAttribute(name) && curr(get())))
-  mo.observe(el, { attributes: true, attributeFilter: [name], attributeOldValue: true })
+  curr.get = () => attr.get(el, name)
+  curr.set = (value) => attr.set(el, name, value)
+  curr.cancel = () => (mo.disconnect(), cancel())
 
-  return (...args) => (
-    (args[0] === CANCEL && mo.disconnect()),
-    curr(...args)
-  )
+  // no need to check all records - just push next value if that's touched
+  const mo = new MutationObserver(() => curr.next(curr.get()))
+  mo.observe(el, { attributes: true, attributeFilter: [name] })
+
+  return curr
 }
 
 attr.get = (el, name, value) => ((value = el.getAttribute(name)) === '' ? true : value)
