@@ -2,20 +2,21 @@ import channel, { observer, CANCEL } from './channel.js'
 
 export default (...subs) => {
   let cur = subs.length ? [subs.shift()] : []
-  let chan = channel()
 
-  value.get = () => cur[0]
-  value.set = val => chan(cur[0] = val)
+  const value = Object.assign((...args) => {
+      if (!cur) return CANCEL
+      if (args[0] === CANCEL) return value.cancel(cur = CANCEL)
+      return !args.length ? (value.get && value.get()) :
+        observer(...args) ? value.subscribe(...args) :
+        (value.set && value.set(...args))
+    }, {
+    ...channel(),
+    get: () => cur[0],
+    set: val => value.next(cur[0] = val)
+  })
 
-  function value (val) {
-    if (!cur) return CANCEL
-    if (val === CANCEL) return chan(cur = val)
-    let res = !arguments.length ? (value.get && value.get()) :
-      observer(val) ? (val = val.next || val, cur.length && val(value.get && value.get()), chan(val)) :
-      (value.set && value.set(val))
-
-    return res
-  }
+  const subscribe = value.subscribe
+  value.subscribe = val => (val = val.next || val, cur.length && val(value.get && value.get()), subscribe(val))
 
   return value
 }
