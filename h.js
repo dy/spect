@@ -168,8 +168,9 @@ function alloc(parent, el) {
       ))
     ) {
       match = node
-      // migrate props
+      // migrate props (triggers fx that mutates them)
       match[_props] = el[_props]
+      render([...el.childNodes], match)
       break
     }
     else if (node[_group]) {

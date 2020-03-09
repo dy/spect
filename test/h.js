@@ -465,3 +465,12 @@ t('h: null-like insertions', t => {
 
   t.is(a.innerHTML, 'false0')
 })
+
+t('h: hydrate by id with existing content', t => {
+  let el = document.createElement('div')
+  el.innerHTML = '<a></a><b id="x"><x></x></b>'
+
+  let el2 = h(el, null, h('b', {id: 'x'}))
+  t.is(el2, el)
+  t.is(el2.outerHTML, `<div><b id="x"></b></div>`)
+})
