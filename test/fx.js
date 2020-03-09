@@ -221,3 +221,14 @@ t('fx: sync must not call twice init state', async t => {
 t.todo('fx: streams', async t => {
 
 })
+
+t.only('fx: aync callback', async t => {
+  let log = []
+  fx(async () => {
+    await time(10)
+    log.push(10)
+  }, [1])
+  t.is(log, [])
+  await time(10)
+  t.is(log, [10])
+})

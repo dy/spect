@@ -32,6 +32,16 @@ t('calc: must be sync', async t => {
   t.is(x2(), 2)
 })
 
+t('calc: async calculator', async t => {
+  const x = calc(async () => {
+    await time(10)
+    return 10
+  }, [1])
+  t.is(x(), undefined)
+  await time(10)
+  t.is(x(), 10)
+})
+
 t.skip('calc: promises/changeables must return undefined', async t => {
   const p = Promise.resolve(1)
   const log = []

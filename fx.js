@@ -15,6 +15,7 @@ export default function fx(fn, deps=[]) {
     if (!values.length) return
     if (destroy && destroy.call) destroy()
     destroy = fn(...values)
+    if (destroy && destroy.then) destroy.then(d => destroy = d)
   })
 
   // curious inversion
