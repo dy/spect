@@ -2,6 +2,7 @@
 
 Version | Changes
 ---|---
+16.0.0 | `observ`/`observable`-compatible implementation.
 15.1.0 | `ref` + `channel` merged into `bus` - accessor/channel primitive. `symbol.bus` and `symbol.observable` introduced.
 15.0.0 | Reactive `html` effect, `input`, better more optimized core.
 14.0.0 | $ is considered a selector observer special effect, added the generic effect `fx` and observables `state`, `calc`, `ref`, `store` etc.

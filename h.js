@@ -86,13 +86,13 @@ export function render(children, el) {
       el[_cleanup].push(
         from(child)(child => {
           cur = !cur ? alloc(el, createChild(child)) : replaceWith(cur, createChild(child))
-          el[_channel]?.(el)
+          if (el[_channel]) el[_channel](el)
         })
       )
       // if sync init did not hit - create placeholder, no hydration posible
       if (!cur) {
         alloc(el, createChild(''))
-        el[_channel]?.(el)
+        if (el[_channel]) el[_channel](el)
       }
     }
     else {

@@ -222,7 +222,7 @@ t.todo('fx: streams', async t => {
 
 })
 
-t.only('fx: aync callback', async t => {
+t('fx: aync callback', async t => {
   let log = []
   fx(async () => {
     await time(10)
