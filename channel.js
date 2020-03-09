@@ -14,20 +14,21 @@ export default (...subs) => {
         const unsubscribe = () => (
             subs.length && subs.splice(subs.indexOf(next) >>> 0, 1),
             complete && complete(),
-            next.closed = true
+            unsubscribe.closed = true
         )
         next.unsubscribe = unsubscribe.unsubscribe = unsubscribe
         unsubscribe.closed = false
         return unsubscribe
     }
 
-    return Object.assign(val => observer(val) ? subscribe(val) : next(val)
-    , {
-        next,
-        subscribe,
-        cancel,
-        [_observable](){return this}
-    })
+    return Object.assign(
+        val => observer(val) ? subscribe(val) : next(val),
+        {
+            next,
+            subscribe,
+            cancel,
+            [_observable](){return this}
+        })
 }
 
 export const observer = (val) => !!(val && (val.call || val.next))
