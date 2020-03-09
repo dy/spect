@@ -1,6 +1,6 @@
 {
   "name": "spect",
-  "version": "16.1.0",
+  "version": "16.1.1",
   "description": "Alternative reactive aspect-oriented framework",
   "main": "index.js",
   "module": "index.js",
