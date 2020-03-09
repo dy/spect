@@ -3,17 +3,17 @@ import from, { observable, primitive } from './from.js'
 import fx from './fx.js'
 import prop from './prop.js'
 import calc from './calc.js'
+import value from './value.js'
+import _observable from 'symbol-observable'
 
-const _group = Symbol('group'), _ptr = Symbol('ptr'), _props = Symbol('props'), _cleanup = Symbol('cleanup')
+const _group = Symbol('group'), _ptr = Symbol('ptr'), _props = Symbol('props'), _cleanup = Symbol('cleanup'), _channel = Symbol('channel')
 const TEXT = 3, ELEMENT = 1
 
 export default function h(tag, props, ...children) {
   if (!props) props = {}
-
-  if (tag == null) return document.createTextNode('')
+  let el
 
   // element
-  let el
   if (typeof tag === 'string') {
     if (!tag) el = document.createDocumentFragment()
     else {
@@ -30,6 +30,9 @@ export default function h(tag, props, ...children) {
   }
   else if (typeof tag === 'function') el = createChild(tag(props))
   else el = createChild(tag)
+
+  el[_channel] = value(el)
+  el[_observable] = () => ({subscribe:el[_channel]})
 
   // props (dynamic)
   if (el.nodeType === ELEMENT) {
@@ -59,6 +62,7 @@ export default function h(tag, props, ...children) {
           el[name] = value
         }
       }
+      el[_channel](el)
       return () => cleanup.map(off => off())
     }, [prop(el, _props)])
   }
@@ -82,10 +86,14 @@ export function render(children, el) {
       el[_cleanup].push(
         from(child)(child => {
           cur = !cur ? alloc(el, createChild(child)) : replaceWith(cur, createChild(child))
+          el[_channel]?.(el)
         })
       )
       // if sync init did not hit - create placeholder, no hydration posible
-      if (!cur) alloc(el, createChild(''))
+      if (!cur) {
+        alloc(el, createChild(''))
+        el[_channel]?.(el)
+      }
     }
     else {
       alloc(el, createChild(child))

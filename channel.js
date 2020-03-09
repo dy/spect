@@ -8,4 +8,4 @@ export default (...subs) =>
         subs.map(sub => sub(val))
     )
 
-export const observer = (val) => val && (val.call || val.next)
+export const observer = (val) => !!(val && (val.call || val.next))

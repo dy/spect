@@ -4,7 +4,7 @@ import value from './value.js'
 export default function store(obj = {}) {
   const cur = value(obj)
 
-  const observable = () => ({subscribe(next){cur(next.next || next)}})
+  const observable = () => ({subscribe:cur})
 
   const proxy = new Proxy(obj, {
     get(obj, prop) {
