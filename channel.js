@@ -11,7 +11,7 @@ export default (...subs) => {
         val === CANCEL ? cancel() :
         observer(val) ? subscribe(val) :
         next(val)
-    , { next, subscribe, cancel, [_observable](){return {subscribe}} })
+    , { next, subscribe, cancel, [_observable](){return this} })
 }
 
 export const observer = (val) => !!(val && (val.call || val.next))

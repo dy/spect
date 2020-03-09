@@ -44,8 +44,8 @@ t('prop: subscription', async t => {
   await tick(8)
   t.is(log.slice(-1), [6], 'changing and back does not trigger too many times')
 
+  xs.cancel()
   // xs(null)
-  xs(null)
   o.x = 7
   o.x = 8
   t.is(o.x, 8, 'end destructs property')
