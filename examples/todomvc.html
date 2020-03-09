@@ -1,0 +1,97 @@
+<!doctype html>
+<html lang="en" data-framework="spect">
+
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Spect • TodoMVC</title>
+  <link rel="stylesheet" href="https://unpkg.com/todomvc-common/base.css">
+  <link rel="stylesheet" href="https://unpkg.com/todomvc-app-css/index.css">
+</head>
+
+<body>
+  <section class="todoapp">
+    <header class="header">
+      <h1>todos</h1>
+      <input class="new-todo" placeholder="What needs to be done?" autofocus>
+    </header>
+    <!-- This section should be hidden by default and shown when there are todos -->
+    <section class="main">
+      <input id="toggle-all" class="toggle-all" type="checkbox">
+      <label for="toggle-all">Mark all as complete</label>
+      <ul class="todo-list"></ul>
+    </section>
+    <!-- This footer should hidden by default and shown when there are todos -->
+    <footer class="footer" hidden>
+      <span class="todo-count"><strong>0</strong> item left</span>
+      <ul class="filters">
+        <li><a class="selected" href="#/">All</a></li>
+        <li><a href="#/active">Active</a></li>
+        <li><a href="#/completed">Completed</a></li>
+      </ul>
+      <button class="clear-completed">Clear completed</button>
+    </footer>
+  </section>
+  <footer class="info">
+    <p>Double-click to edit a todo</p>
+    <p>Created by <a href="https://github.com/dy">dy</a></p>
+    <p>Part of <a href="http://todomvc.com">TodoMVC</a></p>
+  </footer>
+  <script src="https://unpkg.com/todomvc-common/base.js"></script>
+  <script type="module">
+    // import { $, fx, state, store, on } from "https://unpkg.com/spect?module"
+    import { $, fx, state, store, on, html, input, calc, from, location } from "../index.js"
+
+    let items = state([])
+
+    on('.new-todo', 'keypress', e => {
+      if (e.key === 'Enter') {
+        let item = store({ text: state(e.target.value), done: state(false) })
+        items([...items(), item])
+        list.appendChild(html`<li item=${item}/>`)
+        e.target.value = ''
+      }
+    })
+
+    $('.todo-list li', li => {
+      let { item, done } = li
+
+      let hidden = from(location(), l => l === '#/active' ? item.done : l === '#/completed' ? !item.done : false )
+
+      let toggle, edit
+      html`<${li} class="${ from(done, done => done ? 'completed' : '') }" hidden=${ hidden }>
+        <div class="view">
+          ${ toggle = html`<input class="toggle" type="checkbox" checked=${ item.done }/>` }
+          <label>${ item.text }</label>
+          <button class="destroy"></button>
+        </div>
+        ${ edit = html`<input class=edit value=${ item.text } />` }
+      </>`
+
+      input(toggle)(item.done)
+      input(edit)(item.text)
+
+      on(li, 'dblclick', e => {
+        li.classList.add('editing')
+        inputEl.focus()
+        inputEl.onblur = e => li.classList.remove('editing')
+        inputEl.onkeypress = e => e.key === 'Enter' ? e.target.blur() : null
+      })
+    })
+
+    $('.todo-count', el => {
+      html`<${el}>
+        <strong>${ from(items, items => items.length) }</strong>
+        ${ from(items, items => plur('item', items.length)) }
+      </>`
+    })
+
+    on('.toggle-all', 'click', e => items().map(item => item.done(true)))
+    on('.clear-completed', 'click', e => items(items().filter(item => !item.done)))
+
+    $('.main', main => from(items, items => items.length)(attr(main, 'hidden')) )
+
+  </script>
+</body>
+</html>
+
