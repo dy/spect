@@ -33,8 +33,8 @@ t('$: tag selector', async t => {
   t.deepEqual(proplog, [1, 1, 1, 1], 'additional aspect')
 
   document.body.removeChild(container)
-  x1.cancel()
-  x2.cancel()
+  x1(null)
+  x2(null)
 
   t.end()
 })
@@ -51,7 +51,8 @@ t('$: init existing elements', async t => {
   await Promise.resolve()
   t.is(log, ['x', 'x'], 'simple creation')
 
-  xs.cancel()
+  // xs.cancel()
+  xs(null)
   document.body.removeChild(container)
 })
 t('$: dynamically assigned selector', async t => {
@@ -72,7 +73,8 @@ t('$: dynamically assigned selector', async t => {
 
   t.is(log, [el])
 
-  xs.cancel()
+  // xs.cancel()
+  xs(null)
   document.body.removeChild(el)
 
 })
@@ -91,7 +93,8 @@ t('$: simple hooks', async t => {
   await frame()
   t.is(el.count, 1)
 
-  hx.cancel()
+  // hx.cancel()
+  hx(null)
 })
 t('$: aspects must be called in order', async t => {
   let log = []
@@ -106,7 +109,8 @@ t('$: aspects must be called in order', async t => {
   t.deepEqual(log, [1, 2, 3])
 
   document.body.removeChild(a)
-  as.cancel()
+  // as.cancel()
+  as(null)
 })
 t('$: throwing error must not create recursion', async t => {
   let a = document.createElement('a')
@@ -119,7 +123,8 @@ t('$: throwing error must not create recursion', async t => {
   await tick()
 
   document.body.removeChild(a)
-  as.cancel()
+  // as.cancel()
+  as(null)
   t.end()
 })
 t('$: remove/add should not retrigger element', async t => {
@@ -135,7 +140,8 @@ t('$: remove/add should not retrigger element', async t => {
   t.deepEqual(log, ['a'])
 
   document.body.removeChild(a)
-  as.cancel()
+  // as.cancel()
+  as(null)
   await frame()
   t.end()
 })
@@ -152,7 +158,8 @@ t('$: remove/add internal should not retrigger element', async t => {
   t.deepEqual(log, ['b'])
 
   document.body.removeChild(a)
-  abs.cancel()
+  // abs.cancel()
+  abs(null)
   await frame()
   t.end()
 })
@@ -170,7 +177,8 @@ t('$: destructor is called on unmount', async t => {
   el.innerHTML = ''
   await frame(2)
   t.deepEqual(log, [1, 1, 2, 2], 'clear up')
-  all.cancel()
+  // all.cancel()
+  all(null)
   el.innerHTML = 'x<a></a><a></a>x'
   await tick()
   t.deepEqual(log, [1, 1, 2, 2])
@@ -213,8 +221,10 @@ t('$: changed attribute matches new nodes', async t => {
   await frame(2)
   t.is(log, ['+2', '+3', '-2', '-3'])
 
-  abb.cancel()
-  abbc.cancel()
+  // abb.cancel()
+  abb(null)
+  // abbc.cancel()
+  abbc(null)
 })
 t('$: contextual query with self-matching', async t => {
   let el = document.createElement('x')
@@ -427,7 +437,8 @@ t('$: init on list of elements', async t => {
   })
   t.deepEqual(log, ['1', '2'])
   el.innerHTML = ''
-  chldrn.cancel()
+  // chldrn.cancel()
+  chldrn(null)
   await frame(2)
   t.deepEqual(log, ['1', '2', 'un1', 'un2'])
 })

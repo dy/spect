@@ -1,34 +1,29 @@
-import bus from './src/bus.js'
+import state from './state.js'
 
-const cache = new WeakMap
+const CANCEL = null
 
-export default function attr(el, name) {
-  let refs = cache.get(el)
-  if (!refs) cache.set(el, refs = {})
-  if (refs[name]) return refs[name]
+export default function attr (el, name) {
+  const get = attr.get.bind(null, el, name)
+  const set = attr.set.bind(null, el, name)
+  const curr = state(get())
+  curr(set)
 
-  const attr = refs[name] = bus(
-    () => {
-      let value = el.getAttribute(name)
-      return value === '' ? true : value
-    },
-    (value) => {
-      if (value === attr()) return
-      if (value === true) el.setAttribute(name, '')
-      else if (value === false || value == null) el.removeAttribute(name)
-      else el.setAttribute(name, value)
-    },
-    () => observer.disconnect()
+  const mo = new MutationObserver(rx => rx.forEach(rec => rec.oldValue !== el.getAttribute(name) && curr(get())))
+  mo.observe(el, { attributes: true, attributeFilter: [name], attributeOldValue: true })
+
+  return (...args) => (
+    (args[0] === CANCEL && mo.disconnect()),
+    curr(...args)
   )
+}
 
-  // FIXME: observer notifies unchanged attributes too
-  const observer = new MutationObserver(rx => {
-    rx.forEach(rec => {
-      let newValue = el.getAttribute(name)
-      if (rec.oldValue !== newValue) attr(newValue)
-    })
-  })
-  observer.observe(el, { attributes: true, attributeFilter: [name], attributeOldValue: true })
+attr.get = (el, name, value) => ((value = el.getAttribute(name)) === '' ? true : value)
+attr.set = (el, name, value) => {
+  if (value === false || value == null) el.removeAttribute(name)
+  else el.setAttribute(name, value === true ? '' : value)
+}
 
-  return attr
+
+export function attrs() {
+
 }

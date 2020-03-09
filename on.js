@@ -1,43 +1,34 @@
-import bus from './src/bus.js'
+import channel from './channel.js'
+
+const CANCEL = null
 
 export default function on (scope, target, event, callback) {
   if (arguments.length < 4) {
     [target, event, callback] = arguments
-    scope = document
+    scope = null
   }
 
-  if (typeof target === 'string') return delegate(scope, target, event, callback)
-
-  const channel = bus(null, null, () => evts.map(event => target.removeEventListener(event, channel)))
-  if (callback) channel.subscribe(callback)
-
-  const evts = Array.isArray(event) ? event : event.split(/\s+/)
-  evts.map(event => target.addEventListener(event, channel))
-
-  return channel
-}
-
-
-export function delegate (scope, selector, event, callback) {
-  if (arguments.length < 4) {
-    [target, event, callback] = arguments
-    scope = document
+  // delegate
+  if (typeof target === 'string') {
+    if (!scope) scope = document
+    const selector = target, orig = callback
+    callback = e => {
+      const delegateTarget = e.target.closest(selector)
+      if (delegateTarget && scope.contains(delegateTarget)) {
+        e.delegateTarget = delegateTarget
+        orig(e)
+      }
+    }
+    target = scope
   }
 
+  callback = callback ? channel(callback) : channel()
 
-  const delegate = e => {
-    const delegateTarget = e.target.closest(selector)
-		if (delegateTarget && scope.contains(delegateTarget)) {
-			e.delegateTarget = delegateTarget
-      channel(e)
-		}
-  }
+  const evts = Array.isArray(event) ? [event] : event.split(/\s+/)
+  evts.map(event => (target.on || target.addEventListener).call(target, event, callback))
 
-  const evts = Array.isArray(event) ? event : event.split(/\s+/)
-  evts.map(event => scope.addEventListener(event, delegate))
-
-  const channel = bus(null, null, () => evts.map(event => scope.removeEventListener(event, delegate)))
-  if (callback) channel.subscribe(callback)
-
-  return channel
+  return (...args) => (
+    args[0] === CANCEL ? evts.map(event => (target.off || target.removeEventListener).call(target, event, callback)) : null,
+    callback(...args)
+  )
 }

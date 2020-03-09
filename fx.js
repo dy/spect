@@ -1,32 +1,26 @@
-import bus, { _bus } from './src/bus.js'
-import from from './src/from.js'
+import value from './value.js'
+import from from './from.js'
 
-export default function fx(callback, deps=[]) {
-  deps = deps.map(from)
+export default function fx(fn, deps=[]) {
+  const args = value([])
 
-  const channel = bus(), current = deps.map(dep => dep())
-  let changed = null, destroy
+  deps.map((dep, i) =>
+    from(dep)(value =>
+      (args()[i] = value, args(args()))
+    )
+  )
 
-  const notify = (v) => {
-    channel(current)
-    if (changed) return changed
+  let destroy
+  args(values => {
+    if (!values.length) return
+    if (destroy && destroy.call) destroy()
+    destroy = fn(...values)
+    if (destroy && destroy.then) destroy.then(d => destroy = d)
+  })
 
-    // extra tick to skip sync deps
-    return changed = Promise.resolve().then().then().then().then(() => {
-      changed = null
-      if (destroy && destroy.call) destroy()
-      destroy = callback(...current)
-    })
-  }
-
-  deps.map((from, i) => from.subscribe(value => {
-    notify(current[i] = value, i)
-  }))
-
-  // instant run, if there are immediate inputs
-  if (!deps.length || current.some(value => value != null)) {
-    destroy = callback(...current)
-  }
-
-  return channel
+  // curious inversion
+  // usually we return subscriber function and keep value private
+  // with list we return value and keep subscriber function private
+  // ideally we'd return both value and subscriber
+  return args
 }

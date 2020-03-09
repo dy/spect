@@ -33,7 +33,7 @@ t('on: space-separated events', async t => {
   await tick(8)
   t.is(log, ['x', 'y'])
 
-  xs.cancel()
+  xs(null)
   x.dispatchEvent(new Event('x'))
   x.dispatchEvent(new Event('y'))
   await tick(8)
@@ -51,7 +51,7 @@ t('on: delegated events', t => {
   x.dispatchEvent(new Event('y', {bubbles: true}))
   t.is(log, ['x'])
 
-  xs.cancel()
+  xs(null)
   x.dispatchEvent(new Event('x', {bubbles: true}))
   x.dispatchEvent(new Event('y', {bubbles: true}))
   t.is(log, ['x'])
@@ -70,9 +70,10 @@ t('on: observable', async t => {
   let clicks = on(el, 'click')
   let log = []
   ;(async () => {
-    for await (const e of clicks) {
-      log.push(e.type)
-    }
+    // for await (const e of clicks) {
+    //   log.push(e.type)
+    // }
+    clicks(e => log.push(e.type))
   })()
   el.click()
   await tick(6)
@@ -80,21 +81,24 @@ t('on: observable', async t => {
   el.click()
   el.click()
   await tick(8)
-  t.is(log, ['click', 'click'], 'skips events within same tick')
+  // t.is(log, ['click', 'click'], 'skips events within same tick')
+  t.is(log, ['click', 'click', 'click'], 'skips events within same tick')
   el.click()
   el.click()
   el.click()
   await tick(8)
-  t.is(log, ['click', 'click', 'click'], 'updates to latest value')
+  // t.is(log, ['click', 'click', 'click'], 'updates to latest value')
+  t.is(log, ['click', 'click', 'click', 'click', 'click', 'click'], 'updates to latest value')
 
-  clicks.cancel()
+  // clicks.cancel()
+  clicks(null)
   await tick(8)
   await tick(8)
   el.click()
   await tick(8)
   el.click()
   await tick(8)
-  t.is(log, ['click', 'click', 'click'], 'end stops event stream')
+  t.is(log.length, 6, 'end stops event stream')
 })
 t.todo('on: next-tick event should be discarded', async t => {
   let el = document.createElement('click')

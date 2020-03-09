@@ -1,23 +1,12 @@
-import bus from './src/bus.js'
 import fx from './fx.js'
+import value from './value.js'
 
 export default function calc(fn, deps) {
-  let channel = bus(() => {
-    if (changed) {
-      value = fn(...changed)
-      changed = null
-    }
-    return value
-  }), value, changed
-
-  let fxc = fx((...args) => {
-    changed = null
-    channel(value = fn(...args))
+  const cur = value()
+  fx((...args) => {
+    let p = fn(...args)
+    p.then ? p.then(cur) : cur(p)
   }, deps)
-
-  // sync channel to track sync getter
-  fxc.subscribe((args) => changed = args)
-
-  return channel
+  return cur
 }
 

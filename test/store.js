@@ -1,9 +1,6 @@
 import t from 'tst'
 import { $, state, fx, prop, store, calc, attr, on } from '../index.js'
 import { tick, frame, idle, time } from 'wait-please'
-import { augmentor, useState, useEffect, useMemo } from 'augmentor'
-import Observable from 'zen-observable/esm'
-import observable from './observable.js'
 
 
 t('store: core', async t => {

@@ -7,17 +7,6 @@ import Observable from 'zen-observable/esm'
 import observable from './observable.js'
 import morph from './morph.js'
 
-Object.defineProperty(DocumentFragment.prototype, 'outerHTML', {
-  get() {
-    let s = '<>'
-    this.childNodes.forEach(n => {
-      s += n.nodeType === 3 ? n.textContent : n.outerHTML
-    })
-    s+='</>'
-    return s
-  }
-})
-
 t('html: single attribute', async t => {
   const a = state(0)
 
@@ -32,6 +21,7 @@ t('html: single attribute', async t => {
   await tick(24)
   t.is(el.outerHTML, `<div a="1"></div>`)
 
+  a(undefined)
   a(null)
   await tick(24)
   t.is(el.outerHTML, `<div></div>`)
@@ -53,6 +43,7 @@ t('html: single attribute on mounted node', async t => {
   await tick(24)
   t.is(el.outerHTML, `<div a="1"></div>`)
 
+  a(undefined)
   a(null)
   await tick(24)
   t.is(el.outerHTML, `<div></div>`)
@@ -71,6 +62,7 @@ t('html: text content', async t => {
   await tick(8)
   t.is(el.outerHTML, `<div>1</div>`)
 
+  a(undefined)
   a(null)
   await tick(8)
   t.is(el.outerHTML, `<div></div>`)
@@ -171,6 +163,14 @@ t('html: function renders external component', async t => {
   t.is(el[0].outerHTML, `<a>foo <bar></bar><baz></baz></a>`)
   t.is(el[1].outerHTML, `<b></b>`)
 })
+t('html: element should be observable', async t => {
+  let a = state(1)
+  let el = html`<a>${a}</a>`
+  let log = []
+  fx(el => log.push(el.textContent), [el])
+  a(2)
+  t.is(log, ['1', '2'])
+})
 
 t('html: rerendering with props: must persist', async t => {
   let el = document.createElement('x')
@@ -228,21 +228,6 @@ t('html: reinsert self content', async t => {
 
   await tick(28)
   t.is(el.outerHTML, `<div>a <b>c <d>e <f></f> g</d> h</b> i</div>`)
-})
-
-t('html: changeable tag preserves/remounts children', async t => {
-  let tag = state('a')
-  let frag = html`<><${tag}/></>`
-  t.is(frag.outerHTML, '<><a></a></>')
-  await tick(8)
-  t.is(frag.outerHTML, '<><a></a></>')
-  tag('b')
-  t.is(frag.outerHTML, '<><a></a></>')
-  await tick(8)
-  t.is(frag.outerHTML, '<><b></b></>')
-  tag(null)
-  await tick(8)
-  t.is(frag.outerHTML, '<></>')
 })
 
 t('html: wrapping', async t => {
@@ -397,41 +382,7 @@ t('html: does not duplicate classes for container', t => {
   t.is(el.outerHTML, '<div class="x"></div>')
 })
 
-t('html: multiple rendered observables', async t => {
-  let a = state(0), b = state(1)
-
-  let el = document.createElement('a')
-  html`<${el}>${ a }</>`
-  html`<${el}>${ b }</>`
-
-  t.is(el.outerHTML, `<a>1</a>`)
-  a(2)
-  await tick(8)
-  t.is(el.outerHTML, `<a>1</a>`)
-  b(3)
-  await tick(8)
-  t.is(el.outerHTML, `<a>3</a>`)
-})
-
-t('html: legacy readme default', async t => {
-  let div = document.createElement('div')
-
-  html`<${div}><div id=id class=class foo=bar>baz</div></div>`
-
-  t.is(div.outerHTML, '<div><div id="id" class="class" foo="bar">baz</div></div>')
-  t.is(div.firstChild.foo, 'bar')
-  t.is(div.firstChild.id, 'id')
-})
-
-t('html: attributes', t => {
-  let div = document.createElement('div')
-
-  html`<${div}><a href='/' foo=bar>baz</a></>`
-  t.is(div.firstChild.outerHTML, '<a href="/" foo="bar">baz</a>')
-  t.is(div.firstChild.foo, 'bar')
-})
-
-t('legacy html: component static props', async t => {
+t('html: component static props', async t => {
   let log = []
   let el = html`<div><${C} id="x" class="y z"/></>`
 
@@ -518,16 +469,6 @@ t('html: functional components create element', t => {
   t.is(log, [el])
 })
 
-t('html: assigned id must be accessible', async t => {
-  let el = html`<x id=x1 />`
-  t.is(el.id, 'x1')
-
-  $(el, (el) => {
-    t.is(el.id, 'x1')
-    // t.is(props.id, 'x1')
-  })
-})
-
 t('html: must update text content', async t => {
   const foo = html`foo`
   const bar = html`bar`
@@ -584,15 +525,7 @@ t('html: update own children', t => {
   t.is(el.outerHTML, '<div>123</div>')
 })
 
-t('html: externally assigned props must be available', async t => {
-  let el = html`<x x=${1}/>`
-  document.body.appendChild(el)
-  $('x', (el) => {
-    t.is(el.x, 1)
-  })
-})
-
-t('html: streams must update values dynamically', async t => {
+t('html: prop', async t => {
   let obj = { x: 1 }
   let el = html`<div>${ prop(obj, 'x') }</div>`
 
@@ -645,18 +578,6 @@ t('html: insert self/array of nodes', t => {
   a2.id = 'y'
   html`<${el}>${[ a1, a2 ]}</>`
   t.equal(el.innerHTML, `<a id="x"></a><a id="y"></a>`)
-})
-
-t('html: functional insertions', async t => {
-  const c = state(0)
-  let i = 0, j = 0
-  const log = []
-  let el = html`<a foo=${ip => (log.push(ip), i++)} c=${c}>${jp => (log.push(jp), j++)}</a>`
-
-  t.is(el.outerHTML, `<a foo="0" c="0">0</a>`)
-  t.is(i, 1, 'prop fn is called once')
-  t.is(j, 1, 'content fn is called once')
-  t.is(log, [undefined, undefined], 'prev values')
 })
 
 t.todo('legacy html: re-rendering inner nodes shouldn\'t trigger mount callback', async t => {
