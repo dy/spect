@@ -36,7 +36,7 @@
 -->
 
 
-_Spect_ is alternative FRP framework, based on [_observable_](https://www.npmjs.com/package/observable) infused with [_react hooks_](https://reactjs.org/docs/hooks-intro.html), providing [_aspect-oriented programming_](https://en.wikipedia.org/wiki/Aspect-oriented_programming) with simplicity of [_jquery_](https://ghub.io/jquery). Compatible with [observ](https://ghub.io/observ)-[*](https://ghub.io/mutant)/[observables](https://github.com/tc39/proposal-observable).
+_Spect_ is alternative FRP framework, based on [_observable_](https://www.npmjs.com/package/observable) infused with [_react hooks_](https://reactjs.org/docs/hooks-intro.html), providing [_aspect-oriented programming_](https://en.wikipedia.org/wiki/Aspect-oriented_programming) with simplicity of [_jquery_](https://ghub.io/jquery). Compatible with [observ](https://ghub.io/observ)-[*](https://ghub.io/mutant) / [observables](https://github.com/tc39/proposal-observable).
 
 ## Principles
 
@@ -254,7 +254,7 @@ Pending...
 
 > $( scope? , selector | element, callback )
 
-Selector effect. Any time an element matching the `selector` appears in DOM, _**`$`**_ runs the `callback` function. The `callback` can return a teardown function that runs when the element is unmatched.
+Selector effect. Any time an element matching the `selector` appears in DOM, _**`$`**_ runs the `callback` function. If `callback` returns a teardown, it is run when the element is unmatched.
 
 * `selector` is a valid CSS selector.
 * `element` is _HTMLElement_ or a list of elements (array or array-like).
@@ -266,9 +266,7 @@ import { $ } from 'spect'
 
 $('foo', el => {
   console.log('active')
-  return () => {
-    console.log('inactive')
-  }
+  return () => console.log('inactive')
 })
 
 let el = document.createElement('foo')
@@ -307,7 +305,7 @@ timer.cancel()
 
 > let el = h('tag', props, ...children)
 
-Hyperscript constructor, base for [_**`html`**_](#html) effect. Creates DOM element. Compatible with JSX / [hyperscript](https://ghub.io/hyperscript) / etc.
+Hyperscript element constructor. Compatible with [hyperscript](https://ghub.io/hyperscript) et all. Can be used via JSX.
 
 ```js
 import { h, fx, text } from 'spect'
@@ -340,10 +338,9 @@ $('.timer', el => {
 
 <details><summary><strong>html</strong></summary>
 
-> let el = html\`<tag ...${ props }>${ content }</>\`
+> let el = html\`...content\`
 
-HTML effect. Renders markup automatically when input fields update. Fields can be any observables or direct values.
-Syntax is compatible with [htm](https://ghub.io/htm). For JSX see [_**`h`**_](#h).
+_**`html`**_ = [htm](https://ghub.io/xhtm) + _**`h`**_. Renders HTML markup automatically when fields update. Fields can be observables or direct values. Markup syntax is compatible with [htm](https://ghub.io/htm).
 
 ```js
 import { html, fx, text } from 'spect'
@@ -386,8 +383,7 @@ $('.timer', el => {
 
 > value = state( init? )
 
-_**`state`**_ is a value source. It is a getter/setter function with [_AsyncIterator_](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Symbol/asyncIterator) interface for observing changes. `init` is optional initial value.
-_**`state`**_ acts as _useState_ hook and has similar to [observable](https://ghub.io/observable) API. Useful as component state, eg. visibility etc.
+_**`state`**_ is simply observable value − a getter/setter function, fully compatible with [observable](https://ghub.io/observable) API. _**`state`**_ acts as _useState_ hook. Useful as component state, eg. visibility etc.
 
 ```js
 import { state, fx } from 'spect'
@@ -423,8 +419,8 @@ fx(c => {
 
 > fx( callback, deps=[] )
 
-Generic effect. Reacts to `deps` and runs `callback` function with `(...args) => teardown` signature.
-Similar to _useEffect_, but `deps` are observables, detected by [_**`from`**_](#from).
+Generic effect or reaction to changes in `deps`. Runs `callback` function with `(...args) => teardown` signature.
+Similar to _useEffect_, but `deps` are observables or alike.
 
 ```js
 import { state, fx } from 'spect'
@@ -475,7 +471,7 @@ timer.cancel()
 
 > value = calc( state => result, args = [] )
 
-Source computed from `args`. Similar to _**`fx`**_, but synchronous and creates _source_ as result. Analog of _useMemo_.
+Observable value computed from `args`. Similar to _**`fx`**_, but returns calculated value as the result. Analog of _useMemo_.
 
 ```js
 import { $, input, calc } from 'spect'
@@ -496,16 +492,16 @@ fahren() // 32
 
 > obv = from( source, map? )
 
-Create a read-only observable from any source, one of:
+Create a readable observable from any source:
 
-* _Function_ with subscription support or observable ([observ-*](https://ghub.io/observ), [observable](https://ghub.io/observable) or [mutant](https://ghub.io/mutant))
+* Subscribable _function_ ([observ-*](https://ghub.io/observ), [observable](https://ghub.io/observable), [mutant](https://ghub.io/mutant) etc.)
 * _AsyncIterator_ or [_async iterable_](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Symbol/asyncIterator)
 * _Promise_ or _thenable_
 * _Observable_ ([rxjs](https://ghub.io/rxjs), [es-observable](https://ghub.io/es-observable), [zen-observable](https://ghub.io/zen-observable) etc.)
 * [_Stream_](https://nodejs.org/api/stream.html)
 * any other value is considered constant.
 
-Optional `map` transforms value.
+Optional `map` transforms returned value. _**`from`**_ is used as the base for _**`fx`**_ and _**`calc`**_.
 
 #### Example
 
@@ -526,7 +522,7 @@ from(date, date => date.toISOString())(date => console.log(date))
 
 > value = prop( target, name )
 
-_**`prop`**_ is target property accessor/source. _**`prop`**_ keeps safe target's own getter/setter, if defined. Useful to react to element properties changes.
+_**`prop`**_ is target property observable / accessor. It keeps safe target's own getter/setter, if defined. Useful to react to element properties changes.
 
 ```js
 import { prop, fx } from 'spect'
@@ -554,7 +550,7 @@ foos.cancel()
 
 > value = attr( element, name )
 
-_**`attr`**_ is element attribute accessor/source. Similar to _**`prop`**_, it provides access to attribute value and emits changes. Useful to access/react to element attribute values.
+_**`attr`**_ is element attribute observable / accessor. Similar to _**`prop`**_, but observes attribute changes.
 
 ```js
 import { fx, attr } from 'spect'
@@ -586,7 +582,7 @@ loading.close()
 
 > on( scope?, target | selector, event, callback? )
 
-Event effect. Runs `callback` by events on a `target` element or `selector`. For the `selector` case it delegates events to `scope` container, by default `document`.
+Stateless event observable, runs `callback` on `target` events or by `selector`. For the `selector` case it delegates events to `scope` container, by default `document`.
 
 ```js
 import { on } from 'spect'
@@ -638,7 +634,7 @@ ticks.cancel()
 
 > value = input( element )
 
-Input element current value source. Useful to track user input. Works with text inputs, checkboxes, radio and select.
+Input element value observable, useful to track user input. Works with text inputs, checkboxes, radio and select.
 
 ```js
 import { $, fx, input } from 'spect'
@@ -664,7 +660,7 @@ $('input', el => {
 
 > obj = store( init = {} )
 
-_**`store`**_ is object source. Unlike _**`state`**_, it returns an object − adding, changing, or deleting its properties emits changes. Useful as model.
+_**`store`**_ is observable object. Adding, changing, or deleting its properties emits changes. Useful as app model.
 
 ```js
 import { store, fx } from 'spect'
@@ -719,7 +715,7 @@ $('.likes-count', el => {
 
 > arr = list([ ...items ])
 
-_**`list`**_ is array source, similar to _**`store`**_, but intended for collections. Emits changes on any mutations. Useful for rendering multiple items.
+_**`list`**_ is observable array, similar to _**`store`**_, but intended for collections. Emits changes on any mutations.
 
 ```js
 import { list } from 'spect'
