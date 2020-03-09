@@ -11,6 +11,7 @@ import './store.js'
 import './list.js'
 import './h.js'
 import './html.js'
+import './value.js'
 
 
 Object.defineProperty(DocumentFragment.prototype, 'outerHTML', {

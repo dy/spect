@@ -1,5 +1,5 @@
 import t from 'tst'
-import { $, state, fx, prop, on, from } from '../index.js'
+import { $, state, fx, prop, on, from, value, list } from '../index.js'
 import { tick, frame, idle, time } from 'wait-please'
 import { augmentor, useState, useEffect, useMemo } from 'augmentor'
 import Observable from 'zen-observable/esm'
@@ -45,4 +45,18 @@ t('from: async generator', async t => {
 
   await tick(12)
   t.is(log, [1,undefined,1,1,2,1,2,2])
+})
+
+t('from: constant to value', async t => {
+  let v = state()
+  from(0, x => x + 1)(v)
+  t.is(v(), 1)
+})
+
+t('from: stream to value', async t => {
+  let x = value(0)
+  const v = value()
+  from(x)(v)
+  x(v)
+  t.is(v(), 0)
 })
