@@ -6,7 +6,11 @@ import calc from './calc.js'
 import value from './value.js'
 import _observable from 'symbol-observable'
 
-const _group = Symbol('group'), _ptr = Symbol('ptr'), _props = Symbol('props'), _cleanup = Symbol('cleanup'), _channel = Symbol('channel')
+const _group = Symbol.for('@spect.group'),
+      _ptr = Symbol.for('@spect.ptr'),
+      _props = Symbol.for('@spect.props'),
+      _cleanup = Symbol.for('@spect.cleanup'),
+      _channel = Symbol.for('@spect.channel')
 const TEXT = 3, ELEMENT = 1
 
 export default function h(tag, props, ...children) {
