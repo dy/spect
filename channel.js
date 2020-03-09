@@ -8,7 +8,12 @@ export default (...subs) => {
     return Object.assign(val =>
         observer(val) ? subscribe(val) :
         next(val)
-    , { next, subscribe, cancel, [_observable](){return this} })
+    , {
+        next,
+        subscribe,
+        cancel,
+        [_observable](){return this}
+    })
 }
 
 export const observer = (val) => !!(val && (val.call || val.next))

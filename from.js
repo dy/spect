@@ -8,7 +8,8 @@ export default function from(src, map) {
 
   // constant (stateful)
   if (primitive(src)) {
-    curr = (...args) => typeof args[0] === 'function' ? args[0](src) : src
+    curr = value(src)
+    curr.get = () => src
   }
   // observable / observ / mutant (stateful)
   else if (typeof src === 'function') {
@@ -19,7 +20,8 @@ export default function from(src, map) {
     // WARN: we use value instead of channel here
     // it has no-init call prevention, but further subscriptions will fire prev value
     // so ideally use `from` for a single consumer
-    src[_observable]().subscribe({next: curr = value()})
+    curr = value()
+    src[_observable]().subscribe({next: curr})
   }
   // async iterator (stateful, initial undefined)
   else if (src.next || src[Symbol.asyncIterator]) {
@@ -39,7 +41,7 @@ export default function from(src, map) {
 
   if (map) {
     let mapped = value()
-    curr(value => mapped(map(value)))
+    curr(value => (mapped(map(value))))
     curr = mapped
   }
 

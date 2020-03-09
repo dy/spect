@@ -1,10 +1,10 @@
-import state from './state.js'
+import value from './value.js'
 
 export default function attr (el, name) {
-  const curr = state(), { cancel } = curr
+  const curr = value(undefined), { cancel, next } = curr
 
   curr.get = () => attr.get(el, name)
-  curr.set = (value) => attr.set(el, name, value)
+  curr.set = (value) => (attr.set(el, name, value), next(curr.get()))
   curr.cancel = () => (mo.disconnect(), cancel())
 
   // no need to check all records - just push next value if that's touched

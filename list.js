@@ -4,7 +4,7 @@ import _observable from 'symbol-observable'
 
 export default function list(arr = []) {
   const cur = value(arr)
-  const observable = () => ({ subscribe:cur})
+  const observable = () => cur
   const proxy = new Proxy(arr, {
     get(arr, prop) {
       if (prop === _observable) return observable
