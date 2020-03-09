@@ -33,7 +33,7 @@ t('on: space-separated events', async t => {
   await tick(8)
   t.is(log, ['x', 'y'])
 
-  xs(null)
+  xs.cancel()
   x.dispatchEvent(new Event('x'))
   x.dispatchEvent(new Event('y'))
   await tick(8)
@@ -51,7 +51,7 @@ t('on: delegated events', t => {
   x.dispatchEvent(new Event('y', {bubbles: true}))
   t.is(log, ['x'])
 
-  xs(null)
+  xs.cancel()
   x.dispatchEvent(new Event('x', {bubbles: true}))
   x.dispatchEvent(new Event('y', {bubbles: true}))
   t.is(log, ['x'])
@@ -90,8 +90,8 @@ t('on: observable', async t => {
   // t.is(log, ['click', 'click', 'click'], 'updates to latest value')
   t.is(log, ['click', 'click', 'click', 'click', 'click', 'click'], 'updates to latest value')
 
-  // clicks.cancel()
-  clicks(null)
+  clicks.cancel()
+  // clicks(null)
   await tick(8)
   await tick(8)
   el.click()

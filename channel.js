@@ -1,14 +1,11 @@
 import _observable from 'symbol-observable'
 
-export const CANCEL = null
-
 export default (...subs) => {
     const next = val => subs.map(sub => sub(val))
     const cancel = () => subs.length = 0
     const subscribe = val => (val = val.next || val, subs.push(val), () => subs.splice(subs.indexOf(val) >>> 0, 1))
 
     return Object.assign(val =>
-        val === CANCEL ? cancel() :
         observer(val) ? subscribe(val) :
         next(val)
     , { next, subscribe, cancel, [_observable](){return this} })

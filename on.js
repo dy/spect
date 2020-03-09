@@ -1,7 +1,5 @@
 import channel from './channel.js'
 
-const CANCEL = null
-
 export default function on (scope, target, event, callback) {
   if (arguments.length < 4) {
     [target, event, callback] = arguments
@@ -22,13 +20,13 @@ export default function on (scope, target, event, callback) {
     target = scope
   }
 
-  callback = callback ? channel(callback) : channel()
+  const { cancel, next } = callback = callback ? channel(callback) : channel()
 
   const evts = Array.isArray(event) ? [event] : event.split(/\s+/)
-  evts.map(event => (target.on || target.addEventListener).call(target, event, callback))
+  evts.map(event => (target.on || target.addEventListener).call(target, event, next))
 
-  return (...args) => (
-    args[0] === CANCEL ? evts.map(event => (target.off || target.removeEventListener).call(target, event, callback)) : null,
-    callback(...args)
-  )
+  callback.cancel = () => (cancel(), evts.map(event => (target.off || target.removeEventListener).call(target, event, callback)))
+  callback.next = () => {}
+
+  return callback
 }

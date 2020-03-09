@@ -68,7 +68,7 @@ t('input: updates by changing value directly', async t => {
   await tick(8)
   t.is(log.slice(-1), ['6'], 'reading has no side-effects')
 
-  value(null)
+  value.cancel()
   el.value = 7
   el.dispatchEvent(new Event('change'))
   t.is(el.value, '7', 'end destructs inputerty')
@@ -121,7 +121,7 @@ t.skip('input: direct value set off-focus emits event', async t => {
 t('input: checkbox', async t => {
   let el = document.createElement('input')
   el.type = 'checkbox'
-  // document.body.appendChild(el)
+  document.body.appendChild(el)
   let bool = input(el)
   t.is(bool(), false)
   t.is(el.checked, false)
@@ -138,7 +138,7 @@ t('input: checkbox', async t => {
   t.is(el.checked, false)
   t.is(el.value, '')
 
-  bool(null)
+  bool.cancel()
   bool(true)
   t.is(bool(), false)
   t.is(el.checked, false)
@@ -164,7 +164,7 @@ t('input: select', async t => {
   t.is(el.innerHTML, '<option value="1" selected="">A</option><option value="2">B</option>')
   t.is(el.value, '1')
 
-  value(null)
+  value.cancel()
   value('2')
   t.is(value(), '1')
   t.is(el.innerHTML, '<option value="1" selected="">A</option><option value="2">B</option>')

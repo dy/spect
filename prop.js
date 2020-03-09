@@ -18,7 +18,11 @@ export default function prop(target, name) {
       (value) => (desc.set.call(target, value), next(get())) :
       (value) => next(desc.value = value)
     ) : prop.set
-  prop.cancel = () => (cancel(), Object.defineProperty(target, name, desc || { configurable: true, value: get() }))
+  prop.cancel = () => (
+    cancel(),
+    Object.defineProperty(target, name, desc || { configurable: true, value: get() }),
+    prop.set = () => {}
+  )
 
   Object.defineProperty(target, name, { configurable: true, get, set })
 

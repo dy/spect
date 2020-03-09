@@ -1,32 +1,36 @@
 import value from './value.js'
 
-const CANCEL = null
-
 export default function input (el) {
-  const get = {
+  const curr = value(undefined)
+
+  curr.get = {
       text: () => el.value,
       checkbox: () => el.checked,
       'select-one': () => el.value
-    }[el.type],
-    set = {
+    }[el.type]
+
+  curr.set = {
       text: value => el.value = (value == null ? '' : value),
       checkbox: value => (el.checked = value, el.value = (value ? 'on' : ''), value ? el.setAttribute('checked', '') : el.removeAttribute('checked')),
       'select-one': value => ([...el.options].map(el => el.removeAttribute('selected')), el.value = value, el.selectedOptions[0].setAttribute('selected', ''))
-    }[el.type],
-    update = e => curr(get())
-  const curr = value(get())
+    }[el.type]
 
-  // external get/set
-  curr(set)
+  const { cancel, next, get, set } = curr
 
+  // normalize initial value
+  set(get())
+
+  const update = e => (set(get()), next(get()))
   el.addEventListener('change', update)
   el.addEventListener('input', update)
 
-  return (...args) => (
-    !args.length ? get() :
-    (args[0] === CANCEL && (
-      el.removeEventListener('change', update),
-      el.removeEventListener('input', update)
-    ), curr(...args))
+
+  curr.cancel = () => (
+    cancel(),
+    el.removeEventListener('change', update),
+    el.removeEventListener('input', update),
+    curr.set = () => {}
   )
+
+  return curr
 }

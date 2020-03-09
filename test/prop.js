@@ -62,7 +62,7 @@ t('prop: get/set', async t => {
 t('prop: keep initial property value if applied/unapplied', async t => {
   let o = { foo: 'bar' }
   let foos = prop(o, 'foo')
-  foos(null)
+  foos.cancel(null)
   t.is(o, {foo: 'bar'}, 'initial object is unchanged')
 })
 t('prop: multiple instances', async t => {
@@ -106,7 +106,7 @@ t('prop: minimize get/set invocations', async t => {
   t.is(log, ['get', 0, 'changed', 0, 'get', 0, 'set', 1, 'get', 1, 'changed', 1])
 
   log = []
-  xs(null)
+  xs.cancel(null)
   t.is(log, [])
 
   obj.x
