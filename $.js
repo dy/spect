@@ -8,8 +8,6 @@ const _observer = Symbol.for('@@spect.observer')
 const _attrAspects = Symbol.for('@@spect.attrAspects')
 const set = new SelectorSet
 
-const CANCEL = null
-
 // element-based aspect
 export default function spect(context, target, fn) {
   // spect(target, fn)
@@ -24,7 +22,7 @@ export default function spect(context, target, fn) {
     return $(context, target, fn)
   }
 
-  let offs = [], chan = channel()
+  let offs = [], chan = channel(), {cancel} = chan
 
   // spect({'.x': a, '.y': b})
   if (arguments.length === 1) {
@@ -48,10 +46,12 @@ export default function spect(context, target, fn) {
   // spect(target, fn)
   else {
     initCallback(target, fn)
-    return (...args) => args[0] === CANCEL ? destroyCallback(target, fn) : chan(...args)
+    chan.cancel = () => (destroyCallback(target, fn), cancel())
+    return chan
   }
 
-  return (...args) => args[0] === CANCEL ? offs.map(c => c(CANCEL)) : chan(...args)
+  chan.cancel = () => (offs.map(c => c.cancel(), cancel()))
+  return chan
 }
 
 // selector-based aspect
@@ -111,21 +111,22 @@ function $(scope, selector, fn) {
   }
 
   const chan = channel(), aspect = el => {let destroy = fn(el); chan(el); return destroy}
-
-  const off = () => {
+  const {cancel} = chan
+  chan.cancel = () => {
     set.queryAll(scope).forEach(rule => rule.elements.forEach(el => destroyCallback(el, rule.data)))
     set.remove(selector, aspect)
     if (!set.size) {
       scope[_observer].disconnect()
       delete scope[_observer]
     }
+    cancel()
   }
 
   set.add(selector, aspect)
   // set.matches(scope).forEach(rule => initCallback(scope, rule.data))
   set.queryAll(scope).forEach(rule => rule.elements.forEach(el => initCallback(el, rule.data)))
 
-  return (...args) => args[0] === CANCEL ? off() : chan(...args)
+  return chan
 }
 
 function initCallback(el, fn) {
