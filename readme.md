@@ -12,7 +12,7 @@
   <img src="https://img.shields.io/badge/stability-unstable-yellowgreen"/>
 </p>
 
-<p align="center"><img src="/preview.png" width="649"/></p>
+<p align="center"><img src="/preview.png" width="624"/></p>
 <p align="center">▶ <a href="https://codepen.io/dyv/pen/oNXXZEb" target="_blank"><strong>Run</strong></a></p>
 <br/>
 
@@ -25,9 +25,9 @@
   $('#clock', el => {
     const date = state(new Date())
 
-    h(el, { datetime: date },
-      from( date, d => d.toLocaleTimeString())
-    )
+    html`<${el} datetime=${ date }>${
+      from(date, date => date.toLocaleTimeString())
+    }</el>`
 
     let id = setInterval(() => date(new Date()), 1000)
     return () => clearInterval(id)
