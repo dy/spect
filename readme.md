@@ -1,7 +1,7 @@
 <div align="center"><img src="https://avatars3.githubusercontent.com/u/53097200?s=200&v=4" width=108 /></div>
 <p align="center"><h1 align="center">spect</h1></p>
 <p align="center">
-  Alternative reactive aspect-oriented framework.<br/>
+  Micro DOM <em>aspects</em> with <em>effects</em> and <em>observables</em>.<br/>
   <!-- Build reactive UIs with rules, similar to CSS.<br/> -->
   <!-- Each rule specifies an <em>aspect</em> function, carrying a piece of logic.<br/> -->
 </p>
@@ -36,7 +36,7 @@
 -->
 
 
-_Spect_ is alternative framework, providing smallest footprint for organizing complex UI code. It is remake on [_observable_](https://www.npmjs.com/package/observable), inspired by [_react hooks_](https://reactjs.org/docs/hooks-intro.html), [_aspect-oriented programming_](https://en.wikipedia.org/wiki/Aspect-oriented_programming) and [_jquery_](https://ghub.io/jquery). It's compatible with [observ](https://ghub.io/observ)-[*](https://ghub.io/mutant) and interoperable with [observables](https://github.com/tc39/proposal-observable).
+_Spect_ is alternative FRP framework, based on [_observable_](https://www.npmjs.com/package/observable) infused with [_react hooks_](https://reactjs.org/docs/hooks-intro.html), providing [_aspect-oriented programming_](https://en.wikipedia.org/wiki/Aspect-oriented_programming) with simplicity of [_jquery_](https://ghub.io/jquery). Compatible with [observ](https://ghub.io/observ)-[*](https://ghub.io/mutant)/[observables](https://github.com/tc39/proposal-observable).
 
 ## Principles
 
