@@ -36,7 +36,7 @@
 -->
 
 
-_Spect_ is alternative FRP framework, based on [_observable_](https://www.npmjs.com/package/observable) infused with [_react hooks_](https://reactjs.org/docs/hooks-intro.html), providing [_aspect-oriented programming_](https://en.wikipedia.org/wiki/Aspect-oriented_programming) with simplicity of [_jquery_](https://ghub.io/jquery). Compatible with [observ](https://ghub.io/observ)-[*](https://ghub.io/mutant) / [observables](https://github.com/tc39/proposal-observable).
+_Spect_ is [_aspect-oriented_](https://en.wikipedia.org/wiki/Aspect-oriented_programming) FRP framework, a mix of [_observable_](https://www.npmjs.com/package/observable) with [_react hooks_](https://reactjs.org/docs/hooks-intro.html) and [_jquery_](https://ghub.io/jquery). It is compatible with [observable proposal](https://github.com/tc39/proposal-observable) and [observ](https://ghub.io/observ)-[*](https://ghub.io/mutant).
 
 ## Principles
 
@@ -252,31 +252,33 @@ Pending...
 
 <details><summary><strong>$</strong></summary>
 
-> $( scope? , selector | element, callback )
+> let elements = $( scope? , selector | element, callback? )
 
-Selector effect. Any time an element matching the `selector` appears in DOM, _**`$`**_ runs the `callback` function. If `callback` returns a teardown, it is run when the element is unmatched.
+Selector observer, creates live collection of elements matching the `selector`, with optional `callback` run for each new element. If `callback` returns a teardown, it is run when element is unmatched.
 
 * `selector` is a valid CSS selector.
 * `element` is _HTMLElement_ or a list of elements (array or array-like).
-* `callback` is a function with `(element) => teardown?` signature, or an array of such functions.
+* `callback` is a function with `(element) => teardown?` signature.
 * `scope` is optional container element to observe, by default that is `document`.
+* `elements` is live array with matched elements (similar to [HTMLCollection](https://developer.mozilla.org/en-US/docs/Web/API/HTMLCollection)).
 
 ```js
 import { $ } from 'spect'
 
-$('foo', el => {
+let $foo = $('foo', el => {
   console.log('active')
   return () => console.log('inactive')
 })
 
-let el = document.createElement('foo')
-document.body.appendChild(el)
+let foo = document.createElement('foo')
+document.body.appendChild(foo)
+// > "active"
 
-// logs "active"
+foo.replaceWith(null)
+// > "inactive"
 
-el.replaceWith(null)
-
-// logs "inactive"
+$foo[0] === foo
+// > true
 ```
 
 #### Example
@@ -284,7 +286,7 @@ el.replaceWith(null)
 ```js
 import { $ } from 'spect'
 
-const timer = $('.timer', el => {
+const $timer = $('.timer', el => {
   let count = 0
   let id = setInterval(() => {
     el.innerHTML = `Seconds: ${count++}`
@@ -292,11 +294,7 @@ const timer = $('.timer', el => {
   return () => clearInterval(id)
 })
 
-// wait until `.timer` element appears in the tree
-await timer
-
-// dispose `.timer` aspect
-timer.cancel()
+$timer[_observable]()
 ```
 </details>
 
@@ -660,7 +658,7 @@ $('input', el => {
 
 > obj = store( init = {} )
 
-_**`store`**_ is observable object. Adding, changing, or deleting its properties emits changes. Useful as app model.
+_**`store`**_ is observable object/array etc. Adding, changing, or deleting its properties emits changes. Can be safely used with collections. Useful as app model.
 
 ```js
 import { store, fx } from 'spect'
@@ -672,17 +670,29 @@ foo.foo = 'bar'
 foo.baz = ['boo']
 
 // log changes
-fx(({ foo, ...bax }) => {
-  console.log(foo, bax)
-}, [foo])
+fx(({ foo, ...bax }) => console.log(foo, bax), [foo])
 
-// { foo: 'bar', baz: 'boo' }
+// > { foo: 'bar', baz: 'boo' }
 
 // doesn't update store
 foo.baz[1] = 'far'
 
-// can have methods
+// methods
 foo.plugh = function () { this.foo += 'x' }
+
+
+// collection
+let arr = store([])
+
+// set
+arr[3] = 'foo'
+
+// mutate
+arr.push('bar', 'baz')
+arr.unshift('qux')
+
+// ...changes
+fx(arr => console.log(arr), [arr])
 ```
 
 <!--
@@ -710,36 +720,6 @@ $('.likes-count', el => {
 -->
 
 </details>
-
-<details><summary><strong>list</strong></summary>
-
-> arr = list([ ...items ])
-
-_**`list`**_ is observable array, similar to _**`store`**_, but intended for collections. Emits changes on any mutations.
-
-```js
-import { list } from 'spect'
-
-let arr = list([])
-
-// set
-arr[3] = 'foo'
-
-// mutate
-arr.push('bar', 'baz')
-arr.unshift('qux')
-
-// ...changes
-for await (const items of arr) {
-  console.log(items)
-}
-
-// returns new live list instance
-let mapped = arr.map(x => x * 2)
-```
-
-</details>
-
 
 
 <!--

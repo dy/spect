@@ -1,7 +1,7 @@
 import './hyperscript.js'
 
 import t from 'tst'
-import { $, state, fx, prop, h, list } from '../index.js'
+import { $, state, fx, prop, h, store } from '../index.js'
 // import { $, state, fx, prop, store, calc, list, ref, attr, on, html } from '../dist/spect.min.js'
 import { tick, frame, idle, time } from 'wait-please'
 import observable from './observable.js'
@@ -101,7 +101,7 @@ t('h: dynamic list', async t => {
   const foo = h('foo')
   const bar = `bar`
   const baz = h('baz')
-  const content = list([foo, bar, baz])
+  const content = store([foo, bar, baz])
 
   const a = h('a', null, content)
   t.is(a.outerHTML, `<a><foo></foo>bar<baz></baz></a>`)

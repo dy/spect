@@ -1,5 +1,5 @@
 import t from 'tst'
-import { attr, on, from, list, value } from '../index.js'
+import { attr, on, from, store, value } from '../index.js'
 import { tick, frame, idle, time } from 'wait-please'
 
 t('attr: core', async t => {
@@ -79,7 +79,7 @@ t.skip('attr: correct cleanup', async t => {
 })
 
 t('attr: stream to attribute', async t => {
-  let x = list(), el = document.createElement('div')
+  let x = store([]), el = document.createElement('div')
   const a = attr(el, 'hidden')
   from(x, x => !x.length)(a)
   t.is(el.getAttribute('hidden'), '')

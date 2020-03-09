@@ -1,5 +1,5 @@
 import t from 'tst'
-import { $, state, fx, prop, store, calc, list, attr, on, html } from '../index.js'
+import { $, state, fx, prop, store, calc, attr, on, html } from '../index.js'
 // import { $, state, fx, prop, store, calc, list, ref, attr, on, html } from '../dist/spect.min.js'
 import { tick, frame, idle, time } from 'wait-please'
 import { augmentor, useState, useEffect, useMemo } from 'augmentor'
@@ -96,7 +96,7 @@ t('html: dynamic list', async t => {
   const foo = html`<foo></foo>`
   const bar = `bar`
   const baz = html`<baz/>`
-  const content = list([foo, bar, baz])
+  const content = store([foo, bar, baz])
 
   const a = html`<a>${ content }</a>`
   t.is(a.outerHTML, `<a><foo></foo>bar<baz></baz></a>`)
