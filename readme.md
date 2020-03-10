@@ -300,11 +300,13 @@ $timer[0]
 </details>
 
 
-<details><summary><strong>h</strong></summary>
+<details><summary><strong>h</strong>, <strong>html</strong></summary>
 
 > let el = h('tag', props, ...children)
+> let el = html\`...content\`
 
-Hyperscript element constructor. Compatible with [hyperscript](https://ghub.io/hyperscript) et al. Can be used via JSX.
+_**`h`**_ is hyperscript constructor. Compatible with [hyperscript](https://ghub.io/hyperscript) et al. Can be used via JSX.
+_**`html`**_ is tagged hyperscript markup sugar for _**`h`**_.  _**`html`**_ = [_**`htm`**_](https://ghub.io/xhtm) + _**`h`**_.
 
 ```js
 import { h, fx, text } from 'spect'
@@ -319,49 +321,20 @@ const foo = h('foo', {}, text)
 const bar = <bar>{ text }</bar>
 
 // update
-text('bazqux')
-```
+text('fooobar')
 
-#### Example
-
-```js
-import { $, state, h, render } from 'spect'
-
-$('.timer', el => {
-  const count = state(0)
-  setInterval(() => count(count + 1))
-  render(count, el)
-})
-```
-
-</details>
-
-
-<details><summary><strong>html</strong></summary>
-
-> let el = html\`...content\`
-
-Hyperscript tagged markup sugaring for _**`h`**_.  _**`html`**_ = [_**`htm`**_](https://ghub.io/xhtm) + _**`h`**_.
-
-```js
-import { html, fx, text } from 'spect'
-
-const text = state('foobar')
 
 // create element
-const foo = html`<foo>${ text }</foo>`
-
-// update
-text('bazqux')
+const foo = html`<baz>${ text }</baz>`
 
 // create multiple elements
 const [foo1, foo2] = html`<foo>1</foo><foo>2</foo>`
 
 // create document fragment
-const foof = html`<><foo/></>`
+const fooFrag = html`<><foo/></>`
 
-// hydrate element with `foo` as content
-const bar = html`<${document.querySelector('#bar')}>${ foo }</>`
+// hydrate element with `foo`
+const foo = html`<${foo}>${ bar }</>`
 ```
 
 #### Example
@@ -379,12 +352,15 @@ $('.timer', el => {
 </details>
 
 
+<details><summary><strong>state</strong>, <strong>value</strong></summary>
 
-<details><summary><strong>state</strong></summary>
+> obv = value( init? )
+> obv = state( init? )
 
-> value = state( init? )
+_**`value`**_ is simply observable value − a getter/setter function, fully compatible with [observable](https://ghub.io/observable) API.
+_**`state`**_ is the same as _**`value`**_, but skips unchanged values.
 
-_**`state`**_ is simply observable value − a getter/setter function, fully compatible with [observable](https://ghub.io/observable) API. _**`state`**_ acts as _useState_ hook. Useful as component state, eg. visibility etc.
+It acts as _useState_ hook. Useful as component state, eg. visibility etc.
 
 ```js
 import { state, fx } from 'spect'
@@ -474,7 +450,6 @@ fahren() // 32
 ```
 
 </details>
-
 
 
 
