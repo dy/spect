@@ -298,7 +298,7 @@ $timer[0]
 </details>
 
 
-<details><summary><strong>h</ − hyperscriptstrong></summary>
+<details><summary><strong>h − hyperscript</strong></summary>
 
 > el = h('tag', props, ...children)
 
@@ -351,7 +351,7 @@ $('#clock', el => {
 
 
 
-<details><summary><strong>v</ − valuestrong></summary>
+<details><summary><strong>v − value</strong></summary>
 
 > value = v( source?, map? )
 
@@ -424,7 +424,7 @@ fahren() // 32
 
 
 
-<details><summary><strong>o</ − optionsstrong></summary>
+<details><summary><strong>o − options</strong></summary>
 
 > props = o( source, types? )
 
@@ -503,7 +503,7 @@ $('.likes-count', el => h`<${el}>${
 </details>
 
 
-<details><summary><strong>e</ − eventsstrong></summary>
+<details><summary><strong>e − events</strong></summary>
 
 > e( scope?, target|selector, event, callback? )
 
