@@ -20,13 +20,13 @@
 <time id="clock"></time>
 
 <script type="module">
-  import { $, h, from, state, calc } from "https://unpkg.com/spect"
+  import { $, h, f, state, calc } from "https://unpkg.com/spect"
 
   $('#clock', el => {
     const date = state(new Date())
 
     html`<${el} datetime=${ date }>${
-      from(date, date => date.toLocaleTimeString())
+      f(date, date => date.toLocaleTimeString())
     }</el>`
 
     let id = setInterval(() => date(new Date()), 1000)
@@ -36,7 +36,7 @@
 -->
 
 
-_Spect_ is [_aspect-oriented_](https://en.wikipedia.org/wiki/Aspect-oriented_programming) FRP framework, a mix of [_observable_](https://www.npmjs.com/package/observable) with [_react hooks_](https://reactjs.org/docs/hooks-intro.html) and [_jquery_](https://ghub.io/jquery). It is compatible with [observable proposal](https://github.com/tc39/proposal-observable) and [observ](https://ghub.io/observ)-[*](https://ghub.io/mutant).
+_Spect_ is [_aspect-oriented_](https://en.wikipedia.org/wiki/Aspect-oriented_programming) FRP framework, a successor of [_observable_](https://www.npmjs.com/package/observable) inspired by [_react hooks_](https://reactjs.org/docs/hooks-intro.html) and [_jquery_](https://ghub.io/jquery). It is compatible with [standard observable](https://github.com/tc39/proposal-observable) and [observ](https://ghub.io/observ)-[*](https://ghub.io/mutant).
 
 ## Principles
 
@@ -59,7 +59,7 @@ _Spect_ is [_aspect-oriented_](https://en.wikipedia.org/wiki/Aspect-oriented_pro
 
 ```html
 <script type="module">
-import { $ } from 'https://unpkg.com/spect?module'
+import { $, h, f } from 'https://unpkg.com/spect?module'
 
 // ... code here
 </script>
@@ -70,7 +70,7 @@ import { $ } from 'https://unpkg.com/spect?module'
 [![npm i spect](https://nodei.co/npm/spect.png?mini=true)](https://npmjs.org/package/spect/)
 
 ```js
-import { $ } from 'spect'
+import { $, h, f } from 'spect'
 
 // ... code here too
 ```
@@ -86,19 +86,17 @@ Consider simple user welcoming example.
 <div class="user">Loading...</div>
 
 <script type="module">
-import { $, html, state } from 'spect'
+import { $, html, state, f } from 'spect'
 
 $('.user', async el => {
-  const username = state()
-  html`<${el}>Hello, ${ username }!</>`
+  const user = f((await fetch('/user')).json())
 
-  const user = await (await fetch('/user')).json()
-  username(user.name)
+  html`<${el}>${ f(user, u => u ? `Hello, ${u.name}` : `Loading...`) }!</>`
 })
 </script>
 ```
 
-The `$` assigns an _aspect function_ to the `.user` element. `state` here acts as _useState_, but creates an observable `username`. `html` is reactive − it rerenders automatically whenever `username` changes.
+The `$` assigns an _aspect callback_ to the `.user` element. `state` here acts as _useState_, storing `user` in observable container. `html` is reactive − it rerenders automatically whenever the `user` changes. `f` is mapping function - it maps any changeable value (promise in this case) to observable.
 
 <!--
 Consider simple todo app.
@@ -254,7 +252,7 @@ Pending...
 
 > let elements = $( scope? , selector | element, callback? )
 
-Selector observer, creates live collection of elements matching the `selector`. Optional `callback` is run for each new element matching the selector. If `callback` returns a teardown, it is run when the element is unmatched.
+Selector observer, creates live collection of elements matching the `selector`. Optional `callback` runs for each new element matching the selector. If `callback` returns a teardown, it is run when the element is unmatched.
 
 * `selector` is a valid CSS selector.
 * `element` is _HTMLElement_ or a list of elements (array or array-like).
@@ -306,14 +304,14 @@ $timer[0]
 > let el = html\`...content\`
 
 _**`h`**_ is hyperscript constructor. Compatible with [hyperscript](https://ghub.io/hyperscript) et al. Can be used via JSX.
-_**`html`**_ is tagged hyperscript markup sugar for _**`h`**_.  _**`html`**_ = [_**`htm`**_](https://ghub.io/xhtm) + _**`h`**_.
+_**`html`**_ is tagged hyperscript markup sugar for _**`h`**_,  _**`html`**_ = [_**`htm`**_](https://ghub.io/xhtm) + _**`h`**_.
 
 ```js
 import { h, fx, text } from 'spect'
 
 const text = state('foobar')
 
-// create simple
+// create element
 const foo = h('foo', {}, text)
 
 // create jsx
@@ -333,7 +331,7 @@ const [foo1, foo2] = html`<foo>1</foo><foo>2</foo>`
 // create document fragment
 const fooFrag = html`<><foo/></>`
 
-// hydrate element with `foo`
+// hydrate element
 const foo = html`<${foo}>${ bar }</>`
 ```
 
@@ -352,7 +350,7 @@ $('.timer', el => {
 </details>
 
 
-<details><summary><strong>state</strong>, <strong>value</strong></summary>
+<details><summary><strong>state</strong></summary>
 
 > obv = value( init? )
 > obv = state( init? )
@@ -391,20 +389,21 @@ fx(c => {
 </details>
 
 
-<details><summary><strong>from</strong></summary>
+<details><summary><strong>f</strong></summary>
 
-> obv = from( source, map? )
+> obv = f( source, map? )
 
 Create a readable observable from any source:
 
+* Constant value (primitive or immutable object)
 * Subscribable _function_ ([observ-*](https://ghub.io/observ), [observable](https://ghub.io/observable), [mutant](https://ghub.io/mutant) etc.)
 * _AsyncIterator_ or [_async iterable_](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Symbol/asyncIterator)
 * _Promise_ or _thenable_
 * _Observable_ ([rxjs](https://ghub.io/rxjs), [es-observable](https://ghub.io/es-observable), [zen-observable](https://ghub.io/zen-observable) etc.)
-* [_Stream_](https://nodejs.org/api/stream.html)
-* any other value is considered constant.
+* Node [_stream_](https://nodejs.org/api/stream.html) (more streams support is coming...)
+* Any combination of the above as _array_.
 
-Optional `map` transforms returned value. _**`from`**_ can be used to replace _**`useMemo`**_ or _**`useEffect`**_.
+Optional `map` function transforms returned value. _**`from`**_ can be used as _**`useMemo`**_ or _**`useEffect`**_.
 
 ```js
 import { value, from } from 'spect'
@@ -419,7 +418,7 @@ v2() // 2
 let v3 = from([v1, v2], ([v1, v2]) => v1 + v2)
 v3() // 3
 
-// effect on every change
+// run effect on every change
 from([v1, v2, v3])(([v1, v2, v3]) => {
   console.log('in', v1, v2, v3)
   return () => console.log('out', v1, v2, v3)
