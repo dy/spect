@@ -404,7 +404,7 @@ v([v1, v2, v3])(([v1, v2, v3]) => {
 // > 1, 2, 3
 
 // from input
-let v4 = v($('#input'))
+let v4 = v($('#field')[0])
 ```
 
 </details>
@@ -414,7 +414,7 @@ let v4 = v($('#input'))
 ```js
 import { $, v } from 'spect'
 
-const f = v($('#fahren')), c = v($('#celsius'))
+const f = v(...$('#fahren')), c = v(...$('#celsius'))
 const celsius = v(f, f => (f - 32) / 1.8)
 const fahren = v(c, c => (c * 9) / 5 + 32)
 
