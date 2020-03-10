@@ -3,8 +3,6 @@ import t from 'tst'
 import { $, state, fx, prop, store, calc, attr, on } from '../index.js'
 import { tick, frame, idle, time } from 'wait-please'
 import { augmentor, useState, useEffect, useMemo } from 'augmentor'
-import Observable from 'zen-observable/esm'
-import observable from './observable.js'
 
 t('$: tag selector', async t => {
   let ellog = []
@@ -95,7 +93,7 @@ t('$: simple hooks', async t => {
   hx.cancel()
   // hx(null)
 })
-t('$: aspects must be called in order', async t => {
+t.skip('$: aspects must be called in order', async t => {
   let log = []
   let a = document.createElement('a')
 
@@ -415,7 +413,22 @@ t.skip('empty selectors', t => {
   t.notEqual($x, $z)
   // t.notEqual($x, $w)
 })
-t.todo('selecting forms', t => {
+t('$: returned result is live collection', async t => {
+  let scope = document.createElement('div')
+  let els = $(scope, '.x')
+  t.is(els, [])
+  scope.innerHTML = '<a class="x"></a>'
+  await tick(8)
+  t.is(els.length, 1)
+  scope.innerHTML = '<a class="x"><b class="x"/></a>'
+  await tick(2)
+  t.is(els.length, 2)
+  scope.innerHTML = ''
+  await tick(2)
+  t.is(els.length, 0)
+})
+t.todo('$: handles input live collections')
+t.todo('$: selecting by name', t => {
   let $f = $`<form><input name="a"/><input name="b"/></form>`
 
   let $form = $($f)

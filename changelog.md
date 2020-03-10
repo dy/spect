@@ -2,6 +2,7 @@
 
 Version | Changes
 ---|---
+16.2.0 | Removed `list`, `$` now creates live collection.
 16.1.0 | Expose `get`, `set`, `subscribe`, `next`. Make effects return `channel` or `value`.
 16.0.0 | `observ`/`observable`-compatible implementation.
 15.1.0 | `ref` + `channel` merged into `bus` - accessor/channel primitive. `symbol.bus` and `symbol.observable` introduced.

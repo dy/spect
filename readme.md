@@ -254,7 +254,7 @@ Pending...
 
 > let elements = $( scope? , selector | element, callback? )
 
-Selector observer, creates live collection of elements matching the `selector`, with optional `callback` run for each new element. If `callback` returns a teardown, it is run when element is unmatched.
+Selector observer, creates live collection of elements matching the `selector`. Optional `callback` is run for each new element matching the selector. If `callback` returns a teardown, it is run when the element is unmatched.
 
 * `selector` is a valid CSS selector.
 * `element` is _HTMLElement_ or a list of elements (array or array-like).
@@ -294,7 +294,8 @@ const $timer = $('.timer', el => {
   return () => clearInterval(id)
 })
 
-$timer[_observable]()
+$timer[0]
+// > <div.timer></div>
 ```
 </details>
 
@@ -720,6 +721,35 @@ $('.likes-count', el => {
 -->
 
 </details>
+
+<!--
+<details><summary><strong>cancel</strong></summary>
+
+> cancel( ...observables )
+
+Cancel observables in the list.
+
+```js
+import { $, cancel } from 'spect'
+
+let $items = $('.item')
+let clicks = on($items, 'click')
+
+cancel($items, clicks)
+```
+
+#### Example
+
+```js
+import { from } from 'spect'
+
+let date = state(new Date())
+setInterval(() => date(new Date()), 1000)
+from(date, date => date.toISOString())(date => console.log(date))
+```
+
+</details>
+-->
 
 
 <!--
