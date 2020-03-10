@@ -241,7 +241,7 @@ Pending...
 
 <details><summary><strong>$ − selector</strong></summary>
 
-> elements = $( scope? , selector, callback? )<br/>
+> elements = $( scope? , selector , callback? )<br/>
 > elements = $( element | list, callback? )<br/>
 
 Selector observer, creates live collection of elements matching the `selector`. Optional `callback` runs for each new element matching the selector. If `callback` returns a teardown, it is run when the element is unmatched.
@@ -249,7 +249,7 @@ Selector observer, creates live collection of elements matching the `selector`. 
 * `selector` is a valid CSS selector.
 * `element` is _HTMLElement_ or a list of elements (array or array-like).
 * `callback` is a function with `(element) => teardown?` signature.
-* `scope` is optional container element to observe, by default that is `document`.
+* `scope` is optional container element to observe, by default that is `globalThis`.
 * `elements` is live array with matched elements (similar to [HTMLCollection](https://developer.mozilla.org/en-US/docs/Web/API/HTMLCollection)).
 
 ```js
@@ -293,7 +293,7 @@ $timer[0]
 
 <details><summary><strong>h − hyperscript</strong></summary>
 
-> el = h(tag, props?, ...children)<br/>
+> el = h( tag , props? , ...children )<br/>
 > el = h\`...content\`<br/>
 
 [Hyperscript](https://ghub.io/hyperscript)-compatible element constructor. Can be used via JSX or template literal with [_htm_](https://ghub.io/xhtm) syntax.
@@ -345,7 +345,7 @@ $('#clock', el => {
 
 <details><summary><strong>v − value</strong></summary>
 
-> value = v( source?, map? )<br/>
+> value = v( source? , map? )<br/>
 > value = v( observer )<br/>
 
 Value observable − simply a getter/setter function with [observable](https://ghub.io/observable) API.
@@ -419,11 +419,13 @@ fahren() // 32
 
 <details><summary><strong>o − options</strong></summary>
 
-> props = o( target={}, types? )<br/>
+> props = o( target = {} , types? )<br/>
 
-Props observable / accessor for any `target`. It creates `props` object − adding, changing, or deleting its properties emits changes and modifies `target`. If `target` is an _element_, then `props` also reflects attributes.
+Props observer / accessor for any `target`. Adding, changing, or deleting `props` emits changes and modifies `target`. If `target` is an _element_, then `props` also reflects attributes.
 
-`types` optionally specifies props, similar to [propTypes](https://github.com/facebook/prop-types) or [lit-element](https://lit-element.polymer-project.org/guide/properties).
+`types` optionally specifies properties types.
+
+<!--similar to [propTypes](https://github.com/facebook/prop-types) or [lit-element](https://lit-element.polymer-project.org/guide/properties).-->
 
 ```js
 import { o, v } from 'spect'
@@ -499,10 +501,10 @@ $('.likes-count', el => h`<${el}>${
 
 <details><summary><strong>e − events</strong></summary>
 
-> e( target, event, callback? )<br/>
-> e( scope?, selector, event, callback? )<br/>
+> e( target , event , callback? )<br/>
+> e( scope? , selector , event , callback? )<br/>
 
-Event bus (stateless observable) for an element/target, runs `callback` on `target` events or by `selector`. For the `selector` case it delegates events to `scope` container, by default `document`.
+Event bus (stateless observable) for an element/target, runs `callback` on `target` events or by `selector`. For the `selector` case it delegates events to `scope` container, by default `globalThis`.
 
 ```js
 import { e } from 'spect'
