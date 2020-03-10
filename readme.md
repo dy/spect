@@ -249,8 +249,9 @@ Pending...
 ## API
 
 <details><summary><strong>$ − selector</strong></summary>
-
-> elements = $( scope? , selector | element, callback? )
+<br/>
+> elements = $( scope? , selector, callback? )<br/>
+> elements = $( element | list, callback? )<br/>
 
 Selector observer, creates live collection of elements matching the `selector`. Optional `callback` runs for each new element matching the selector. If `callback` returns a teardown, it is run when the element is unmatched.
 
@@ -300,9 +301,9 @@ $timer[0]
 
 
 <details><summary><strong>h − hyperscript</strong></summary>
-
-> el = h('tag', props, ...children)<br/>
-> el = h\`...content\`
+<br/>
+> el = h(tag, props?, ...children)<br/>
+> el = h\`...content\`<br/>
 
 [Hyperscript](https://ghub.io/hyperscript)-compatible element constructor. Can be used via JSX or template literal with [_htm_](https://ghub.io/xhtm) syntax.
 
@@ -352,8 +353,9 @@ $('#clock', el => {
 
 
 <details><summary><strong>v − value</strong></summary>
-
-> value = v( source?, map? )
+<br/>
+> value = v( source?, map? )<br/>
+> value = v( observer )<br/>
 
 Value observable − simply a getter/setter function with [observable](https://ghub.io/observable) API.
 
@@ -425,10 +427,10 @@ fahren() // 32
 
 
 <details><summary><strong>o − options</strong></summary>
+<br/>
+> props = o( target={}, types? )<br/>
 
-> props = o( source, types? )
-
-Props observable / accessor for any target. It creates `props` object − adding, changing, or deleting its properties emits changes and modifies `source`. If `source` is an _element_, then _**`o`**_ also reflects attributes.
+Props observable / accessor for any `target`. It creates `props` object − adding, changing, or deleting its properties emits changes and modifies `target`. If `target` is an _element_, then `props` also reflects attributes.
 
 `types` optionally specifies props, similar to [propTypes](https://github.com/facebook/prop-types) or [lit-element](https://lit-element.polymer-project.org/guide/properties).
 
@@ -505,38 +507,36 @@ $('.likes-count', el => h`<${el}>${
 
 
 <details><summary><strong>e − events</strong></summary>
-
-> e( scope?, target|selector, event, callback? )
+<br/>
+> e( target, event, callback? )<br/>
+> e( scope?, selector, event, callback? )<br/>
 
 Event bus (stateless observable) for an element/target, runs `callback` on `target` events or by `selector`. For the `selector` case it delegates events to `scope` container, by default `document`.
 
 ```js
-import { on } from 'spect'
+import { e } from 'spect'
 
 // target events
-on(document.querySelector('button'), 'click', e => {
+e(document.querySelector('button'), 'click', e => {
   console.log('clicked', e)
 })
 
 // delegate events
-const submit = on('form', 'submit', e => console.log(e))
-
-// wait for a 'submit' event
-const e = await submit
+const submit = e('form', 'submit', e => console.log(e))
 
 // cancel submit events listener
 submit.cancel()
 
 // multiple events
-on('.draggable', 'touchstart mousedown', e => {})
+e('.draggable', 'touchstart mousedown', e => {})
 ```
 
 #### Example
 
 ```js
-import { on } from 'spect'
+import { e } from 'spect'
 
-const ticks = on('.timer', 'tick', e => {
+const ticks = e('.timer', 'tick', e => {
   console.log('Seconds', e.detail.count)
 })
 
@@ -545,10 +545,7 @@ setInterval(() => {
   timer.dispatchEvent(new CustomEvent('tick', { detail: ++count}))
 }, 1000)
 
-// await the next 'tick' event
-await ticks
-
-// cancel ticks listener
+// cancel ticks
 ticks.cancel()
 ```
 
