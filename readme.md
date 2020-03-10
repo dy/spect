@@ -36,19 +36,19 @@
 -->
 
 
-_Spect_ is radical [_aspect-oriented_](https://en.wikipedia.org/wiki/Aspect-oriented_programming) FRP framework, a successor of [_observable_](https://www.npmjs.com/package/observable), [_react hooks_](https://reactjs.org/docs/hooks-intro.html) and [_jquery_](https://ghub.io/jquery). It is compatible with [standard observable](https://github.com/tc39/proposal-observable) and [observ](https://ghub.io/observ)-[*](https://ghub.io/mutant).
+_Spect_ is radical [_aspect-oriented_](https://en.wikipedia.org/wiki/Aspect-oriented_programming) FRP framework, a successor of [_observable_](https://www.npmjs.com/package/observable), [_react hooks_](https://reactjs.org/docs/hooks-intro.html) and [_jquery_](https://ghub.io/jquery). It is compatible with [_standard observable_](https://github.com/tc39/proposal-observable) and [_observ_](https://ghub.io/observ)-[_*_](https://ghub.io/mutant) and provides terse code.
 
 ## Principles
 
-:gem: **Separation of cross-cutting concerns** via _aspects_ − fragments of logic assigned to elements.
+:gem: **Separation of cross-cutting concerns** via _aspects_.
 
-:deciduous_tree: **Native first** − cares about semantic clean tree and encourages native API, vanilla friendly.
+:deciduous_tree: **Native first** − semantic clean tree and native API, vanilla friendly.
 
-:ocean: **Progressive enhancement** − multiple aspects provide layers of functionality.
+:ocean: **Progressive enhancement** − multiple aspects add on functionality.
 
-:baby_chick: **Low entry barrier** − no complexity hostages and bureacratic code.
+:baby_chick: **Low entry barrier** − no complexity hostages and code bureaucracy.
 
-:dizzy: **0** bundling, **0** server, **0** template − an html page with `<script>` is enough.
+:dizzy: **0** bundling, **0** server, **0** template.
 
 :shipit: **Low-profile** − doesn’t force stack and can be used as utility.
 
@@ -302,7 +302,7 @@ $timer[0]
 
 <details><summary><strong>h − hyperscript</strong></summary>
 
-> el = h('tag', props, ...children)
+> el = h('tag', props, ...children)<br/>
 > el = h\`...content\`
 
 [Hyperscript](https://ghub.io/hyperscript)-compatible element constructor. Can be used via JSX or template literal with [_**`htm`**_](https://ghub.io/xhtm) syntax.
