@@ -358,13 +358,12 @@ _**`v`**_ creates an observable `value` − simply a getter/setter function with
 
 `source` can be:
 
+* _Primitive_ or plain value
 * _Observable_ or subscribable _function_ ([observ-*](https://ghub.io/observ), [observable](https://ghub.io/observable), [mutant](https://ghub.io/mutant) etc.)
 * _AsyncIterator_ or an object with [`Symbol.asyncIterator`](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Symbol/asyncIterator) property
 * _Promise_ or _thenable_
-* _Observable_ or an object with [`Symbol.observable`] property ([rxjs](https://ghub.io/rxjs), [es-observable](https://ghub.io/es-observable), [zen-observable](https://ghub.io/zen-observable) etc.)
-* _Input_ (including `radio` or `checkbox`) or _Select_.
-* Node [_stream_](https://nodejs.org/api/stream.html)
-* Constant _primitive_ or _object_
+* _Observable_ or an object with [`Symbol.observable`](https://ghub.io/symbol-observable) property ([rxjs](https://ghub.io/rxjs),[zen-observable](https://ghub.io/zen-observable) etc.)
+* _Input_ (inc. `radio` or `checkbox`) or _Select_.
 * Any combination of the above as _array_.
 
 Optional `map` transforms returned value. _**`from`**_ can be used as _**`useState`**_, _**`useMemo`**_ or _**`useEffect`**_.
@@ -451,6 +450,7 @@ foos.cancel()
 ```
 
 </details>
+
 
 <details><summary><strong>attr</strong></summary>
 

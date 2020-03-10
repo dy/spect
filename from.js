@@ -28,10 +28,6 @@ export default function from(src, map) {
     curr = value()
     ;(async () => {for await (const v of src) curr(v)})()
   }
-  // node streams (stateless)
-  else if (src.on && src.pipe) {
-    src.on('data', curr = channel())
-  }
   // promise (stateful, initial undefined)
   else if (src.then) {
     src.then(curr = channel())
