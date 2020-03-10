@@ -303,8 +303,9 @@ $timer[0]
 > let el = h('tag', props, ...children)
 > let el = html\`...content\`
 
-_**`h`**_ is hyperscript constructor. Compatible with [hyperscript](https://ghub.io/hyperscript) et al. Can be used via JSX.
-_**`html`**_ is tagged hyperscript markup sugar for _**`h`**_,  _**`html`**_ = [_**`htm`**_](https://ghub.io/xhtm) + _**`h`**_.
+_**`h`**_ is **h**yperscript constructor. Compatible with [hyperscript](https://ghub.io/hyperscript) et al. Can be used via JSX.
+
+_**`html`**_ is **h** **t**agged **m**arkup **l**iteral sugar,  _**`html`**_ = [_**`htm`**_](https://ghub.io/xhtm) + _**`h`**_.
 
 ```js
 import { h, fx, text } from 'spect'
@@ -338,10 +339,10 @@ const foo = html`<${foo}>${ bar }</>`
 #### Example
 
 ```js
-import { $, state, html } from 'spect'
+import { $, v, html } from 'spect'
 
 $('.timer', el => {
-  const count = state(0)
+  const count = v(0)
   setInterval(() => count(count + 1))
   html`<${el}>Seconds: ${ count }</>`
 })
@@ -350,40 +351,32 @@ $('.timer', el => {
 </details>
 
 
-<details><summary><strong>state</strong></summary>
+<details><summary><strong>v</strong></summary>
 
-> obv = value( init? )
-> obv = state( init? )
+> value = v( init? )
 
-_**`value`**_ is simply observable value − a getter/setter function, fully compatible with [observable](https://ghub.io/observable) API.
-_**`state`**_ is the same as _**`value`**_, but skips unchanged values.
-
+_**`v`**_ is simply observable value − a getter/setter function, fully compatible with [observable](https://ghub.io/observable) API.
 It acts as _useState_ hook. Useful as component state, eg. visibility etc.
 
 ```js
-import { state, fx } from 'spect'
+import { v } from 'spect'
 
-let count = state(0)
+let count = v(0)
 
 // get
 count()
 
 // set
 count(1)
-count(prev => prev + 1)
 
 // observe changes
-for await (let value of count) {
+count(value => {
   // 0, 1, ...
-}
 
-// current value
-count.current
-
-// run effect
-fx(c => {
-  console.log(c)
-}, [count])
+  return () => {
+    // ...teardown
+  }
+})
 ```
 
 </details>
@@ -395,31 +388,31 @@ fx(c => {
 
 Create a readable observable from any source:
 
-* Constant value (primitive or immutable object)
+* _Constant_ value
 * Subscribable _function_ ([observ-*](https://ghub.io/observ), [observable](https://ghub.io/observable), [mutant](https://ghub.io/mutant) etc.)
 * _AsyncIterator_ or [_async iterable_](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Symbol/asyncIterator)
 * _Promise_ or _thenable_
 * _Observable_ ([rxjs](https://ghub.io/rxjs), [es-observable](https://ghub.io/es-observable), [zen-observable](https://ghub.io/zen-observable) etc.)
-* Node [_stream_](https://nodejs.org/api/stream.html) (more streams support is coming...)
+* Node [_stream_](https://nodejs.org/api/stream.html)
 * Any combination of the above as _array_.
 
 Optional `map` function transforms returned value. _**`from`**_ can be used as _**`useMemo`**_ or _**`useEffect`**_.
 
 ```js
-import { value, from } from 'spect'
+import { v, f } from 'spect'
 
-let v1 = value(1)
+let v1 = v(1)
 
 // from single value
-let v2 = from(v1, v1 => v1 * 2)
+let v2 = f(v1, v1 => v1 * 2)
 v2() // 2
 
 // from multiple values
-let v3 = from([v1, v2], ([v1, v2]) => v1 + v2)
+let v3 = f([v1, v2], ([v1, v2]) => v1 + v2)
 v3() // 3
 
 // run effect on every change
-from([v1, v2, v3])(([v1, v2, v3]) => {
+f([v1, v2, v3])(([v1, v2, v3]) => {
   console.log('in', v1, v2, v3)
   return () => console.log('out', v1, v2, v3)
 })
@@ -428,11 +421,11 @@ from([v1, v2, v3])(([v1, v2, v3]) => {
 #### Example
 
 ```js
-import { from } from 'spect'
+import { f, v, h } from 'spect'
 
-let date = state(new Date())
+let date = v(new Date())
 setInterval(() => date(new Date()), 1000)
-from(date, date => date.toISOString())(date => console.log(date))
+f(date, date => date.toISOString())(console.log)
 ```
 
 #### Example 2
@@ -465,7 +458,7 @@ let obj = { foo: 'bar' }
 let foos = prop(obj, 'foo')
 
 // log changes
-fx(foo => console.log(foo), [foos])
+foos(foo => console.log(foo))
 
 // set
 obj.foo = 'baz'
@@ -487,14 +480,14 @@ foos.cancel()
 _**`attr`**_ is element attribute observable / accessor. Similar to _**`prop`**_, but observes attribute changes.
 
 ```js
-import { fx, attr } from 'spect'
+import { attr } from 'spect'
 
 const loading = attr(document.querySelector('button'), 'loading')
 
 // react to changes
-fx(loading => {
+attr(loading => {
   console.log(loading)
-}, [loading])
+})
 
 // set
 loading(true)
@@ -571,20 +564,14 @@ ticks.cancel()
 Input element value observable, useful to track user input. Works with text inputs, checkboxes, radio and select.
 
 ```js
-import { $, fx, input } from 'spect'
+import { $, f, input } from 'spect'
 
-$('input', el => {
-  const inputValue = input(el)
+const val = input(...$('input'))
 
-  fx(value => {
-    console.log(`Value`, value)
-  }, [inputValue]
+val(value => console.log(`Value`, value))
 
-  // to update `inputValue` dispatch event
-  el.value = 3
-  el.dispatch(new Event('change'))
-})
-
+el.value = 3
+el.dispatch(new Event('change'))
 ```
 
 </details>
@@ -594,44 +581,36 @@ $('input', el => {
 
 > obj = store( init = {} )
 
-_**`store`**_ is observable object/array etc. Adding, changing, or deleting its properties emits changes. Can be safely used with collections. Useful as app model.
+_**`store`**_ is observable object/array. Adding, changing, or deleting its properties emits changes. Useful as app model.
 
 ```js
-import { store, fx } from 'spect'
+import { store, f } from 'spect'
 
 const foo = store({ foo: null })
 
-// set
+// set props
 foo.foo = 'bar'
 foo.baz = ['boo']
 
 // log changes
-fx(({ foo, ...bax }) => console.log(foo, bax), [foo])
-
+f(foo)({ foo, ...bax }) => console.log(foo, ...bax))
 // > { foo: 'bar', baz: 'boo' }
-
-// doesn't update store
-foo.baz[1] = 'far'
-
-// methods
-foo.plugh = function () { this.foo += 'x' }
 
 
 // collection
 let arr = store([])
 
-// set
+// set item
 arr[3] = 'foo'
 
 // mutate
 arr.push('bar', 'baz')
 arr.unshift('qux')
 
-// ...changes
-fx(arr => console.log(arr), [arr])
+// log changes
+f(arr, arr => console.log(arr))
 ```
 
-<!--
 #### Example
 
 ```js
@@ -647,13 +626,11 @@ let likes = store({
   }
 })
 
-$('.likes-count', el => {
-  fx(async () => {
-    render(likes.loading ? html`Loading...` : html`Likes: ${ likes.count }`, element)
-  }, [likes])
+$('.likes-count', el => html`<${el}>${
+    f(likes, ({loading, count}) => loading ? `Loading...` : `Likes: ${ likes.count }`)
+  }</>`
 })
 ```
--->
 
 </details>
 
@@ -688,37 +665,6 @@ from(date, date => date.toISOString())(date => console.log(date))
 
 
 <!--
-## Utils
-
-
-### _`ref`_
-
-> value = ref( init? )
-
-Value container, emits every _set_ call. Thenable, Cancelable, AsyncIterable. _**`ref`**_ is direct analog of _useRef_ hook.
-
-```js
-import ref from 'spect/ref'
-
-let count = ref(0)
-
-// get
-count()
-
-// set
-count(1)
-
-// observe setting value
-for await (const c of count) {
-  // 1, ...
-}
-
-// discard observable, end generators
-count.cancel()
-```
-
-<br/>
-
 ### _`channel`_
 
 > ch = channel( callback, onCancel )
