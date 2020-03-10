@@ -407,8 +407,6 @@ v([v1, v2, v3])(([v1, v2, v3]) => {
 let v4 = v($('#field')[0])
 ```
 
-</details>
-
 #### Example
 
 ```js
