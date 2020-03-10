@@ -279,6 +279,8 @@ foo.replaceWith(null)
 // > "inactive"
 ```
 
+_**`$`**_ serves as replacement for _jQuery_, _selector-observer_.
+
 #### Example
 
 ```js
@@ -301,7 +303,6 @@ $timer[0]
 <details><summary><strong>h − hyperscript</strong></summary>
 
 > el = h('tag', props, ...children)
-
 > el = h\`...content\`
 
 [Hyperscript](https://ghub.io/hyperscript)-compatible element constructor. Can be used via JSX or template literal with [_**`htm`**_](https://ghub.io/xhtm) syntax.
@@ -482,9 +483,9 @@ v(props, ({loading}) => console.log(loading))
 #### Example
 
 ```js
-import { store } from 'spect'
+import { o } from 'spect'
 
-let likes = store({
+let likes = o({
   count: null,
   loading: false,
   async load() {
