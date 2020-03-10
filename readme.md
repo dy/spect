@@ -133,19 +133,13 @@ Input element here is uncontrolled and logic closely follows native js to provid
 See all [/examples](examples).
 
 <!--
-See all examples...
 
 Maybe validation / sending form? (better for cases, eg. forms (all react cases))
-
 Or familiar examples of another framework, rewritten with spect? (better for docs, as spect vs N)
-
 Something showcasing wow features, like composable streaming and how that restructures waterfall rendering?
 Yes, makes more sense. The very natural flow, where with HTML you can prototype, then naturally upgrade to UI-framework, then add actions. Minimize design - code distance.
---!>
 
-<!--
-Let's start off with an app, displaying a [list of users].
-
+an app, displaying a [list of users].
 First, create semantic HTML you'd regularly do without js.
 
 ```html
@@ -210,9 +204,6 @@ $('input#height', el => {
   }, [on(el, 'input'), on(el, 'change')])
 })
 ```
---!>
-
-<!--
 
 #### React-less hooks
 
@@ -249,7 +240,7 @@ Pending...
 ## API
 
 <details><summary><strong>$ − selector</strong></summary>
-<br/>
+
 > elements = $( scope? , selector, callback? )<br/>
 > elements = $( element | list, callback? )<br/>
 
@@ -301,7 +292,7 @@ $timer[0]
 
 
 <details><summary><strong>h − hyperscript</strong></summary>
-<br/>
+
 > el = h(tag, props?, ...children)<br/>
 > el = h\`...content\`<br/>
 
@@ -353,7 +344,7 @@ $('#clock', el => {
 
 
 <details><summary><strong>v − value</strong></summary>
-<br/>
+
 > value = v( source?, map? )<br/>
 > value = v( observer )<br/>
 
@@ -427,7 +418,7 @@ fahren() // 32
 
 
 <details><summary><strong>o − options</strong></summary>
-<br/>
+
 > props = o( target={}, types? )<br/>
 
 Props observable / accessor for any `target`. It creates `props` object − adding, changing, or deleting its properties emits changes and modifies `target`. If `target` is an _element_, then `props` also reflects attributes.
@@ -507,7 +498,7 @@ $('.likes-count', el => h`<${el}>${
 
 
 <details><summary><strong>e − events</strong></summary>
-<br/>
+
 > e( target, event, callback? )<br/>
 > e( scope?, selector, event, callback? )<br/>
 
