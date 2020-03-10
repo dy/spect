@@ -417,11 +417,11 @@ fahren() // 32
 
 
 
-<details><summary><strong>o − options</strong></summary>
+<details><summary><strong>o − object</strong></summary>
 
 > props = o( target = {} , types? )<br/>
 
-Props observer / accessor for any `target`. Adding, changing, or deleting `props` emits changes and modifies `target`. If `target` is an _element_, then `props` also reflects attributes.
+Object props observer / accessor. Adding, changing, or deleting `props` emits changes and modifies `target`. If `target` is an _element_, then `props` also reflects attributes.
 
 `types` optionally specifies properties types.
 
