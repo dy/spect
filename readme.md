@@ -1,7 +1,7 @@
 <div align="center"><img src="https://avatars3.githubusercontent.com/u/53097200?s=200&v=4" width=108 /></div>
 <p align="center"><h1 align="center">spect</h1></p>
 <p align="center">
-  Micro DOM <em>aspects</em> with <em>effects</em> and <em>observables</em>.<br/>
+  Micro <em>aspects</em> with <em>effects</em> and <em>observables</em>.<br/>
   <!-- Build reactive UIs with rules, similar to CSS.<br/> -->
   <!-- Each rule specifies an <em>aspect</em> function, carrying a piece of logic.<br/> -->
 </p>
@@ -36,7 +36,7 @@
 -->
 
 
-_Spect_ is [_aspect-oriented_](https://en.wikipedia.org/wiki/Aspect-oriented_programming) FRP framework, a successor of [_observable_](https://www.npmjs.com/package/observable) inspired by [_react hooks_](https://reactjs.org/docs/hooks-intro.html) and [_jquery_](https://ghub.io/jquery). It is compatible with [standard observable](https://github.com/tc39/proposal-observable) and [observ](https://ghub.io/observ)-[*](https://ghub.io/mutant).
+_Spect_ is radical [_aspect-oriented_](https://en.wikipedia.org/wiki/Aspect-oriented_programming) FRP framework, a successor of [_observable_](https://www.npmjs.com/package/observable), [_react hooks_](https://reactjs.org/docs/hooks-intro.html) and [_jquery_](https://ghub.io/jquery). It is compatible with [standard observable](https://github.com/tc39/proposal-observable) and [observ](https://ghub.io/observ)-[*](https://ghub.io/mutant).
 
 ## Principles
 
@@ -248,9 +248,9 @@ Pending...
 
 ## API
 
-<details><summary><strong>$</strong> − selector</summary>
+<details><summary><strong>$ − selector</strong></summary>
 
-> let elements = $( scope? , selector | element, callback? )
+> elements = $( scope? , selector | element, callback? )
 
 Selector observer, creates live collection of elements matching the `selector`. Optional `callback` runs for each new element matching the selector. If `callback` returns a teardown, it is run when the element is unmatched.
 
@@ -298,12 +298,13 @@ $timer[0]
 </details>
 
 
-<details><summary><strong>h</strong> − hyperscript</summary>
+<details><summary><strong>h</ − hyperscriptstrong></summary>
 
-> let el = h('tag', props, ...children)
-> let el = h\`...content\`
+> el = h('tag', props, ...children)
 
-_**`h`**_ is **h**yperscript constructor. Compatible with [hyperscript](https://ghub.io/hyperscript) et al. Can be used via JSX or as tagged template literal with [_**`htm`**_](https://ghub.io/xhtm) syntax.
+> el = h\`...content\`
+
+[Hyperscript](https://ghub.io/hyperscript)-compatible element constructor. Can be used via JSX or template literal with [_**`htm`**_](https://ghub.io/xhtm) syntax.
 
 ```js
 import { h, v } from 'spect'
@@ -321,7 +322,7 @@ const bar = <bar>{ text }</bar>
 text('fooobar')
 
 
-// as template literal
+// template literal
 const foo = h`<baz>${ text }</baz>`
 
 // create multiple elements
@@ -350,23 +351,23 @@ $('#clock', el => {
 
 
 
-<details><summary><strong>v</strong> − value</summary>
+<details><summary><strong>v</ − valuestrong></summary>
 
 > value = v( source?, map? )
 
-_**`v`**_ creates an observable `value` − simply a getter/setter function with [observable](https://ghub.io/observable) API.
+Value observable − simply a getter/setter function with [observable](https://ghub.io/observable) API.
 
 `source` can be:
 
-* _Primitive_ or plain value
-* _Observable_ or subscribable _function_ ([observ-*](https://ghub.io/observ), [observable](https://ghub.io/observable), [mutant](https://ghub.io/mutant) etc.)
-* _AsyncIterator_ or an object with [`Symbol.asyncIterator`](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Symbol/asyncIterator) property
+* _Primitive_ or _plain_ value
+* Subscribable _function_ ([observ-*](https://ghub.io/observ), [observable](https://ghub.io/observable), [mutant](https://ghub.io/mutant) etc.)
+* _AsyncIterator_ or target with [`Symbol.asyncIterator`](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Symbol/asyncIterator)
 * _Promise_ or _thenable_
-* _Observable_ or an object with [`Symbol.observable`](https://ghub.io/symbol-observable) property ([rxjs](https://ghub.io/rxjs),[zen-observable](https://ghub.io/zen-observable) etc.)
-* _Input_ (inc. `radio` or `checkbox`) or _Select_.
-* Any combination of the above as _array_.
+* _Observable_ or target with [`Symbol.observable`](https://ghub.io/symbol-observable) ([rxjs](https://ghub.io/rxjs),[zen-observable](https://ghub.io/zen-observable) etc.)
+* _Input_ inc. _radio_ or _checkbox_, or _Select_
+* _Array_ with any combination of the above.
 
-Optional `map` transforms returned value. _**`from`**_ can be used as _**`useState`**_, _**`useMemo`**_ or _**`useEffect`**_.
+`map` optionally transforms returned value. _**`from`**_ can be used as _**`useState`**_, _**`useMemo`**_ or _**`useEffect`**_.
 
 ```js
 import { v } from 'spect'
@@ -423,13 +424,13 @@ fahren() // 32
 
 
 
-<details><summary><strong>o</strong> − options</summary>
+<details><summary><strong>o</ − optionsstrong></summary>
 
 > props = o( source, types? )
 
-_**`o`**_ is props observable / accessor for any target. It creates `props` object − adding, changing, or deleting its properties emits changes and modifies `source`. If `source` is an _element_, then _**`o`**_ also reflects attributes. Unlike _**`v`**_, it creates plain object instead of getter/setter function.
+Props observable / accessor for any target. It creates `props` object − adding, changing, or deleting its properties emits changes and modifies `source`. If `source` is an _element_, then _**`o`**_ also reflects attributes.
 
-Optional `types` specifies props (similar to [propTypes](https://github.com/facebook/prop-types) or [lit-element](https://lit-element.polymer-project.org/guide/properties)).
+`types` optionally specifies props, similar to [propTypes](https://github.com/facebook/prop-types) or [lit-element](https://lit-element.polymer-project.org/guide/properties).
 
 ```js
 import { o, v } from 'spect'
@@ -502,7 +503,7 @@ $('.likes-count', el => h`<${el}>${
 </details>
 
 
-<details><summary><strong>e</strong> − events</summary>
+<details><summary><strong>e</ − eventsstrong></summary>
 
 > e( scope?, target|selector, event, callback? )
 
