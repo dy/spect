@@ -20,13 +20,13 @@
 <time id="clock"></time>
 
 <script type="module">
-  import { $, h, f, state, calc } from "https://unpkg.com/spect"
+  import { $, h, v } from "https://unpkg.com/spect"
 
   $('#clock', el => {
-    const date = state(new Date())
+    const date = v(new Date())
 
     h`<${el} datetime=${ date }>${
-      f(date, date => date.toLocaleTimeString())
+      v(date, date => date.toLocaleTimeString())
     }</el>`
 
     let id = setInterval(() => date(new Date()), 1000)
@@ -59,7 +59,7 @@ _Spect_ is [_aspect-oriented_](https://en.wikipedia.org/wiki/Aspect-oriented_pro
 
 ```html
 <script type="module">
-import { $, h, f } from 'https://unpkg.com/spect?module'
+import { $, h, v } from 'https://unpkg.com/spect?module'
 
 // ... code here
 </script>
@@ -70,7 +70,7 @@ import { $, h, f } from 'https://unpkg.com/spect?module'
 [![npm i spect](https://nodei.co/npm/spect.png?mini=true)](https://npmjs.org/package/spect/)
 
 ```js
-import { $, h, f } from 'spect'
+import { $, h, v } from 'spect'
 
 // ... code here too
 ```
@@ -86,17 +86,17 @@ Consider simple user welcoming example.
 <div class="user">Loading...</div>
 
 <script type="module">
-import { $, h, state, f } from 'spect'
+import { $, h, v } from 'spect'
 
 $('.user', async el => {
-  const user = f((await fetch('/user')).json())
+  const user = v((await fetch('/user')).json())
 
-  h`<${el}>${ f(user, u => u ? `Hello, ${u.name}` : `Loading...`) }!</>`
+  h(el, v(user, u => u ? `Hello, ${u.name}!` : `Loading...`))
 })
 </script>
 ```
 
-The `$` assigns an _aspect callback_ to the `.user` element. `state` here acts as _useState_, storing `user` in observable container. `h` is reactive − it rerenders automatically whenever the `user` changes. `f` is mapping function - it maps any changeable value (promise in this case) to observable.
+The `$` assigns an _aspect callback_ to the `.user` element. `v` here acts as _useState_, storing `user` in observable container. `h` is reactive − it rerenders automatically whenever the `user` changes.
 
 <!--
 Consider simple todo app.
@@ -272,11 +272,11 @@ let foo = document.createElement('foo')
 document.body.appendChild(foo)
 // > "active"
 
-foo.replaceWith(null)
-// > "inactive"
-
 $foo[0] === foo
 // > true
+
+foo.replaceWith(null)
+// > "inactive"
 ```
 
 #### Example
@@ -337,103 +337,86 @@ const foo = h`<${foo}>${ bar }</>`
 #### Example
 
 ```js
-import { $, v, h } from 'spect'
+import { v, h } from 'spect'
 
-$('.timer', el => {
-  const count = v(0)
-  setInterval(() => count(count + 1))
-  h`<${el}>Seconds: ${ count }</>`
+$('#clock', el => {
+  let date = v(new Date())
+  setInterval(() => date(new Date()), 1000)
+  h`<${el}>${ v(date => date.toISOString())} </>`
 })
 ```
+
 
 </details>
 
 
 <details><summary><strong>v</strong></summary>
 
-> value = v( init? )
+> value = v( source?, map? )
 
-_**`v`**_ is simply observable value − a getter/setter function, fully compatible with [observable](https://ghub.io/observable) API.
-It acts as _useState_ hook. Useful as component state, eg. visibility etc.
+_**`v`**_ creates an observable `value` − simply a getter/setter function with [observable](https://ghub.io/observable) API.
+
+`source` can be:
+
+* _Observable_ or subscribable _function_ ([observ-*](https://ghub.io/observ), [observable](https://ghub.io/observable), [mutant](https://ghub.io/mutant) etc.)
+* _AsyncIterator_ or an object with [`Symbol.asyncIterator`](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Symbol/asyncIterator) property
+* _Promise_ or _thenable_
+* _Observable_ or an object with [`Symbol.observable`] property ([rxjs](https://ghub.io/rxjs), [es-observable](https://ghub.io/es-observable), [zen-observable](https://ghub.io/zen-observable) etc.)
+* _Input_ (including `radio` or `checkbox`) or _Select_.
+* Node [_stream_](https://nodejs.org/api/stream.html)
+* Constant _primitive_ or _object_
+* Any combination of the above as _array_.
+
+Optional `map` transforms returned value. _**`from`**_ can be used as _**`useState`**_, _**`useMemo`**_ or _**`useEffect`**_.
 
 ```js
 import { v } from 'spect'
 
-let count = v(0)
+let v1 = v(0)
 
 // get
-count()
+v1()
 
 // set
-count(1)
+v1(1)
 
 // observe changes
-count(value => {
-  // 0, 1, ...
-
+v1(value => {
+  // new value
   return () => {
     // ...teardown
   }
 })
+
+// from value
+let v2 = v(v1, v1 => v1 * 2)
+v2() // > 2
+
+// from multiple values
+let v3 = v([v1, v2], ([v1, v2]) => v1 + v2)
+v3() // > 3
+
+// run effect on every change
+v([v1, v2, v3])(([v1, v2, v3]) => {
+  console.log(v1, v2, v3)
+  return () => console.log('teardown', v1, v2, v3)
+})
+// > 1, 2, 3
+
+// from input
+let v4 = v($('#input'))
 ```
 
 </details>
 
-
-<details><summary><strong>f</strong></summary>
-
-> obv = f( source, map? )
-
-Create a readable observable from any source:
-
-* _Constant_ value
-* Subscribable _function_ ([observ-*](https://ghub.io/observ), [observable](https://ghub.io/observable), [mutant](https://ghub.io/mutant) etc.)
-* _AsyncIterator_ or [_async iterable_](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Symbol/asyncIterator)
-* _Promise_ or _thenable_
-* _Observable_ ([rxjs](https://ghub.io/rxjs), [es-observable](https://ghub.io/es-observable), [zen-observable](https://ghub.io/zen-observable) etc.)
-* Node [_stream_](https://nodejs.org/api/stream.html)
-* Any combination of the above as _array_.
-
-Optional `map` function transforms returned value. _**`from`**_ can be used as _**`useMemo`**_ or _**`useEffect`**_.
-
-```js
-import { v, f } from 'spect'
-
-let v1 = v(1)
-
-// from single value
-let v2 = f(v1, v1 => v1 * 2)
-v2() // 2
-
-// from multiple values
-let v3 = f([v1, v2], ([v1, v2]) => v1 + v2)
-v3() // 3
-
-// run effect on every change
-f([v1, v2, v3])(([v1, v2, v3]) => {
-  console.log('in', v1, v2, v3)
-  return () => console.log('out', v1, v2, v3)
-})
-```
-
 #### Example
 
 ```js
-import { f, v, h } from 'spect'
+import { $, v } from 'spect'
 
-let date = v(new Date())
-setInterval(() => date(new Date()), 1000)
-f(date, date => date.toISOString())(console.log)
-```
-
-#### Example 2
-
-```js
-import { $, input, from } from 'spect'
-
-const f = input(...$('#fahrenheit')), c = input(...$('#celsius'))
-const celsius = from(f, f => (f - 32) / 1.8)
-const fahren = from(c, c => (c * 9) / 5 + 32)
+const f = v($('#fahren')), c = v($('#celsius'))
+const celsius = v(f, f => (f - 32) / 1.8)
+const fahren = v(c, c => (c * 9) / 5 + 32)
 
 celsius() // 0
 fahren() // 32
@@ -549,27 +532,6 @@ await ticks
 
 // cancel ticks listener
 ticks.cancel()
-```
-
-</details>
-
-
-
-<details><summary><strong>input</strong></summary>
-
-> value = input( element )
-
-Input element value observable, useful to track user input. Works with text inputs, checkboxes, radio and select.
-
-```js
-import { $, f, input } from 'spect'
-
-const val = input(...$('input'))
-
-val(value => console.log(`Value`, value))
-
-el.value = 3
-el.dispatch(new Event('change'))
 ```
 
 </details>
