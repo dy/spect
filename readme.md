@@ -415,80 +415,6 @@ fx(c => {
 </details>
 
 
-
-<details><summary><strong>fx</strong></summary>
-
-> fx( callback, deps=[] )
-
-Generic effect or reaction to changes in `deps`. Runs `callback` function with `(...args) => teardown` signature.
-Similar to _useEffect_, but `deps` are observables or alike.
-
-```js
-import { state, fx } from 'spect'
-import { time } from 'wait-please'
-
-let a = state(0), b = state('foo')
-
-fx((a, b) => {
-  console.log('in', a, b)
-  return () => console.log('out', a, b)
-}, [a, b])
-
-setTimeout(() => (a(1), b('bar')), 1000)
-
-// 'in' 0 'foo'
-// ...
-// 'out' 0 'foo'
-// 'in' 1 'bar'
-
-// runs only once
-fx(() => {})
-```
-
-#### Example
-
-```js
-import { fx } from 'spect'
-import { time } from 'wait-please'
-
-// timer
-const timer = fx(async c => {
-  console.log('Seconds', c)
-  await time(1000)
-  count(c + 1)
-}, [count])
-
-// await next count
-await timer
-
-// cancel effect
-timer.cancel()
-```
-
-</details>
-
-
-<details><summary><strong>calc</strong></summary>
-
-> value = calc( state => result, args = [] )
-
-Observable value computed from `args`. Similar to _**`fx`**_, but returns calculated value as the result. Analog of _useMemo_.
-
-```js
-import { $, input, calc } from 'spect'
-
-const f = state(32), c = state(0)
-const celsius = calc(f => (f - 32) / 1.8, [f])
-const fahren = calc(c => (c * 9) / 5 + 32, [c])
-
-celsius() // 0
-fahren() // 32
-```
-
-</details>
-
-
-
 <details><summary><strong>from</strong></summary>
 
 > obv = from( source, map? )
@@ -502,7 +428,27 @@ Create a readable observable from any source:
 * [_Stream_](https://nodejs.org/api/stream.html)
 * any other value is considered constant.
 
-Optional `map` transforms returned value. _**`from`**_ is used as the base for _**`fx`**_ and _**`calc`**_.
+Optional `map` transforms returned value. _**`from`**_ can be used to replace _**`useMemo`**_ or _**`useEffect`**_.
+
+```js
+import { value, from } from 'spect'
+
+let v1 = value(1)
+
+// from single value
+let v2 = from(v1, v1 => v1 * 2)
+v2() // 2
+
+// from multiple values
+let v3 = from([v1, v2], ([v1, v2]) => v1 + v2)
+v3() // 3
+
+// effect on every change
+from([v1, v2, v3])(([v1, v2, v3]) => {
+  console.log('in', v1, v2, v3)
+  return () => console.log('out', v1, v2, v3)
+})
+```
 
 #### Example
 
@@ -512,6 +458,19 @@ import { from } from 'spect'
 let date = state(new Date())
 setInterval(() => date(new Date()), 1000)
 from(date, date => date.toISOString())(date => console.log(date))
+```
+
+#### Example 2
+
+```js
+import { $, input, from } from 'spect'
+
+const f = input(...$('#fahrenheit')), c = input(...$('#celsius'))
+const celsius = from(f, f => (f - 32) / 1.8)
+const fahren = from(c, c => (c * 9) / 5 + 32)
+
+celsius() // 0
+fahren() // 32
 ```
 
 </details>
