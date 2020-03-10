@@ -25,7 +25,7 @@
   $('#clock', el => {
     const date = state(new Date())
 
-    html`<${el} datetime=${ date }>${
+    h`<${el} datetime=${ date }>${
       f(date, date => date.toLocaleTimeString())
     }</el>`
 
@@ -86,17 +86,17 @@ Consider simple user welcoming example.
 <div class="user">Loading...</div>
 
 <script type="module">
-import { $, html, state, f } from 'spect'
+import { $, h, state, f } from 'spect'
 
 $('.user', async el => {
   const user = f((await fetch('/user')).json())
 
-  html`<${el}>${ f(user, u => u ? `Hello, ${u.name}` : `Loading...`) }!</>`
+  h`<${el}>${ f(user, u => u ? `Hello, ${u.name}` : `Loading...`) }!</>`
 })
 </script>
 ```
 
-The `$` assigns an _aspect callback_ to the `.user` element. `state` here acts as _useState_, storing `user` in observable container. `html` is reactive − it rerenders automatically whenever the `user` changes. `f` is mapping function - it maps any changeable value (promise in this case) to observable.
+The `$` assigns an _aspect callback_ to the `.user` element. `state` here acts as _useState_, storing `user` in observable container. `h` is reactive − it rerenders automatically whenever the `user` changes. `f` is mapping function - it maps any changeable value (promise in this case) to observable.
 
 <!--
 Consider simple todo app.
@@ -112,11 +112,11 @@ Consider simple todo app.
 </form>
 
 <script type="module">
-import { $, html, on, list } from 'spect'
+import { $, h, on, list } from 'spect'
 
 const todos = list([])
 
-$('.todo-list', el => html`<${el}>${ todos }</>`)
+$('.todo-list', el => h`<${el}>${ todos }</>`)
 
 $('.todo-form', el => on(el, 'submit', e => {
   e.preventDefault()
@@ -127,7 +127,7 @@ $('.todo-form', el => on(el, 'submit', e => {
 </script>
 ```
 
-Input element here is uncontrolled and logic closely follows native js to provide _progressive enhancement_. _**`list`**_ creates an observable array `todos`, mutating it automatically rerenders _**`html`**_.
+Input element here is uncontrolled and logic closely follows native js to provide _progressive enhancement_. _**`list`**_ creates an observable array `todos`, mutating it automatically rerenders _**`h`**_.
 -->
 
 See all [/examples](examples).
@@ -166,7 +166,7 @@ Second, make data loading circuit.
 
 ```js
 <script type="module">
-import { $, html, store } from 'https://unpkg.com/spect?module'
+import { $, h, store } from 'https://unpkg.com/spect?module'
 
 const articles = store({
   items: [],
@@ -178,8 +178,8 @@ const articles = store({
 })
 
 $('#articles', el => {
-  html`<${el}>${
-    articles.map(item => html``)
+  h`<${el}>${
+    articles.map(item => h``)
   }</>`
 })
 </script>
@@ -206,7 +206,7 @@ $('input#height', el => {
   fx(e => {
     const value = e.target.value
 
-    render(html`Your height: <strong>${ value }</strong>cm`, hintEl)
+    render(h`Your height: <strong>${ value }</strong>cm`, hintEl)
   }, [on(el, 'input'), on(el, 'change')])
 })
 ```
@@ -298,19 +298,17 @@ $timer[0]
 </details>
 
 
-<details><summary><strong>h</strong>, <strong>html</strong></summary>
+<details><summary><strong>h</strong></summary>
 
 > let el = h('tag', props, ...children)
-> let el = html\`...content\`
+> let el = h\`...content\`
 
-_**`h`**_ is **h**yperscript constructor. Compatible with [hyperscript](https://ghub.io/hyperscript) et al. Can be used via JSX.
-
-_**`html`**_ is **h** **t**agged **m**arkup **l**iteral sugar,  _**`html`**_ = [_**`htm`**_](https://ghub.io/xhtm) + _**`h`**_.
+_**`h`**_ is **h**yperscript constructor. Compatible with [hyperscript](https://ghub.io/hyperscript) et al. Can be used via JSX or as tagged template literal with [_**`htm`**_](https://ghub.io/xhtm) syntax.
 
 ```js
-import { h, fx, text } from 'spect'
+import { h, v } from 'spect'
 
-const text = state('foobar')
+const text = v('foobar')
 
 // create element
 const foo = h('foo', {}, text)
@@ -323,28 +321,28 @@ const bar = <bar>{ text }</bar>
 text('fooobar')
 
 
-// create element
-const foo = html`<baz>${ text }</baz>`
+// as template literal
+const foo = h`<baz>${ text }</baz>`
 
 // create multiple elements
-const [foo1, foo2] = html`<foo>1</foo><foo>2</foo>`
+const [foo1, foo2] = h`<foo>1</foo><foo>2</foo>`
 
 // create document fragment
-const fooFrag = html`<><foo/></>`
+const fooFrag = h`<><foo/></>`
 
 // hydrate element
-const foo = html`<${foo}>${ bar }</>`
+const foo = h`<${foo}>${ bar }</>`
 ```
 
 #### Example
 
 ```js
-import { $, v, html } from 'spect'
+import { $, v, h } from 'spect'
 
 $('.timer', el => {
   const count = v(0)
   setInterval(() => count(count + 1))
-  html`<${el}>Seconds: ${ count }</>`
+  h`<${el}>Seconds: ${ count }</>`
 })
 ```
 
@@ -626,7 +624,7 @@ let likes = store({
   }
 })
 
-$('.likes-count', el => html`<${el}>${
+$('.likes-count', el => h`<${el}>${
     f(likes, ({loading, count}) => loading ? `Loading...` : `Likes: ${ likes.count }`)
   }</>`
 })
