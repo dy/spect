@@ -304,16 +304,19 @@ $timer[0]
 
 > let el = h('tag', props, ...children)
 
-Hyperscript element constructor. Compatible with [hyperscript](https://ghub.io/hyperscript) et all. Can be used via JSX.
+Hyperscript element constructor. Compatible with [hyperscript](https://ghub.io/hyperscript) et al. Can be used via JSX.
 
 ```js
 import { h, fx, text } from 'spect'
 
 const text = state('foobar')
 
+// create simple
+const foo = h('foo', {}, text)
+
+// create jsx
 /* jsx h */
-// create element
-const foo = <foo>{ text }</foo>
+const bar = <bar>{ text }</bar>
 
 // update
 text('bazqux')
@@ -327,8 +330,7 @@ import { $, state, h, render } from 'spect'
 $('.timer', el => {
   const count = state(0)
   setInterval(() => count(count + 1))
-  render(<el></el>, h)
-  html`<${el}>Seconds: ${ count }</>`
+  render(count, el)
 })
 ```
 
@@ -339,7 +341,7 @@ $('.timer', el => {
 
 > let el = html\`...content\`
 
-_**`html`**_ = [htm](https://ghub.io/xhtm) + _**`h`**_. Renders HTML markup automatically when fields update. Fields can be observables or direct values. Markup syntax is compatible with [htm](https://ghub.io/htm).
+Hyperscript tagged markup sugaring for _**`h`**_.  _**`html`**_ = [_**`htm`**_](https://ghub.io/xhtm) + _**`h`**_.
 
 ```js
 import { html, fx, text } from 'spect'
@@ -820,7 +822,7 @@ foobus.cancel()
 * [selector-observer](https://ghub.io/selector-observer) − same idea with object-based API.
 * [unihooks](https://ghub.io/unihooks) − cross-framework hooks collection.
 * [observable](https://ghub.io/observable), [observ](https://ghub.io/observ), [mutant](https://ghub.io/mutant) − elegant observable implementation.
-* [zen-observable](https://ghub.io/zen-observable), [es-observable](https://ghub.io/es-observable) et all − foundational research / proposal.
+* [zen-observable](https://ghub.io/zen-observable), [es-observable](https://ghub.io/es-observable) et al − foundational research / proposal.
 * [reuse](https://ghub.io/reuse) − aspects attempt for react world.
 * [tonic](https://ghub.io/tonic), [etch](https://ghub.io/etch), [turbine](https://github.com/funkia/turbine), [hui](https://ghub.io/hui) − nice takes on web-component frameworks.
 * [atomico](https://ghub.io/atomico), [haunted](https://ghub.io/haunted), [fuco](https://ghub.io/fuco), [hooked-elements](https://github.com/WebReflection/hooked-elements) − react-less hooks implementations.
