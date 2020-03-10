@@ -36,7 +36,7 @@
 -->
 
 
-_Spect_ is radical [_aspect-oriented_](https://en.wikipedia.org/wiki/Aspect-oriented_programming) FRP framework, a successor of [_observable_](https://www.npmjs.com/package/observable), [_react hooks_](https://reactjs.org/docs/hooks-intro.html) and [_jquery_](https://ghub.io/jquery). It is compatible with [_standard observable_](https://github.com/tc39/proposal-observable) and [_observ_](https://ghub.io/observ)-[_*_](https://ghub.io/mutant) and provides terse code.
+_Spect_ is radical [_aspect-oriented_](https://en.wikipedia.org/wiki/Aspect-oriented_programming) FRP framework, a successor of [_observable_](https://www.npmjs.com/package/observable), [_react hooks_](https://reactjs.org/docs/hooks-intro.html) and [_jquery_](https://ghub.io/jquery). It is compatible with [_standard observable_](https://github.com/tc39/proposal-observable) and [_observ_](https://ghub.io/observ)-[_*_](https://ghub.io/mutant) and enables super-compact UI code.
 
 ## Principles
 
@@ -279,8 +279,6 @@ foo.replaceWith(null)
 // > "inactive"
 ```
 
-_**`$`**_ serves as replacement for _jQuery_, _selector-observer_.
-
 #### Example
 
 ```js
@@ -297,6 +295,7 @@ const $timer = $('.timer', el => {
 $timer[0]
 // > <div.timer></div>
 ```
+<br/>
 </details>
 
 
@@ -305,7 +304,7 @@ $timer[0]
 > el = h('tag', props, ...children)<br/>
 > el = h\`...content\`
 
-[Hyperscript](https://ghub.io/hyperscript)-compatible element constructor. Can be used via JSX or template literal with [_**`htm`**_](https://ghub.io/xhtm) syntax.
+[Hyperscript](https://ghub.io/hyperscript)-compatible element constructor. Can be used via JSX or template literal with [_htm_](https://ghub.io/xhtm) syntax.
 
 ```js
 import { h, v } from 'spect'
@@ -348,8 +347,8 @@ $('#clock', el => {
 })
 ```
 
+<br/>
 </details>
-
 
 
 <details><summary><strong>v − value</strong></summary>
@@ -368,7 +367,7 @@ Value observable − simply a getter/setter function with [observable](https://g
 * _Input_ inc. _radio_ or _checkbox_, or _Select_
 * _Array_ with any combination of the above.
 
-`map` optionally transforms returned value. _**`from`**_ can be used as _**`useState`**_, _**`useMemo`**_ or _**`useEffect`**_.
+`map` optionally transforms `source` value.
 
 ```js
 import { v } from 'spect'
@@ -381,7 +380,7 @@ v1()
 // set
 v1(1)
 
-// observe changes
+// subscribe
 v1(value => {
   // new value
   return () => {
@@ -420,7 +419,7 @@ const fahren = v(c, c => (c * 9) / 5 + 32)
 celsius() // 0
 fahren() // 32
 ```
-
+<br/>
 </details>
 
 
@@ -501,6 +500,7 @@ $('.likes-count', el => h`<${el}>${
 })
 ```
 
+<br/>
 </details>
 
 
@@ -552,6 +552,7 @@ await ticks
 ticks.cancel()
 ```
 
+<br/>
 </details>
 
 
