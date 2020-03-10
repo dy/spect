@@ -248,7 +248,7 @@ Pending...
 
 ## API
 
-<details><summary><strong>$</strong></summary>
+<details><summary><strong>$</strong> − selector</summary>
 
 > let elements = $( scope? , selector | element, callback? )
 
@@ -298,7 +298,7 @@ $timer[0]
 </details>
 
 
-<details><summary><strong>h</strong></summary>
+<details><summary><strong>h</strong> − hyperscript</summary>
 
 > let el = h('tag', props, ...children)
 > let el = h\`...content\`
@@ -346,11 +346,11 @@ $('#clock', el => {
 })
 ```
 
-
 </details>
 
 
-<details><summary><strong>v</strong></summary>
+
+<details><summary><strong>v</strong> − value</summary>
 
 > value = v( source?, map? )
 
@@ -423,72 +423,90 @@ fahren() // 32
 
 
 
-<details><summary><strong>prop</strong></summary>
+<details><summary><strong>o</strong> − options</summary>
 
-> value = prop( target, name )
+> props = o( source, types? )
 
-_**`prop`**_ is target property observable / accessor. It keeps safe target's own getter/setter, if defined. Useful to react to element properties changes.
+_**`o`**_ is props observable / accessor for any target. It creates `props` object − adding, changing, or deleting its properties emits changes and modifies `source`. If `source` is an _element_, then _**`o`**_ also reflects attributes. Unlike _**`v`**_, it creates plain object instead of getter/setter function.
+
+Optional `types` specifies props (similar to [propTypes](https://github.com/facebook/prop-types) or [lit-element](https://lit-element.polymer-project.org/guide/properties)).
 
 ```js
-import { prop, fx } from 'spect'
+import { o, v } from 'spect'
 
-let obj = { foo: 'bar' }
-let foos = prop(obj, 'foo')
+// object
+const obj = o({ foo: null })
+
+// set props
+obj.foo = 'bar'
 
 // log changes
-foos(foo => console.log(foo))
+v(obj, ({ foo }) => console.log(foo))
+// > 'bar'
+
+
+// array
+let arr = o([1, 2, 3])
+
+// set item
+arr[3] = 4
+
+// mutate
+arr.push(5, 6)
+arr.unshift(0)
+
+// log
+v(arr, arr => console.log(arr))
+// > [0, 1, 2, 3, 4, 5, 6]
+
+
+// element
+let props = o(el, { loading: Boolean })
 
 // set
-obj.foo = 'baz'
-foos('qux')
+props.loading = true
 
 // get
-foos() // qux
+props.loading
+// > true
 
-// forget
-foos.cancel()
+// attr
+el.getAttribute('loading')
+// > ''
+
+// log
+v(props, ({loading}) => console.log(loading))
 ```
 
-</details>
-
-
-<details><summary><strong>attr</strong></summary>
-
-> value = attr( element, name )
-
-_**`attr`**_ is element attribute observable / accessor. Similar to _**`prop`**_, but observes attribute changes.
+#### Example
 
 ```js
-import { attr } from 'spect'
+import { store } from 'spect'
 
-const loading = attr(document.querySelector('button'), 'loading')
-
-// react to changes
-attr(loading => {
-  console.log(loading)
+let likes = store({
+  count: null,
+  loading: false,
+  async load() {
+    this.loading = true
+    this.count = await (await fetch('/likes')).json()
+    this.loading = false
+  }
 })
 
-// set
-loading(true)
-
-// get
-loading()
-
-// remove attribute
-loading(null)
-
-// dispose accessor
-loading.close()
+$('.likes-count', el => h`<${el}>${
+    v(likes, ({loading, count}) => loading ? `Loading...` : `Likes: ${ likes.count }`)
+  }</>`
+})
 ```
 
 </details>
 
 
-<details><summary><strong>on</strong></summary>
+<details><summary><strong>e</strong> − events</summary>
 
-> on( scope?, target | selector, event, callback? )
+> e( scope?, target|selector, event, callback? )
 
-Stateless event observable, runs `callback` on `target` events or by `selector`. For the `selector` case it delegates events to `scope` container, by default `document`.
+Event bus (stateless observable) for an element/target, runs `callback` on `target` events or by `selector`. For the `selector` case it delegates events to `scope` container, by default `document`.
 
 ```js
 import { on } from 'spect'
@@ -534,63 +552,6 @@ ticks.cancel()
 
 </details>
 
-
-<details><summary><strong>store</strong></summary>
-
-> obj = store( init = {} )
-
-_**`store`**_ is observable object/array. Adding, changing, or deleting its properties emits changes. Useful as app model.
-
-```js
-import { store, f } from 'spect'
-
-const foo = store({ foo: null })
-
-// set props
-foo.foo = 'bar'
-foo.baz = ['boo']
-
-// log changes
-f(foo)({ foo, ...bax }) => console.log(foo, ...bax))
-// > { foo: 'bar', baz: 'boo' }
-
-
-// collection
-let arr = store([])
-
-// set item
-arr[3] = 'foo'
-
-// mutate
-arr.push('bar', 'baz')
-arr.unshift('qux')
-
-// log changes
-f(arr, arr => console.log(arr))
-```
-
-#### Example
-
-```js
-import { store } from 'spect'
-
-let likes = store({
-  count: null,
-  loading: false,
-  async load() {
-    this.loading = true
-    this.count = await (await fetch('/likes')).json()
-    this.loading = false
-  }
-})
-
-$('.likes-count', el => h`<${el}>${
-    f(likes, ({loading, count}) => loading ? `Loading...` : `Likes: ${ likes.count }`)
-  }</>`
-})
-```
-
-</details>
 
 <!--
 <details><summary><strong>cancel</strong></summary>
