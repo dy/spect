@@ -11,7 +11,13 @@ export default function v(init, map = v => v) {
       (value.set && value.set(...args))
     ), channel)
 
-  value.next = arg => channel.next(value.current = map(arg))
+  value.next = arg => {
+    const v = map(arg)
+    if (v && v.then) {
+      delete value.current
+      v.then(v => channel.next(value.current = v))
+    } else channel.next(value.current = v)
+  }
 
   value.get = () => value.current
 
@@ -23,16 +29,16 @@ export default function v(init, map = v => v) {
 
     // group
     if (Array.isArray(arg)) {
-      const vals = value.current = []
-      const channel = c()
+      let vals = value.current = []
+      const depc = c()
       const deps = arg.map((dep, i) => {
         let depv = v(dep)
-        depv(v => (vals[i] = v, channel(vals)))
+        depv(v => (vals[i] = v, depc(vals)))
         return depv
       })
-      channel(value.next)
-      if (vals.length) channel(vals)
-      unsub = () => (deps.map(depv => depv.cancel()), channel.cancel())
+      depc(value.next)
+      if (vals.length || !arg.length) depc(vals)
+      unsub = () => (deps.map(depv => depv.cancel()), depc.cancel())
     }
     // constant (stateful)
     else if (primitive(arg)) {

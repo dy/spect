@@ -36,7 +36,7 @@
 -->
 
 
-_Spect_ is radical [_aspect-oriented_](https://en.wikipedia.org/wiki/Aspect-oriented_programming) FRP framework, a successor of [_observable_](https://www.npmjs.com/package/observable), [_react hooks_](https://reactjs.org/docs/hooks-intro.html) and [_jquery_](https://ghub.io/jquery). It is compatible with [_standard observable_](https://github.com/tc39/proposal-observable) and [_observ_](https://ghub.io/observ)-[_*_](https://ghub.io/mutant) and enables super-compact UI code.
+_Spect_ is radical minimalistic [_aspect-oriented_](https://en.wikipedia.org/wiki/Aspect-oriented_programming) FRP library, a successor of [_observable_](https://www.npmjs.com/package/observable), inspired by [_react hooks_](https://reactjs.org/docs/hooks-intro.html) and [_jquery_](https://ghub.io/jquery). It is compatible with [_standard observable_](https://github.com/tc39/proposal-observable) and [_observ_](https://ghub.io/observ)-[_*_](https://ghub.io/mutant) and enables super-compact UI code.
 
 ## Principles
 
@@ -346,7 +346,7 @@ $('#clock', el => {
 <details><summary><strong>v − value</strong></summary>
 
 > value = v( source? , map? )<br/>
-> value = v( observer )<br/>
+> value = v( next , error?, complete? )<br/>
 
 Value observable − simply a getter/setter function with [observable](https://ghub.io/observable) API.
 

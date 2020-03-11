@@ -4,6 +4,7 @@ import { tick, frame, time } from 'wait-please'
 import Observable from 'zen-observable/esm'
 import observable from './observable.js'
 
+// value
 t('v: readme', async t => {
   let log = []
   let v1 = v(0)
@@ -152,6 +153,7 @@ t('v: mapper should be called once on group deps', async t => {
   t.is(log, [[0, 1]])
 })
 
+// from
 t('v: from promise', async t => {
   let log = []
 
@@ -220,6 +222,7 @@ t('v: to value', async t => {
   t.is(y(), 0)
 })
 
+// fx
 t.todo('v: fx core', async t => {
   let a = v(0)
   let o = { b: 1 }
@@ -399,4 +402,99 @@ t('v: fx aync callback', async t => {
   t.is(log, [])
   await time(10)
   t.is(log, [10])
+})
+
+// calc
+t('v: calc core', async t => {
+
+  const f = v(32), c = v(0)
+  const celsius = v(f, f => (f - 32) / 1.8)
+  const fahren = v(c, c => (c * 9) / 5 + 32)
+
+  await tick(8)
+
+  t.is(celsius(), 0) // 0
+  t.is(fahren(), 32) // 32
+
+  c(20)
+  await tick(8)
+  t.is(fahren(), 68)
+})
+t('v: calc must be sync', async t => {
+  const x = v(0)
+  const x2 = v(x, x => x * 2)
+  t.is(x2(), 0)
+
+  x(1)
+  await tick(8)
+  t.is(x2(), 2)
+})
+t('v: calc async calculator', async t => {
+  const x = v(1, async () => {
+    await time(10)
+    return 10
+  })
+  t.is(x(), undefined)
+  await time(10)
+  t.is(x(), 10)
+})
+t('v: calc promises/changeables must return undefined', async t => {
+  const p = Promise.resolve(1)
+  const log = []
+  v(p, x => log.push(x))
+  await tick(8)
+  t.is(log, [1])
+})
+t('v: calc async generator is fine', async t => {
+  const ag = async function* () {
+    yield 1
+    await tick()
+    yield 2
+  }
+  let log = []
+  v(ag(), x => {
+    log.push(x)
+  })
+  await tick(12)
+  t.is(log, [1, 2])
+})
+t('v: calc empty-deps case calls calc once', async t => {
+  let v1 = v(null, () => 1)
+  t.is(v1(), 1)
+  let v2 = v([], () => 1)
+  t.is(v2(), 1)
+})
+t('v: calc reading recalcs value', async t => {
+  let x = v(1)
+  let y = v(x, (x) => x * 2)
+  t.is(y(), 2)
+  x(2)
+  t.is(x(), 2)
+  t.is(y(), 4)
+})
+t('v: calc promises must be resolved fine', async t => {
+  let p = new Promise(ok => setTimeout(() => ok(2)))
+  let x = v(p, value => value)
+  t.is(x(), undefined)
+  await time()
+  t.is(x(), 2)
+})
+
+t('v: stores arrays with observables just fine', async t => {
+  let a = v([])
+  t.is(a(), [])
+  a([1])
+  t.is(a(), [1])
+  a([1, 2])
+  t.is(a(), [1, 2])
+  a([])
+  t.is(a(), [])
+
+  let b = v(0)
+  a([b])
+  t.is(a(), [0])
+  b(1)
+  t.is(a(), [1])
+  a([b()])
+  t.is(a(), [1])
 })

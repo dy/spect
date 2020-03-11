@@ -1,7 +1,7 @@
 import _observable from 'symbol-observable'
 
 export default (...subs) => {
-    const _teardown = Symbol('teardown'), _unsubscribe = Symbol('unsub')
+    const _teardown = Symbol('teardown'), _cancel = Symbol('cancel')
 
     const next = (val, subs=channel.subs) => {
         subs.map(sub => {
@@ -14,8 +14,8 @@ export default (...subs) => {
         subs.map(sub => (
             sub[_teardown] && sub[_teardown].call && sub[_teardown](),
             delete sub[_teardown],
-            sub[_unsubscribe](),
-            delete sub[_unsubscribe]
+            sub[_cancel](),
+            delete sub[_cancel]
         ))
         subs.length = 0
         channel.closed = true
@@ -31,7 +31,7 @@ export default (...subs) => {
             if (complete) complete()
             unsubscribe.closed = true
         }
-        next[_unsubscribe] = unsubscribe.unsubscribe = unsubscribe
+        next[_cancel] = unsubscribe.unsubscribe = unsubscribe
         unsubscribe.closed = false
         return unsubscribe
     }
