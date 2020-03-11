@@ -4,6 +4,47 @@ import { tick, frame, time } from 'wait-please'
 import Observable from 'zen-observable/esm'
 import observable from './observable.js'
 
+t('v: readme', async t => {
+  let log = []
+  let v1 = v(0)
+
+  // get
+  t.is(v1(), 0)
+
+  // subscribe
+  v1(value => {
+    log.push(value)
+    return () => {
+      log.push('-')
+    }
+  })
+
+  // set
+  v1(1)
+  t.is(v1(), 1)
+  t.is(log, [0, '-', 1])
+
+
+  // from value
+  let v2 = v(v1, v1 => v1 * 2)
+  t.is(v2(), 2) // > 2
+
+  // from multiple values
+  let v3 = v([v1, v2], ([v1, v2]) => v1 + v2)
+  t.is(v3(), 3) // > 3
+
+  // run effect on every change
+  log = []
+  v([v1, v2, v3])(([v1, v2, v3]) => {
+    log.push(v1, v2, v3)
+    return () => log.push('-')
+  })
+  t.is(log, [1, 2, 3])
+  // > 1, 2, 3
+
+  // from input
+  // let v4 = v($('#field')[0])
+})
 t('v: core', async t => {
   let s = v(0)
 
@@ -12,19 +53,20 @@ t('v: core', async t => {
   // ;(async () => { for await (let value of s) log.push(value) })()
   s(value => log.push(value))
 
-  // t.equal(+s, 0, 'toPrimitive')
-  // t.equal(s.valueOf(), 0, 'valueOf')
-  // t.equal(s.toString(), 0, 'toString')
+  t.equal(+s, 0, 'toPrimitive')
+  t.equal(s.valueOf(), 0, 'valueOf')
+  t.equal(s.toString(), 0, 'toString')
+
   t.equal(s(), 0, 's()')
 
   await tick()
   t.deepEqual(log, [0], 'should publish the initial state')
 
-  // s(1)
-  // t.equal(+s, 1, 'state.current = value')
+  s(1)
+  t.equal(+s, 1, 'state.current = value')
 
   s(2)
-  // t.equal(+s, 2, 'state(value)')
+  t.equal(+s, 2, 'state(value)')
   t.equal(s(), 2, 'state(value)')
 
   s(s() + 1)
@@ -50,7 +92,6 @@ t('v: core', async t => {
 
   t.end()
 })
-
 t('v: should not expose technical symbols', async t => {
   let s = v({x: 1})
   let log = []
@@ -59,24 +100,20 @@ t('v: should not expose technical symbols', async t => {
   }
   t.is(log, ['x'])
 })
-
-t.skip('v: function/other state gets subscribed', async t => {
+t('v: function/other state gets subscribed', async t => {
   let s = v(1)
   let s2 = v(s)
-  console.log(s2())
 
   t.is(s2(), 1)
   s(2)
   t.is(s2(), 2)
 })
-
 t('v: v to v', t => {
   const a = v(0), b = v()
   a(b)
   t.is(a(), 0)
   t.is(b(), 0)
 })
-
 t('v: subscribe teardown', t => {
   const a = v()
   const log = []
@@ -90,25 +127,29 @@ t('v: subscribe teardown', t => {
   a(1)
   t.is(log, ['in', 0, 'out', 0, 'in', 1])
 })
-
-t.todo('v: multiple subscriptions should not inter-trigger', async t => {
+t('v: multiple subscriptions should not inter-trigger', async t => {
   let value = v(0)
   let log1 = [], log2 = [], log3 = []
   value(v => log1.push(v))
   value(v => log2.push(v))
   t.is(log1, [0])
   t.is(log2, [0])
-  v(1)
+  value(1)
   t.is(log1, [0, 1])
   t.is(log2, [0, 1])
   value(v => log3.push(v))
   t.is(log1, [0, 1])
   t.is(log2, [0, 1])
   t.is(log3, [1])
-  v(2)
+  value(2)
   t.is(log1, [0, 1, 2])
   t.is(log2, [0, 1, 2])
   t.is(log3, [1, 2])
+})
+t('v: mapper should be called once on group deps', async t => {
+  let a=v(0), b=v(1), log = []
+  v([a,b], (args) => log.push([...args]))
+  t.is(log, [[0, 1]])
 })
 
 t('v: from promise', async t => {
@@ -128,7 +169,6 @@ t('v: from promise', async t => {
   t.is(vp(), 2)
   t.is(log, [1, 2])
 })
-
 t('v: from promise / observable / observ', async t => {
   let p = new Promise(r => setTimeout(() => r(2), 10))
   let O = new Observable(obs => setTimeout(() => obs.next(3), 20))
@@ -162,22 +202,201 @@ t('v: from async generator', async t => {
     yield 2
   }
   const log = []
-  v([x(), x()], (x1, x2) => {
+  v([x(), x()], ([x1, x2]) => {
     log.push(x1, x2)
   })
   await tick(12)
   t.is(log, [1,undefined,1,1,2,1,2,2])
 })
-
 t('v: mapper', async t => {
   let v0 = v()
   v(0, x => x + 1)(v0)
   t.is(v0(), 1)
 })
-
-t('v: stream to value', async t => {
+t('v: to value', async t => {
   let x = v(0)
   const y = v()
   v(x)(y)
   t.is(y(), 0)
+})
+
+t.todo('v: fx core', async t => {
+  let a = v(0)
+  let o = { b: 1 }
+  let b = prop(o, 'b')
+
+  let log = []
+  fx((a, b) => {
+    log.push(a, b)
+  }, [a, b])
+
+  await tick(8)
+  t.is(log, [0, 1], 'initial state')
+  a(1)
+  a(2)
+  await tick(8)
+  t.any(log, [[0, 1, 2, 1], [0, 1, 1, 1, 2, 1]], 'changed state')
+  o.b = 2
+  await tick(8)
+  t.any(log, [[0, 1, 2, 1, 2, 2], [0, 1, 1,1, 2,1, 2,2]], 'changed prop')
+  o.b = 2
+  a(2)
+  await tick(8)
+  t.any(log, [[0,1, 2,1, 2,2, 2,2], [0,1, 1,1, 2,1, 2,2, 2,2]], 'unchanged prop')
+})
+t('v: fx destructor', async t => {
+  let log = []
+  let a = v(0), b = v(0)
+  v([a,b])(([a, b]) => {
+    log.push('in', a, b)
+    return () => {
+      log.push('out', a, b)
+    }
+  })
+
+  await tick(8)
+  t.is(log, ['in', 0, 0])
+
+  log = []
+  a(1)
+  b(1)
+  await tick(8)
+  t.is(log.slice(0, 3), ['out', 0, 0], 'destructor is ok')
+  t.is(log.slice(-3), ['in', 1, 1], 'destructor is ok')
+})
+t.todo('v: fx disposed by unmounted element automatically')
+t('v: fx runs unchanged', async t => {
+  let a = v(0)
+  let log = []
+  v(a)(a => {
+    log.push(a)
+  })
+
+  await tick(8)
+  t.is(log, [0])
+  a(1)
+  a(0)
+  await tick(8)
+  t.is(log, [0, 1, 0], 'runs unchanged')
+})
+t('v: fx no-deps/empty deps runs once after deps', async t => {
+  let log = []
+  const c = v(0)
+  v([c])(([c]) => {
+    log.push(c)
+  })
+  v([])(() => {
+    log.push(1)
+  })
+  v()(() => {
+    log.push(2)
+  })
+  v([c])(() => {
+    log.push(c())
+  })
+
+  await tick(8)
+  t.is(log, [0, 1, 0])
+})
+t('v: fx async fn', async t => {
+  let count = v(0)
+  let log = []
+  v(count)(async c => {
+    log.push(c)
+    if (c > 3) return
+    await tick()
+    count(c + 1)
+  })
+
+  await tick(10)
+  t.is(log, [0, 1, 2, 3, 4])
+})
+t('v: fx promise / observable / direct dep', async t => {
+  let p = new Promise(r => setTimeout(() => r(2), 10))
+  let O = new Observable(obs => setTimeout(() => obs.next(3), 20))
+  let o = observable(); setTimeout(() => o(4), 30)
+  let c = 1
+
+  let log = []
+  v([p, O, c, o])(([p, O, c, o]) => {
+    log.push(c, p, O, o)
+  })
+
+  await tick(8)
+  t.is(log, [1, undefined, undefined, undefined])
+  log = []
+  await time(10)
+  t.is(log, [1, 2, undefined, undefined])
+  log = []
+  await time(10)
+  t.is(log, [1, 2, 3, undefined])
+  log = []
+  await time(10)
+  t.is(log, [1, 2, 3, 4])
+})
+t.todo('v: fx on must not create initial tick', async t => {
+  let ex = on(document.createElement('x'), 'click')
+  let log = []
+  v(ex)(e => {
+    log.push(1)
+  })
+
+  await tick(20)
+  t.is(log, [])
+})
+t.skip('v: fx thenable', async t => {
+  const s = state(0), log = []
+  const sx = fx(s => {
+    log.push(s)
+  }, [s])
+  await tick(10)
+  t.is(log, [0])
+
+  sx.then(x => log.push('aw', ...x))
+  s(1)
+  // await tick(6)
+  // t.is(log, [0, 1])
+  await tick(8)
+  t.any(log, [[0, 'aw', 1, 1], [0, 1, 'aw', 1]])
+})
+t('v: fx simple values', async t => {
+  const o = {x:1}, log = []
+  v([o, o.x])(([o, x]) => {
+    log.push(o, x)
+  })
+  await tick(8)
+  t.is(log, [{x: 1}, 1])
+})
+t.skip('v: fx deps length change', async t => {
+  let deps = [state(1)]
+  let log = []
+  fx((...args) => {
+    log.push(args)
+  }, deps)
+  await tick(8)
+  t.is(log, [[1]])
+
+  deps.push(state(2))
+  await tick(8)
+  t.is(log, [[1], [1,2]])
+})
+t('v: fx sync must not call twice init const', async t => {
+  let log = []
+  v('x')((v) => {
+    log.push(v)
+  })
+
+  t.is(log, ['x'])
+  await tick(28)
+  t.is(log, ['x'])
+})
+t('v: fx aync callback', async t => {
+  let log = []
+  v(1)(async () => {
+    await time(10)
+    log.push(10)
+  })
+  t.is(log, [])
+  await time(10)
+  t.is(log, [10])
 })

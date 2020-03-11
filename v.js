@@ -1,6 +1,7 @@
 import _observable from 'symbol-observable'
 import c, { observer } from './channel.js'
 
+
 export default function v(init, map = v => v) {
   const channel = c()
 
@@ -14,14 +15,27 @@ export default function v(init, map = v => v) {
 
   value.get = () => value.current
 
-  // manual user set
+  // manual set, handles subscription to input obsevrable
   let unsub
   value.set = arg => {
     // unsubscribe prev, if any
     if (unsub && unsub.call) (unsub(), unsub = null)
 
+    // group
+    if (Array.isArray(arg)) {
+      const vals = value.current = []
+      const channel = c()
+      const deps = arg.map((dep, i) => {
+        let depv = v(dep)
+        depv(v => (vals[i] = v, channel(vals)))
+        return depv
+      })
+      channel(value.next)
+      if (vals.length) channel(vals)
+      unsub = () => (deps.map(depv => depv.cancel()), channel.cancel())
+    }
     // constant (stateful)
-    if (primitive(arg)) {
+    else if (primitive(arg)) {
       value.next(arg)
     }
     // observ
@@ -61,7 +75,9 @@ export default function v(init, map = v => v) {
   value.subscribe = callback => {
     channel.subscribe(callback)
     // callback is registered as the last channel subscription, so send it immediately as value
-    if ('current' in value) channel.next(value.get(), channel.subs.slice(-1))
+    if ('current' in value) {
+      channel.next(value.get(), channel.subs.slice(-1))
+    }
   }
   value.cancel = () => {
     channel.cancel()

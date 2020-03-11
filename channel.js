@@ -1,7 +1,5 @@
 import _observable from 'symbol-observable'
 
-const noop = () => {}
-
 export default (...subs) => {
     const _teardown = Symbol('teardown'), _unsubscribe = Symbol('unsub')
 
@@ -35,7 +33,6 @@ export default (...subs) => {
         }
         next[_unsubscribe] = unsubscribe.unsubscribe = unsubscribe
         unsubscribe.closed = false
-
         return unsubscribe
     }
 
