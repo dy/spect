@@ -1,7 +1,7 @@
 import _observable from 'symbol-observable'
 
 export default (...subs) => {
-    const next = val => subs.map(sub => sub(val))
+    const next = val => subs.map(sub => (sub.teardown && sub.teardown.call && sub.teardown(), sub.teardown = sub(val)))
     const cancel = (...unsubs) => (
         unsubs = subs.map(sub => sub.unsubscribe),
         subs.length = 0,
