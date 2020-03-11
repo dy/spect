@@ -7,13 +7,14 @@ export default (...subs) => {
         (value.set && value.set(...args))
     ), {
     ...channel(),
-    set: val => (value.get = value.get || (() => value.current), value.next(value.current = val))
+    get: () => value.current,
+    set: val => (value.next(value.current = val))
   })
 
-  if (subs.length) value.set(subs.shift())
+  if (subs.length) value.current = subs.shift()
 
   const {subscribe, cancel} = value
-  value.subscribe = val => (val = val.call ? val : val.next, value.get && val(value.get()), subscribe(val))
+  value.subscribe = val => (val = val.call ? val : val.next, 'current' in value && val(value.get()), subscribe(val))
   value.cancel = () => (cancel(), delete value.current)
 
   return value
