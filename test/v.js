@@ -91,16 +91,53 @@ t('v: subscribe teardown', t => {
   t.is(log, ['in', 0, 'out', 0, 'in', 1])
 })
 
+t.todo('v: multiple subscriptions should not inter-trigger', async t => {
+  let value = v(0)
+  let log1 = [], log2 = [], log3 = []
+  value(v => log1.push(v))
+  value(v => log2.push(v))
+  t.is(log1, [0])
+  t.is(log2, [0])
+  v(1)
+  t.is(log1, [0, 1])
+  t.is(log2, [0, 1])
+  value(v => log3.push(v))
+  t.is(log1, [0, 1])
+  t.is(log2, [0, 1])
+  t.is(log3, [1])
+  v(2)
+  t.is(log1, [0, 1, 2])
+  t.is(log2, [0, 1, 2])
+  t.is(log3, [1, 2])
+})
 
-t('v: from promise / observable / direct dep', async t => {
+t('v: from promise', async t => {
+  let log = []
+
+  let vp = v(time(10).then(() => 1))
+  vp(v => log.push(v))
+
+  t.is(vp(), undefined)
+  await time(10)
+  t.is(vp(), 1)
+  t.is(log, [1])
+
+  vp(time(10).then(() => 2))
+  t.is(vp(), undefined)
+  await time(10)
+  t.is(vp(), 2)
+  t.is(log, [1, 2])
+})
+
+t('v: from promise / observable / observ', async t => {
   let p = new Promise(r => setTimeout(() => r(2), 10))
   let O = new Observable(obs => setTimeout(() => obs.next(3), 20))
   let o = observable(0); setTimeout(() => o(4), 30)
-  let v = 1
+  let c = 1
 
   let log = []
 
-  let op = from(p), oO = from(O), ov = from(v), oo = from(o)
+  let op = v(p), oO = v(O), ov = v(c), oo = v(o)
   oo(v => log.push(v))
   op(v => log.push(v))
   ov(v => log.push(v))
@@ -125,24 +162,22 @@ t('v: from async generator', async t => {
     yield 2
   }
   const log = []
-  fx((x1, x2) => {
+  v([x(), x()], (x1, x2) => {
     log.push(x1, x2)
-  }, [from(x()), from(x())])
-
+  })
   await tick(12)
   t.is(log, [1,undefined,1,1,2,1,2,2])
 })
 
-t('v: from constant to value', async t => {
-  let v = state()
-  from(0, x => x + 1)(v)
-  t.is(v(), 1)
+t('v: mapper', async t => {
+  let v0 = v()
+  v(0, x => x + 1)(v0)
+  t.is(v0(), 1)
 })
 
 t('v: stream to value', async t => {
-  let x = value(0)
-  const v = value()
-  from(x)(v)
-  x(v)
-  t.is(v(), 0)
+  let x = v(0)
+  const y = v()
+  v(x)(y)
+  t.is(y(), 0)
 })

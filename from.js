@@ -30,7 +30,8 @@ export default function from(src, map) {
   }
   // promise (stateful, initial undefined)
   else if (src.then) {
-    src.then(curr = channel())
+    curr = channel()
+    src.then(curr)
   }
   // objects etc
   else curr = value(src)

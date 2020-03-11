@@ -1,34 +1,54 @@
 import _observable from 'symbol-observable'
 
+const noop = () => {}
+
 export default (...subs) => {
-    const next = val => subs.map(sub => (sub.teardown && sub.teardown.call && sub.teardown(), sub.teardown = sub(val)))
-    const cancel = (...unsubs) => (
-        unsubs = subs.map(sub => sub.unsubscribe),
-        subs.length = 0,
-        unsubs.map(unsub => unsub && unsub())
-    )
+    const _teardown = Symbol('teardown'), _unsubscribe = Symbol('unsub')
+
+    const next = (val, subs=channel.subs) => {
+        subs.map(sub => {
+            if (sub[_teardown] && sub[_teardown].call) sub[_teardown]()
+            sub[_teardown] = sub(val)
+        })
+    }
+
+    const cancel = () => {
+        subs.map(sub => (
+            sub[_teardown] && sub[_teardown].call && sub[_teardown](),
+            delete sub[_teardown],
+            sub[_unsubscribe](),
+            delete sub[_unsubscribe]
+        ))
+        subs.length = 0
+        channel.closed = true
+    }
+
     const subscribe = (next, error, complete) => {
-        next = (next.call ? next : next.next).bind()
-        subs.push(next)
+        next = next.call ? next : next.next
         complete = next.call ? complete : next.complete
-        const unsubscribe = () => (
-            subs.length && subs.splice(subs.indexOf(next) >>> 0, 1),
-            complete && complete(),
+        subs.push(next)
+
+        const unsubscribe = () => {
+            if (subs.length) subs.splice(subs.indexOf(next) >>> 0, 1)
+            if (complete) complete()
             unsubscribe.closed = true
-        )
-        next.unsubscribe = unsubscribe.unsubscribe = unsubscribe
+        }
+        next[_unsubscribe] = unsubscribe.unsubscribe = unsubscribe
         unsubscribe.closed = false
+
         return unsubscribe
     }
 
-    return Object.assign(
-        val => observer(val) ? subscribe(val) : next(val),
-        {
-            next,
-            subscribe,
-            cancel,
-            [_observable](){return this}
-        })
+    const channel = val => observer(val) ? subscribe(val) : next(val)
+
+    return Object.assign(channel, {
+        subs,
+        closed: false,
+        next,
+        subscribe,
+        cancel,
+        [_observable](){return this}
+    })
 }
 
 export const observer = (val) => !!(val && (val.call || val.next))
