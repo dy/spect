@@ -375,6 +375,9 @@ const fahren = v(c, c => (c * 9) / 5 + 32)
 celsius() // 0
 fahren() // 32
 ```
+
+<!-- _**v**_ is a single-character alternative for _useState_, _useEffect_, _useMemo_, _rxjs/from_, _zen-observable_, _mobx@computed_ etc. -->
+
 <br/>
 </details>
 
@@ -457,6 +460,8 @@ $('.likes-count', el => h`<${el}>${
   }</>`
 })
 ```
+
+<!-- _**o**_ is a single-character alternative for _redux_, _react-redux_, _useReducer_, _mobx@observable_, _unistore_ etc. -->
 
 <br/>
 </details>
