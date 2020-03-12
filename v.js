@@ -1,7 +1,7 @@
 import _observable from 'symbol-observable'
 import c, { observer } from './channel.js'
 
-export default function v(init, map, unmap) {
+export default function f(init, map, unmap) {
   const channel = c()
 
   if (!map) map = unmap = v => v
@@ -12,123 +12,98 @@ export default function v(init, map, unmap) {
     (value.set && value.set(...args))
   ), channel)
 
-  value.next = v => {
-    if (v && v.then) {
-      delete value.current
-      v.then(v => channel.next(value.current = v))
-    } else {
-      channel.next(value.current = v)
-    }
-  }
-
-  // default set pushes to channel
-  value.set = v => value.next(map(v))
-
-  // revert setter (for subscriptions)
-  if (unmap) value.unset = v => value.next(unmap(v))
-
-  // default get receives last set value
-  value.valueOf = value.toString = value[Symbol.toPrimitive] =
-  value.get = () => value.current
-
   // add listener
   value.subscribe = callback => {
     channel.subscribe(callback)
     // callback is registered as the last channel subscription, so send it immediately as value
-    if ('current' in value) {
-      channel.next(value.get(), channel.subs.slice(-1))
-    }
-  }
-
-  // cancel subscriptions, dispose
-  value.cancel = () => {
-    unsubscribe()
-    channel.cancel()
-    delete value.current
+    if (value.get) channel.next(value.get(), channel.subs.slice(-1))
   }
 
   // init source
   let unsubscribe
-  if (arguments.length) {
-    // group
-    if (Array.isArray(init)) {
-      let vals = value.current = []
-      const depc = c()
-      const deps = init.map((dep, i) => {
-        let depv = v(dep)
-        depv(v => (vals[i] = v, depc(vals)))
-        return depv
-      })
-      depc(value.set)
-      if (vals.length || !init.length) depc(vals)
-      unsubscribe = () => (deps.map(depv => depv.cancel()), depc.cancel())
-    }
-    // constant (stateful)
-    else if (primitive(init)) {
-      value.set(init)
-    }
-    // observ
-    else if (typeof init === 'function') {
-      delete value.current
-      let block = false, set = value.set
-      const unforward = init(v => !block && value.set(v))
-      const unback = init.unset && unmap ? value.subscribe(v => (block = true, init.unset(unmap(v)), block = false)) : _ => _
-      unsubscribe = () => (unforward(), unback())
-    }
-    // input
-    else if (init.nodeType) {
-      const el = init
 
-      const get = value.get = el.type === 'checkbox' ? () => el.checked : () => el.value
+  // group
+  if (Array.isArray(init)) {
+    let vals = []
+    const depsChannel = c()
+    init = init.map((dep, i) => {
+      let depv = f(dep)
+      depv(v => (vals[i] = v, depsChannel(vals)))
+      return depv
+    })
+    value.get = () => map(vals)
+    depsChannel(v => value.next(value.get()))
+    if (vals.length) depsChannel(vals)
+    if (unmap) value.set = v => value.next(vals = unmap(v))
+    unsubscribe = () => (deps.map(depv => depv.cancel()), depsChannel.cancel())
+  }
+  // observ
+  else if (typeof init === 'function') {
+    value.set = v => init(unmap(v))
+    value.get = () => map(init())
+    const out = init(v => value.next(map(v)))
+    unsubscribe = () => (out(), delete value.get, delete value.set)
+  }
+  // input
+  else if (init && init.nodeType) {
+    const el = init
 
-      const set = {
-        text: value => el.value = (value == null ? '' : value),
-        checkbox: value => (el.checked = value, el.value = (value ? 'on' : ''), value ? el.setAttribute('checked', '') : el.removeAttribute('checked')),
-        'select-one': value => ([...el.options].map(el => el.removeAttribute('selected')), el.value = value, el.selectedOptions[0].setAttribute('selected', ''))
-      }[el.type]
+    const get = value.get = el.type === 'checkbox' ? () => el.checked : () => el.value
 
-      value.subscribe(v => set(v))
+    const set = {
+      text: value => el.value = (value == null ? '' : value),
+      checkbox: value => (el.checked = value, el.value = (value ? 'on' : ''), value ? el.setAttribute('checked', '') : el.removeAttribute('checked')),
+      'select-one': value => ([...el.options].map(el => el.removeAttribute('selected')), el.value = value, el.selectedOptions[0].setAttribute('selected', ''))
+    }[el.type]
 
-      const update = e => value.set(get())
+    value.set = v => (set(v), value.next(get()))
 
-      // normalize initial value
-      update()
+    // normalize initial value
+    set(get())
 
-      el.addEventListener('change', update)
-      el.addEventListener('input', update)
+    const update = e => value.set(get())
+    el.addEventListener('change', update)
+    el.addEventListener('input', update)
+    unsubscribe = () => (
+      delete value.set,
+      el.removeEventListener('change', update),
+      el.removeEventListener('input', update)
+    )
+  }
+  // Observable (stateless)
+  else if (init && init[_observable]) {
+    unsubscribe = init[_observable]().subscribe({next: v => value.next(map(v))})
+    unsubscribe = unsubscribe.unsubscribe || unsubscribe
+  }
+  // async iterator (stateful, initial undefined)
+  else if (init && (init.next || init[Symbol.asyncIterator])) {
+    let stop
+    ;(async () => {
+      for await (let v of init) {
+        if (stop) break
+        value.next(map(v))
+      }
+    })()
+    unsubscribe = () => stop = true
+  }
+  // promise (stateful, initial undefined)
+  else if (init && init.then) {
+    init.then(v => (v = map(v), value.get = () => v, value.next(v)))
+  }
+  // plain value
+  else {
+    const get = _ => map(init)
+    if (arguments.length) value.get = get
+    value.set = v => (init = unmap(v), value.get = value.get || get, value.next(v))
+  }
 
-      unsubscribe = () => (
-        el.removeEventListener('change', update),
-        el.removeEventListener('input', update)
-      )
-    }
-    // Observable (stateless)
-    else if (init[_observable]) {
-      delete value.current
-      unsubscribe = init[_observable]().subscribe({next: value.set})
-      unsubscribe = unsubscribe.unsubscribe || unsubscribe
-    }
-    // async iterator (stateful, initial undefined)
-    else if (init.next || init[Symbol.asyncIterator]) {
-      delete value.current
-      let stop
-      ;(async () => {
-        for await (let v of init) {
-          if (stop) break
-          value.set(v)
-        }
-      })()
-      unsubscribe = () => stop = true
-    }
-    // promise (stateful, initial undefined)
-    else if (init.then) {
-      delete value.current
-      init.then(value.set)
-    }
-    // plain value
-    else {
-      value.set(init)
-    }
+  value.valueOf = value.toString = value[Symbol.toPrimitive] = value.get
+
+  // cancel subscriptions, dispose
+  value.cancel = () => {
+    if (unsubscribe) unsubscribe()
+    channel.cancel()
+    delete value.current
   }
 
   return value
