@@ -560,7 +560,7 @@ t('v: input updates by changing value directly', async t => {
   await tick(10)
   t.is(log.slice(-1), ['6'], 'end destructs inputerty')
 })
-t.todo('v: input get/set', async t => {
+t('v: input get/set', async t => {
   let el = document.createElement('input')
   let value = v(el)
   value(0)
@@ -602,7 +602,7 @@ t.skip('v: input direct value set off-focus emits event', async t => {
   t.is(log, ['', '1'])
   t.is(i(), '1')
 })
-t.todo('v: input checkbox', async t => {
+t('v: input checkbox', async t => {
   let el = document.createElement('input')
   el.type = 'checkbox'
   document.body.appendChild(el)
@@ -628,11 +628,11 @@ t.todo('v: input checkbox', async t => {
   t.is(el.checked, false)
   t.is(el.value, '')
 })
-t.todo('v: input select', async t => {
+t('v: input select', async t => {
   let el = document.createElement('select')
   el.innerHTML = '<option value=1 selected>A</option><option value=2>B</option>'
   // document.body.appendChild(el)
-  let value = input(el)
+  let value = v(el)
   t.is(value(), '1')
   t.is(el.value, '1')
 

@@ -2,7 +2,7 @@ import _observable from 'symbol-observable'
 import c, { observer } from './channel.js'
 
 
-export default function v(init, map = v => v, unmap = v => v) {
+export default function v(init, map = v => v) {
   const channel = c()
 
   const value = Object.assign((...args) => (
@@ -11,11 +11,9 @@ export default function v(init, map = v => v, unmap = v => v) {
     (value.set && value.set(...args))
   ), channel)
 
-  value.get = () => value.current
-
-  // manual set, handles subscription to input obsevrable
-  value.set = arg => {
-    const v = map(arg)
+  // default set pushes to channel - can be redefined depending on source
+  value.set = (v) => {
+    v = map(v)
     if (v && v.then) {
       delete value.current
       v.then(v => channel.next(value.current = v))
@@ -23,6 +21,9 @@ export default function v(init, map = v => v, unmap = v => v) {
       channel.next(value.current = v)
     }
   }
+
+  // default get receives last set value
+  value.get = () => value.current
 
   value.subscribe = callback => {
     channel.subscribe(callback)
@@ -32,6 +33,7 @@ export default function v(init, map = v => v, unmap = v => v) {
     }
   }
   value.cancel = () => {
+    unsubscribe()
     channel.cancel()
     delete value.current
   }
@@ -65,9 +67,9 @@ export default function v(init, map = v => v, unmap = v => v) {
     }
     // input
     else if (init.nodeType) {
-      let el = init
+      const el = init
 
-      const get = el.type === 'checkbox' ? () => el.checked : () => el.value
+      const get = value.get = el.type === 'checkbox' ? () => el.checked : () => el.value
 
       const set = {
         text: value => el.value = (value == null ? '' : value),
@@ -75,17 +77,21 @@ export default function v(init, map = v => v, unmap = v => v) {
         'select-one': value => ([...el.options].map(el => el.removeAttribute('selected')), el.value = value, el.selectedOptions[0].setAttribute('selected', ''))
       }[el.type]
 
-      const update = e => {
-        // FIXME: check mapper too
-        if (get() !== value.current) (set(get()), value.set(get()))
+      const _set = value.set
+      value.set = v => {
+        if (v !== value.current) (set(v), _set(get()))
       }
+
+      const update = e => value.set(get())
 
       // normalize initial value
       update()
+
       el.addEventListener('change', update)
       el.addEventListener('input', update)
 
       unsubscribe = () => (
+        value.set = v=>v,
         el.removeEventListener('change', update),
         el.removeEventListener('input', update)
       )
