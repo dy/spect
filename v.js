@@ -1,9 +1,10 @@
 import _observable from 'symbol-observable'
 import c, { observer } from './channel.js'
 
-
-export default function v(init, map = v => v) {
+export default function v(init, map, unmap) {
   const channel = c()
+
+  if (!map) map = unmap = v => v
 
   const value = Object.assign((...args) => (
     !args.length ? (value.get && value.get()) :
@@ -11,9 +12,7 @@ export default function v(init, map = v => v) {
     (value.set && value.set(...args))
   ), channel)
 
-  // default set pushes to channel - can be redefined depending on source
-  value.set = (v) => {
-    v = map(v)
+  value.next = v => {
     if (v && v.then) {
       delete value.current
       v.then(v => channel.next(value.current = v))
@@ -22,9 +21,17 @@ export default function v(init, map = v => v) {
     }
   }
 
+  // default set pushes to channel
+  value.set = v => value.next(map(v))
+
+  // revert setter (for subscriptions)
+  if (unmap) value.unset = v => value.next(unmap(v))
+
   // default get receives last set value
+  value.valueOf = value.toString = value[Symbol.toPrimitive] =
   value.get = () => value.current
 
+  // add listener
   value.subscribe = callback => {
     channel.subscribe(callback)
     // callback is registered as the last channel subscription, so send it immediately as value
@@ -32,15 +39,15 @@ export default function v(init, map = v => v) {
       channel.next(value.get(), channel.subs.slice(-1))
     }
   }
+
+  // cancel subscriptions, dispose
   value.cancel = () => {
     unsubscribe()
     channel.cancel()
     delete value.current
   }
 
-  value.valueOf = value.toString = value[Symbol.toPrimitive] = value.get
-
-  // detect source
+  // init source
   let unsubscribe
   if (arguments.length) {
     // group
@@ -63,10 +70,10 @@ export default function v(init, map = v => v) {
     // observ
     else if (typeof init === 'function') {
       delete value.current
-      let block = false
-      const uninit = init(v => (!block && value.set(v)))
-      const unself = value.subscribe(v => (block = true, init(v), block = false))
-      unsubscribe = () => (uninit(), unself())
+      let block = false, set = value.set
+      const unforward = init(v => !block && value.set(v))
+      const unback = init.unset && unmap ? value.subscribe(v => (block = true, init.unset(unmap(v)), block = false)) : _ => _
+      unsubscribe = () => (unforward(), unback())
     }
     // input
     else if (init.nodeType) {
@@ -80,10 +87,7 @@ export default function v(init, map = v => v) {
         'select-one': value => ([...el.options].map(el => el.removeAttribute('selected')), el.value = value, el.selectedOptions[0].setAttribute('selected', ''))
       }[el.type]
 
-      const _set = value.set
-      value.set = v => {
-        if (v !== value.current) (set(v), _set(get()))
-      }
+      value.subscribe(v => set(v))
 
       const update = e => value.set(get())
 
@@ -94,7 +98,6 @@ export default function v(init, map = v => v) {
       el.addEventListener('input', update)
 
       unsubscribe = () => (
-        value.set = v=>v,
         el.removeEventListener('change', update),
         el.removeEventListener('input', update)
       )
