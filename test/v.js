@@ -152,6 +152,24 @@ t('v: mapper should be called once on group deps', async t => {
   v([a,b], (args) => log.push([...args]))
   t.is(log, [[0, 1]])
 })
+t('v: stores arrays with observables', async t => {
+  let a = v([])
+  t.is(a(), [])
+  a([1])
+  t.is(a(), [1])
+  a([1, 2])
+  t.is(a(), [1, 2])
+  a([])
+  t.is(a(), [])
+
+  let b = v(0)
+  a = v([b])
+  t.is(a(), [0])
+  b(1)
+  t.is(a(), [1])
+  a([b()])
+  t.is(a(), [1])
+})
 
 // from
 t('v: from promise', async t => {
@@ -480,21 +498,162 @@ t('v: calc promises must be resolved fine', async t => {
   t.is(x(), 2)
 })
 
-t('v: stores arrays with observables just fine', async t => {
-  let a = v([])
-  t.is(a(), [])
-  a([1])
-  t.is(a(), [1])
-  a([1, 2])
-  t.is(a(), [1, 2])
-  a([])
-  t.is(a(), [])
+// input
+t('v: input text', async t => {
+  let el = document.createElement('input')
+  document.body.appendChild(el)
+  let text = v(el)
+  text(v => console.log(v))
 
-  let b = v(0)
-  a([b])
-  t.is(a(), [0])
-  b(1)
-  t.is(a(), [1])
-  a([b()])
-  t.is(a(), [1])
+  let cb = document.createElement('input')
+  cb.setAttribute('type', 'checkbox')
+  document.body.appendChild(cb)
+  let bool = v(cb)
+  bool(v => console.log(v))
+
+  let sel = document.createElement('select')
+  sel.innerHTML = `<option value=1>A</option><option value=2>B</option>`
+  document.body.appendChild(sel)
+  let enm = v(sel)
+  enm(v => console.log(v))
 })
+t('v: input updates by changing value directly', async t => {
+  let el = document.createElement('input')
+  el.value = 0
+  let value = v(el)
+  t.is(value(), '0')
+
+  // observer 1
+  let log = []
+  value(v => log.push(v))
+
+  await tick(2)
+  t.is(log, ['0'], 'initial value notification')
+
+  el.focus()
+  el.dispatchEvent(new Event('focus'))
+  el.value = 1
+  el.dispatchEvent(new Event('change'))
+  await tick()
+  el.value = 2
+  el.dispatchEvent(new Event('change'))
+  await tick()
+  el.value = 3
+  el.dispatchEvent(new Event('change'))
+  el.value = 4
+  el.dispatchEvent(new Event('change'))
+  el.value = 5
+  el.dispatchEvent(new Event('change'))
+  await tick(8)
+  t.is(log.slice(-1), ['5'], 'updates to latest value')
+
+  el.value = 6
+  el.dispatchEvent(new Event('change'))
+  t.is(el.value, '6', 'reading value')
+  await tick(8)
+  t.is(log.slice(-1), ['6'], 'reading has no side-effects')
+
+  value.cancel()
+  el.value = 7
+  el.dispatchEvent(new Event('change'))
+  t.is(el.value, '7', 'end destructs inputerty')
+  await tick(10)
+  t.is(log.slice(-1), ['6'], 'end destructs inputerty')
+})
+t.todo('v: input get/set', async t => {
+  let el = document.createElement('input')
+  let value = v(el)
+  value(0)
+  t.is(el.value, '0', 'set is ok')
+  t.is(value(), '0', 'get is ok')
+  await tick(8)
+  t.is(el.value, '0', 'set is ok')
+  t.is(value(), '0', 'get is ok')
+})
+t.skip('v: input should register on simple selectors', async t => {
+  let el = document.createElement('input')
+  document.body.appendChild(el)
+  let value = input('input')
+  await frame(2)
+  value(0)
+  t.is(el.value, '0', 'set is ok')
+  t.is(value(), '0', 'get is ok')
+})
+t.skip('v: input multiple instances same? ref', async t => {
+  const el = document.createElement('input')
+  let xs1 = input(el)
+  let xs2 = input(el)
+
+  t.is(xs1, xs2, 'same ref')
+})
+t.skip('v: input direct value set off-focus emits event', async t => {
+  // NS: not sure we have to track direct `el.value = 1` when not focused. Looks like deciding for the user. Dispatching an event is not a big deal.
+  let el = document.createElement('input')
+  let i = input(el)
+  let log = []
+  fx(v => {
+    log.push(v)
+  }, [i])
+  await tick(8)
+  t.is(log, [''])
+
+  el.value = 1
+  await tick(8)
+  t.is(log, ['', '1'])
+  t.is(i(), '1')
+})
+t.todo('v: input checkbox', async t => {
+  let el = document.createElement('input')
+  el.type = 'checkbox'
+  document.body.appendChild(el)
+  let bool = v(el)
+  t.is(bool(), false)
+  t.is(el.checked, false)
+  t.is(el.value, '')
+
+  el.checked = true
+  el.dispatchEvent(new Event('change'))
+  t.is(bool(), true)
+  t.is(el.checked, true)
+  t.is(el.value, 'on')
+
+  bool(false)
+  t.is(bool(), false)
+  t.is(el.checked, false)
+  t.is(el.value, '')
+
+  bool.cancel()
+  bool(true)
+  t.is(bool(), false)
+  t.is(el.checked, false)
+  t.is(el.value, '')
+})
+t.todo('v: input select', async t => {
+  let el = document.createElement('select')
+  el.innerHTML = '<option value=1 selected>A</option><option value=2>B</option>'
+  // document.body.appendChild(el)
+  let value = input(el)
+  t.is(value(), '1')
+  t.is(el.value, '1')
+
+  el.value = '2'
+  el.dispatchEvent(new Event('change'))
+  t.is(value(), '2')
+  t.is(el.value, '2')
+  t.is(el.innerHTML, '<option value="1">A</option><option value="2" selected="">B</option>')
+
+  value('1')
+  t.is(value(), '1')
+  t.is(el.innerHTML, '<option value="1" selected="">A</option><option value="2">B</option>')
+  t.is(el.value, '1')
+
+  value.cancel()
+  value('2')
+  t.is(value(), '1')
+  t.is(el.innerHTML, '<option value="1" selected="">A</option><option value="2">B</option>')
+  t.is(el.value, '1')
+})
+t.todo('v: input radio')
+t.todo('v: input range')
+t.todo('v: input date')
+t.todo('v: input multiselect')

@@ -2,79 +2,25 @@ import _observable from 'symbol-observable'
 import c, { observer } from './channel.js'
 
 
-export default function v(init, map = v => v) {
+export default function v(init, map = v => v, unmap = v => v) {
   const channel = c()
 
   const value = Object.assign((...args) => (
-      !args.length ? (value.get && value.get()) :
-      observer(...args) ? value.subscribe(...args) :
-      (value.set && value.set(...args))
-    ), channel)
-
-  value.next = arg => {
-    const v = map(arg)
-    if (v && v.then) {
-      delete value.current
-      v.then(v => channel.next(value.current = v))
-    } else channel.next(value.current = v)
-  }
+    !args.length ? (value.get && value.get()) :
+    observer(...args) ? value.subscribe(...args) :
+    (value.set && value.set(...args))
+  ), channel)
 
   value.get = () => value.current
 
   // manual set, handles subscription to input obsevrable
-  let unsub
   value.set = arg => {
-    // unsubscribe prev, if any
-    if (unsub && unsub.call) (unsub(), unsub = null)
-
-    // group
-    if (Array.isArray(arg)) {
-      let vals = value.current = []
-      const depc = c()
-      const deps = arg.map((dep, i) => {
-        let depv = v(dep)
-        depv(v => (vals[i] = v, depc(vals)))
-        return depv
-      })
-      depc(value.next)
-      if (vals.length || !arg.length) depc(vals)
-      unsub = () => (deps.map(depv => depv.cancel()), depc.cancel())
-    }
-    // constant (stateful)
-    else if (primitive(arg)) {
-      value.next(arg)
-    }
-    // observ
-    else if (typeof arg === 'function') {
+    const v = map(arg)
+    if (v && v.then) {
       delete value.current
-      unsub = arg(value.next)
-    }
-    // Observable (stateless)
-    else if (arg[_observable]) {
-      delete value.current
-      unsub = arg[_observable]().subscribe({next: value.next})
-      unsub = unsub.unsubscribe || unsub
-    }
-    // async iterator (stateful, initial undefined)
-    else if (arg.next || arg[Symbol.asyncIterator]) {
-      delete value.current
-      let stop
-      ;(async () => {
-        for await (let v of arg) {
-          if (stop) break
-          value.next(v)
-        }
-      })()
-      unsub = () => stop = true
-    }
-    // promise (stateful, initial undefined)
-    else if (arg.then) {
-      delete value.current
-      arg.then(value.next)
-    }
-    // plain value
-    else {
-      value.next(arg)
+      v.then(v => channel.next(value.current = v))
+    } else {
+      channel.next(value.current = v)
     }
   }
 
@@ -93,7 +39,85 @@ export default function v(init, map = v => v) {
   value.valueOf = value.toString = value[Symbol.toPrimitive] = value.get
 
   // detect source
-  if (arguments.length) value.set(init)
+  let unsubscribe
+  if (arguments.length) {
+    // group
+    if (Array.isArray(init)) {
+      let vals = value.current = []
+      const depc = c()
+      const deps = init.map((dep, i) => {
+        let depv = v(dep)
+        depv(v => (vals[i] = v, depc(vals)))
+        return depv
+      })
+      depc(value.set)
+      if (vals.length || !init.length) depc(vals)
+      unsubscribe = () => (deps.map(depv => depv.cancel()), depc.cancel())
+    }
+    // constant (stateful)
+    else if (primitive(init)) {
+      value.set(init)
+    }
+    // observ
+    else if (typeof init === 'function') {
+      delete value.current
+      unsubscribe = init(value.set)
+    }
+    // input
+    else if (init.nodeType) {
+      let el = init
+
+      const get = el.type === 'checkbox' ? () => el.checked : () => el.value
+
+      const set = {
+        text: value => el.value = (value == null ? '' : value),
+        checkbox: value => (el.checked = value, el.value = (value ? 'on' : ''), value ? el.setAttribute('checked', '') : el.removeAttribute('checked')),
+        'select-one': value => ([...el.options].map(el => el.removeAttribute('selected')), el.value = value, el.selectedOptions[0].setAttribute('selected', ''))
+      }[el.type]
+
+      const update = e => {
+        // FIXME: check mapper too
+        if (get() !== value.current) (set(get()), value.set(get()))
+      }
+
+      // normalize initial value
+      update()
+      el.addEventListener('change', update)
+      el.addEventListener('input', update)
+
+      unsubscribe = () => (
+        el.removeEventListener('change', update),
+        el.removeEventListener('input', update)
+      )
+    }
+    // Observable (stateless)
+    else if (init[_observable]) {
+      delete value.current
+      unsubscribe = init[_observable]().subscribe({next: value.set})
+      unsubscribe = unsubscribe.unsubscribe || unsubscribe
+    }
+    // async iterator (stateful, initial undefined)
+    else if (init.next || init[Symbol.asyncIterator]) {
+      delete value.current
+      let stop
+      ;(async () => {
+        for await (let v of init) {
+          if (stop) break
+          value.set(v)
+        }
+      })()
+      unsubscribe = () => stop = true
+    }
+    // promise (stateful, initial undefined)
+    else if (init.then) {
+      delete value.current
+      init.then(value.set)
+    }
+    // plain value
+    else {
+      value.set(init)
+    }
+  }
 
   return value
 }

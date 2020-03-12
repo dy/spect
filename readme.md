@@ -346,6 +346,7 @@ $('#clock', el => {
 <details><summary><strong>v − value</strong></summary>
 
 > value = v( source? , map? )<br/>
+> value = v( input )<br/>
 > value = v( next , error?, complete? )<br/>
 
 Value observable − simply a getter/setter function with [observable](https://ghub.io/observable) API.
