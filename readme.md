@@ -96,7 +96,7 @@ $('.user', async el => {
 </script>
 ```
 
-The `$` assigns an _aspect callback_ to the `.user` element. `v` here acts as _useState_, storing `user` in observable container. `h` is reactive − it rerenders automatically whenever the `user` changes.
+The `$` assigns an _aspect callback_ to the `.user` element. `v` here acts as _useState_, storing `user` in observable container. `h` is hyperscipts − it rerenders automatically whenever the `user` changes.
 
 <!--
 Consider simple todo app.
@@ -190,43 +190,6 @@ import { $ } from 'spect'
 $('input', el => el.addEventListener('focus', e => el.classList.add('touched')))
 ```
 
-#### Lit-html
-
-```js
-import { $, fx, on } from 'spect'
-import { render, html } from 'lit-html'
-
-$('input#height', el => {
-  fx(e => {
-    const value = e.target.value
-
-    render(h`Your height: <strong>${ value }</strong>cm`, hintEl)
-  }, [on(el, 'input'), on(el, 'change')])
-})
-```
-
-#### React-less hooks
-
-```js
-import $ from 'spect'
-import * as augmentor from 'augmentor'
-import hooked from 'enhook'
-import setHooks, { useState, useEffect } from 'unihooks'
-
-// init hooks
-enhook.use(augmentor)
-setHooks(augmentor)
-
-$('#timer', hooked(el => {
-  let [count, setCount] = useState(0)
-  useEffect(() => {
-    let interval = setInterval(() => setCount(count => count + 1), 1000)
-    return () => clearInterval(interval)
-  }, [])
-  el.textContent = `Seconds: ${count}`
-}))
-```
-
 #### Microfrontends
 
 Pending...
@@ -242,14 +205,14 @@ Pending...
 <details><summary><strong>$ − selector</strong></summary>
 
 > elements = $( scope? , selector , callback? )<br/>
-> elements = $( element | list, callback? )<br/>
+> elements = $( element | list , callback? )<br/>
 
 Selector observer, creates live collection of elements matching the `selector`. Optional `callback` runs for each new element matching the selector. If `callback` returns a teardown, it is run when the element is unmatched.
 
 * `selector` is a valid CSS selector.
-* `element` is _HTMLElement_ or a list of elements (array or array-like).
-* `callback` is a function with `(element) => teardown?` signature.
 * `scope` is optional container element to observe, by default that is `globalThis`.
+* `element` is _HTMLElement_ or a `list` of elements (array or array-like).
+* `callback` is a function with `(element) => teardown?` signature.
 * `elements` is live array with matched elements (similar to [HTMLCollection](https://developer.mozilla.org/en-US/docs/Web/API/HTMLCollection)).
 
 ```js
@@ -345,21 +308,22 @@ $('#clock', el => {
 
 <details><summary><strong>v − value</strong></summary>
 
-> value = v( source? , map? )<br/>
+> value = v( from? , map? )<br/>
 
 Value observable − simply a getter/setter function with [observable](https://ghub.io/observable) API.
 
-`source` can be:
+`from` can be:
 
-* _Primitive_ or _plain_ value
-* Subscribable _function_ ([observ-*](https://ghub.io/observ), [observable](https://ghub.io/observable), [mutant](https://ghub.io/mutant) etc.)
+* _Primitive_ value
+* _Function_ (another _v_, [observ-*](https://ghub.io/observ), [observable](https://ghub.io/observable), [mutant](https://ghub.io/mutant) etc.)
 * _AsyncIterator_ or target with [`Symbol.asyncIterator`](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Symbol/asyncIterator)
 * _Promise_ or _thenable_
 * _Observable_ or target with [`Symbol.observable`](https://ghub.io/symbol-observable) ([rxjs](https://ghub.io/rxjs),[zen-observable](https://ghub.io/zen-observable) etc.)
-* _Input_ inc. _radio_ or _checkbox_, or _Select_
+* _Input_ (_radio_, _checkbox_), or _Select_
 * _Array_ with any combination of the above.
+* Any other value
 
-`map` optionally transforms `source` value.
+`map` optionally transforms `from` value.
 
 ```js
 import { v } from 'spect'
@@ -374,7 +338,7 @@ v1(1)
 
 // subscribe
 v1(value => {
-  // new value
+  // 1
   return () => {
     // ...teardown
   }
@@ -396,7 +360,7 @@ v([v1, v2, v3])(([v1, v2, v3]) => {
 // > 1, 2, 3
 
 // from input
-let v4 = v($('#field')[0])
+let v4 = v(...$('#input'))
 ```
 
 #### Example
@@ -420,9 +384,9 @@ fahren() // 32
 
 > props = o( target = {} , types? )<br/>
 
-Object props observer / accessor. Adding, changing, or deleting `props` emits changes and modifies `target`. If `target` is an _element_, then `props` also reflects attributes.
+Object observer / accessor. Creates a `props` proxy to any `target`. Adding, changing, or deleting `props` emits changes and mutates `target`. If `target` is an _element_, then `props` also reflects attributes.
 
-`types` optionally specifies properties types.
+`types` optionally specifies properties types − one of _Boolean_, _String_, _Number_, _Array_ or _Object.
 
 <!--similar to [propTypes](https://github.com/facebook/prop-types) or [lit-element](https://lit-element.polymer-project.org/guide/properties).-->
 
@@ -432,10 +396,10 @@ import { o, v } from 'spect'
 // object
 const obj = o({ foo: null })
 
-// set props
+// set
 obj.foo = 'bar'
 
-// log changes
+// subscribe to changes
 v(obj, ({ foo }) => console.log(foo))
 // > 'bar'
 
@@ -443,14 +407,14 @@ v(obj, ({ foo }) => console.log(foo))
 // array
 let arr = o([1, 2, 3])
 
-// set item
+// set
 arr[3] = 4
 
 // mutate
 arr.push(5, 6)
 arr.unshift(0)
 
-// log
+// subscribe
 v(arr, arr => console.log(arr))
 // > [0, 1, 2, 3, 4, 5, 6]
 
@@ -469,7 +433,7 @@ props.loading
 el.getAttribute('loading')
 // > ''
 
-// log
+// subscribe
 v(props, ({loading}) => console.log(loading))
 ```
 
