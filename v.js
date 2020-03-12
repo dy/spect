@@ -115,6 +115,6 @@ export function primitive(val) {
 }
 
 export function observable(arg) {
-  if (primitive(arg)) return false
+  if (!arg) return false
   return !!(typeof arg === 'function' || arg[_observable] || arg[Symbol.asyncIterator] || arg.next || arg.then)
 }
