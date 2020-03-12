@@ -178,7 +178,7 @@ t('v: stores arrays with observables', async t => {
 })
 t('v: simple unmap', async t => {
   let a = v(1, v => v + 1, v => v - 1)
-  t.is(a(), 2)
+  t.is(a(), 1)
   a(2)
   t.is(a(), 2)
   a(3)
@@ -197,12 +197,11 @@ t('v: from promise', async t => {
   t.is(vp(), 1)
   t.is(log, [1])
 
-  // WARN: secondary assign promise doesn't work.
-  // vp(time(10).then(() => 2))
-  // t.is(vp(), undefined)
-  // await time(10)
-  // t.is(vp(), 2)
-  // t.is(log, [1, 2])
+  vp(time(10).then(() => 2))
+  t.is(vp(), undefined)
+  await time(10)
+  t.is(vp(), 2)
+  t.is(log, [1, 2])
 })
 t('v: from promise / observable / observ', async t => {
   let p = new Promise(r => setTimeout(() => r(2), 10))
@@ -235,15 +234,20 @@ t('v: from async generator', async t => {
     yield 1
     await tick(3)
     yield 2
+    await time(10)
+    yield 3
   }
   const log = []
-  v([x(), x()], ([x1, x2]) => {
+  let a = v([x(), x()], ([x1, x2]) => {
     log.push(x1, x2)
   })
   await tick(12)
   t.is(log, [1,undefined,1,1,2,1,2,2])
+  a.cancel()
+  await time(10)
+  t.is(log, [1,undefined,1,1,2,1,2,2])
 })
-t('v: mapper', async t => {
+t('v: mapper from v', async t => {
   let v0 = v()
   v(0, x => x + 1)(v0)
   t.is(v0(), 1)
@@ -365,7 +369,7 @@ t('v: fx promise / observable / direct dep', async t => {
   let c = 1
 
   let log = []
-  v([p, O, c, o])(([p, O, c, o]) => {
+  let unsub = v([p, O, c, o])(([p, O, c, o]) => {
     log.push(c, p, O, o)
   })
 
@@ -380,6 +384,8 @@ t('v: fx promise / observable / direct dep', async t => {
   log = []
   await time(10)
   t.is(log, [1, 2, 3, 4])
+
+  unsub()
 })
 t.todo('v: fx on must not create initial tick', async t => {
   let ex = on(document.createElement('x'), 'click')
@@ -408,11 +414,12 @@ t.skip('v: fx thenable', async t => {
 })
 t('v: fx simple values', async t => {
   const o = {x:1}, log = []
-  v([o, o.x])(([o, x]) => {
+  let unsub = v([o, o.x])(([o, x]) => {
     log.push(o, x)
   })
   await tick(8)
   t.is(log, [{x: 1}, 1])
+  unsub()
 })
 t.skip('v: fx deps length change', async t => {
   let deps = [state(1)]
@@ -651,7 +658,7 @@ t('v: input checkbox', async t => {
 
   bool.cancel()
   bool(true)
-  t.is(bool(), false)
+  t.any(bool(), [null, undefined, false])
   t.is(el.checked, false)
   t.is(el.value, '')
 })
@@ -676,7 +683,7 @@ t('v: input select', async t => {
 
   value.cancel()
   value('2')
-  t.is(value(), '1')
+  t.any(value(), [null, undefined, '1'])
   t.is(el.innerHTML, '<option value="1" selected="">A</option><option value="2">B</option>')
   t.is(el.value, '1')
 })
@@ -684,3 +691,8 @@ t.todo('v: input radio')
 t.todo('v: input range')
 t.todo('v: input date')
 t.todo('v: input multiselect')
+
+// error
+t('v: error in mapper')
+t('v: error in subscription')
+t('v: error in source')
