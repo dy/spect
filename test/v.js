@@ -239,6 +239,17 @@ t('v: to value', async t => {
   v(x)(y)
   t.is(y(), 0)
 })
+t('v: another observer setter should work', async t => {
+  let a = v(0), b = v(a), c = v(b)
+  a(1)
+  t.is(b(), 1)
+  b(2)
+  t.is(a(), 2)
+  t.is(c(), 2)
+  c(3)
+  t.is(a(), 3)
+  t.is(b(), 3)
+})
 
 // fx
 t.todo('v: fx core', async t => {

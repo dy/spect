@@ -63,7 +63,10 @@ export default function v(init, map = v => v) {
     // observ
     else if (typeof init === 'function') {
       delete value.current
-      unsubscribe = init(value.set)
+      let block = false
+      const uninit = init(v => (!block && value.set(v)))
+      const unself = value.subscribe(v => (block = true, init(v), block = false))
+      unsubscribe = () => (uninit(), unself())
     }
     // input
     else if (init.nodeType) {
