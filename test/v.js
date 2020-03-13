@@ -20,7 +20,7 @@ t('v: readme', async t => {
     }
   })
 
-  // set
+  // // set
   v1(1)
   t.is(v1(), 1)
   t.is(log, [0, '-', 1])
@@ -249,7 +249,8 @@ t('v: from async generator', async t => {
 })
 t('v: mapper from v', async t => {
   let v0 = v()
-  v(0, x => x + 1)(v0)
+  let v1 = v(0, x => x + 1)
+  v1(v0)
   t.is(v0(), 1)
 })
 t('v: to value', async t => {

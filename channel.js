@@ -1,49 +1,50 @@
 import _observable from 'symbol-observable'
 
 export default (...subs) => {
-    const _teardown = Symbol('teardown'), _cancel = Symbol('cancel')
-
-    const next = (val, subs=channel.subs) => {
+    const push = (val, subs=channel.subs) => {
         // promise awaits value
-        if (val && val.then) return val.then(val => next(val))
+        if (val && val.then) return val.then(val => push(val))
         subs.map(sub => {
-            if (sub[_teardown] && sub[_teardown].call) ( sub[_teardown]())
-            sub[_teardown] = sub(val)
+            if (sub.out && sub.out.call) sub.out()
+            if (sub.next) sub.out = sub.next(val)
         })
     }
 
     const cancel = () => {
-        subs.map(sub => (
-            sub[_teardown] && sub[_teardown].call && (sub[_teardown]()),
-            delete sub[_teardown],
-            sub[_cancel](),
-            delete sub[_cancel]
-        ))
+        let unsubs = subs.map(sub => {
+            if (sub.out && sub.out.call) sub.out()
+            return sub.unsubscribe
+        })
         subs.length = 0
+        unsubs.map(unsub => unsub())
         channel.closed = true
     }
 
     const subscribe = (next, error, complete) => {
-        next = next.call ? next : next.next
-        complete = next.call ? complete : next.complete
-        subs.push(next)
+        next = next && next.next || next
+        error = next && next.error || error
+        complete = next && next.complete || complete
 
         const unsubscribe = () => {
-            if (subs.length) subs.splice(subs.indexOf(next) >>> 0, 1)
+            if (subs.length) subs.splice(subs.indexOf(subscription) >>> 0, 1)
             if (complete) complete()
             unsubscribe.closed = true
         }
-        next[_cancel] = unsubscribe.unsubscribe = unsubscribe
+        unsubscribe.unsubscribe = unsubscribe
         unsubscribe.closed = false
+
+        const subscription = { next, error, complete, unsubscribe }
+        subs.push(subscription)
+
         return unsubscribe
     }
 
-    const channel = val => observer(val) ? subscribe(val) : next(val)
+    const channel = val => observer(val) ? subscribe(val) : push(val)
 
     return Object.assign(channel, {
         subs,
         closed: false,
-        next,
+        push,
         subscribe,
         cancel,
         [_observable](){return this}
