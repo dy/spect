@@ -20,11 +20,60 @@ t('o: own props become observable on init only', t => {
   t.is(log, [{x:1}, {x:2}])
 })
 
-t.todo('o: reinit new own props define new observers, agnostic of prev os')
+t('o: reinit new own props defines new observers, agnostic of prev o-s', t => {
+  let x = {x: 1}
+  let ox = o(x)
+  x.y = 2
+  let oy = o(x)
 
-t('o: defined types create observers (with reflection to attributes if possible)')
+  let logx = [], logy = []
+  v(ox, x => logx.push({...x}))
+  v(oy, y => logy.push({...y}))
 
-t('o: reflect own props to attributes')
+  t.is(logx, [{x: 1, y: 2}])
+  t.is(logy, [{x: 1, y: 2}])
+
+  x.x = 2
+  t.is(logx, [{x: 1, y: 2}, {x: 2, y: 2}])
+  t.is(logy, [{x: 1, y: 2}, {x: 2, y: 2}])
+
+  x.y = 3
+  t.is(logx, [{x: 1, y: 2}, {x: 2, y: 2}])
+  t.is(logy, [{x: 1, y: 2}, {x: 2, y: 2}, {x: 2, y: 3}])
+})
+
+t('o: defined types create observers (with reflection to attributes if possible)', t => {
+  let x = {}
+  let ox = o(x, {n: Number, b: Boolean, s: String, a: Array, o: Object, f: Function})
+
+  t.is(ox, {n: undefined, b: undefined, s: undefined, a: undefined, o: undefined, f: undefined})
+  x.n = '1'
+  x.b = 1
+  x.s = 123
+  x.a = 'a'
+  x.o = {x:1}
+  let f = x.f = () => 1
+  t.is(ox, {n: 1, b: true, s: '123', a: ['a'], o: {x:1}, f})
+})
+
+t('o: undefined types set value as passed', t => {
+  let x = {x: 1, y: null}
+  let ox = o(x)
+  x.x = '2'
+  x.y = 2
+  t.is(x, {x: 2, y: 2})
+})
+
+t.only('o: reflect own props to attributes', t => {
+  let div = document.createElement('div')
+  div.x = 1
+  let odiv = o(div)
+
+  t.is(div.getAttribute('x'), '1')
+
+  div.x = 2
+  t.is(div.getAttribute('x'), '2')
+})
 
 t.todo('o: init', t => {
   let a = o()

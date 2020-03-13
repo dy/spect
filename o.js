@@ -6,12 +6,12 @@ export default function o (target = {}, types = {}) {
   const descriptors = {}
 
   // take in defined types
-  for (let name in types) descriptors[name] = { type: types[name] }
+  for (let name in types) descriptors[name] = { type: types[name], enumerable: true }
 
   // detect types from target own props
   let ownProps = Object.getOwnPropertyNames(target)
   ownProps.map(name => {
-    if (!descriptors[name]) descriptors[name] = { type: type(target[name]) }
+    if (!descriptors[name]) descriptors[name] = { type: type(target[name]), enumerable: true }
   })
 
   // // bind attribute
@@ -32,10 +32,11 @@ export default function o (target = {}, types = {}) {
 
     // bind prop
     descriptor.get = orig ? (orig.get ? orig.get.bind(target): () => orig.value) : () => descriptor.value
-    descriptor.set = orig ? (
-      orig.set ? v => (orig.set.call(target, v), value(target)) :
-      v => (orig.value = v, value(target))
-    ) : v => (descriptor.value = v, value(target))
+    descriptor.set = v => (
+      v = !descriptor.type || (v instanceof descriptor.type) ? v : descriptor.type(v),
+      orig ? (orig.set ? orig.set.call(target, v) : orig.value = v) : descriptor.value = v,
+      value(target)
+    )
   }
 
   Object.defineProperties(target, descriptors)
@@ -76,7 +77,7 @@ export default function o (target = {}, types = {}) {
 }
 
 function type(arg) {
-  if (arg == null) return null
+  if (arg == null) return v => v
   if (typeof arg === 'boolean') return Boolean
   if (typeof arg === 'string') return String
   if (typeof arg === 'number') return Number
