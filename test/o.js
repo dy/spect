@@ -140,7 +140,7 @@ t('o: store must not expose internal props', async t => {
 })
 
 // list
-t('list: core', async t => {
+t('o: list core', async t => {
   let s = o([1])
   let l
   v(s)(s => (l = s))
@@ -193,7 +193,7 @@ t('list: core', async t => {
   await tick(8)
   t.is(l, [1,2,3], 'shift')
 })
-t('list: must not expose internal props', async t => {
+t('o: list must not expose internal props', async t => {
   let s = o([])
   let log = []
   for (let p in []) {
@@ -201,7 +201,7 @@ t('list: must not expose internal props', async t => {
   }
   t.is(log, [])
 })
-t.skip('list: bubbles up internal item updates', async t => {
+t.skip('o: list bubbles up internal item updates', async t => {
   let l = list(), s = state(0)
   l.push(s)
 
@@ -217,7 +217,7 @@ t.skip('list: bubbles up internal item updates', async t => {
   await tick(8)
   t.is(log, [[s], [s]])
 })
-t('list: fx sync init', async t => {
+t('o: list fx sync init', async t => {
   let l = o([])
   let log = []
   v(l, item => log.push(item.slice()))
@@ -232,73 +232,71 @@ t('list: fx sync init', async t => {
 })
 
 // prop
-t('prop: subscription', async t => {
-  let o = { x: 0 }
-  let xs = prop(o, 'x')
-  t.is(xs(), 0)
+t('o: prop subscription', async t => {
+  let obj = { x: 0 }
+  let oobj = o(obj)
+  t.is(oobj.x, 0)
 
   // observer 1
   let log = []
-  ;(async () => {
-    // for await (const item of xs) {
-    //   log.push(item)
-    // }
-    xs(item => log.push(item))
-  })();
+  // for await (const item of oobj) {
+  //   log.push(item)
+  // }
+  v(oobj)(item => log.push(item.x))
 
   await tick(2)
   t.is(log, [0], 'initial value notification')
 
-  o.x = 1
+  obj.x = 1
   await tick(1)
-  o.x = 2
+  obj.x = 2
   await tick(8)
   t.is(log, [0, 1, 2], 'updates to latest value')
-  o.x = 3
-  o.x = 4
-  o.x = 5
+  obj.x = 3
+  obj.x = 4
+  obj.x = 5
   await tick(8)
   t.is(log.slice(-1), [5], 'updates to latest value')
 
-  o.x = 6
-  t.is(o.x, 6, 'reading value')
+  obj.x = 6
+  t.is(obj.x, 6, 'reading value')
   await tick(8)
   t.is(log.slice(-1), [6], 'reading has no side-effects')
 
-  o.x = 7
-  o.x = 6
+  obj.x = 7
+  obj.x = 6
   await tick(8)
   t.is(log.slice(-1), [6], 'changing and back does not trigger too many times')
 
-  xs.cancel()
+  oobj[Symbol.observable]().cancel()
   // xs(null)
-  o.x = 7
-  o.x = 8
-  t.is(o.x, 8, 'end destructs property')
+  obj.x = 7
+  obj.x = 8
+  t.is(obj.x, 8, 'end destructs property')
   await tick(10)
   t.is(log.slice(-1), [6], 'end destructs property')
 })
-t('prop: get/set', async t => {
-  let o = { x: () => { t.fail('Should not be called') } }
-  let xs = prop(o, 'x')
-  xs(0)
-  t.is(o.x, 0, 'set is ok')
-  t.is(xs(), 0, 'get is ok')
+t('o: prop get/set', async t => {
+  let ob = { x: () => { t.fail('Should not be called') } }
+  let ox = o(ob)
+  ox.x = 0
+  t.is(ob, {x:0}, 'set is ok')
+  t.is(ox, {x:0}, 'get is ok')
 })
-t('prop: keep initial property value if applied/unapplied', async t => {
+t('o: prop keep initial property value if applied/unapplied', async t => {
   let o = { foo: 'bar' }
   let foos = prop(o, 'foo')
   foos.cancel(null)
   t.is(o, {foo: 'bar'}, 'initial object is unchanged')
 })
-t('prop: multiple instances', async t => {
+t('o: prop multiple instances', async t => {
   let x = { x: 1}
   let xs1 = prop(x, 'x')
   let xs2 = prop(x, 'x')
 
   t.is(xs1, xs2, 'same ref')
 })
-t('prop: minimize get/set invocations', async t => {
+t('o: prop minimize get/set invocations', async t => {
   let log = []
   let obj = {
     _x: 0,
@@ -342,7 +340,7 @@ t('prop: minimize get/set invocations', async t => {
   await tick(8)
   t.is(log, ['get', 1, 'set', 0])
 })
-t.todo('prop: observe store property')
+t.todo('o: prop observe store property')
 
 // attr
 t('attr: core', async t => {

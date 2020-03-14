@@ -5,16 +5,19 @@ export default function o (target = {}, types = {}) {
   // create descriptors on target
   const descriptors = {}
 
-  // take in defined types
-  for (let name in types) descriptors[name] = { type: types[name], enumerable: true }
-
-  // detect types from target own props
   if (!Array.isArray(target)) {
     let ownProps = Object.keys(target)
     ownProps.map(name => {
-      if (!descriptors[name]) descriptors[name] = { type: type(target[name]), enumerable: true }
+      // own props don't define coercion - it is a bit unnatural to js op, leave it to user
+      if (!descriptors[name]) descriptors[name] = {
+        type: null,
+        enumerable: true
+      }
     })
   }
+
+  // take in defined types
+  for (let name in types) descriptors[name] = Object.assign(descriptors[name] || {}, { type: types[name], enumerable: true })
 
   // take in set attributes
   if (target.attributes) {

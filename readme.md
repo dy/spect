@@ -389,7 +389,7 @@ fahren() // 32
 
 Object observer / accessor. Creates a `props` proxy to any `target`. Adding, changing, or deleting `props` emits changes and mutates `target`. If `target` is an _element_, then `props` also reflects attributes.
 
-`types` optionally specifies properties types − one of _Boolean_, _String_, _Number_, _Array_ or _Object.
+`types` optionally defines type coercion for values − one of _Boolean_, _String_, _Number_, _Array_ or _Object.
 
 <!--similar to [propTypes](https://github.com/facebook/prop-types) or [lit-element](https://lit-element.polymer-project.org/guide/properties).-->
 
