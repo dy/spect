@@ -9,10 +9,12 @@ export default function o (target = {}, types = {}) {
   for (let name in types) descriptors[name] = { type: types[name], enumerable: true }
 
   // detect types from target own props
-  let ownProps = Object.getOwnPropertyNames(target)
-  ownProps.map(name => {
-    if (!descriptors[name]) descriptors[name] = { type: type(target[name]), enumerable: true }
-  })
+  if (!Array.isArray(target)) {
+    let ownProps = Object.keys(target)
+    ownProps.map(name => {
+      if (!descriptors[name]) descriptors[name] = { type: type(target[name]), enumerable: true }
+    })
+  }
 
   // take in set attributes
   if (target.attributes) {
@@ -40,6 +42,8 @@ export default function o (target = {}, types = {}) {
   for (let name in descriptors) {
     let descriptor = descriptors[name]
     let orig = descriptor.orig = Object.getOwnPropertyDescriptor(target, name)
+
+    descriptor.enumerable = true
 
     // bind prop
     descriptor.get = orig ? (orig.get ? orig.get.bind(target): () => orig.value) : () => descriptor.value
@@ -69,8 +73,9 @@ export default function o (target = {}, types = {}) {
       if (prop === _observable) return true
       return prop in target
     },
-    set(target, prop, value) {
-      target[prop] = value
+    set(target, prop, v) {
+      target[prop] = v
+      // for the cases when some unobserved prop is set (observed prop updates via defined setter)
       if (!descriptors[prop]) value(target)
       return true
     },

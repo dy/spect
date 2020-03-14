@@ -21,8 +21,21 @@ export default function f(init, map=v=>v, unmap=v=>v) {
   // current is mapped value (map can be heavy)
   value.get = () => value.current
 
+  // observ
+  if (typeof init === 'function') {
+    value.set = v => init(unmap(v))
+    channel.subscribe(null, null, init(v => value.push(value.current = map(v))))
+  }
+  // Observable (stateless)
+  else if (init && init[_observable]) {
+    value.set = noop
+    let unsubscribe = init[_observable]().subscribe({next: v => value.push(value.current = map(v))})
+    unsubscribe = unsubscribe.unsubscribe || unsubscribe
+    channel.subscribe(null, null, () => unsubscribe())
+  }
   // group
-  if (Array.isArray(init)) {
+  // NOTE: array may have _observable, so it should go after
+  else if (Array.isArray(init)) {
     let vals = value.current = []
     const depsChannel = c()
     const deps = init.map((dep, i) => {
@@ -34,11 +47,6 @@ export default function f(init, map=v=>v, unmap=v=>v) {
     if (vals.length || !init.length) depsChannel(vals)
     value.set = v => (value.push(value.current = map(unmap(v))))
     channel.subscribe(null, null, () => (deps.map(depv => depv.cancel()), depsChannel.cancel()))
-  }
-  // observ
-  else if (typeof init === 'function') {
-    value.set = v => init(unmap(v))
-    channel.subscribe(null, null, init(v => value.push(value.current = map(v))))
   }
   // input
   else if (init && (init.tagName === 'INPUT' || init.tagName === 'SELECT')) {
@@ -64,13 +72,6 @@ export default function f(init, map=v=>v, unmap=v=>v) {
       el.removeEventListener('change', update)
       el.removeEventListener('input', update)
     })
-  }
-  // Observable (stateless)
-  else if (init && init[_observable]) {
-    value.set = noop
-    let unsubscribe = init[_observable]().subscribe({next: v => value.push(value.current = map(v))})
-    unsubscribe = unsubscribe.unsubscribe || unsubscribe
-    channel.subscribe(null, null, unsubscribe)
   }
   // async iterator (stateful, initial undefined)
   else if (init && (init.next || init[Symbol.asyncIterator])) {
