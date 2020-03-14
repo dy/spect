@@ -14,17 +14,27 @@ export default function o (target = {}, types = {}) {
     if (!descriptors[name]) descriptors[name] = { type: type(target[name]), enumerable: true }
   })
 
-  // // bind attribute
-  // if (target.nodeType) {
-  //   // FIXME: create single MO per target
+  // take in set attributes
+  if (target.attributes) {
+    [...target.attributes].map(({ name, value }) => {
+      if (!descriptors[name]) {
+        descriptors[name] = { type: null, enumerable: true }
+        target[name] = value
+      }
+    })
+  }
+
+  const value = v()
+  value.set(target)
+
+  // set attribute observer
+  // if (target.setAttribute) {
   //   const mo = new MutationObserver((records) => records.map(({attributeName}) => {
   //     target[attributeName] = target.getAttribute(attributeName)
   //   }))
-  //   mo.observe(target, { attributes: true, attributeFilter: Object.getOwnPropertyNames(descriptors) })
-  //   value(null, null, () => mo.disconnect())
+  //   mo.observe(target, { attributes: true, attributeFilter: Object.keys(descriptors) })
+  //   value.subscribe(null, null, () => mo.disconnect())
   // }
-
-  const value = v(target)
 
   for (let name in descriptors) {
     let descriptor = descriptors[name]
@@ -34,12 +44,15 @@ export default function o (target = {}, types = {}) {
     descriptor.get = orig ? (orig.get ? orig.get.bind(target): () => orig.value) : () => descriptor.value
     descriptor.set = v => (
       v = !descriptor.type || (v instanceof descriptor.type) ? v : descriptor.type(v),
+      // target.setAttribute ? setAttribute(target, name, v) : null,
       orig ? (orig.set ? orig.set.call(target, v) : orig.value = v) : descriptor.value = v,
       value(target)
     )
   }
 
   Object.defineProperties(target, descriptors)
+
+
   value.subscribe(null, null, () => {
     let orig = {}
     for (let name in descriptors) if (descriptors[name].orig) orig[name] = descriptors[name].orig
@@ -73,6 +86,9 @@ export default function o (target = {}, types = {}) {
     }
   })
 
+  // sync up initial attributes with values
+  // for (let name in target) target[name] = target[name]
+
   return proxy
 }
 
@@ -86,10 +102,23 @@ function type(arg) {
 
 // // attr
 // attr.get = (el, name, value) => ((value = el.getAttribute(name)) === '' ? true : value)
-// attr.set = (el, name, value) => {
-//   if (value === false || value == null) el.removeAttribute(name)
-//   else el.setAttribute(name, value === true ? '' : value)
-// }
+
+function setAttribute (el, name, value) {
+  // class=[a, b, ...c] - possib observables
+  if (Array.isArray(value)) {
+    values.filter(v => v).join(' ')
+  }
+  // style={}
+  else if (typeof value === 'object') {
+    el.setAttribute(name, Object.keys(value).map((key, i) => `${key}: ${value[i]};`).join(' '))
+  }
+  else if (value === false || value == null) {
+    el.removeAttribute(name)
+  }
+  else {
+    el.setAttribute(name, value === true ? '' : value)
+  }
+}
 
 
 // // inputs

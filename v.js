@@ -41,7 +41,7 @@ export default function f(init, map=v=>v, unmap=v=>v) {
     channel.subscribe(null, null, init(v => value.push(value.current = map(v))))
   }
   // input
-  else if (init && init.nodeType) {
+  else if (init && (init.nodeType === 'input' || init.nodeType === 'select')) {
     const el = init
 
     const get = el.type === 'checkbox' ? () => el.checked : () => el.value

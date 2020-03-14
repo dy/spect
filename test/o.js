@@ -75,6 +75,10 @@ t.only('o: reflect own props to attributes', t => {
   t.is(div.getAttribute('x'), '2')
 })
 
+t('o: read initial attribute values', t => {
+
+})
+
 t.todo('o: init', t => {
   let a = o()
   t.is(a, {})

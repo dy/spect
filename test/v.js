@@ -270,6 +270,22 @@ t('v: subscribed observable setter', async t => {
   t.is(a(), 3)
   t.is(b(), 3)
 })
+t('v: init non-input elements is fine', async t => {
+  let el = document.createElement('div')
+  let vel = v(el)
+  t.is(vel(), el)
+  vel.cancel()
+
+  let vel2 = v()
+  vel2(el)
+  t.is(vel2(), el)
+  vel2.cancel()
+
+  let vel3 = v()
+  vel3.set(el)
+  t.is(vel3(), el)
+  vel3.cancel()
+})
 
 // fx
 t.todo('v: fx core', async t => {
