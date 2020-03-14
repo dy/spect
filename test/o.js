@@ -64,7 +64,7 @@ t('o: undefined types set value as passed', t => {
   t.is(x, {x: 2, y: 2})
 })
 
-t.only('o: reflect own props to attributes', t => {
+t('o: reflect own props to attributes', t => {
   let div = document.createElement('div')
   div.x = 1
   let odiv = o(div)

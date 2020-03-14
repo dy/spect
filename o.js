@@ -28,13 +28,14 @@ export default function o (target = {}, types = {}) {
   value.set(target)
 
   // set attribute observer
-  // if (target.setAttribute) {
-  //   const mo = new MutationObserver((records) => records.map(({attributeName}) => {
-  //     target[attributeName] = target.getAttribute(attributeName)
-  //   }))
-  //   mo.observe(target, { attributes: true, attributeFilter: Object.keys(descriptors) })
-  //   value.subscribe(null, null, () => mo.disconnect())
-  // }
+  if (target.setAttribute) {
+    const mo = new MutationObserver((records) => records.map(({attributeName: name}) => {
+      let attr = descriptors[name].type(target.getAttribute(name))
+      if (target[name] !== attr) target[name] = attr
+    }))
+    mo.observe(target, { attributes: true, attributeFilter: Object.keys(descriptors) })
+    value.subscribe(null, null, () => mo.disconnect())
+  }
 
   for (let name in descriptors) {
     let descriptor = descriptors[name]
@@ -43,8 +44,8 @@ export default function o (target = {}, types = {}) {
     // bind prop
     descriptor.get = orig ? (orig.get ? orig.get.bind(target): () => orig.value) : () => descriptor.value
     descriptor.set = v => (
-      v = !descriptor.type || (v instanceof descriptor.type) ? v : descriptor.type(v),
-      // target.setAttribute ? setAttribute(target, name, v) : null,
+      v = !descriptor.type || v == null || (v instanceof descriptor.type) ? v : descriptor.type(v),
+      target.setAttribute ? setAttribute(target, name, v) : null,
       orig ? (orig.set ? orig.set.call(target, v) : orig.value = v) : descriptor.value = v,
       value(target)
     )
@@ -87,7 +88,7 @@ export default function o (target = {}, types = {}) {
   })
 
   // sync up initial attributes with values
-  // for (let name in target) target[name] = target[name]
+  for (let name in descriptors) target[name] = target[name]
 
   return proxy
 }
