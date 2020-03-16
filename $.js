@@ -1,6 +1,5 @@
 import SelectorSet from 'selector-set'
-import channel from './channel.js'
-import store from './store.js'
+import o from './o.js'
 import tuple from 'immutable-tuple'
 import _observable from 'symbol-observable'
 
@@ -14,6 +13,8 @@ const set = new SelectorSet
 
 
 export default function spect(context, target, callback) {
+  // spect`#x`
+  if (context.raw) return $(document, String.raw(...arguments))
   // spect(target, '.a')
   if (typeof context === 'string') return $(document, context, target)
   // spect('.a', b)
@@ -26,7 +27,7 @@ export default function spect(context, target, callback) {
     context = document
   }
 
-  let offs = [], collection = store([]), channel = collection[_observable](), { cancel } = channel
+  let offs = [], collection = o([]), channel = collection[_observable](), { cancel } = channel
 
   // spect(list, fn)
   if (target[Symbol.iterator] && !target.nodeType) {
@@ -103,7 +104,7 @@ function $(scope, selector, callback) {
     })
   }
 
-  const collection = store([]),
+  const collection = o([]),
         channel = collection[_observable](),
         { cancel } = channel
 

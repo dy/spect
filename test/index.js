@@ -1,4 +1,4 @@
-// import './$.js'
+import './$.js'
 // import './state.js'
 // import './on.js'
 // import './attr.js'

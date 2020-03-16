@@ -308,7 +308,7 @@ $('#clock', el => {
 
 <details><summary><strong>v − value</strong></summary>
 
-> value = v( from? , map? )<br/>
+> value = v( from? , get?, set? )<br/>
 
 Value observable − simply a getter/setter function with [observable](https://ghub.io/observable) API.
 
@@ -320,10 +320,10 @@ Value observable − simply a getter/setter function with [observable](https://g
 * _Promise_ or _thenable_
 * _Observable_ or target with [`Symbol.observable`](https://ghub.io/symbol-observable) ([rxjs](https://ghub.io/rxjs),[zen-observable](https://ghub.io/zen-observable) etc.)
 * _Input_ (_radio_, _checkbox_), or _Select_
-* _Array_ with any combination of the above.
-* Any other value
+* _Array_ or _Object_ with any combination of the above.
+* Any other value (considered constant)
 
-`map` optionally transforms `from` value.
+`get` optionally maps `from` value.
 
 ```js
 import { v } from 'spect'
@@ -383,13 +383,13 @@ fahren() // 32
 
 
 
-<details><summary><strong>o − object storage</strong></summary>
+<details><summary><strong>o − object</strong></summary>
 
-> store = o( target = {} , props? )<br/>
+> state = o( target = {} , props? )<br/>
 
-Object store with reflection to attributes. Creates a `store` proxy to any `target`, with optionally defined `props` to observe on target. Adding, changing, or deleting `store` mutates `target` and emits changes. If `target` is an _Element_, then `store` reflects values as attributes.
+Object state with reflection to attributes. Creates a `state` proxy to any `target`, with optionally defined `props` to observe on the target. Adding, changing, or deleting `state` props mutates `target` and emits changes. If `target` is an _Element_, then `state` also reflects values as attributes.
 
-`props` define obseved props on `target` and type to cast − one of _Boolean_, _String_, _Number_, _Array_, _Object_ or `null` (no coercion). If `props` are undefined, then only own target props are observed without coercion.
+`props` define obseved props on `target` and their type − one of _Boolean_, _String_, _Number_, _Array_, _Object_ or `null`. If `props` are undefined, then only own target safe props are observed without coercion.
 
 <!--similar to [propTypes](https://github.com/facebook/prop-types) or [lit-element](https://lit-element.polymer-project.org/guide/properties).-->
 
@@ -478,7 +478,7 @@ Event stateless observable for an element, runs `callback` on `target` / `list` 
 import { e } from 'spect'
 
 // target events
-e($`button`, 'click', e => {
+e(document.querySelector('button'), 'click', e => {
   console.log('clicked', e)
 })
 
