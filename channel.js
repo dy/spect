@@ -1,6 +1,8 @@
 import _observable from 'symbol-observable'
 
-export default (...subs) => {
+export default () => {
+    const subs = []
+
     const push = (val, subs=channel.subs) => {
         // promise awaits value
         if (val && val.then) return val.then(val => push(val))

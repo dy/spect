@@ -469,16 +469,16 @@ _**o**_ is a single-character alternative for _react props_, _redux_, _react-red
 
 <details><summary><strong>e − events</strong></summary>
 
-> e( target , event , callback? )<br/>
 > e( scope? , selector , event , callback? )<br/>
+> e( target | list , event , callback? )<br/>
 
-Event bus (stateless observable) for an element/target, runs `callback` on `target` events or by `selector`. For the `selector` case it delegates events to `scope` container, by default `globalThis`.
+Event stateless observable for an element, runs `callback` on `target` / `list` events or by `selector`. For the `selector` case it delegates events to `scope` container, by default `globalThis`.
 
 ```js
 import { e } from 'spect'
 
 // target events
-e(document.querySelector('button'), 'click', e => {
+e($`button`, 'click', e => {
   console.log('clicked', e)
 })
 

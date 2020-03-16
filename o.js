@@ -94,6 +94,7 @@ export default function o (target = {}, types) {
       return target[prop]
     },
     has(target, prop) {
+      if (value.canceled) return
       if (prop === _observable) return true
       return prop in target
     },

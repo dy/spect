@@ -13,6 +13,7 @@
 // import './value.js'
 import './v.js'
 import './o.js'
+import './e.js'
 
 
 Object.defineProperty(DocumentFragment.prototype, 'outerHTML', {
