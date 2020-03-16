@@ -383,13 +383,13 @@ fahren() // 32
 
 
 
-<details><summary><strong>o − object</strong></summary>
+<details><summary><strong>o − object storage</strong></summary>
 
-> props = o( target = {} , propTypes? )<br/>
+> store = o( target = {} , props? )<br/>
 
-Object observer / accessor, useful as store or element props accessor. Creates a `props` proxy to any `target`. Adding, changing, or deleting `props` emits changes and mutates `target`. If `target` is an _element_, then `props` also reflects attributes.
+Object store with reflection to attributes. Creates a `store` proxy to any `target`, with optionally defined `props` to observe on target. Adding, changing, or deleting `store` mutates `target` and emits changes. If `target` is an _Element_, then `store` reflects values as attributes.
 
-`propTypes` optionally define type coercion for values − one of _Boolean_, _String_, _Number_, _Array_, _Object_ or null (automatic).
+`props` define obseved props on `target` and type to cast − one of _Boolean_, _String_, _Number_, _Array_, _Object_ or `null` (no coercion). If `props` are undefined, then only own target props are observed without coercion.
 
 <!--similar to [propTypes](https://github.com/facebook/prop-types) or [lit-element](https://lit-element.polymer-project.org/guide/properties).-->
 
@@ -443,7 +443,7 @@ v(props, ({loading}) => console.log(loading))
 #### Example
 
 ```js
-import { o } from 'spect'
+import { o, v } from 'spect'
 
 let likes = o({
   count: null,
@@ -461,7 +461,7 @@ $('.likes-count', el => h`<${el}>${
 })
 ```
 
-<!-- _**o**_ is a single-character alternative for _redux_, _react-redux_, _useReducer_, _mobx@observable_, _unistore_ etc. -->
+_**o**_ is a single-character alternative for _react props_, _redux_, _react-redux_, _useReducer_, _mobx@observable_, _unistore_, _prop-types_, _lit-element props_ etc.
 
 <br/>
 </details>

@@ -1,31 +1,27 @@
 import v from './v.js'
 import _observable from 'symbol-observable'
 
-export default function o (target = {}, types = {}) {
+export default function o (target = {}, types) {
   const descriptors = {}
 
-  // detect the safest manually defined available props (no custom behavior, no private, no numeric, no custom names, no symbols etc.)
-  if (!Array.isArray(target)) {
-    let ownProps = Object.keys(target)
-    ownProps.filter(name => (
+  if (types) {
+    for (let name in types) descriptors[name] = { type: types[name], enumerable: true }
+  }
+  // detect the safest manually defined available props
+  // (no custom behavior, no private, no numeric, no custom names, no symbols, not function etc.)
+  else if (!Array.isArray(target)) {
+    Object.keys(target)
+    .filter(name => (
       typeof target[name] !== 'function' &&
       /^[A-Za-z]/.test(name)
-    )).map(name => {
-      // own props don't define coercion - it is a bit unnatural to js op, leave it to user
-      if (!descriptors[name]) descriptors[name] = {
-        type: null,
-        enumerable: true
-      }
+    ))
+    // own props don't define coercion - it is a bit unnatural to js op, leave it to user
+    .map(name => {
+      descriptors[name] = { type: null, enumerable: true }
     })
   }
 
-  // take in defined types
-  for (let name in types) {
-    const type = types[name]
-    descriptors[name] = Object.assign(descriptors[name] || {}, { type, enumerable: true })
-  }
-
-  // take in init attributes
+  // take init attributes as well
   // FIXME: map camelCase props to dashCase attribs
   if (target.attributes) {
     [...target.attributes]
