@@ -13,6 +13,8 @@ const set = new SelectorSet
 
 
 export default function spect(context, target, callback) {
+  if (!context) return
+
   // spect`#x`
   if (context.raw) return $(document, String.raw(...arguments))
   // spect(target, '.a')
@@ -122,7 +124,10 @@ function $(scope, selector, callback) {
       collection.splice(collection.indexOf(el) >>> 0, 1)
       el[_planned] = window.requestAnimationFrame(() => {
         delete el[_planned]
-        destroy && destroy()
+        if (destroy) {
+          if (destroy.then) destroy.then(destroy => destroy && destroy.call && destroy())
+          else destroy && destroy.call && destroy()
+        }
       })
     }
   }
