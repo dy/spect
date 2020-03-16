@@ -184,6 +184,19 @@ t('v: simple unmap', async t => {
   a(3)
   t.is(a(), 3)
 })
+t('v: object', async t => {
+  let x = v(1), y = v(1)
+  let o = {x, y}
+  let log = []
+  v(o, ({x, y}) =>{
+    log.push(x, y)
+  })
+  t.is(log, [1,1])
+  x(2)
+  t.is(log, [1,1, 2,1])
+  y(2)
+  t.is(log, [1,1, 2,1, 2,2])
+})
 
 // from
 t('v: from promise', async t => {

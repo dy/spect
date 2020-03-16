@@ -1,6 +1,7 @@
 import _observable from 'symbol-observable'
 import c, { observer } from './channel.js'
 
+
 export default function f(init, map=v=>v, unmap=v=>v) {
   const channel = c()
 
@@ -34,17 +35,17 @@ export default function f(init, map=v=>v, unmap=v=>v) {
     channel.subscribe(null, null, () => unsubscribe())
   }
   // group
-  // NOTE: array may have _observable, so it should go after
-  else if (Array.isArray(init)) {
-    let vals = value.current = []
-    const depsChannel = c()
-    const deps = init.map((dep, i) => {
-      let depv = f(dep)
-      depv(v => (vals[i] = v, depsChannel(vals)))
-      return depv
-    })
+  // NOTE: array/object may have _observable, so it should go after
+  else if (Array.isArray(init) || object(init)) {
+    let vals = value.current = new init.constructor
+    const depsChannel = c(), deps = []
+    for (let name in init) {
+      let dep = init[name], depv = f(dep)
+      depv(v => (vals[name] = v, depsChannel(vals)))
+      deps.push(depv)
+    }
     depsChannel(v => value.push(value.current = map(v)))
-    if (vals.length || !init.length) depsChannel(vals)
+    if (Object.keys(vals).length || !Object.keys(init).length) depsChannel(vals)
     value.set = v => (value.push(value.current = map(unmap(v))))
     channel.subscribe(null, null, () => (deps.map(depv => depv.cancel()), depsChannel.cancel()))
   }
@@ -117,4 +118,10 @@ export function primitive(val) {
 export function observable(arg) {
   if (!arg) return false
   return !!(typeof arg === 'function' || arg[_observable] || arg[Symbol.asyncIterator] || arg.next || arg.then)
+}
+
+export function object (value) {
+	if (Object.prototype.toString.call(value) !== '[object Object]') return false;
+	const prototype = Object.getPrototypeOf(value);
+	return prototype === null || prototype === Object.prototype;
 }
