@@ -2,12 +2,14 @@ import v from './v.js'
 import _observable from 'symbol-observable'
 
 export default function o (target = {}, types = {}) {
-  // create descriptors on target
   const descriptors = {}
 
+  // detect the safest manually defined available props (no custom behavior, no private, no numeric, no custom names, no symbols etc.)
   if (!Array.isArray(target)) {
     let ownProps = Object.keys(target)
-    ownProps.map(name => {
+    ownProps.filter(name => (
+      /^[A-Za-z]/.test(name)
+    )).map(name => {
       // own props don't define coercion - it is a bit unnatural to js op, leave it to user
       if (!descriptors[name]) descriptors[name] = {
         type: null,
@@ -17,16 +19,31 @@ export default function o (target = {}, types = {}) {
   }
 
   // take in defined types
-  for (let name in types) descriptors[name] = Object.assign(descriptors[name] || {}, { type: types[name], enumerable: true })
+  for (let name in types) {
+    const type = types[name]
+    descriptors[name] = Object.assign(descriptors[name] || {}, { type, enumerable: true })
+  }
 
-  // take in set attributes
+  // take in init attributes
+  // FIXME: map camelCase props to dashCase attribs
   if (target.attributes) {
-    [...target.attributes].map(({ name, value }) => {
-      if (!descriptors[name]) {
-        descriptors[name] = { type: null, enumerable: true }
-        target[name] = value
-      }
-    })
+    [...target.attributes]
+      .map(({name, value}) => name)
+      .filter(name =>
+        !(name in target) &&
+        name !== 'id' &&
+        name !== 'class' &&
+        name.slice(0,5) !== 'data-' &&
+        name.slice(0,5) !== 'aria-'
+      )
+      .map(name => {
+        descriptors[name] = descriptors[name] || { type: null, enumerable: true }
+        if (!(name in target)) {
+          let value = getAttribute(target, name)
+          if (descriptors[name].type) value = descriptors[name].type(value)
+          target[name] = value
+        }
+      })
   }
 
   const value = v()
@@ -35,7 +52,8 @@ export default function o (target = {}, types = {}) {
   // set attribute observer
   if (target.setAttribute) {
     const mo = new MutationObserver((records) => records.map(({attributeName: name}) => {
-      let attr = descriptors[name].type(target.getAttribute(name))
+      let attr = getAttribute(target, name)
+      if (descriptors[name] && descriptors[name].type) attr = descriptors[name].type(attr)
       if (target[name] !== attr) target[name] = attr
     }))
     mo.observe(target, { attributes: true, attributeFilter: Object.keys(descriptors) })
@@ -49,13 +67,18 @@ export default function o (target = {}, types = {}) {
     descriptor.enumerable = true
 
     // bind prop
-    descriptor.get = orig ? (orig.get ? orig.get.bind(target): () => orig.value) : () => descriptor.value
-    descriptor.set = v => (
-      v = !descriptor.type || v == null || (v instanceof descriptor.type) ? v : descriptor.type(v),
-      target.setAttribute ? setAttribute(target, name, v) : null,
-      orig ? (orig.set ? orig.set.call(target, v) : orig.value = v) : descriptor.value = v,
+    descriptor.get = () => {
+      return orig ? (
+        orig.get ? orig.get.call(target) :
+        orig.value
+      ) : descriptor.value
+    }
+    descriptor.set = v => {
+      v = !descriptor.type || v == null || (v instanceof descriptor.type) ? v : descriptor.type(v)
+      target.setAttribute ? setAttribute(target, name, v) : null
+      orig ? (orig.set ? orig.set.call(target, v) : orig.value = v) : descriptor.value = v
       value(target)
-    )
+    }
   }
 
   Object.defineProperties(target, descriptors)
@@ -69,6 +92,7 @@ export default function o (target = {}, types = {}) {
 
   const proxy = new Proxy(target, {
     get(target, prop) {
+      if (value.canceled) return
       if (prop === _observable) return () => value
       return target[prop]
     },
@@ -77,6 +101,7 @@ export default function o (target = {}, types = {}) {
       return prop in target
     },
     set(target, prop, v) {
+      if (value.canceled) return true
       target[prop] = v
       // for the cases when some unobserved prop is set (observed prop updates via defined setter)
       if (!descriptors[prop]) value(target)
@@ -96,7 +121,9 @@ export default function o (target = {}, types = {}) {
   })
 
   // sync up initial attributes with values
-  for (let name in descriptors) target[name] = target[name]
+  if (target.attributes) {
+    for (let name in descriptors) target[name] = target[name]
+  }
 
   return proxy
 }
@@ -110,12 +137,12 @@ function type(arg) {
 }
 
 // // attr
-// attr.get = (el, name, value) => ((value = el.getAttribute(name)) === '' ? true : value)
+function getAttribute (el, name, value) { return (value = el.getAttribute(name)) === '' ? true : value }
 
 function setAttribute (el, name, value) {
   // class=[a, b, ...c] - possib observables
   if (Array.isArray(value)) {
-    values.filter(v => v).join(' ')
+    el.setAttribute(name, value.filter(Boolean).join(' '))
   }
   // style={}
   else if (typeof value === 'object') {
@@ -128,18 +155,3 @@ function setAttribute (el, name, value) {
     el.setAttribute(name, value === true ? '' : value)
   }
 }
-
-
-// // inputs
-// const get = el.type === 'checkbox' ? () => el.checked : () => el.value
-
-// const set = {
-//   text: value => el.value = (value == null ? '' : value),
-//   checkbox: value => (el.checked = value, el.value = (value ? 'on' : ''), value ? el.setAttribute('checked', '') : el.removeAttribute('checked')),
-//   'select-one': value => ([...el.options].map(el => el.removeAttribute('selected')), el.value = value, el.selectedOptions[0].setAttribute('selected', ''))
-// }[el.type]
-
-// // prop
-
-
-// // local storage

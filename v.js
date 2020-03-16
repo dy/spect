@@ -99,7 +99,10 @@ export default function f(init, map=v=>v, unmap=v=>v) {
   value.valueOf = value.toString = value[Symbol.toPrimitive] = value.get
 
   // cancel subscriptions, dispose
-  channel.subscribe(null, null, () => delete value.current)
+  channel.subscribe(null, null, () => {
+    value.canceled = true
+    delete value.current
+  })
 
   return value
 }

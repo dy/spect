@@ -385,11 +385,11 @@ fahren() // 32
 
 <details><summary><strong>o − object</strong></summary>
 
-> props = o( target = {} , types? )<br/>
+> props = o( target = {} , propTypes? )<br/>
 
-Object observer / accessor. Creates a `props` proxy to any `target`. Adding, changing, or deleting `props` emits changes and mutates `target`. If `target` is an _element_, then `props` also reflects attributes.
+Object observer / accessor, useful as store or element props accessor. Creates a `props` proxy to any `target`. Adding, changing, or deleting `props` emits changes and mutates `target`. If `target` is an _element_, then `props` also reflects attributes.
 
-`types` optionally defines type coercion for values − one of _Boolean_, _String_, _Number_, _Array_ or _Object.
+`propTypes` optionally define type coercion for values − one of _Boolean_, _String_, _Number_, _Array_, _Object_ or null (automatic).
 
 <!--similar to [propTypes](https://github.com/facebook/prop-types) or [lit-element](https://lit-element.polymer-project.org/guide/properties).-->
 
