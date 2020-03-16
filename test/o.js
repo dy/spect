@@ -62,18 +62,21 @@ t('o: undefined types set value as passed', t => {
   t.is(x, {x: '2', y: 2})
 })
 t('o: ignored props', t => {
+  let f = () => {}
   let x, ox = o(x = {
     x: 1,
     _x: 1,
     '@x': 1,
     [0]: 1,
-    [Symbol.for('x')]: 1
+    [Symbol.for('x')]: 1,
+    y: f
     // #x: 1
   })
   let log = []
   v(ox, o => log.push({...o}))
   x._x = 2
-  t.is(log, [{x: 1, _x: 1, '@x': 1, [0]: 1, [Symbol.for('x')]: 1}])
+  x.y = () => {}
+  t.is(log, [{x: 1, _x: 1, '@x': 1, [0]: 1, [Symbol.for('x')]: 1, y:f}])
   t.is(log.length, 1)
 })
 t('o: reflect own props to attributes', t => {
@@ -378,6 +381,7 @@ t('o: prop minimize get/set invocations', async t => {
   }
 
   let xs = o(obj)
+  log = [] // skip init calls
   ;(async () => {
     // for await (let value of xs) {
       xs[Symbol.observable]()(value => {

@@ -8,6 +8,7 @@ export default function o (target = {}, types = {}) {
   if (!Array.isArray(target)) {
     let ownProps = Object.keys(target)
     ownProps.filter(name => (
+      typeof target[name] !== 'function' &&
       /^[A-Za-z]/.test(name)
     )).map(name => {
       // own props don't define coercion - it is a bit unnatural to js op, leave it to user
@@ -128,15 +129,6 @@ export default function o (target = {}, types = {}) {
   return proxy
 }
 
-function type(arg) {
-  if (arg == null) return v => v
-  if (typeof arg === 'boolean') return Boolean
-  if (typeof arg === 'string') return String
-  if (typeof arg === 'number') return Number
-  return Object.getPrototypeOf(arg).constructor
-}
-
-// // attr
 function getAttribute (el, name, value) { return (value = el.getAttribute(name)) === '' ? true : value }
 
 function setAttribute (el, name, value) {
