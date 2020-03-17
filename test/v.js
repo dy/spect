@@ -184,7 +184,7 @@ t('v: simple unmap', async t => {
   a(3)
   t.is(a(), 3)
 })
-t('v: object', async t => {
+t('v: object deps', async t => {
   let x = v(1), y = v(1)
   let o = {x, y}
   let log = []
@@ -196,6 +196,11 @@ t('v: object', async t => {
   t.is(log, [1,1, 2,1])
   y(2)
   t.is(log, [1,1, 2,1, 2,2])
+})
+t.todo('v: recursive set', async t => {
+  let x = {x: 1}, a = v(x), b = v()
+  b(a())
+  t.is(b(), {x: 1})
 })
 
 // from

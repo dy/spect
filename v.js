@@ -2,7 +2,7 @@ import _observable from 'symbol-observable'
 import c, { observer } from './channel.js'
 
 
-export default function f(init, map=v=>v, unmap=v=>v) {
+export default function v(init, map=v=>v, unmap=v=>v) {
   const channel = c()
 
   const value = Object.assign((...args) => (
@@ -40,7 +40,7 @@ export default function f(init, map=v=>v, unmap=v=>v) {
     let vals = value.current = new init.constructor
     const depsChannel = c(), deps = []
     for (let name in init) {
-      let dep = init[name], depv = f(dep)
+      let dep = init[name], depv = v(dep)
       depv(v => (vals[name] = v, depsChannel(vals)))
       deps.push(depv)
     }

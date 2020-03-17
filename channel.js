@@ -22,6 +22,13 @@ export default () => {
         channel.closed = true
     }
 
+    // const mute = () => {
+    //     channel.paused = true
+    // }
+    // const unmute = () => {
+    //     channel.paused = false
+    // }
+
     const subscribe = (next, error, complete) => {
         next = next && next.next || next
         error = next && next.error || error

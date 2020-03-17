@@ -1,13 +1,14 @@
 import './hyperscript.js'
+import './html.js'
 
 import t from 'tst'
-import { $, state, fx, prop, h, store } from '../index.js'
+import { h, v, o } from '../index.js'
 // import { $, state, fx, prop, store, calc, list, ref, attr, on, html } from '../dist/spect.min.js'
 import { tick, frame, idle, time } from 'wait-please'
 import observable from './observable.js'
 
 t('h: single attribute', async t => {
-  const a = state(0)
+  const a = v(0)
 
   let el = h('div', { a })
 
@@ -20,13 +21,13 @@ t('h: single attribute', async t => {
   t.is(el.outerHTML, `<div a="1"></div>`)
 
   a(undefined)
-  a(null)
+  a.cancel(null)
   await tick(24)
   t.is(el.outerHTML, `<div></div>`)
 })
 
 t('h: single attribute on mounted node', async t => {
-  const a = state(0)
+  const a = v(0)
   let div = document.createElement('div')
 
   let el = h(div, {a})
@@ -42,13 +43,13 @@ t('h: single attribute on mounted node', async t => {
   t.is(el.outerHTML, `<div a="1"></div>`)
 
   a(undefined)
-  a(null)
+  a.cancel()
   await tick(24)
   t.is(el.outerHTML, `<div></div>`)
 })
 
 t('h: text content', async t => {
-  const a = state(0)
+  const a = v(0)
 
   let el = h('div', { }, a)
 
@@ -61,13 +62,13 @@ t('h: text content', async t => {
   t.is(el.outerHTML, `<div>1</div>`)
 
   a(undefined)
-  a(null)
+  a.cancel()
   await tick(8)
   t.is(el.outerHTML, `<div></div>`)
 })
 
 t('h: child node', async t => {
-  const text = state(0)
+  const text = v(0)
   const a = h('a', null, text)
   const b = h('b', null, a)
 
@@ -101,7 +102,7 @@ t('h: dynamic list', async t => {
   const foo = h('foo')
   const bar = `bar`
   const baz = h('baz')
-  const content = store([foo, bar, baz])
+  const content = o([foo, bar, baz])
 
   const a = h('a', null, content)
   t.is(a.outerHTML, `<a><foo></foo>bar<baz></baz></a>`)
@@ -133,7 +134,7 @@ t('h: 2-level fragment', async t => {
 
 t('h: mount to another element', async t => {
   const a = h('a')
-  const c = state(0)
+  const c = v(0)
   const b = h(a, null, c)
 
   t.is(a, b)
@@ -233,7 +234,7 @@ t('h: wrapping', async t => {
 
   let wrapped = h('div', null, h(foo, {class:'foo'}, h('bar')))
 
-  t.is(wrapped.outerHTML, '<div><foo class="foo"><bar></bar></foo></div>')
+  t.is(wrapped.outerHTML, '<div><foo x="1" class="foo"><bar></bar></foo></div>')
   t.is(wrapped.firstChild, foo)
   t.is(wrapped.firstChild.x, 1)
 })
@@ -246,7 +247,7 @@ t('h: wrapping with children', async t => {
 
   let wrapped = h('div', null, h(foo, {class:'foo'}, ...foo.childNodes))
 
-  t.is(wrapped.outerHTML, '<div><foo class="foo"><bar></bar><baz></baz></foo></div>')
+  t.is(wrapped.outerHTML, '<div><foo x="1" class="foo"><bar></bar><baz></baz></foo></div>')
   t.is(wrapped.firstChild, foo)
   t.is(wrapped.firstChild.x, 1)
 })
@@ -391,7 +392,7 @@ t('h: component props', async t => {
 })
 
 t('h: observable in class', t => {
-  let bar = state('')
+  let bar = v('')
   let el = h('div', {class:[false, null, undefined, 'foo', bar]})
   t.is(el.outerHTML, `<div class="foo"></div>`)
   bar('bar')
@@ -450,8 +451,8 @@ t('h: update own children', t => {
 })
 
 t('h: prop', async t => {
-  let obj = { x: 1 }
-  let el = h('div', null, prop(obj, 'x'))
+  let obj = o({ x: 1 })
+  let el = h('div', null, v(obj, obj => obj.x))
 
   t.is(el.outerHTML, '<div>1</div>')
 
@@ -473,4 +474,14 @@ t('h: hydrate by id with existing content', t => {
   let el2 = h(el, null, h('b', {id: 'x'}))
   t.is(el2, el)
   t.is(el2.outerHTML, `<div><b id="x"></b></div>`)
+})
+
+t('h: direct children', t => {
+  let el1 = h('x', 1)
+  let el2 = h('x', h('y'))
+  let el3 = h('x', 'x')
+
+  t.is(el1.outerHTML, '<x>1</x>')
+  t.is(el2.outerHTML, '<x><y></y></x>')
+  t.is(el3.outerHTML, '<x>x</x>')
 })
