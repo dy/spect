@@ -172,6 +172,15 @@ t('o: readme', t => {
   v(props, ({loading}) => log.push(loading))
   t.is(log, [true])
 })
+t('o: hidden proptypes unhide props', t => {
+  let x = {[Symbol.for('x')]: 1}
+  let ox = o(x, {[Symbol.for('x')]: null})
+  t.is(ox, {[Symbol.for('x')]: 1})
+  let log = []
+  v(ox, ox => log.push(ox[Symbol.for('x')]))
+  x[Symbol.for('x')] = 2
+  t.is(log, [1, 2])
+})
 
 // store
 t('o: store core', async t => {
@@ -495,4 +504,10 @@ t.skip('o: attr stream to attribute', async t => {
   t.is(el.getAttribute('hidden'), null)
   x.length = 0
   t.is(el.getAttribute('hidden'), '')
+})
+t('o: attr must set for new props', async t => {
+  let el = document.createElement('div')
+  let props = o(el)
+  props.x = 1
+  t.is(el.getAttribute('x'), '1')
 })
