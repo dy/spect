@@ -1,20 +1,36 @@
-import attr from './attr.js'
-import from, { observable, primitive } from './from.js'
-import fx from './fx.js'
-import prop from './prop.js'
-import calc from './calc.js'
-import value from './value.js'
+import v, { observable, primitive, object } from './v.js'
+import o from './o.js'
 import _observable from 'symbol-observable'
+import htm from 'xhtm/index.js'
 
 const _group = Symbol.for('@spect.group'),
       _ptr = Symbol.for('@spect.ptr'),
       _props = Symbol.for('@spect.props'),
       _cleanup = Symbol.for('@spect.cleanup'),
       _channel = Symbol.for('@spect.channel')
+
 const TEXT = 3, ELEMENT = 1
 
-export default function h(tag, props, ...children) {
-  if (!props) props = {}
+
+export function html (...args) {
+  let result = htm.apply(h, args)
+
+  let container = []
+  container.childNodes = container
+  container.appendChild = el => container.push(el)
+
+  render(Array.isArray(result) ? result : [result], container)
+
+  return container.length > 1 ? container : container[0]
+}
+
+export default function h(tag, ...children) {
+  // h`...content`
+  if (tag.raw) return html(...arguments)
+
+  // h(tag, child1, child2)
+  const props = object(children[0]) || children[0] == null ? children.shift() || {} : {}
+
   let el
 
   // element
@@ -35,40 +51,19 @@ export default function h(tag, props, ...children) {
   else if (typeof tag === 'function') el = createChild(tag(props))
   else el = createChild(tag)
 
-  el[_channel] = value(el)
-  el[_observable] = () => ({subscribe:el[_channel]})
+  el[_channel] = v()
+  el[_channel].set(el)
+  el[_observable] = () => el[_channel]
 
   // props (dynamic)
   if (el.nodeType === ELEMENT) {
-    el[_props] = props
-    fx((props) => {
-      const cleanup = []
-      for (let name in props) {
-        let value = props[name]
-        if(observable(value)) {
-          cleanup.push(from(value)(value => (attr.set(el, name, value), el[name] = value)))
-        }
-        // class=[a, b, ...c] - possib observables
-        else if (Array.isArray(value)) {
-          el[name] = value
-          cleanup.push(calc((...values) => values.filter(v => v).join(' '), [...value])
-          (value => (attr.set(el, name, value))))
-        }
-        // style={}
-        else if (typeof value === 'object') {
-          el[name] = value
-          let keys = Object.keys(value)
-          cleanup.push(calc((...values) => keys.map((key, i) => `${key}: ${values[i]};`).join(' '), Object.values(value))
-          (value => (attr.set(el, name, value))))
-        }
-        else {
-          attr.set(el, name, value)
-          el[name] = value
-        }
-      }
-      el[_channel](el)
-      return () => cleanup.map(off => off())
-    }, [prop(el, _props)])
+    const realProps = o(el)
+    el[_props] = v(props)
+    el[_props](props => {
+      Object.assign( realProps, props )
+      el[_channel].set(el)
+    })
+    el[_channel].subscribe(null, null, () => el[_props].cancel())
   }
 
   // children
@@ -81,22 +76,21 @@ export function render(children, el) {
   el[_ptr] = 0
 
   // clean up prev observers
-  if (el[_cleanup]) el[_cleanup].map(off => off())
+  if (el[_cleanup]) el[_cleanup].map(obv => obv.cancel())
   el[_cleanup] = []
 
   children.map((child) => {
     if (observable(child)) {
-      let cur
-      el[_cleanup].push(
-        from(child)(child => {
-          cur = !cur ? alloc(el, createChild(child)) : replaceWith(cur, createChild(child))
-          if (el[_channel]) el[_channel](el)
-        })
-      )
-      // if sync init did not hit - create placeholder, no hydration posible
+      let cur, oChild = v(child)
+      el[_cleanup].push(oChild)
+      oChild(child => {
+        cur = !cur ? alloc(el, createChild(child)) : replaceWith(cur, createChild(child))
+        if (el[_channel]) el[_channel].set(el)
+      })
+      // if sync init did not hit - create placeholder, no hydration possible
       if (!cur) {
         alloc(el, createChild(''))
-        if (el[_channel]) el[_channel](el)
+        if (el[_channel]) el[_channel].set(el)
       }
     }
     else {
@@ -173,7 +167,7 @@ function alloc(parent, el) {
     ) {
       match = node
       // migrate props (triggers fx that mutates them)
-      match[_props] = el[_props]
+      if (el[_props] && match[_props] && el !== match) match[_props].set(el[_props]())
       render([...el.childNodes], match)
       break
     }

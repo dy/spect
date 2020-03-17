@@ -1,17 +1,8 @@
 import './$.js'
-import './state.js'
-import './on.js'
-import './attr.js'
-import './prop.js'
-import './input.js'
-import './fx.js'
-import './calc.js'
-import './from.js'
-import './store.js'
 import './h.js'
-import './html.js'
-import './value.js'
-
+import './v.js'
+import './o.js'
+import './e.js'
 
 Object.defineProperty(DocumentFragment.prototype, 'outerHTML', {
   get() {

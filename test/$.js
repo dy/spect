@@ -1,6 +1,6 @@
 import t from 'tst'
 // import { $, state, fx, prop, store, calc, attr, on } from '../dist/spect.min.js'
-import { $, state, fx, prop, store, calc, attr, on } from '../index.js'
+import { $ } from '../index.js'
 import { tick, frame, idle, time } from 'wait-please'
 import { augmentor, useState, useEffect, useMemo } from 'augmentor'
 
@@ -372,27 +372,31 @@ t.todo('same aspect same target', async t => {
   await spect(a).use(fx)
   t.deepEqual(log, ['a'])
 })
-t.todo('async aspects', t => {
+t('async aspects', async t => {
   let a = document.createElement('a')
+  document.body.appendChild(a)
 
-  $(a, async function a() {
-    t.is(a, current.fn)
+  let log = []
+  $('a', async el => {
+    log.push(1)
     await Promise.resolve().then()
-    t.is(a, current.fn)
+    log.push(2)
+    return () => log.push(3)
   })
-
+  await tick(10)
+  document.body.removeChild(a)
+  await frame(2)
+  t.is(log, [1, 2, 3])
 })
-t.todo('rebinding to other document', async t => {
-  let { document } = await import('dom-lite')
-
-  // FIXME: w
-  let _$ = $.bind(document)
+t('rebinding to other document', async t => {
+  let { default: undom} = await import('undom/src/undom')
+  let document = undom()
 
   var div = document.createElement("div")
   div.className = "foo bar"
 
-  _$(div).use(el => {
-    t.is(el.tagName, 'DIV')
+  $(div, el => {
+    t.is(el.nodeName, 'DIV')
   })
 })
 t.skip('empty selectors', t => {
@@ -454,6 +458,14 @@ t('$: init on list of elements', async t => {
   await frame(2)
   t.deepEqual(log, ['1', '2', 'un1', 'un2'])
 })
+
 t('$: init/destroy in body of web-component')
 
-t('$: await $(target, fn) should not block')
+t('$: template literal', async t => {
+  let el = document.createElement('div')
+  document.body.appendChild(el)
+  el.innerHTML = '<div class="x"></div><div class="x"></div>'
+
+  let els = $`div.${'x'}`
+  t.is(els, [...el.childNodes])
+})
