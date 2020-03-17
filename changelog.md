@@ -2,6 +2,7 @@
 
 Version | Changes
 ---|---
+18.0.0 | Terser effects $, h, v, o, e.
 17.0.0 | Removed `list`, `$` now creates live collection.
 16.1.0 | Expose `get`, `set`, `subscribe`, `next`. Make effects return `channel` or `value`.
 16.0.0 | `observ`/`observable`-compatible implementation.

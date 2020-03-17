@@ -1,7 +1,7 @@
 <div align="center"><img src="https://avatars3.githubusercontent.com/u/53097200?s=200&v=4" width=108 /></div>
 <p align="center"><h1 align="center">spect</h1></p>
 <p align="center">
-  Micro DOM <em>aspects</em> with <em>effects</em> and <em>observables</em>.<br/>
+  Micro <em>aspects</em> with <em>effects</em> and <em>observables</em>.<br/>
   <!-- Build reactive UIs with rules, similar to CSS.<br/> -->
   <!-- Each rule specifies an <em>aspect</em> function, carrying a piece of logic.<br/> -->
 </p>
@@ -36,19 +36,19 @@
 -->
 
 
-_Spect_ is [_aspect-oriented_](https://en.wikipedia.org/wiki/Aspect-oriented_programming) FRP framework, a mix of [_observable_](https://www.npmjs.com/package/observable) with [_react hooks_](https://reactjs.org/docs/hooks-intro.html) and [_jquery_](https://ghub.io/jquery). It is compatible with [observable proposal](https://github.com/tc39/proposal-observable) and [observ](https://ghub.io/observ)-[*](https://ghub.io/mutant).
+_Spect_ is radical minimalistic [_aspect-oriented_](https://en.wikipedia.org/wiki/Aspect-oriented_programming) FRP library enabling super-compact UI code. _Spect_ is a successor of [_observable_](https://www.npmjs.com/package/observable), inspired by [_react hooks_](https://reactjs.org/docs/hooks-intro.html) and [_jquery_](https://ghub.io/jquery). It is compatible with [_observable_](https://github.com/tc39/proposal-observable) and [_observ_](https://ghub.io/observ)-[_*_](https://ghub.io/mutant).
 
 ## Principles
 
-:gem: **Separation of cross-cutting concerns** via _aspects_ − fragments of logic assigned to elements.
+:gem: **Separation of cross-cutting concerns** via _aspects_.
 
-:deciduous_tree: **Native first** − cares about semantic clean tree and encourages native API, vanilla friendly.
+:deciduous_tree: **Native first** − semantic clean tree and native API, vanilla friendly.
 
-:ocean: **Progressive enhancement** − multiple aspects provide layers of functionality.
+:ocean: **Progressive enhancement** − multiple aspects add on functionality.
 
-:baby_chick: **Low entry barrier** − no complexity hostages and bureacratic code.
+:baby_chick: **Low entry barrier** − no complexity hostages and code bureaucracy.
 
-:dizzy: **0** bundling, **0** server, **0** template − an html page with `<script>` is enough.
+:dizzy: **0** bundling, **0** server, **0** template.
 
 :shipit: **Low-profile** − doesn’t force stack and can be used as utility.
 
@@ -59,7 +59,7 @@ _Spect_ is [_aspect-oriented_](https://en.wikipedia.org/wiki/Aspect-oriented_pro
 
 ```html
 <script type="module">
-import { $ } from 'https://unpkg.com/spect?module'
+import { $, h, v } from 'https://unpkg.com/spect?module'
 
 // ... code here
 </script>
@@ -70,7 +70,7 @@ import { $ } from 'https://unpkg.com/spect?module'
 [![npm i spect](https://nodei.co/npm/spect.png?mini=true)](https://npmjs.org/package/spect/)
 
 ```js
-import { $ } from 'spect'
+import { $, h, v } from 'spect'
 
 // ... code here too
 ```
@@ -91,9 +91,7 @@ import { $, h, v } from 'spect'
 $('.user', async el => {
   const username = v('guest')
   h`<${el}>Hello, ${ username }!</>`
-
-  const user = await (await fetch('/user')).json()
-  username(user.name)
+  const user = v((await fetch('/user')).json())
 })
 </script>
 ```
@@ -116,11 +114,11 @@ Consider simple todo app.
 </form>
 
 <script type="module">
-import { $, html, on, list } from 'spect'
+import { $, h, on, list } from 'spect'
 
 const todos = list([])
 
-$('.todo-list', el => html`<${el}>${ todos }</>`)
+$('.todo-list', el => h`<${el}>${ todos }</>`)
 
 $('.todo-form', el => on(el, 'submit', e => {
   e.preventDefault()
@@ -131,25 +129,19 @@ $('.todo-form', el => on(el, 'submit', e => {
 </script>
 ```
 
-Input element here is uncontrolled and logic closely follows native js to provide _progressive enhancement_. _**`list`**_ creates an observable array `todos`, mutating it automatically rerenders _**`html`**_.
+Input element here is uncontrolled and logic closely follows native js to provide _progressive enhancement_. _**`list`**_ creates an observable array `todos`, mutating it automatically rerenders _**`h`**_.
 -->
 
 See more [/examples](examples).
 
 <!--
-See all examples...
 
 Maybe validation / sending form? (better for cases, eg. forms (all react cases))
-
 Or familiar examples of another framework, rewritten with spect? (better for docs, as spect vs N)
-
 Something showcasing wow features, like composable streaming and how that restructures waterfall rendering?
 Yes, makes more sense. The very natural flow, where with HTML you can prototype, then naturally upgrade to UI-framework, then add actions. Minimize design - code distance.
---!>
 
-<!--
-Let's start off with an app, displaying a [list of users].
-
+an app, displaying a [list of users].
 First, create semantic HTML you'd regularly do without js.
 
 ```html
@@ -170,7 +162,7 @@ Second, make data loading circuit.
 
 ```js
 <script type="module">
-import { $, html, store } from 'https://unpkg.com/spect?module'
+import { $, h, store } from 'https://unpkg.com/spect?module'
 
 const articles = store({
   items: [],
@@ -182,8 +174,8 @@ const articles = store({
 })
 
 $('#articles', el => {
-  html`<${el}>${
-    articles.map(item => html``)
+  h`<${el}>${
+    articles.map(item => h``)
   }</>`
 })
 </script>
@@ -200,46 +192,6 @@ import { $ } from 'spect'
 $('input', el => el.addEventListener('focus', e => el.classList.add('touched')))
 ```
 
-#### Lit-html
-
-```js
-import { $, fx, on } from 'spect'
-import { render, html } from 'lit-html'
-
-$('input#height', el => {
-  fx(e => {
-    const value = e.target.value
-
-    render(html`Your height: <strong>${ value }</strong>cm`, hintEl)
-  }, [on(el, 'input'), on(el, 'change')])
-})
-```
---!>
-
-<!--
-
-#### React-less hooks
-
-```js
-import $ from 'spect'
-import * as augmentor from 'augmentor'
-import hooked from 'enhook'
-import setHooks, { useState, useEffect } from 'unihooks'
-
-// init hooks
-enhook.use(augmentor)
-setHooks(augmentor)
-
-$('#timer', hooked(el => {
-  let [count, setCount] = useState(0)
-  useEffect(() => {
-    let interval = setInterval(() => setCount(count => count + 1), 1000)
-    return () => clearInterval(interval)
-  }, [])
-  el.textContent = `Seconds: ${count}`
-}))
-```
-
 #### Microfrontends
 
 Pending...
@@ -252,16 +204,17 @@ Pending...
 
 ## API
 
-<details><summary><strong>$</strong></summary>
+<details><summary><strong>$ − selector</strong></summary>
 
-> let elements = $( scope? , selector | element, callback? )
+> elements = $( scope? , selector , callback? )<br/>
+> elements = $( element | list , callback? )<br/>
 
-Selector observer, creates live collection of elements matching the `selector`. Optional `callback` is run for each new element matching the selector. If `callback` returns a teardown, it is run when the element is unmatched.
+Selector observer, creates live collection of elements matching the `selector`. Optional `callback` runs for each new element matching the selector. If `callback` returns a teardown, it is run when the element is unmatched.
 
 * `selector` is a valid CSS selector.
-* `element` is _HTMLElement_ or a list of elements (array or array-like).
+* `scope` is optional container element to observe, by default that is `globalThis`.
+* `element` is _HTMLElement_ or a `list` of elements (array or array-like).
 * `callback` is a function with `(element) => teardown?` signature.
-* `scope` is optional container element to observe, by default that is `document`.
 * `elements` is live array with matched elements (similar to [HTMLCollection](https://developer.mozilla.org/en-US/docs/Web/API/HTMLCollection)).
 
 ```js
@@ -276,11 +229,11 @@ let foo = document.createElement('foo')
 document.body.appendChild(foo)
 // > "active"
 
-foo.replaceWith(null)
-// > "inactive"
-
 $foo[0] === foo
 // > true
+
+foo.replaceWith(null)
+// > "inactive"
 ```
 
 #### Example
@@ -299,21 +252,23 @@ const $timer = $('.timer', el => {
 $timer[0]
 // > <div.timer></div>
 ```
+<br/>
 </details>
 
 
-<details><summary><strong>h</strong></summary>
+<details><summary><strong>h − hyperscript</strong></summary>
 
-> let el = h('tag', props, ...children)
+> el = h( tag , props? , ...children )<br/>
+> el = h\`...content\`<br/>
 
-Hyperscript element constructor. Compatible with [hyperscript](https://ghub.io/hyperscript) et al. Can be used via JSX.
+[Hyperscript](https://ghub.io/hyperscript)-compatible element constructor. Can be used via JSX or template literal with [_htm_](https://ghub.io/xhtm) syntax.
 
 ```js
-import { h, fx, text } from 'spect'
+import { h, v } from 'spect'
 
-const text = state('foobar')
+const text = v('foobar')
 
-// create simple
+// create element
 const foo = h('foo', {}, text)
 
 // create jsx
@@ -321,392 +276,178 @@ const foo = h('foo', {}, text)
 const bar = <bar>{ text }</bar>
 
 // update
-text('bazqux')
-```
-
-#### Example
-
-```js
-import { $, state, h, render } from 'spect'
-
-$('.timer', el => {
-  const count = state(0)
-  setInterval(() => count(count + 1))
-  render(count, el)
-})
-```
-
-</details>
+text('fooobar')
 
 
-<details><summary><strong>html</strong></summary>
-
-> let el = html\`...content\`
-
-Hyperscript tagged markup sugaring for _**`h`**_.  _**`html`**_ = [_**`htm`**_](https://ghub.io/xhtm) + _**`h`**_.
-
-```js
-import { html, fx, text } from 'spect'
-
-const text = state('foobar')
-
-// create element
-const foo = html`<foo>${ text }</foo>`
-
-// update
-text('bazqux')
+// template literal
+const foo = h`<baz>${ text }</baz>`
 
 // create multiple elements
-const [foo1, foo2] = html`<foo>1</foo><foo>2</foo>`
+const [foo1, foo2] = h`<foo>1</foo><foo>2</foo>`
 
 // create document fragment
-const foof = html`<><foo/></>`
+const fooFrag = h`<><foo/></>`
 
-// hydrate element with `foo` as content
-const bar = html`<${document.querySelector('#bar')}>${ foo }</>`
+// hydrate element
+const foo = h`<${foo}>${ bar }</>`
 ```
 
 #### Example
 
 ```js
-import { $, state, html } from 'spect'
+import { v, h } from 'spect'
 
-$('.timer', el => {
-  const count = state(0)
-  setInterval(() => count(count + 1))
-  html`<${el}>Seconds: ${ count }</>`
+$('#clock', el => {
+  let date = v(new Date())
+  setInterval(() => date(new Date()), 1000)
+  h`<${el}>${ v(date => date.toISOString())} </>`
 })
 ```
 
+<br/>
 </details>
 
 
+<details><summary><strong>v − value</strong></summary>
 
-<details><summary><strong>state</strong></summary>
+> value = v( from? , get?, set? )<br/>
 
-> value = state( init? )
+Value observable − simply a getter/setter function with [observable](https://ghub.io/observable) API.
 
-_**`state`**_ is simply observable value − a getter/setter function, fully compatible with [observable](https://ghub.io/observable) API. _**`state`**_ acts as _useState_ hook. Useful as component state, eg. visibility etc.
+`from` can be:
+
+* _Primitive_ value
+* _Function_ (another _v_, [observ-*](https://ghub.io/observ), [observable](https://ghub.io/observable), [mutant](https://ghub.io/mutant) etc.)
+* _AsyncIterator_ or target with [`Symbol.asyncIterator`](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Symbol/asyncIterator)
+* _Promise_ or _thenable_
+* _Observable_ or target with [`Symbol.observable`](https://ghub.io/symbol-observable) ([rxjs](https://ghub.io/rxjs),[zen-observable](https://ghub.io/zen-observable) etc.)
+* _Input_ (_radio_, _checkbox_), or _Select_
+* _Array_ or _Object_ with any combination of the above.
+* Any other value (considered constant)
+
+`get` optionally maps `from` value.
 
 ```js
-import { state, fx } from 'spect'
+import { v } from 'spect'
 
-let count = state(0)
+let v1 = v(0)
 
 // get
-count()
+v1()
 
 // set
-count(1)
-count(prev => prev + 1)
+v1(1)
 
-// observe changes
-for await (let value of count) {
-  // 0, 1, ...
-}
+// subscribe
+v1(value => {
+  // 1
+  return () => {
+    // ...teardown
+  }
+})
 
-// current value
-count.current
+// from value
+let v2 = v(v1, v1 => v1 * 2)
+v2() // > 2
 
-// run effect
-fx(c => {
-  console.log(c)
-}, [count])
-```
+// from multiple values
+let v3 = v([v1, v2], ([v1, v2]) => v1 + v2)
+v3() // > 3
 
-</details>
+// run effect on every change
+v([v1, v2, v3])(([v1, v2, v3]) => {
+  console.log(v1, v2, v3)
+  return () => console.log('teardown', v1, v2, v3)
+})
+// > 1, 2, 3
 
-
-
-<details><summary><strong>fx</strong></summary>
-
-> fx( callback, deps=[] )
-
-Generic effect or reaction to changes in `deps`. Runs `callback` function with `(...args) => teardown` signature.
-Similar to _useEffect_, but `deps` are observables or alike.
-
-```js
-import { state, fx } from 'spect'
-import { time } from 'wait-please'
-
-let a = state(0), b = state('foo')
-
-fx((a, b) => {
-  console.log('in', a, b)
-  return () => console.log('out', a, b)
-}, [a, b])
-
-setTimeout(() => (a(1), b('bar')), 1000)
-
-// 'in' 0 'foo'
-// ...
-// 'out' 0 'foo'
-// 'in' 1 'bar'
-
-// runs only once
-fx(() => {})
+// from input
+let v4 = v(...$('#input'))
 ```
 
 #### Example
 
 ```js
-import { fx } from 'spect'
-import { time } from 'wait-please'
+import { $, v } from 'spect'
 
-// timer
-const timer = fx(async c => {
-  console.log('Seconds', c)
-  await time(1000)
-  count(c + 1)
-}, [count])
-
-// await next count
-await timer
-
-// cancel effect
-timer.cancel()
-```
-
-</details>
-
-
-<details><summary><strong>calc</strong></summary>
-
-> value = calc( state => result, args = [] )
-
-Observable value computed from `args`. Similar to _**`fx`**_, but returns calculated value as the result. Analog of _useMemo_.
-
-```js
-import { $, input, calc } from 'spect'
-
-const f = state(32), c = state(0)
-const celsius = calc(f => (f - 32) / 1.8, [f])
-const fahren = calc(c => (c * 9) / 5 + 32, [c])
+const f = v(...$('#fahren')), c = v(...$('#celsius'))
+const celsius = v(f, f => (f - 32) / 1.8)
+const fahren = v(c, c => (c * 9) / 5 + 32)
 
 celsius() // 0
 fahren() // 32
 ```
 
+<!-- _**v**_ is a single-character alternative for _useState_, _useEffect_, _useMemo_, _rxjs/from_, _zen-observable_, _mobx@computed_ etc. -->
+
+<br/>
 </details>
 
 
 
-<details><summary><strong>from</strong></summary>
+<details><summary><strong>o − object</strong></summary>
 
-> obv = from( source, map? )
+> state = o( target = {} , props? )<br/>
 
-Create a readable observable from any source:
+Object state with reflection to attributes. Creates a `state` proxy to any `target`, with optionally defined `props` to observe on the target. Adding, changing, or deleting `state` props mutates `target` and emits changes. If `target` is an _Element_, then `state` also reflects values as attributes.
 
-* Subscribable _function_ ([observ-*](https://ghub.io/observ), [observable](https://ghub.io/observable), [mutant](https://ghub.io/mutant) etc.)
-* _AsyncIterator_ or [_async iterable_](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Symbol/asyncIterator)
-* _Promise_ or _thenable_
-* _Observable_ ([rxjs](https://ghub.io/rxjs), [es-observable](https://ghub.io/es-observable), [zen-observable](https://ghub.io/zen-observable) etc.)
-* [_Stream_](https://nodejs.org/api/stream.html)
-* any other value is considered constant.
+`props` define obseved props on `target` and their type − one of _Boolean_, _String_, _Number_, _Array_, _Object_ or `null`. If `props` are undefined, then only own target safe props are observed without coercion.
 
-Optional `map` transforms returned value. _**`from`**_ is used as the base for _**`fx`**_ and _**`calc`**_.
-
-#### Example
+<!--similar to [propTypes](https://github.com/facebook/prop-types) or [lit-element](https://lit-element.polymer-project.org/guide/properties).-->
 
 ```js
-import { from } from 'spect'
+import { o, v } from 'spect'
 
-let date = state(new Date())
-setInterval(() => date(new Date()), 1000)
-from(date, date => date.toISOString())(date => console.log(date))
-```
-
-</details>
-
-
-
-
-<details><summary><strong>prop</strong></summary>
-
-> value = prop( target, name )
-
-_**`prop`**_ is target property observable / accessor. It keeps safe target's own getter/setter, if defined. Useful to react to element properties changes.
-
-```js
-import { prop, fx } from 'spect'
-
-let obj = { foo: 'bar' }
-let foos = prop(obj, 'foo')
-
-// log changes
-fx(foo => console.log(foo), [foos])
+// object
+const obj = o({ foo: null })
 
 // set
-obj.foo = 'baz'
-foos('qux')
+obj.foo = 'bar'
 
-// get
-foos() // qux
+// subscribe to changes
+v(obj, ({ foo }) => console.log(foo))
+// > 'bar'
 
-// forget
-foos.cancel()
-```
 
-</details>
-
-<details><summary><strong>attr</strong></summary>
-
-> value = attr( element, name )
-
-_**`attr`**_ is element attribute observable / accessor. Similar to _**`prop`**_, but observes attribute changes.
-
-```js
-import { fx, attr } from 'spect'
-
-const loading = attr(document.querySelector('button'), 'loading')
-
-// react to changes
-fx(loading => {
-  console.log(loading)
-}, [loading])
+// array
+let arr = o([1, 2, 3])
 
 // set
-loading(true)
-
-// get
-loading()
-
-// remove attribute
-loading(null)
-
-// dispose accessor
-loading.close()
-```
-
-</details>
-
-
-<details><summary><strong>on</strong></summary>
-
-> on( scope?, target | selector, event, callback? )
-
-Stateless event observable, runs `callback` on `target` events or by `selector`. For the `selector` case it delegates events to `scope` container, by default `document`.
-
-```js
-import { on } from 'spect'
-
-// target events
-on(document.querySelector('button'), 'click', e => {
-  console.log('clicked', e)
-})
-
-// delegate events
-const submit = on('form', 'submit', e => console.log(e))
-
-// wait for a 'submit' event
-const e = await submit
-
-// cancel submit events listener
-submit.cancel()
-
-// multiple events
-on('.draggable', 'touchstart mousedown', e => {})
-```
-
-#### Example
-
-```js
-import { on } from 'spect'
-
-const ticks = on('.timer', 'tick', e => {
-  console.log('Seconds', e.detail.count)
-})
-
-let count = 0, timer = document.querySelector('.timer')
-setInterval(() => {
-  timer.dispatchEvent(new CustomEvent('tick', { detail: ++count}))
-}, 1000)
-
-// await the next 'tick' event
-await ticks
-
-// cancel ticks listener
-ticks.cancel()
-```
-
-</details>
-
-
-
-<details><summary><strong>input</strong></summary>
-
-> value = input( element )
-
-Input element value observable, useful to track user input. Works with text inputs, checkboxes, radio and select.
-
-```js
-import { $, fx, input } from 'spect'
-
-$('input', el => {
-  const inputValue = input(el)
-
-  fx(value => {
-    console.log(`Value`, value)
-  }, [inputValue]
-
-  // to update `inputValue` dispatch event
-  el.value = 3
-  el.dispatch(new Event('change'))
-})
-
-```
-
-</details>
-
-
-<details><summary><strong>store</strong></summary>
-
-> obj = store( init = {} )
-
-_**`store`**_ is observable object/array etc. Adding, changing, or deleting its properties emits changes. Can be safely used with collections. Useful as app model.
-
-```js
-import { store, fx } from 'spect'
-
-const foo = store({ foo: null })
-
-// set
-foo.foo = 'bar'
-foo.baz = ['boo']
-
-// log changes
-fx(({ foo, ...bax }) => console.log(foo, bax), [foo])
-
-// > { foo: 'bar', baz: 'boo' }
-
-// doesn't update store
-foo.baz[1] = 'far'
-
-// methods
-foo.plugh = function () { this.foo += 'x' }
-
-
-// collection
-let arr = store([])
-
-// set
-arr[3] = 'foo'
+arr[3] = 4
 
 // mutate
-arr.push('bar', 'baz')
-arr.unshift('qux')
+arr.push(5, 6)
+arr.unshift(0)
 
-// ...changes
-fx(arr => console.log(arr), [arr])
+// subscribe
+v(arr, arr => console.log(arr))
+// > [0, 1, 2, 3, 4, 5, 6]
+
+
+// element
+let props = o(el, { loading: Boolean })
+
+// set
+props.loading = true
+
+// get
+props.loading
+// > true
+
+// attr
+el.getAttribute('loading')
+// > ''
+
+// subscribe
+v(props, ({loading}) => console.log(loading))
 ```
 
-<!--
 #### Example
 
 ```js
-import { store } from 'spect'
+import { o, v } from 'spect'
 
-let likes = store({
+let likes = o({
   count: null,
   loading: false,
   async load() {
@@ -716,15 +457,64 @@ let likes = store({
   }
 })
 
-$('.likes-count', el => {
-  fx(async () => {
-    render(likes.loading ? html`Loading...` : html`Likes: ${ likes.count }`, element)
-  }, [likes])
+$('.likes-count', el => h`<${el}>${
+    v(likes, ({loading, count}) => loading ? `Loading...` : `Likes: ${ likes.count }`)
+  }</>`
 })
 ```
--->
 
+_**o**_ is a single-character alternative for _react props_, _redux_, _react-redux_, _useReducer_, _mobx@observable_, _unistore_, _prop-types_, _lit-element props_ etc.
+
+<br/>
 </details>
+
+
+<details><summary><strong>e − events</strong></summary>
+
+> e( scope? , selector , event , callback? )<br/>
+> e( target | list , event , callback? )<br/>
+
+Event stateless observable for an element, runs `callback` on `target` / `list` events or by `selector`. For the `selector` case it delegates events to `scope` container, by default `globalThis`.
+
+```js
+import { e } from 'spect'
+
+// target events
+e(document.querySelector('button'), 'click', e => {
+  console.log('clicked', e)
+})
+
+// delegate events
+const submit = e('form', 'submit', e => console.log(e))
+
+// cancel submit events listener
+submit.cancel()
+
+// multiple events
+e('.draggable', 'touchstart mousedown', e => {})
+```
+
+#### Example
+
+```js
+import { e } from 'spect'
+
+const ticks = e('.timer', 'tick', e => {
+  console.log('Seconds', e.detail.count)
+})
+
+let count = 0, timer = document.querySelector('.timer')
+setInterval(() => {
+  timer.dispatchEvent(new CustomEvent('tick', { detail: ++count}))
+}, 1000)
+
+// cancel ticks
+ticks.cancel()
+```
+
+<br/>
+</details>
+
 
 <!--
 <details><summary><strong>cancel</strong></summary>
@@ -757,37 +547,6 @@ from(date, date => date.toISOString())(date => console.log(date))
 
 
 <!--
-## Utils
-
-
-### _`ref`_
-
-> value = ref( init? )
-
-Value container, emits every _set_ call. Thenable, Cancelable, AsyncIterable. _**`ref`**_ is direct analog of _useRef_ hook.
-
-```js
-import ref from 'spect/ref'
-
-let count = ref(0)
-
-// get
-count()
-
-// set
-count(1)
-
-// observe setting value
-for await (const c of count) {
-  // 1, ...
-}
-
-// discard observable, end generators
-count.cancel()
-```
-
-<br/>
-
 ### _`channel`_
 
 > ch = channel( callback, onCancel )

@@ -1,12 +1,12 @@
 import t from 'tst'
-import { $, state, fx, prop, store, calc, attr, on } from '../index.js'
+import { e as on, e } from '../index.js'
 import { tick, frame, idle, time } from 'wait-please'
 import { augmentor, useState, useEffect, useMemo } from 'augmentor'
 import Observable from 'zen-observable/esm'
 import observable from './observable.js'
 
 
-t('on: core', t => {
+t('e: core', t => {
   var y = document.createElement('div')
 	var x = document.createElement('div'), log = []
   y.appendChild(x)
@@ -24,7 +24,7 @@ t('on: core', t => {
 	t.end()
 });
 
-t('on: space-separated events', async t => {
+t('e: space-separated events', async t => {
 	var x = document.createElement('div'), log = []
 
   let xs = on(x, 'x y', e => log.push(e.type))
@@ -42,7 +42,7 @@ t('on: space-separated events', async t => {
 	t.end()
 });
 
-t('on: delegated events', t => {
+t('e: delegated events', t => {
 	var x = document.createElement('x'), log = []
   document.documentElement.appendChild(x)
 
@@ -61,11 +61,11 @@ t('on: delegated events', t => {
 	t.end()
 });
 
-t('on: events list', async t => {
+t('e: events list', async t => {
   on('x', ['x', 'y'], e => {})
 })
 
-t('on: observable', async t => {
+t('e: observable', async t => {
   let el = document.createElement('div')
   let clicks = on(el, 'click')
   let log = []
@@ -100,7 +100,7 @@ t('on: observable', async t => {
   await tick(8)
   t.is(log.length, 6, 'end stops event stream')
 })
-t.todo('on: next-tick event should be discarded', async t => {
+t.todo('e: next-tick event should be discarded', async t => {
   let el = document.createElement('click')
   let resolve, p = new Promise(r => {resolve = r})
   let log = []
@@ -115,4 +115,21 @@ t.todo('on: next-tick event should be discarded', async t => {
   resolve()
   await tick(12)
   t.is(log, [true, false])
+})
+t('e: list as target', async t => {
+  let div = document.createElement('div')
+  div.innerHTML = '<a></a><b></b><c></c>'
+
+  let log = []
+  let c = e(div.childNodes, 'click', e => {
+    log.push(e.target.tagName)
+  })
+  div.childNodes[0].click()
+  t.is(log, ['A'])
+  div.childNodes[1].click()
+  t.is(log, ['A', 'B'])
+  div.childNodes[2].click()
+  t.is(log, ['A', 'B', 'C'])
+
+  c.cancel()
 })

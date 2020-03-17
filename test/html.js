@@ -1,5 +1,5 @@
 import t from 'tst'
-import { $, state, fx, prop, store, calc, attr, on, html } from '../index.js'
+import { v, o, h as html } from '../index.js'
 // import { $, state, fx, prop, store, calc, list, ref, attr, on, html } from '../dist/spect.min.js'
 import { tick, frame, idle, time } from 'wait-please'
 import { augmentor, useState, useEffect, useMemo } from 'augmentor'
@@ -8,7 +8,7 @@ import observable from './observable.js'
 import morph from './morph.js'
 
 t('html: single attribute', async t => {
-  const a = state(0)
+  const a = v(0)
 
   let el = html`<div a=${a}></div>`
 
@@ -28,7 +28,7 @@ t('html: single attribute', async t => {
 })
 
 t('html: single attribute on mounted node', async t => {
-  const a = state(0)
+  const a = v(0)
   let div = document.createElement('div')
 
   let el = html`<${div} a=${a}></>`
@@ -50,7 +50,7 @@ t('html: single attribute on mounted node', async t => {
 })
 
 t('html: text content', async t => {
-  const a = state(0)
+  const a = v(0)
 
   let el = html`<div>${ a }</div>`
 
@@ -69,7 +69,7 @@ t('html: text content', async t => {
 })
 
 t('html: child node', async t => {
-  const text = state(0)
+  const text = v(0)
   const a = html`<a>${ text }</a>`
   const b = html`<b>${ a }</b>`
 
@@ -96,7 +96,7 @@ t('html: dynamic list', async t => {
   const foo = html`<foo></foo>`
   const bar = `bar`
   const baz = html`<baz/>`
-  const content = store([foo, bar, baz])
+  const content = o([foo, bar, baz])
 
   const a = html`<a>${ content }</a>`
   t.is(a.outerHTML, `<a><foo></foo>bar<baz></baz></a>`)
@@ -132,7 +132,7 @@ t('html: 2-level fragment', async t => {
 
 t('html: mount to another element', async t => {
   const a = html`<a></a>`
-  const c = state(0)
+  const c = v(0)
   const b = html`<${a}>${ c }</>`
 
   t.is(a, b)
@@ -164,10 +164,10 @@ t('html: function renders external component', async t => {
   t.is(el[1].outerHTML, `<b></b>`)
 })
 t('html: element should be observable', async t => {
-  let a = state(1)
+  let a = v(1)
   let el = html`<a>${a}</a>`
   let log = []
-  fx(el => log.push(el.textContent), [el])
+  v(el, el => log.push(el.textContent))
   a(2)
   t.is(log, ['1', '2'])
 })
@@ -238,7 +238,7 @@ t('html: wrapping', async t => {
 
   let wrapped = html`<div><${foo} class="foo"><bar/></></div>`
 
-  t.is(wrapped.outerHTML, '<div><foo class="foo"><bar></bar></foo></div>')
+  t.is(wrapped.outerHTML, '<div><foo x="1" class="foo"><bar></bar></foo></div>')
   t.is(wrapped.firstChild, foo)
   t.is(wrapped.firstChild.x, 1)
 })
@@ -251,7 +251,7 @@ t('html: wrapping with children', async t => {
 
   let wrapped = html`<div><${foo} class=foo>${ [...foo.childNodes] }</></div>`
 
-  t.is(wrapped.outerHTML, '<div><foo class="foo"><bar></bar><baz></baz></foo></div>')
+  t.is(wrapped.outerHTML, '<div><foo x="1" class="foo"><bar></bar><baz></baz></foo></div>')
   t.is(wrapped.firstChild, foo)
   t.is(wrapped.firstChild.x, 1)
 })
@@ -526,8 +526,8 @@ t('html: update own children', t => {
 })
 
 t('html: prop', async t => {
-  let obj = { x: 1 }
-  let el = html`<div>${ prop(obj, 'x') }</div>`
+  let obj = o({ x: 1 })
+  let el = html`<div>${ v(obj, obj => obj.x) }</div>`
 
   t.is(el.outerHTML, '<div>1</div>')
 

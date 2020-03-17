@@ -1,34 +1,63 @@
 import _observable from 'symbol-observable'
 
-export default (...subs) => {
-    const next = val => subs.map(sub => sub(val))
-    const cancel = (...unsubs) => (
-        unsubs = subs.map(sub => sub.unsubscribe),
-        subs.length = 0,
-        unsubs.map(unsub => unsub && unsub())
-    )
+export default () => {
+    const subs = []
+
+    const push = (val, subs=channel.subs) => {
+        // promise awaits value
+        if (val && val.then) return val.then(val => push(val))
+        subs.map(sub => {
+            if (sub.out && sub.out.call) sub.out()
+            if (sub.next) sub.out = sub.next(val)
+        })
+    }
+
+    const cancel = () => {
+        let unsubs = subs.map(sub => {
+            if (sub.out && sub.out.call) sub.out()
+            return sub.unsubscribe
+        })
+        subs.length = 0
+        unsubs.map(unsub => unsub())
+        channel.closed = true
+    }
+
+    // const mute = () => {
+    //     channel.paused = true
+    // }
+    // const unmute = () => {
+    //     channel.paused = false
+    // }
+
     const subscribe = (next, error, complete) => {
-        next = (next.call ? next : next.next).bind()
-        subs.push(next)
-        complete = next.call ? complete : next.complete
-        const unsubscribe = () => (
-            subs.length && subs.splice(subs.indexOf(next) >>> 0, 1),
-            complete && complete(),
+        next = next && next.next || next
+        error = next && next.error || error
+        complete = next && next.complete || complete
+
+        const unsubscribe = () => {
+            if (subs.length) subs.splice(subs.indexOf(subscription) >>> 0, 1)
+            if (complete) complete()
             unsubscribe.closed = true
-        )
-        next.unsubscribe = unsubscribe.unsubscribe = unsubscribe
+        }
+        unsubscribe.unsubscribe = unsubscribe
         unsubscribe.closed = false
+
+        const subscription = { next, error, complete, unsubscribe }
+        subs.push(subscription)
+
         return unsubscribe
     }
 
-    return Object.assign(
-        val => observer(val) ? subscribe(val) : next(val),
-        {
-            next,
-            subscribe,
-            cancel,
-            [_observable](){return this}
-        })
+    const channel = val => observer(val) ? subscribe(val) : push(val)
+
+    return Object.assign(channel, {
+        subs,
+        closed: false,
+        push,
+        subscribe,
+        cancel,
+        [_observable](){return this}
+    })
 }
 
 export const observer = (val) => !!(val && (val.call || val.next))
