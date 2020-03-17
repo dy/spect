@@ -142,7 +142,8 @@ function setAttribute (el, name, value) {
   }
   // style={}
   else if (typeof value === 'object') {
-    el.setAttribute(name, Object.keys(value).map((key, i) => `${key}: ${value[i]};`).join(' '))
+    let values = Object.values(value)
+    el.setAttribute(name, Object.keys(value).map((key, i) => `${key}: ${values[i]};`).join(' '))
   }
   else {
     el.setAttribute(name, value === true ? '' : value)
