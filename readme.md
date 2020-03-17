@@ -252,6 +252,7 @@ const $timer = $('.timer', el => {
 $timer[0]
 // > <div.timer></div>
 ```
+<sub>_$_ is reverence to _jQuery_, designed with regards to [_HTMLCollection_](https://developer.mozilla.org/en-US/docs/Web/API/HTMLCollection), [_selector-observer_](https://github.com/josh/selector-observer) and _aspect-oriended-programming_.</sub>
 <br/>
 </details>
 
@@ -303,7 +304,7 @@ $('#clock', el => {
   h`<${el}>${ v(date => date.toISOString())} </>`
 })
 ```
-
+<sub>_h_ is direct remake on [hyperscript](https://ghub.io/hyperscript) with extended observable support and unique in class [html syntax parser](https://ghub.io/xhtm).</sub>
 <br/>
 </details>
 
@@ -316,14 +317,14 @@ Value observable − creates a getter/setter function with [observable](https://
 
 `from` can be:
 
-* _Primitive_ value − creates simple state observable.
-* _Function_ (_v_, [observ-*](https://ghub.io/observ), [observable](https://ghub.io/observable), [mutant](https://ghub.io/mutant) etc.) − creates 2-way binding with optional mapping.
-* _AsyncIterator_ or target with [`Symbol.asyncIterator`](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Symbol/asyncIterator) − creates 1-way bound observable with optional mapping, without setter.
-* _Promise_ or _thenable_ − subscribes to promise resolution.
-* _Observable_ or target with [`Symbol.observable`](https://ghub.io/symbol-observable) ([rxjs](https://ghub.io/rxjs),[zen-observable](https://ghub.io/zen-observable) etc.) − 1-way binding.
-* _Input_ (_radio_, _checkbox_), or _Select_ − creates 2-way binding for input value with getter/setter support.
+* _Primitive_ value − creates simple observable state.
+* _Function_ (_v_, [observ-*](https://ghub.io/observ), [observable](https://ghub.io/observable), [mutant](https://ghub.io/mutant) etc.) − creates 2-way bound observable.
+* _AsyncIterator_ or target with [`Symbol.asyncIterator`](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Symbol/asyncIterator) − creates 1-way bound observable with optional mapping.
+* _Promise_ or _thenable_ − subscribes to promise state.
+* _Standard observable_ or target with [`Symbol.observable`](https://ghub.io/symbol-observable) ([rxjs](https://ghub.io/rxjs), [zen-observable](https://ghub.io/zen-observable) etc.) − creates 1-way bound observable.
+* _Input_ (_radio_, _checkbox_), or _Select_ − creates 2-way bound observable for input value, normalizes attributes.
 * _Array_ or _Object_ with any combination of the above.
-* Any other value − creates simple observable.
+* Any other value − creates simple observable state.
 
 ```js
 import { v } from 'spect'
@@ -376,7 +377,7 @@ celsius() // 0
 fahren() // 32
 ```
 
-<!-- _**v**_ is a single-character alternative for _useState_, _useEffect_, _useMemo_, _rxjs/from_, _zen-observable_, _mobx@computed_ etc. -->
+<sub>_v_ is a single-character replacement to _useState_, _useEffect_, _useMemo_, _rxjs/from_, _zen-observable_, _mobx@computed_ etc. Its design is derived from _react hooks_, [_observable_](https://ghut.io/observable), [_rxjs_](https://ghub.io/rxjs), [_iron_](https://github.com/ironjs/iron) and others.</sub>
 
 <br/>
 </details>
@@ -390,8 +391,6 @@ fahren() // 32
 Object state with reflection to attributes. Creates a `state` proxy to any `target`, with optionally defined `props` to observe on the target. Adding, changing, or deleting `state` props mutates `target` and emits changes. If `target` is an _Element_, then `state` also reflects values as attributes.
 
 `props` define obseved props on `target` and their type − one of _Boolean_, _String_, _Number_, _Array_, _Object_ or `null`. If `props` are undefined, then only own target safe props are observed without coercion.
-
-<!--similar to [propTypes](https://github.com/facebook/prop-types) or [lit-element](https://lit-element.polymer-project.org/guide/properties).-->
 
 ```js
 import { o, v } from 'spect'
@@ -461,7 +460,7 @@ $('.likes-count', el => h`<${el}>${
 })
 ```
 
-_**o**_ is a single-character alternative for _react props_, _redux_, _react-redux_, _useReducer_, _mobx@observable_, _unistore_, _prop-types_, _lit-element props_ etc.
+<sub>_o_ is a single-character alternative to _react props_, _redux_, _react-redux_, _useReducer_, _mobx@observable_, _unistore_, _use-store_ etc. It incorporates _prop-types_, _lit-element props_, _typescript_ etc logic.</sub>
 
 <br/>
 </details>
@@ -509,7 +508,7 @@ setInterval(() => {
 // cancel ticks
 ticks.cancel()
 ```
-
+<sub>_e_ simplest alternative to _rxjs.fromEvent_, _jQuery.on_ etc. is designed with reference to [delegated-events](https://www.npmjs.com/package/delegated-events), [emmy](https://ghub.io/emmy) and others.</sub>
 <br/>
 </details>
 
