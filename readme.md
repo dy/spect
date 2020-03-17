@@ -12,7 +12,7 @@
   <img src="https://img.shields.io/badge/stability-unstable-yellowgreen"/>
 </p>
 
-<p align="center"><img src="/preview.png" width="624"/></p>
+<p align="center"><img src="/preview.png" width="566"/></p>
 <p align="center">▶ <a href="https://codepen.io/dyv/pen/oNXXZEb" target="_blank"><strong>Run</strong></a></p>
 <br/>
 
@@ -20,13 +20,13 @@
 <time id="clock"></time>
 
 <script type="module">
-  import { $, h, from, state, calc } from "https://unpkg.com/spect"
+  import { $, h, v } from "https://unpkg.com/spect"
 
   $('#clock', el => {
-    const date = state(new Date())
+    const date = v(new Date())
 
-    html`<${el} datetime=${ date }>${
-      from(date, date => date.toLocaleTimeString())
+    h`<${el} datetime=${ date }>${
+      v(date, date => date.toLocaleTimeString())
     }</el>`
 
     let id = setInterval(() => date(new Date()), 1000)
@@ -86,11 +86,11 @@ Consider simple user welcoming example.
 <div class="user">Loading...</div>
 
 <script type="module">
-import { $, html, state } from 'spect'
+import { $, h, v } from 'spect'
 
 $('.user', async el => {
-  const username = state()
-  html`<${el}>Hello, ${ username }!</>`
+  const username = v('guest')
+  h`<${el}>Hello, ${ username }!</>`
 
   const user = await (await fetch('/user')).json()
   username(user.name)
@@ -98,7 +98,9 @@ $('.user', async el => {
 </script>
 ```
 
-The `$` assigns an _aspect function_ to the `.user` element. `state` here acts as _useState_, but creates an observable `username`. `html` is reactive − it rerenders automatically whenever `username` changes.
+`$` defines a `.user` rule, assigning an _aspect_ callback for matching elements, similar to _CSS_ or _jQuery_, but live.
+`h` is _hyperscript_ / _htm_ in one, declaring markup effect. It rerenders automatically whenever `username` changes.
+`v` is _observable_ acting as _useState_.
 
 <!--
 Consider simple todo app.
@@ -132,7 +134,7 @@ $('.todo-form', el => on(el, 'submit', e => {
 Input element here is uncontrolled and logic closely follows native js to provide _progressive enhancement_. _**`list`**_ creates an observable array `todos`, mutating it automatically rerenders _**`html`**_.
 -->
 
-See all [/examples](examples).
+See more [/examples](examples).
 
 <!--
 See all examples...
