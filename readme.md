@@ -315,7 +315,7 @@ $('#clock', el => {
 </details>
 
 
-<details><summary><strong>v − value observable</strong></summary>
+<details><summary><strong>v − value</strong></summary>
 
 > value = v( from? , get?, set? )<br/>
 
