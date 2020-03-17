@@ -253,7 +253,7 @@ $timer[0]
 // > <div.timer></div>
 ```
 
-<sub>_$_ is reverence to _jQuery_, designed with regards to [_HTMLCollection_](https://developer.mozilla.org/en-US/docs/Web/API/HTMLCollection), [_selector-observer_](https://github.com/josh/selector-observer) and _aspect-oriended-programming_.</sub>
+<!-- <sub>_$_ is reverence to _jQuery_, designed with regards to [_HTMLCollection_](https://developer.mozilla.org/en-US/docs/Web/API/HTMLCollection), [_selector-observer_](https://github.com/josh/selector-observer) and _aspect-oriended-programming_.</sub> -->
 
 <br/>
 
@@ -308,7 +308,7 @@ $('#clock', el => {
 })
 ```
 
-<sub>_h_ is direct remake on [hyperscript](https://ghub.io/hyperscript) with extended observable support and unique in class [html syntax parser](https://ghub.io/xhtm).</sub>
+<!-- <sub>_h_ is direct remake on [hyperscript](https://ghub.io/hyperscript) with extended observable support and unique in class [html syntax parser](https://ghub.io/xhtm).</sub> -->
 
 <br/>
 
@@ -383,7 +383,7 @@ celsius() // 0
 fahren() // 32
 ```
 
-<sub>_v_ is a single-character replacement to _useState_, _useEffect_, _useMemo_, _rxjs/from_, _zen-observable_, _mobx@computed_ etc. Its design is derived from _react hooks_, [_observable_](https://ghut.io/observable), [_rxjs_](https://ghub.io/rxjs), [_iron_](https://github.com/ironjs/iron) and others.</sub>
+<!-- <sub>_v_ is a single-character replacement to _useState_, _useEffect_, _useMemo_, _rxjs/from_, _zen-observable_, _mobx@computed_ etc. Its design is derived from _react hooks_, [_observable_](https://ghut.io/observable), [_rxjs_](https://ghub.io/rxjs), [_iron_](https://github.com/ironjs/iron) and others.</sub> -->
 
 <br/>
 
@@ -467,7 +467,7 @@ $('.likes-count', el => h`<${el}>${
 })
 ```
 
-<sub>_o_ is a single-character alternative to _react props_, _redux_, _react-redux_, _useReducer_, _mobx@observable_, _unistore_, _use-store_ etc. It incorporates _prop-types_, _lit-element props_, _typescript_ etc logic.</sub>
+<!-- <sub>_o_ is a single-character alternative to _react props_, _redux_, _react-redux_, _useReducer_, _mobx@observable_, _unistore_, _use-store_ etc. It incorporates _prop-types_, _lit-element props_, _typescript_ etc logic.</sub> -->
 
 <br/>
 
@@ -517,7 +517,7 @@ setInterval(() => {
 ticks.cancel()
 ```
 
-<sub>_e_ simplest alternative to _rxjs.fromEvent_, _jQuery.on_ etc. is designed with reference to [delegated-events](https://www.npmjs.com/package/delegated-events), [emmy](https://ghub.io/emmy) and others.</sub>
+<!-- <sub>_e_ simplest alternative to _rxjs.fromEvent_, _jQuery.on_ etc. is designed with reference to [delegated-events](https://www.npmjs.com/package/delegated-events), [emmy](https://ghub.io/emmy) and others.</sub> -->
 
 <br/>
 
