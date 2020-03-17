@@ -308,7 +308,7 @@ $('#clock', el => {
 </details>
 
 
-<details><summary><strong>v − value</strong></summary>
+<details><summary><strong>v − value observable</strong></summary>
 
 > value = v( from? , get?, set? )<br/>
 
@@ -385,7 +385,7 @@ fahren() // 32
 
 
 
-<details><summary><strong>o − object</strong></summary>
+<details><summary><strong>o − object state</strong></summary>
 
 > state = o( target = {} , props? )<br/>
 
