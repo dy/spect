@@ -27,7 +27,7 @@
 
     h`<${el} datetime=${ date }>${
       v(date, date => date.toLocaleTimeString())
-    }</el>`
+    }</>`
 
     let id = setInterval(() => date(new Date()), 1000)
     return () => clearInterval(id)
