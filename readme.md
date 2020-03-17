@@ -312,20 +312,18 @@ $('#clock', el => {
 
 > value = v( from? , get?, set? )<br/>
 
-Value observable − simply a getter/setter function with [observable](https://ghub.io/observable) API.
+Value observable − creates a getter/setter function with [observable](https://ghub.io/observable) API. May act as _transform_, taking optional `get` and `set` mappers.
 
 `from` can be:
 
-* _Primitive_ value
-* _Function_ (another _v_, [observ-*](https://ghub.io/observ), [observable](https://ghub.io/observable), [mutant](https://ghub.io/mutant) etc.)
-* _AsyncIterator_ or target with [`Symbol.asyncIterator`](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Symbol/asyncIterator)
-* _Promise_ or _thenable_
-* _Observable_ or target with [`Symbol.observable`](https://ghub.io/symbol-observable) ([rxjs](https://ghub.io/rxjs),[zen-observable](https://ghub.io/zen-observable) etc.)
-* _Input_ (_radio_, _checkbox_), or _Select_
+* _Primitive_ value − creates simple state observable.
+* _Function_ (_v_, [observ-*](https://ghub.io/observ), [observable](https://ghub.io/observable), [mutant](https://ghub.io/mutant) etc.) − creates 2-way binding with optional mapping.
+* _AsyncIterator_ or target with [`Symbol.asyncIterator`](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Symbol/asyncIterator) − creates 1-way bound observable with optional mapping, without setter.
+* _Promise_ or _thenable_ − subscribes to promise resolution.
+* _Observable_ or target with [`Symbol.observable`](https://ghub.io/symbol-observable) ([rxjs](https://ghub.io/rxjs),[zen-observable](https://ghub.io/zen-observable) etc.) − 1-way binding.
+* _Input_ (_radio_, _checkbox_), or _Select_ − creates 2-way binding for input value with getter/setter support.
 * _Array_ or _Object_ with any combination of the above.
-* Any other value (considered constant)
-
-`get` optionally maps `from` value.
+* Any other value − creates simple observable.
 
 ```js
 import { v } from 'spect'
