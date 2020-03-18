@@ -13,23 +13,28 @@ t('v: readme', async t => {
   t.is(v1(), 0)
 
   // subscribe
-  v1(value => {
+  let unsub = v1(value => {
     log.push(value)
     return () => {
       log.push('-')
     }
   })
 
-  // // set
+  // set
   v1(1)
   t.is(v1(), 1)
   t.is(log, [0, '-', 1])
-
+  unsub()
 
   // from value
   let v2 = v(v1, v1 => v1 * 2)
+  log = []
+  v2(v2 => log.push(v2))
   t.is(v2(), 2) // > 2
   t.is(v1(), 1)
+  t.is(log, [2])
+  v1(1)
+  t.is(log, [2, 2])
 
   // gotcha
   v(v2)
@@ -288,7 +293,7 @@ t('v: subscribed observable setter', async t => {
   t.is(a(), 3)
   t.is(b(), 3)
 })
-t('v: init non-input elements is fine', async t => {
+t('v: init non-input elements are detected', async t => {
   let el = document.createElement('div')
   let vel = v(el)
   t.is(vel(), el)
@@ -299,22 +304,28 @@ t('v: init non-input elements is fine', async t => {
   t.is(vel2(), el)
   vel2.cancel()
 
-  let vel3 = v()
-  vel3.set(el)
-  t.is(vel3(), el)
-  vel3.cancel()
+  // let vel3 = v()
+  // vel3.set(el)
+  // t.is(vel3(), el)
+  // vel3.cancel()
+})
+t('v: expose deps observables', async t => {
+  let a = v(0), b = v(1), c = v({a, b})
+  t.is(c.a(), 0)
+  t.is(c.b(), 1)
+  t.is(c(), {a:0, b:1})
 })
 
 // fx
-t.todo('v: fx core', async t => {
+t('v: fx core', async t => {
   let a = v(0)
   let o = { b: 1 }
-  let b = prop(o, 'b')
+  let b = v(o)
 
   let log = []
-  fx((a, b) => {
-    log.push(a, b)
-  }, [a, b])
+  v([a, b], ([a, b]) => {
+    log.push(a, b.b)
+  })
 
   await tick(8)
   t.is(log, [0, 1], 'initial state')
@@ -322,13 +333,13 @@ t.todo('v: fx core', async t => {
   a(2)
   await tick(8)
   t.any(log, [[0, 1, 2, 1], [0, 1, 1, 1, 2, 1]], 'changed state')
-  o.b = 2
+  b({b: 2})
   await tick(8)
   t.any(log, [[0, 1, 2, 1, 2, 2], [0, 1, 1,1, 2,1, 2,2]], 'changed prop')
-  o.b = 2
+  b({b: 2})
   a(2)
   await tick(8)
-  t.any(log, [[0,1, 2,1, 2,2, 2,2], [0,1, 1,1, 2,1, 2,2, 2,2]], 'unchanged prop')
+  t.is(log, [0,1, 1,1, 2,1, 2,2, 2,2, 2,2], 'unchanged prop')
 })
 t('v: fx destructor', async t => {
   let log = []
@@ -422,16 +433,6 @@ t('v: fx promise / observable / direct dep', async t => {
 
   unsub()
 })
-t.todo('v: fx on must not create initial tick', async t => {
-  let ex = on(document.createElement('x'), 'click')
-  let log = []
-  v(ex)(e => {
-    log.push(1)
-  })
-
-  await tick(20)
-  t.is(log, [])
-})
 t.skip('v: fx thenable', async t => {
   const s = state(0), log = []
   const sx = fx(s => {
@@ -456,17 +457,15 @@ t('v: fx simple values', async t => {
   t.is(log, [{x: 1}, 1])
   unsub()
 })
-t.skip('v: fx deps length change', async t => {
-  let deps = [state(1)]
+t.todo('v: deps updated to new length', async t => {
+  let deps = v([v(1)])
   let log = []
-  fx((...args) => {
+  v(deps, (args) => {
     log.push(args)
-  }, deps)
-  await tick(8)
+  })
   t.is(log, [[1]])
 
-  deps.push(state(2))
-  await tick(8)
+  deps([...deps, v(2)])
   t.is(log, [[1], [1,2]])
 })
 t('v: fx sync must not call twice init const', async t => {

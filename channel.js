@@ -1,33 +1,26 @@
 import _observable from 'symbol-observable'
 
-export default () => {
-    const subs = []
+export default (...args) => {
+    const observers = []
 
-    const push = (val, subs=channel.subs) => {
+    const push = (val, observers=channel.observers) => {
         // promise awaits value
         if (val && val.then) return val.then(val => push(val))
-        subs.map(sub => {
+        observers.map(sub => {
             if (sub.out && sub.out.call) sub.out()
             if (sub.next) sub.out = sub.next(val)
         })
     }
 
     const cancel = () => {
-        let unsubs = subs.map(sub => {
+        let unsubs = observers.map(sub => {
             if (sub.out && sub.out.call) sub.out()
             return sub.unsubscribe
         })
-        subs.length = 0
+        observers.length = 0
         unsubs.map(unsub => unsub())
-        channel.closed = true
+        channel.canceled = true
     }
-
-    // const mute = () => {
-    //     channel.paused = true
-    // }
-    // const unmute = () => {
-    //     channel.paused = false
-    // }
 
     const subscribe = (next, error, complete) => {
         next = next && next.next || next
@@ -35,15 +28,15 @@ export default () => {
         complete = next && next.complete || complete
 
         const unsubscribe = () => {
-            if (subs.length) subs.splice(subs.indexOf(subscription) >>> 0, 1)
+            if (observers.length) observers.splice(observers.indexOf(subscription) >>> 0, 1)
             if (complete) complete()
-            unsubscribe.closed = true
+            unsubscribe.canceled = true
         }
         unsubscribe.unsubscribe = unsubscribe
-        unsubscribe.closed = false
+        unsubscribe.canceled = false
 
         const subscription = { next, error, complete, unsubscribe }
-        subs.push(subscription)
+        observers.push(subscription)
 
         return unsubscribe
     }
@@ -51,12 +44,11 @@ export default () => {
     const channel = val => observer(val) ? subscribe(val) : push(val)
 
     return Object.assign(channel, {
-        subs,
-        closed: false,
+        observers,
+        canceled: false,
         push,
         subscribe,
-        cancel,
-        [_observable](){return this}
+        cancel
     })
 }
 

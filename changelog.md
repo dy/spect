@@ -2,8 +2,9 @@
 
 Version | Changes
 ---|---
-18.0.0 | Terser effects $, h, v, o, e.
-17.0.0 | Removed `list`, `$` now creates live collection.
+19.0.0 | Reduced API: `$`, `h`, `v`.
+18.0.0 | Reduced API: `$`, `h`, `v`, `o`, `e`.
+17.0.0 | Removed `list`. `$` now creates live collection.
 16.1.0 | Expose `get`, `set`, `subscribe`, `next`. Make effects return `channel` or `value`.
 16.0.0 | `observ`/`observable`-compatible implementation.
 15.1.0 | `ref` + `channel` merged into `bus` - accessor/channel primitive. `symbol.bus` and `symbol.observable` introduced.

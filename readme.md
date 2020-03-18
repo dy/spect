@@ -260,7 +260,7 @@ $timer[0]
 </details>
 
 
-<details><summary><strong>h − hyperscript</strong></summary>
+<details><summary><strong>h − hyperscript / html</strong></summary>
 
 > el = h( tag , props? , ...children )<br/>
 > el = h\`...content\`<br/>
@@ -315,7 +315,7 @@ $('#clock', el => {
 </details>
 
 
-<details><summary><strong>v − value</strong></summary>
+<details><summary><strong>v − varying value</strong></summary>
 
 > value = v( from? , get?, set? )<br/>
 
@@ -331,6 +331,8 @@ Value observable − creates a getter/setter function with [observable](https://
 * _Input_ (_radio_, _checkbox_), or _Select_ − creates 2-way bound observable for input value, normalizes attributes.
 * _Array_ or _Object_ with any combination of the above.
 * Any other value − creates simple observable state.
+
+_v_ exposes observable properties as on `value`.
 
 ```js
 import { v } from 'spect'
@@ -353,21 +355,30 @@ v1(value => {
 
 // from value
 let v2 = v(v1, v1 => v1 * 2)
-v2() // > 2
+v2() // 2
 
 // from multiple values
 let v3 = v([v1, v2], ([v1, v2]) => v1 + v2)
-v3() // > 3
+v3() // 3
+v3[0]() // 1
 
 // run effect on every change
 v([v1, v2, v3])(([v1, v2, v3]) => {
   console.log(v1, v2, v3)
   return () => console.log('teardown', v1, v2, v3)
 })
-// > 1, 2, 3
+// 1, 2, 3
 
 // from input
 let v4 = v(...$('#input'))
+
+// from object
+let v5 = v({ done: v(true) })
+v5.done()
+// true
+
+v5().done
+// true
 ```
 
 #### Example
@@ -375,7 +386,7 @@ let v4 = v(...$('#input'))
 ```js
 import { $, v } from 'spect'
 
-const f = v(...$('#fahren')), c = v(...$('#celsius'))
+const f = v(...$`#fahren`), c = v(...$`#celsius`)
 const celsius = v(f, f => (f - 32) / 1.8)
 const fahren = v(c, c => (c * 9) / 5 + 32)
 

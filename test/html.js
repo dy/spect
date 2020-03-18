@@ -1,5 +1,5 @@
 import t from 'tst'
-import { v, o, h as html } from '../index.js'
+import { v, h as html } from '../index.js'
 // import { $, state, fx, prop, store, calc, list, ref, attr, on, html } from '../dist/spect.min.js'
 import { tick, frame, idle, time } from 'wait-please'
 import { augmentor, useState, useEffect, useMemo } from 'augmentor'
