@@ -1,7 +1,7 @@
 import SelectorSet from 'selector-set'
-import o from './o.js'
 import tuple from 'immutable-tuple'
 import _observable from 'symbol-observable'
+import v from './v.js'
 
 // global to avold multiple spect instances collision
 const _callbacks = Symbol.for('@spect.callbacks'),
@@ -29,21 +29,17 @@ export default function spect(context, target, callback) {
     context = document
   }
 
-  let offs = [], collection = o([]), channel = collection[_observable](), { cancel } = channel
+  let collection = [], channel = v()
+  channel(collection)
+  collection.cancel = channel.cancel
 
   // spect(list, fn)
-  if (target[Symbol.iterator] && !target.nodeType) {
-    collection.push(...target)
-    offs = collection.map(target => spect(context, target, callback))
-    collection.cancel = channel.cancel = () => (offs.map(c => c.cancel()), cancel())
-  }
-
   // spect(target, fn)
-  else {
-    collection.push(target)
-    matched(target, callback)
-    collection.cancel = channel.cancel = () => (unmatched(target, callback), cancel())
-  }
+  if (target.nodeType || !target[Symbol.iterator]) target = [target]
+
+  collection.push(...target)
+  collection.map(target => matched(target, callback))
+  channel(null, null, () => collection.map(target => unmatched(target, callback)))
 
   return collection
 }
@@ -106,9 +102,9 @@ function $(scope, selector, callback) {
     })
   }
 
-  const collection = o([]),
-        channel = collection[_observable](),
-        { cancel } = channel
+  const collection = [], channel = v()
+  channel(collection)
+  collection.cancel = channel.cancel
 
   const aspect = el => {
     let destroy
@@ -116,17 +112,18 @@ function $(scope, selector, callback) {
       window.cancelAnimationFrame(el[_planned])
       delete el[_planned]
     } else {
-      destroy = callback && callback(el);
+      destroy = callback && callback(el)
       collection.push(el)
-      channel(el)
+      channel(collection)
     }
     return () => {
       collection.splice(collection.indexOf(el) >>> 0, 1)
+      channel(collection)
       el[_planned] = window.requestAnimationFrame(() => {
         delete el[_planned]
         if (destroy) {
           if (destroy.then) destroy.then(destroy => destroy && destroy.call && destroy())
-          else destroy && destroy.call && destroy()
+          else destroy.call && destroy()
         }
       })
     }
@@ -134,14 +131,14 @@ function $(scope, selector, callback) {
 
   set.add(selector, aspect)
 
-  collection.cancel = channel.cancel = () => {
+  collection.cancel = () => {
+    channel[_observable]().cancel()
     set.queryAll(scope).forEach(rule => rule.elements.forEach(el => unmatched(el, rule.data)))
     set.remove(selector, aspect)
     if (!set.size) {
       scope[_observer].disconnect()
       delete scope[_observer]
     }
-    cancel()
   }
 
   // set.matches(scope).forEach(rule => matched(scope, rule.data))

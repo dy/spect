@@ -2,7 +2,6 @@ import _observable from 'symbol-observable'
 import c, { observer } from './channel.js'
 
 const _current = Symbol.for('@spect.current')
-const _cancel = Symbol.for('@spect.cancel')
 
 export default function v(init, map=v=>v, unmap=v=>v) {
   const channel = c(), { subscribe, observers, push } = channel

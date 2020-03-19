@@ -52,4 +52,4 @@ export default (...args) => {
     })
 }
 
-export const observer = (val) => !!(val && (val.call || val.next))
+export const observer = (next, error, complete) => (next && next.call) || (error && error.call) || (complete && complete.call) || (next && observer(next.next, next.error, next.complete))
