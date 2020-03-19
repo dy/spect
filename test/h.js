@@ -2,7 +2,7 @@ import './hyperscript.js'
 import './html.js'
 
 import t from 'tst'
-import { h, v, o } from '../index.js'
+import { h, v } from '../index.js'
 // import { $, state, fx, prop, store, calc, list, ref, attr, on, html } from '../dist/spect.min.js'
 import { tick, frame, idle, time } from 'wait-please'
 import observable from './observable.js'
@@ -80,8 +80,8 @@ t('h: child node', async t => {
 })
 
 t('h: fragments / text', async t => {
-  let el = h('', null, `foo`, [`bar`])
-  t.is(el.textContent, 'foobar')
+  let a = h('', null, `foo`, [`bar`])
+  t.is(a.textContent, 'foobar')
   // let el2 = h(null, null, `foo`, [`bar`])
   // t.is(el2.textContent, 'foobar')
 })
@@ -102,26 +102,31 @@ t('h: dynamic list', async t => {
   const foo = h('foo')
   const bar = `bar`
   const baz = h('baz')
-  const content = o([foo, bar, baz])
+  const content = v()
+  content([foo, bar, baz])
 
   const a = h('a', null, content)
   t.is(a.outerHTML, `<a><foo></foo>bar<baz></baz></a>`)
   await tick(8)
   t.is(a.outerHTML, `<a><foo></foo>bar<baz></baz></a>`)
 
-  content.push(`qux`)
+  // content.push(`qux`)
+  content([...content(), `qux`])
   await tick(8)
   t.is(a.outerHTML, `<a><foo></foo>bar<baz></baz>qux</a>`)
 
-  content.shift()
+  content().shift()
+  content(content())
   await tick(8)
   t.is(a.outerHTML, `<a>bar<baz></baz>qux</a>`)
 
-  content.length = 0
+  content().length = 0
+  content(content())
   await tick(8)
   t.is(a.outerHTML, `<a></a>`)
 
-  content.push('x')
+  content().push('x')
+  content(content())
   t.is(a.outerHTML, `<a>x</a>`)
 })
 
@@ -234,7 +239,7 @@ t('h: wrapping', async t => {
 
   let wrapped = h('div', null, h(foo, {class:'foo'}, h('bar')))
 
-  t.is(wrapped.outerHTML, '<div><foo x="1" class="foo"><bar></bar></foo></div>')
+  t.is(wrapped.outerHTML, '<div><foo class="foo"><bar></bar></foo></div>')
   t.is(wrapped.firstChild, foo)
   t.is(wrapped.firstChild.x, 1)
 })
@@ -247,9 +252,14 @@ t('h: wrapping with children', async t => {
 
   let wrapped = h('div', null, h(foo, {class:'foo'}, ...foo.childNodes))
 
-  t.is(wrapped.outerHTML, '<div><foo x="1" class="foo"><bar></bar><baz></baz></foo></div>')
+  t.is(wrapped.outerHTML, '<div><foo class="foo"><bar></bar><baz></baz></foo></div>')
   t.is(wrapped.firstChild, foo)
   t.is(wrapped.firstChild.x, 1)
+})
+
+t('h: input case', async t => {
+  let el = h('', h('input'))
+  t.is(el.outerHTML, `<><input></>`)
 })
 
 t('h: select case', async t => {
@@ -450,13 +460,14 @@ t('h: update own children', t => {
   t.is(el.outerHTML, '<div>123</div>')
 })
 
-t('h: prop', async t => {
-  let obj = o({ x: 1 })
+t('h: simple prop case', async t => {
+  let obj = v()
+  obj({ x: 1 })
   let el = h('div', null, v(obj, obj => obj.x))
 
   t.is(el.outerHTML, '<div>1</div>')
 
-  obj.x = 2
+  obj({x: 2})
   await tick(8)
   t.is(el.outerHTML, '<div>2</div>')
 })

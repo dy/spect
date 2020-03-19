@@ -293,7 +293,7 @@ t('v: subscribed observable setter', async t => {
   t.is(a(), 3)
   t.is(b(), 3)
 })
-t('v: init non-input elements are detected', async t => {
+t('v: init non-input elements', async t => {
   let el = document.createElement('div')
   let vel = v(el)
   t.is(vel(), el)
@@ -465,7 +465,10 @@ t.todo('v: deps updated to new length', async t => {
   })
   t.is(log, [[1]])
 
-  deps([...deps, v(2)])
+  // this apparently sets values
+  // deps([...deps, v(2)])
+  // instead we should modify directly observable
+  deps.push(v(2))
   t.is(log, [[1], [1,2]])
 })
 t('v: fx sync must not call twice init const', async t => {

@@ -1,6 +1,6 @@
-import './$.js'
-// import './h.js'
-import './v.js'
+// import './$.js'
+import './h.js'
+// import './v.js'
 
 Object.defineProperty(DocumentFragment.prototype, 'outerHTML', {
   get() {

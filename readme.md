@@ -317,9 +317,9 @@ $('#clock', el => {
 
 <details><summary><strong>v − varying value</strong></summary>
 
-> value = v( from? , get?, set? )<br/>
+> value = v( from? , map?, inmap? )<br/>
 
-Value observable − creates a getter/setter function with [observable](https://ghub.io/observable) API. May act as _transform_, taking optional `get` and `set` mappers.
+Value observable − creates a getter/setter function with [observable](https://ghub.io/observable) API. May act as _transform_, taking optional `map` and `inmap` mappers.
 
 `from` can be:
 
@@ -332,7 +332,7 @@ Value observable − creates a getter/setter function with [observable](https://
 * _Array_ or _Object_ with any combination of the above.
 * Any other value − creates simple observable state.
 
-_v_ exposes observable properties as on `value`.
+_v_ exposes observable properties on `value`.
 
 ```js
 import { v } from 'spect'
@@ -401,7 +401,7 @@ fahren() // 32
 </details>
 
 
-
+<!--
 <details><summary><strong>o − object state</strong></summary>
 
 > state = o( target = {} , props? )<br/>
@@ -477,14 +477,11 @@ $('.likes-count', el => h`<${el}>${
   }</>`
 })
 ```
+-->
 
 <!-- <sub>_o_ is a single-character alternative to _react props_, _redux_, _react-redux_, _useReducer_, _mobx@observable_, _unistore_, _use-store_ etc. It incorporates _prop-types_, _lit-element props_, _typescript_ etc logic.</sub> -->
 
-<br/>
-
-</details>
-
-
+<!--
 <details><summary><strong>e − events</strong></summary>
 
 > e( scope? , selector , event , callback? )<br/>
@@ -527,12 +524,8 @@ setInterval(() => {
 // cancel ticks
 ticks.cancel()
 ```
-
+-->
 <!-- <sub>_e_ simplest alternative to _rxjs.fromEvent_, _jQuery.on_ etc. is designed with reference to [delegated-events](https://www.npmjs.com/package/delegated-events), [emmy](https://ghub.io/emmy) and others.</sub> -->
-
-<br/>
-
-</details>
 
 
 <!--

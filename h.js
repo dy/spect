@@ -1,13 +1,10 @@
-import v, { observable, primitive, object } from './v.js'
-import o from './o.js'
-import _observable from 'symbol-observable'
+import v, { observable, primitive, object, input } from './v.js'
 import htm from 'xhtm/index.js'
 
 const _group = Symbol.for('@spect.group'),
       _ptr = Symbol.for('@spect.ptr'),
       _props = Symbol.for('@spect.props'),
-      _cleanup = Symbol.for('@spect.cleanup'),
-      _channel = Symbol.for('@spect.channel')
+      _children = Symbol.for('@spect.children')
 
 const TEXT = 3, ELEMENT = 1
 
@@ -51,19 +48,23 @@ export default function h(tag, ...children) {
   else if (typeof tag === 'function') el = createChild(tag(props))
   else el = createChild(tag)
 
-  el[_channel] = v()
-  el[_channel].set(el)
-  el[_observable] = () => el[_channel]
-
   // props (dynamic)
   if (el.nodeType === ELEMENT) {
-    const realProps = o(el)
     el[_props] = v(props)
-    el[_props](props => {
-      Object.assign( realProps, props )
-      el[_channel].set(el)
+    el[_props]((props) => {
+      let cleanup
+      for (let name in props) {
+        let value = props[name]
+        if (observable(value) || Array.isArray(value) || object(value)) {
+          cleanup = v(value, value => (el[name] = value, setAttribute(el, name, value)))
+        }
+        else {
+          el[name] = value
+          setAttribute(el, name, value)
+        }
+      }
+      return cleanup
     })
-    el[_channel].subscribe(null, null, () => el[_props].cancel())
   }
 
   // children
@@ -73,29 +74,28 @@ export default function h(tag, ...children) {
 }
 
 export function render(children, el) {
+  // clean up prev observers
+  if (el[_children]) el[_children].cancel()
+  el[_children] = v(children.map((child) => {
+    // ignore input el
+    if (input(child)) {
+      let el = v()
+      el(child)
+      return el
+    }
+    return child
+  }))
+
   el[_ptr] = 0
 
-  // clean up prev observers
-  if (el[_cleanup]) el[_cleanup].map(obv => obv.cancel())
-  el[_cleanup] = []
-
-  children.map((child) => {
-    if (observable(child)) {
-      let cur, oChild = v(child)
-      el[_cleanup].push(oChild)
-      oChild(child => {
-        cur = !cur ? alloc(el, createChild(child)) : replaceWith(cur, createChild(child))
-        if (el[_channel]) el[_channel].set(el)
-      })
+  const cur = []
+  el[_children](children => {
+    children.map((child, i) => {
+      if (cur[i] === child) return
+      cur[i] = !cur[i] ? alloc(el, createChild(child)) : replaceWith(cur[i], createChild(child))
       // if sync init did not hit - create placeholder, no hydration possible
-      if (!cur) {
-        alloc(el, createChild(''))
-        if (el[_channel]) el[_channel].set(el)
-      }
-    }
-    else {
-      alloc(el, createChild(child))
-    }
+      if (!cur[i]) cur[i] = alloc(el, createChild(''))
+    })
   })
 
   // trim unused nodes
@@ -167,7 +167,7 @@ function alloc(parent, el) {
     ) {
       match = node
       // migrate props (triggers fx that mutates them)
-      if (el[_props] && match[_props] && el !== match) match[_props].set(el[_props]())
+      if (el !== match && el[_props] && match[_props]) match[_props](el[_props]())
       render([...el.childNodes], match)
       break
     }
@@ -216,4 +216,24 @@ function replaceWith(from, to) {
   }
 
   return to
+}
+
+function getAttribute (el, name, value) { return (value = el.getAttribute(name)) === '' ? true : value }
+
+function setAttribute (el, name, value) {
+  if (value === false || value == null) {
+    el.removeAttribute(name)
+  }
+  // class=[a, b, ...c] - possib observables
+  else if (Array.isArray(value)) {
+    el.setAttribute(name, value.filter(Boolean).join(' '))
+  }
+  // style={}
+  else if (object(value)) {
+    let values = Object.values(value)
+    el.setAttribute(name, Object.keys(value).map((key, i) => `${key}: ${values[i]};`).join(' '))
+  }
+  else {
+    el.setAttribute(name, value === true ? '' : value)
+  }
 }
