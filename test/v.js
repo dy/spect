@@ -202,10 +202,11 @@ t('v: object deps', async t => {
   y(2)
   t.is(log, [1,1, 2,1, 2,2])
 })
-t.todo('v: recursive set', async t => {
-  let x = {x: 1}, a = v(x), b = v()
-  b(a())
-  t.is(b(), {x: 1})
+t('v: recursion', async t => {
+  let x = {a: 1}
+  x.x = x
+  let vx = v(x)
+  t.is(vx().a, 1)
 })
 
 // from

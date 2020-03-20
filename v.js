@@ -1,6 +1,8 @@
 import _observable from 'symbol-observable'
 import c, { observer } from './channel.js'
 
+const _deps = Symbol.for('@spect.deps')
+
 export default function v(init, map=v=>v, unmap=v=>v) {
   const channel = c(), { subscribe, observers, push } = channel
 
@@ -14,6 +16,11 @@ export default function v(init, map=v=>v, unmap=v=>v) {
     }
     return set(...args)
   }
+  // we define props on fn - must hide own props
+  Object.defineProperties(fn, {
+    length: {value: null, writable: true, enumerable: false},
+    name: {value: null, writable: true, enumerable: false},
+  })
   const value = fn
   // const value = new Proxy(fn, {
   //   get(fn, prop) {
@@ -45,7 +52,6 @@ export default function v(init, map=v=>v, unmap=v=>v) {
   fn.valueOf = fn.toString = fn[Symbol.toPrimitive] = get
   fn[_observable] = () => channel
   fn.cancel = channel.cancel
-
   // observ
   // if (arguments.length) {
     if (typeof init === 'function') {
@@ -62,17 +68,21 @@ export default function v(init, map=v=>v, unmap=v=>v) {
     // NOTE: array/object may have _observable, which redefines default deps behavior
     else if (Array.isArray(init) || object(init)) {
       let vals = fn.current = new init.constructor
-      const depsChannel = c(), deps = []
-      for (let name in init) {
-        let dep = init[name], depv = v(dep)
-        depv(v => (vals[name] = v, depsChannel(vals)))
-        deps.push(value[name] = depv)
+      let deps = init[_deps]
+      if (!deps) {
+        deps = [], deps.channel = c()
+        Object.defineProperty(init, _deps, {enumerable: false, value: deps})
+        for (let name in init) {
+          const dep = init[name], depv = v(dep)
+          depv(v => (vals[name] = v, deps.channel(vals)))
+          deps.push(value[name] = depv)
+        }
+        value[Symbol.iterator] = deps[Symbol.iterator].bind(deps)
+        deps.channel(v => push(fn.current = map(v)))
+        if (Object.keys(vals).length || !Object.keys(init).length) deps.channel(vals)
       }
-      value[Symbol.iterator] = deps[Symbol.iterator].bind(deps)
-      depsChannel(v => push(fn.current = map(v)))
-      if (Object.keys(vals).length || !Object.keys(init).length) depsChannel(vals)
       set = v => push(fn.current = map(unmap(v)))
-      subscribe(null, null, () => (deps.map(depv => depv.cancel()), depsChannel.cancel()))
+      subscribe(null, null, () => (deps.map(depv => depv.cancel()), deps.channel.cancel()))
     }
     // input
     else if (input(init)) {

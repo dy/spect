@@ -496,3 +496,8 @@ t('h: direct children', t => {
   t.is(el2.outerHTML, '<x><y></y></x>')
   t.is(el3.outerHTML, '<x>x</x>')
 })
+
+t.todo('h: array component', t => {
+  let el = h(() => [1, 2])
+  t.is(el.textContent, '1,2')
+})
