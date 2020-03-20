@@ -1,5 +1,5 @@
 import t from 'tst'
-import { v, o, h as html } from '../index.js'
+import { v, h as html } from '../index.js'
 // import { $, state, fx, prop, store, calc, list, ref, attr, on, html } from '../dist/spect.min.js'
 import { tick, frame, idle, time } from 'wait-please'
 import { augmentor, useState, useEffect, useMemo } from 'augmentor'
@@ -96,22 +96,26 @@ t('html: dynamic list', async t => {
   const foo = html`<foo></foo>`
   const bar = `bar`
   const baz = html`<baz/>`
-  const content = o([foo, bar, baz])
+  const content = v()
+  content([foo, bar, baz])
 
   const a = html`<a>${ content }</a>`
   t.is(a.outerHTML, `<a><foo></foo>bar<baz></baz></a>`)
   await tick(8)
   t.is(a.outerHTML, `<a><foo></foo>bar<baz></baz></a>`)
 
-  content.push(html`qux`)
+  content().push(html`qux`)
+  content(content())
   await tick(8)
   t.is(a.outerHTML, `<a><foo></foo>bar<baz></baz>qux</a>`)
 
-  content.shift()
+  content().shift()
+  content(content())
   await tick(8)
   t.is(a.outerHTML, `<a>bar<baz></baz>qux</a>`)
 
-  content.length = 0
+  content().length = 0
+  content(content())
   await tick(8)
   t.is(a.outerHTML, `<a></a>`)
 })
@@ -163,11 +167,12 @@ t('html: function renders external component', async t => {
   t.is(el[0].outerHTML, `<a>foo <bar></bar><baz></baz></a>`)
   t.is(el[1].outerHTML, `<b></b>`)
 })
-t('html: element should be observable', async t => {
+t.skip('html: element should be observable', async t => {
+  // NOTE: Observable support is dropped - no much use
   let a = v(1)
   let el = html`<a>${a}</a>`
   let log = []
-  v(el, el => log.push(el.textContent))
+  v(el)(el => log.push(el.textContent))
   a(2)
   t.is(log, ['1', '2'])
 })
@@ -238,7 +243,7 @@ t('html: wrapping', async t => {
 
   let wrapped = html`<div><${foo} class="foo"><bar/></></div>`
 
-  t.is(wrapped.outerHTML, '<div><foo x="1" class="foo"><bar></bar></foo></div>')
+  t.is(wrapped.outerHTML, '<div><foo class="foo"><bar></bar></foo></div>')
   t.is(wrapped.firstChild, foo)
   t.is(wrapped.firstChild.x, 1)
 })
@@ -251,7 +256,7 @@ t('html: wrapping with children', async t => {
 
   let wrapped = html`<div><${foo} class=foo>${ [...foo.childNodes] }</></div>`
 
-  t.is(wrapped.outerHTML, '<div><foo x="1" class="foo"><bar></bar><baz></baz></foo></div>')
+  t.is(wrapped.outerHTML, '<div><foo class="foo"><bar></bar><baz></baz></foo></div>')
   t.is(wrapped.firstChild, foo)
   t.is(wrapped.firstChild.x, 1)
 })
@@ -525,13 +530,13 @@ t('html: update own children', t => {
   t.is(el.outerHTML, '<div>123</div>')
 })
 
-t('html: prop', async t => {
-  let obj = o({ x: 1 })
+t('html: [legacy] prop', async t => {
+  let obj = v({ x: 1 })
   let el = html`<div>${ v(obj, obj => obj.x) }</div>`
 
   t.is(el.outerHTML, '<div>1</div>')
 
-  obj.x = 2
+  obj({x: 2})
   await tick(8)
   t.is(el.outerHTML, '<div>2</div>')
 })
@@ -553,6 +558,7 @@ t('html: insert nodes list', t => {
   html`<${el}>foo ${ orig } qux</>`
   t.equal(el.innerHTML, `foo |bar <baz></baz>| qux`)
 
+// console.log('set', ...orig)
   html`<${el}><div class="prepended" /> foo ${ orig } qux <div class="appended" /></>`
   t.equal(el.innerHTML, `<div class="prepended"></div> foo |bar <baz></baz>| qux <div class="appended"></div>`)
 })
@@ -627,6 +633,28 @@ t('html: null-like insertions', t => {
   t.is(b.map(e => e.textContent).join(''), '  false 0')
   let c = html``
   t.is(c.textContent, '')
+})
+
+t.todo('html: component siblings', t => {
+  let a = html`<x/> ${1}`
+})
+
+t('html: non-observables create flat string', t => {
+  let b = html`1 ${2} <${() => 3}/> ${[4, ' ', html`5 ${6}`]}`
+  t.is(b.map(n => n.textContent).join(''), `1 2 3 4 5 6`)
+
+  let c = html`1 ${v(2)} 3`
+  t.is(c.map(n => n.textContent).join(''), `1 2 3`)
+})
+
+t('html: recursion case', t => {
+  let el = html`${ [html`<${fn} x=1/>`] }`
+
+  function fn ({x}) {
+    return html`x: ${x}`
+  }
+
+  t.is(el.map(n => n.textContent).join(''), `x: 1`)
 })
 
 t('html: 50+ elements shouldnt invoke recursion', t => {
