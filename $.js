@@ -29,9 +29,9 @@ export default function spect(context, target, callback) {
     context = document
   }
 
-  let collection = [], channel = v()
-  channel(collection)
-  collection.cancel = channel.cancel
+  let collection = [], value = v()
+  value(collection)
+  collection.cancel = value.cancel
 
   // spect(list, fn)
   // spect(target, fn)
@@ -39,7 +39,7 @@ export default function spect(context, target, callback) {
 
   collection.push(...target)
   collection.map(target => matched(target, callback))
-  channel(null, null, () => collection.map(target => unmatched(target, callback)))
+  value(null, null, () => collection.map(target => unmatched(target, callback)))
 
   return collection
 }
@@ -102,9 +102,9 @@ function $(scope, selector, callback) {
     })
   }
 
-  const collection = [], channel = v()
-  channel(collection)
-  collection.cancel = channel.cancel
+  const collection = [], value = v()
+  value(collection)
+  collection.cancel = value.cancel
 
   const aspect = el => {
     let destroy
@@ -114,11 +114,11 @@ function $(scope, selector, callback) {
     } else {
       destroy = callback && callback(el)
       collection.push(el)
-      channel(collection)
+      value(collection)
     }
     return () => {
       collection.splice(collection.indexOf(el) >>> 0, 1)
-      channel(collection)
+      value(collection)
       el[_planned] = window.requestAnimationFrame(() => {
         delete el[_planned]
         if (destroy) {
@@ -132,7 +132,7 @@ function $(scope, selector, callback) {
   set.add(selector, aspect)
 
   collection.cancel = () => {
-    channel[_observable]().cancel()
+    value[_observable]().cancel()
     set.queryAll(scope).forEach(rule => rule.elements.forEach(el => unmatched(el, rule.data)))
     set.remove(selector, aspect)
     if (!set.size) {

@@ -41,42 +41,41 @@
   <script type="module">
     import plur from 'https://cdn.pika.dev/plur'
     // import { $, fx, state, store, on } from "https://unpkg.com/spect?module"
-    import { $, fx, state, store, on, html, input, calc, from, attr } from "../index.js"
+    import { $, h, v } from "../index.js"
 
-    let items = state([])
+    let items = v([])
+    let [list] = $('.todo-list')
 
-    $('.todo-list', list => {
-      on('.new-todo', 'keypress', e => {
+    $('.new-todo', el => {
+      el.addEventListener('keypress', e => {
         if (e.key === 'Enter') {
-          let item = store({ text: state(e.target.value), done: state(false) })
-          items([...items(), item])
-          list.appendChild(html`<li item=${item}/>`)
+          let item = v({ text: v(e.target.value), done: v(false) })
+          items.push(item)
+          list.appendChild(h`<li item=${item}/>`)
           e.target.value = ''
         }
       })
     })
 
     $('.todo-list li', li => {
-      let { item, done } = li
-
-      const hash = state(window.location.hash)
-      on(window, 'hashchange', e => hash(window.location.hash))
-      const hidden = from(hash, hash => hash === '#/active' ? item.done : hash === '#/completed' ? !item.done : false )
+      const hash = v(window.location.hash)
+      window.addEventListener('hashchange', e => hash(window.location.hash))
+      const hidden = v(hash, hash => hash === '#/active' ? item.done() : hash === '#/completed' ? !item.done() : false )
 
       let toggle, edit
-      html`<${li} class="${ from(done, done => done ? 'completed' : '') }" hidden=${ hidden }>
+      h`<${li} class="${ v(item.done, done => done ? 'completed' : '') }" hidden=${ hidden }>
         <div class="view">
-          ${ toggle = html`<input class="toggle" type="checkbox" checked=${ item.done }/>` }
+          ${ toggle = h`<input class="toggle" type="checkbox" checked=${ item.done }/>` }
           <label>${ item.text }</label>
           <button class="destroy"></button>
         </div>
-        ${ edit = html`<input class=edit value=${ item.text } />` }
+        ${ edit = h`<input class=edit value=${ item.text } />` }
       </>`
 
-      input(toggle)(item.done)
-      input(edit)(item.text)
+      v(toggle)(item.done)
+      v(edit)(item.text)
 
-      on(li, 'dblclick', e => {
+      li.addEventListener('dblclick', e => {
         li.classList.add('editing')
         edit.focus()
         edit.onblur = e => li.classList.remove('editing')
@@ -85,19 +84,18 @@
     })
 
     $('.todo-count', el => {
-      html`<${el}>
-        <strong>${ from(items, items => items.length) }</strong>
-        ${ from(items, items => plur('item', items.length)) }
+      h`<${el}>
+        <strong>${ v(items, items => items.length) }</strong>
+        ${ v(items, items => plur('item', items.length)) }
       </>`
     })
 
-    on('.toggle-all', 'click', e => items().map(item => item.done(true)))
-    on('.clear-completed', 'click', e => items(items().filter(item => !item.done)))
+    $('.toggle-all', el => el.addEventListener('click', e => items().map(item => item.done(true))))
+    $('.clear-completed', el => el.addEventListener('click', e => items(items().filter(item => !item.done))))
 
     // if $ is observable that can be done simpler
-    $('.main', main => from(items, items => !items.length)(attr(main, 'hidden')))
-    $('.footer', footer => from(items, items => !items.length)(attr(footer, 'hidden')))
-    // $('.footer', footer => from(items, items => !items.length)(v => attr.set(footer, 'hidden', v)))
+    $('.main', el => items(items => items.length ? el.setAttribute('hidden', '') : el.removeAttribute('hidden')))
+    $('.footer', el => items(items => items.length ? el.setAttribute('hidden', '') : el.removeAttribute('hidden')))
   </script>
 </body>
 </html>

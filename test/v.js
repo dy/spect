@@ -46,7 +46,7 @@ t('v: readme', async t => {
 
   // from multiple values
   let v3 = v([v1, v2], ([v1, v2]) => v1 + v2)
-  t.is(v3(), 3) // > 3
+  t.is(v3(), 3, 'from multiple values') // > 3
 
   // run effect on every change
   log = []
@@ -695,6 +695,7 @@ t('v: input checkbox', async t => {
   t.is(el.value, '')
 
   bool.cancel()
+  // t.throws(() => bool(true))
   bool(true)
   t.any(bool(), [null, undefined, false])
   t.is(el.checked, false)
@@ -720,6 +721,7 @@ t('v: input select', async t => {
   t.is(el.value, '1')
 
   value.cancel()
+  // t.throws(() => value('2'))
   value('2')
   t.any(value(), [null, undefined, '1'])
   t.is(el.innerHTML, '<option value="1" selected="">A</option><option value="2">B</option>')

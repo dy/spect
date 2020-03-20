@@ -11,7 +11,7 @@ const TEXT = 3, ELEMENT = 1
 
 export function html (...args) {
   let result = htm.apply(h, args)
-
+  if (!result) return document.createTextNode('')
   let container = []
   container.childNodes = container
   container.appendChild = el => container.push(el)
@@ -45,11 +45,14 @@ export default function h(tag, ...children) {
       el = document.createElement(tag)
     }
   }
-  else if (typeof tag === 'function') el = createChild(tag(props))
-  else el = createChild(tag)
+  else if (typeof tag === 'function') {
+    el = nodify(tag(props))
+  }
+  else el = nodify(tag)
 
-  // props (dynamic)
+  // element
   if (el.nodeType === ELEMENT) {
+    // props (dynamic)
     el[_props] = v(props)
     el[_props]((props) => {
       let cleanup
@@ -63,12 +66,23 @@ export default function h(tag, ...children) {
           setAttribute(el, name, value)
         }
       }
-      return cleanup
+      return () => cleanup && cleanup.cancel()
     })
-  }
 
-  // children
-  render(children, el)
+    // children
+    if (children.length) render(children, el)
+  }
+  // text
+  else if (el.nodeType === TEXT) {
+    // if (el[_group]) {
+    //   el =
+    // }
+    // el =
+  }
+  // fragment
+  else {
+    if (children.length) render(children, el)
+  }
 
   return el
 }
@@ -92,9 +106,9 @@ export function render(children, el) {
   el[_children](children => {
     children.map((child, i) => {
       if (cur[i] === child) return
-      cur[i] = !cur[i] ? alloc(el, createChild(child)) : replaceWith(cur[i], createChild(child))
+      cur[i] = !cur[i] ? alloc(el, nodify(child)) : replaceWith(cur[i], nodify(child))
       // if sync init did not hit - create placeholder, no hydration possible
-      if (!cur[i]) cur[i] = alloc(el, createChild(''))
+      if (!cur[i]) cur[i] = alloc(el, nodify(''))
     })
   })
 
@@ -102,7 +116,7 @@ export function render(children, el) {
   while(el.childNodes[el[_ptr]]) el.childNodes[el[_ptr]].remove()
 }
 
-function createChild(arg) {
+function nodify(arg) {
   if (arg == null) return document.createTextNode('')
 
   // can be text/primitive
@@ -115,7 +129,7 @@ function createChild(arg) {
   // can be an array / array-like
   if (arg[Symbol.iterator]) {
     let marker = document.createTextNode('')
-    marker[_group] = [...arg].flat().map(arg => createChild(arg))
+    marker[_group] = [...arg].flat().map(arg => nodify(arg))
     return marker
   }
 
@@ -151,9 +165,10 @@ function alloc(parent, el) {
   for (let i = parent[_ptr]; i < parent.childNodes.length; i++) {
     const node = parent.childNodes[i]
     // same node
-    if (node === el
+    if (
+      node === el
       || (node.isSameNode && node.isSameNode(el))
-      || (node[_group] && el[_group])
+
       || (node.tagName === el.tagName && (
         // same-key node
         (node.id && (node.id === el.id))

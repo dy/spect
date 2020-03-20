@@ -1,7 +1,7 @@
 import _observable from 'symbol-observable'
 import c, { observer } from './channel.js'
 
-const _deps = Symbol.for('@spect.deps')
+const depsCache = new WeakMap
 
 export default function v(init, map=v=>v, unmap=v=>v) {
   const channel = c(), { subscribe, observers, push } = channel
@@ -46,7 +46,7 @@ export default function v(init, map=v=>v, unmap=v=>v) {
   // })
 
   // current is mapped value (map can be heavy to call each get)
-  const get = () => fn.current
+  let get = () => fn.current
   let set = () => {}
 
   fn.valueOf = fn.toString = fn[Symbol.toPrimitive] = get
@@ -68,21 +68,28 @@ export default function v(init, map=v=>v, unmap=v=>v) {
     // NOTE: array/object may have _observable, which redefines default deps behavior
     else if (Array.isArray(init) || object(init)) {
       let vals = fn.current = new init.constructor
-      let deps = init[_deps]
-      if (!deps) {
-        deps = [], deps.channel = c()
-        Object.defineProperty(init, _deps, {enumerable: false, value: deps})
-        for (let name in init) {
-          const dep = init[name], depv = v(dep)
-          depv(v => (vals[name] = v, deps.channel(vals)))
-          deps.push(value[name] = depv)
-        }
-        value[Symbol.iterator] = deps[Symbol.iterator].bind(deps)
-        deps.channel(v => push(fn.current = map(v)))
-        if (Object.keys(vals).length || !Object.keys(init).length) deps.channel(vals)
+      let deps = []
+      deps.channel = c()
+      value[Symbol.iterator] = deps[Symbol.iterator].bind(deps)
+      if (!depsCache.has(init)) depsCache.set(fn.init = init, value)
+      for (let name in init) {
+        const dep = init[name], depv = depsCache.has(dep) ? depsCache.get(dep) : v(dep)
+        // console.log(dep, depsCache.has(dep), depv)
+        depv(v => {
+          vals[name] = v
+          // avoid self-recursion here
+          if (value !== depv) deps.channel(vals)
+        })
+        deps.push(value[name] = depv)
       }
+      deps.channel(v => push(fn.current = map(v)))
+      if (Object.keys(vals).length || !Object.keys(init).length) deps.channel(vals)
       set = v => push(fn.current = map(unmap(v)))
-      subscribe(null, null, () => (deps.map(depv => depv.cancel()), deps.channel.cancel()))
+      // set = v => deps.push(unmap(v))
+      subscribe(null, null, () => {
+        deps.map(depv => depv.cancel())
+        deps.channel.cancel()
+      })
     }
     // input
     else if (input(init)) {
@@ -109,7 +116,7 @@ export default function v(init, map=v=>v, unmap=v=>v) {
       el.addEventListener('change', update)
       el.addEventListener('input', update)
       subscribe(null, null, () => {
-        set = () => {}
+        // set = () => {}
         el.removeEventListener('change', update)
         el.removeEventListener('input', update)
       })
@@ -139,6 +146,9 @@ export default function v(init, map=v=>v, unmap=v=>v) {
 
   // cancel subscriptions, dispose
   subscribe(null, null, () => {
+    // get = set = () => {throw Error('closed')}
+    get = set = () => {}
+    depsCache.delete(fn.init)
     delete fn.current
   })
 
