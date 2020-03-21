@@ -1,7 +1,7 @@
 {
   "name": "spect",
   "version": "18.0.0",
-  "description": "Alternative reactive aspect-oriented framework",
+  "description": "Rarical FRP framework with aspects and observables",
   "main": "index.js",
   "module": "index.js",
   "unpkg": "dist/spect.min.js",
