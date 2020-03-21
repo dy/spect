@@ -15,13 +15,11 @@
       <h1>todos</h1>
       <input class="new-todo" placeholder="What needs to be done?" autofocus>
     </header>
-    <!-- This section should be hidden by default and shown when there are todos -->
     <section class="main">
       <input id="toggle-all" class="toggle-all" type="checkbox">
       <label for="toggle-all">Mark all as complete</label>
       <ul class="todo-list"></ul>
     </section>
-    <!-- This footer should hidden by default and shown when there are todos -->
     <footer class="footer" hidden>
       <span class="todo-count"><strong>0</strong> item left</span>
       <ul class="filters">
@@ -40,34 +38,47 @@
   <script src="https://unpkg.com/todomvc-common/base.js"></script>
   <script type="module">
     import plur from 'https://cdn.pika.dev/plur'
-    // import { $, fx, state, store, on } from "https://unpkg.com/spect?module"
-    import { $, h, v } from "../index.js"
+    import { $, h, v } from "https://unpkg.com/spect?module"
+    // import { $, h, v } from "../index.js"
 
     let items = v([])
-    let [list] = $('.todo-list')
+    items.remove = item => {
+      items().splice(items().indexOf(item) >>> 0, 1)
+      items(items())
+    }
+    const remains = v(items, items => items.filter(item => !item().done).length)
+    const allComplete = v(items, items => items.every(item => item.done()))
+
+    let [list] = $`.todo-list`
+
+    const hash = v(() => window.location.hash)
+    window.addEventListener('hashchange', e => hash(window.location.hash))
 
     $('.new-todo', el => {
       el.addEventListener('keypress', e => {
         if (e.key === 'Enter') {
           let item = v({ text: v(e.target.value), done: v(false) })
-          items.push(item)
-          list.appendChild(h`<li item=${item}/>`)
+          items().push(item)
+          v(item)((item) => items(items()))
+          let li
+          list.appendChild(li = h`<li item=${v(() => item)}/>`)
+          item(null, null, () => li.remove())
           e.target.value = ''
         }
       })
     })
 
     $('.todo-list li', li => {
-      const hash = v(window.location.hash)
-      window.addEventListener('hashchange', e => hash(window.location.hash))
+      const { item } = li
+
       const hidden = v(hash, hash => hash === '#/active' ? item.done() : hash === '#/completed' ? !item.done() : false )
 
-      let toggle, edit
+      let toggle, edit, destroy
       h`<${li} class="${ v(item.done, done => done ? 'completed' : '') }" hidden=${ hidden }>
         <div class="view">
           ${ toggle = h`<input class="toggle" type="checkbox" checked=${ item.done }/>` }
           <label>${ item.text }</label>
-          <button class="destroy"></button>
+          <button class="destroy" onclick=${e => (items.remove(item), li.remove())}></button>
         </div>
         ${ edit = h`<input class=edit value=${ item.text } />` }
       </>`
@@ -85,17 +96,31 @@
 
     $('.todo-count', el => {
       h`<${el}>
-        <strong>${ v(items, items => items.length) }</strong>
-        ${ v(items, items => plur('item', items.length)) }
+        <strong>${ remains }</strong>
+        ${ v(remains, count => plur('item', count) + ' left' ) }
       </>`
     })
 
-    $('.toggle-all', el => el.addEventListener('click', e => items().map(item => item.done(true))))
-    $('.clear-completed', el => el.addEventListener('click', e => items(items().filter(item => !item.done))))
+    $('.toggle-all', el => el.addEventListener('click', e => {
+      const all = allComplete()
+      items().map(item => item.done(all ? false : true ))
+    }))
+    $('.clear-completed', el => {
+      el.addEventListener('click', e => {
+        items(items().filter(item => !item.done() ? true : (item.cancel(), false)))
+      })
+      h`<${el} hidden=${allComplete}/>`
+    })
 
     // if $ is observable that can be done simpler
-    $('.main', el => items(items => items.length ? el.setAttribute('hidden', '') : el.removeAttribute('hidden')))
-    $('.footer', el => items(items => items.length ? el.setAttribute('hidden', '') : el.removeAttribute('hidden')))
+    $('.main', el => items(items => !items.length ? el.setAttribute('hidden', '') : el.removeAttribute('hidden')))
+    $('.footer', el => items(items => !items.length ? el.setAttribute('hidden', '') : el.removeAttribute('hidden')))
+    $('.filters li a', el => {
+      v(hash, hash => {
+        if (hash === el.hash) el.classList.add('selected')
+        else el.classList.remove('selected')
+      })
+    })
   </script>
 </body>
 </html>
