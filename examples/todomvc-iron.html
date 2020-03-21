@@ -1,0 +1,141 @@
+<!doctype html>
+<html lang="en" data-framework="spect">
+
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Spect • TodoMVC</title>
+  <link rel="stylesheet" href="https://unpkg.com/todomvc-common/base.css">
+  <link rel="stylesheet" href="https://unpkg.com/todomvc-app-css/index.css">
+</head>
+
+<body>
+  <section class="todoapp">
+    <header class="header">
+      <h1>todos</h1>
+      <input class="new-todo" placeholder="What needs to be done?" autofocus>
+    </header>
+    <section class="main">
+      <input id="toggle-all" class="toggle-all" type="checkbox">
+      <label for="toggle-all">Mark all as complete</label>
+      <ul class="todo-list"></ul>
+    </section>
+    <footer class="footer" hidden>
+      <span class="todo-count"><strong>0</strong> item left</span>
+      <ul class="filters">
+        <li><a class="selected" href="#/">All</a></li>
+        <li><a href="#/active">Active</a></li>
+        <li><a href="#/completed">Completed</a></li>
+      </ul>
+      <button class="clear-completed">Clear completed</button>
+    </footer>
+  </section>
+  <footer class="info">
+    <p>Double-click to edit a todo</p>
+    <p>Created by <a href="https://github.com/dy">dy</a></p>
+    <p>Part of <a href="http://todomvc.com">TodoMVC</a></p>
+  </footer>
+  <script src="https://unpkg.com/todomvc-common/base.js"></script>
+  <script type="module">
+    import plur from 'https://cdn.pika.dev/plur'
+    // import { v } from "https://cdn.pika.dev/ironjs"
+    import { v } from "ironjs"
+    // import { $, h } from "https://unpkg.com/spect?module"
+    import { $, h } from "../index.js"
+
+    let [list] = $`.todo-list`
+    let items = v([])
+    items.remove = item => {
+      item.cancel()
+      items.put(items.v.indexOf(item) >>> 0, 1)
+    }
+    items.add = item => {
+      item = v(item)
+      let idx = items.v.length
+      items.push(item)
+      items.v = items._v // FIXME
+      let li
+      list.appendChild(li = h`<li data-item-id=${idx}/>`)
+      // item(item => items(items()), null, () => li.remove())
+    }
+
+    // init store
+    // let str = localStorage.getItem('todomvc.items')
+    // if (str) JSON.parse(str).map(item => items.add(item))
+    // v(() => localStorage.setItem('todomvc.items', JSON.stringify(items.v)))
+
+    const remains = v(() => items.v.filter(item => !item.done).length)
+    const allComplete = v(() => items.v.every(item => item.done))
+
+    const hash = v(() => window.location.hash || '#/')
+    window.addEventListener('hashchange', e => hash.v = window.location.hash)
+
+    $('.new-todo', el => {
+      el.addEventListener('keypress', e => {
+        if (e.key === 'Enter') {
+          items.add({ text: e.target.value, done: false })
+          e.target.value = ''
+        }
+      })
+    })
+
+    $('.todo-list li', li => {
+      const item = items.v[li.dataset.itemId]
+
+      const hidden = v(() => hash.v === '#/active' ? item.v.done : hash === '#/completed' ? !item.v.done : false )
+
+      let toggle, edit, destroy
+      h`<${li} class="${ v(() => item.v.done ? 'completed' : '') }" hidden=${ hidden }>
+        <div class="view">
+          ${ toggle = h`<input class="toggle" type="checkbox" checked=${ v(() => item.v.done) }/>` }
+          <label>${ v(() => item.v.text) }</label>
+          <button class="destroy" onclick=${e => (items.remove(item))}></button>
+        </div>
+        ${ edit = h`<input class=edit value=${ v(() => item.v.text) } />` }
+      </>`
+
+      toggle.addEventListener('change', e => (item.v = { ...item.v, done: e.target.checked }, items.v = items._v))
+      edit.addEventListener('change', e => item.v = { ...item.v, text: e.target.value })
+
+      li.addEventListener('dblclick', e => {
+        li.classList.add('editing')
+        edit.focus()
+        edit.onblur = e => li.classList.remove('editing')
+        edit.onkeypress = e => e.key === 'Enter' ? e.target.blur() : null
+      })
+    })
+
+    $('.todo-count', el => {
+      h`<${el}>
+        <strong>${ remains }</strong>
+        ${ v(() => plur('item', remains.v) + ' left' ) }
+      </>`
+    })
+
+    $('.toggle-all', el => el.addEventListener('click', e => {
+      v(() => {
+        items.v.map(item => item.v.done = allComplete.v ? false : true )
+        items.v = items._v // FIXME
+      })
+    }))
+    $('.clear-completed', el => {
+      el.addEventListener('click', e => {
+        v(() => items.v = items.v.filter(item => !item.v.done ? true : (items.remove(item), item.v = null)))
+      })
+      h`<${el} hidden=${v(() => items.v.every(item => !item.v.done))}/>`
+    })
+
+    // if $ is observable that can be done simpler
+    let main = $('.main')[0]
+    v(() => !items.v.length ? main.setAttribute('hidden', '') : main.removeAttribute('hidden'))
+    $('.footer', el => v(() => !items.v.length ? el.setAttribute('hidden', '') : el.removeAttribute('hidden')))
+    $('.filters li a', el => {
+      v(() => {
+        if (hash === el.hash) el.classList.add('selected')
+        else el.classList.remove('selected')
+      })
+    })
+  </script>
+</body>
+</html>
+
