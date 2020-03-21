@@ -3,15 +3,17 @@ import c, { observer } from './channel.js'
 
 const depsCache = new WeakMap
 
-export default function v(...args) {
-  let value = f()
-  if (args.length) value(args[0])
-  return value
-}
-
-v.from = f
-export function f(source, map=v=>v, unmap=v=>v) {
+export default function v(source, map=v=>v, unmap=v=>v) {
   const channel = c(), { subscribe, observers, push } = channel
+
+  // v(map, unmap) vs v(v, map)
+  if (typeof source === 'function') {
+    if (!observable(source)) {
+      unmap = map
+      map = source
+      source = undefined
+    }
+  }
 
   const fn = (...args) => {
     if (!args.length) return get()
@@ -54,19 +56,21 @@ export function f(source, map=v=>v, unmap=v=>v) {
 
   // current is mapped value (map can be heavy to call each get)
   let get = () => fn.current
-  let set = () => {}
+  let set = v => push(fn.current = map(unmap(v)))
 
   fn.valueOf = fn.toString = fn[Symbol.toPrimitive] = get
   fn[_observable] = () => channel
   fn.cancel = channel.cancel
-  // observ
-  // if (arguments.length) {
+
+  if (arguments.length) {
+    // v / observ
     if (typeof source === 'function') {
       set = v => source(unmap(v))
       subscribe(null, null, source(v => push(fn.current = map(v))))
     }
     // Observable (stateless)
     else if (source && source[_observable]) {
+      set = () => {}
       let unsubscribe = source[_observable]().subscribe({next: v => push(fn.current = map(v))})
       unsubscribe = unsubscribe.unsubscribe || unsubscribe
       subscribe(null, null, unsubscribe)
@@ -80,7 +84,7 @@ export function f(source, map=v=>v, unmap=v=>v) {
       value[Symbol.iterator] = deps[Symbol.iterator].bind(deps)
       if (!depsCache.has(source)) depsCache.set(fn.source = source, value)
       for (let name in source) {
-        const dep = source[name], depv = depsCache.has(dep) ? depsCache.get(dep) : f(dep)
+        const dep = source[name], depv = depsCache.has(dep) ? depsCache.get(dep) : v(dep)
         // console.log(dep, depsCache.has(dep), depv)
         depv(v => {
           vals[name] = v
@@ -91,8 +95,7 @@ export function f(source, map=v=>v, unmap=v=>v) {
       }
       deps.channel(v => push(fn.current = map(v)))
       if (Object.keys(vals).length || !Object.keys(source).length) deps.channel(vals)
-      set = v => push(fn.current = map(unmap(v)))
-      // set = v => deps.push(unmap(v))
+      set = v => deps.channel.push(unmap(v))
       subscribe(null, null, () => {
         deps.map(depv => depv.cancel())
         deps.channel.cancel()
@@ -130,6 +133,7 @@ export function f(source, map=v=>v, unmap=v=>v) {
     }
     // async iterator (stateful, initial undefined)
     else if (source && (source.next || source[Symbol.asyncIterator])) {
+      set = () => {}
       let stop
       ;(async () => {
         for await (let v of source) {
@@ -146,10 +150,9 @@ export function f(source, map=v=>v, unmap=v=>v) {
     }
     // plain value
     else {
-      set = v => push(fn.current = map(unmap(v)))
-      if (arguments.length) set(source)
+      set(source)
     }
-  // }
+  }
 
   // cancel subscriptions, dispose
   subscribe(null, null, () => {
@@ -169,7 +172,7 @@ export function primitive(val) {
 
 export function observable(arg) {
   if (!arg) return false
-  return !!(typeof arg === 'function' || arg[_observable] || arg[Symbol.asyncIterator] || arg.next || arg.then)
+  return !!(arg[_observable] || (typeof arg === 'function' && arg.set) || arg[Symbol.asyncIterator] || arg.next || arg.then)
 }
 
 export function object (value) {
