@@ -89,9 +89,9 @@ Consider simple user welcoming example.
 import { $, h, v } from 'spect'
 
 $('.user', async el => {
-  const username = v('guest')
-  h`<${el}>Hello, ${ username }!</>`
   const user = v((await fetch('/user')).json())
+
+  h`<${el}>Hello, ${ user()?.name || 'guest' }!</>`
 })
 </script>
 ```
@@ -132,7 +132,11 @@ $('.todo-form', el => on(el, 'submit', e => {
 Input element here is uncontrolled and logic closely follows native js to provide _progressive enhancement_. _**`list`**_ creates an observable array `todos`, mutating it automatically rerenders _**`h`**_.
 -->
 
-See more [/examples](examples).
+### Examples
+
+* [todomvc](https://spectjs.github.io/examples/todomvc.html)
+
+See [/examples](examples) folder.
 
 <!--
 
