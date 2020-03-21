@@ -27,7 +27,7 @@ t('v: readme', async t => {
   unsub()
 
   // from value
-  let v2 = v(v1, v1 => v1 * 2)
+  let v2 = v.from(v1, v1 => v1 * 2)
   log = []
   v2(v2 => log.push(v2))
   t.is(v2(), 2) // > 2
@@ -37,20 +37,20 @@ t('v: readme', async t => {
   t.is(log, [2, 2])
 
   // gotcha
-  v(v2)
+  v.from(v2)
   t.is(v1(), 1)
   t.is(v2(), 2)
-  v([v2, v1])
+  v.from([v2, v1])
   t.is(v1(), 1)
   t.is(v2(), 2)
 
   // from multiple values
-  let v3 = v([v1, v2], ([v1, v2]) => v1 + v2)
+  let v3 = v.from([v1, v2], ([v1, v2]) => v1 + v2)
   t.is(v3(), 3, 'from multiple values') // > 3
 
   // run effect on every change
   log = []
-  v([v1, v2, v3])(([v1, v2, v3]) => {
+  v.from([v1, v2, v3])(([v1, v2, v3]) => {
     log.push(v1, v2, v3)
     return () => log.push('-')
   })
@@ -105,7 +105,7 @@ t('v: core', async t => {
   t.end()
 })
 t('v: should not expose technical symbols', async t => {
-  let s = v({x: 1})
+  let s = v.from({x: 1})
   let log = []
   for(let p in s()) {
     log.push(p)
@@ -114,7 +114,7 @@ t('v: should not expose technical symbols', async t => {
 })
 t('v: function/other state gets subscribed', async t => {
   let s = v(1)
-  let s2 = v(s)
+  let s2 = v.from(s)
 
   t.is(s2(), 1)
   s(2)
@@ -160,7 +160,7 @@ t('v: multiple subscriptions should not inter-trigger', async t => {
 })
 t('v: mapper should be called once on group deps', async t => {
   let a=v(0), b=v(1), log = []
-  v([a,b], (args) => log.push([...args]))
+  v.from([a,b], (args) => log.push([...args]))
   t.is(log, [[0, 1]])
 })
 t('v: stores arrays with observables', async t => {
@@ -174,7 +174,7 @@ t('v: stores arrays with observables', async t => {
   t.is(a(), [])
 
   let b = v(0)
-  a = v([b])
+  a = v.from([b])
   t.is(a(), [0])
   b(1)
   t.is(a(), [1])
@@ -182,7 +182,7 @@ t('v: stores arrays with observables', async t => {
   t.is(a(), [1])
 })
 t('v: simple unmap', async t => {
-  let a = v(1, v => v + 1, v => v - 1)
+  let a = v.from(1, v => v + 1, v => v - 1)
   t.is(a(), 1)
   a(2)
   t.is(a(), 2)
@@ -193,7 +193,7 @@ t('v: object deps', async t => {
   let x = v(1), y = v(1)
   let o = {x, y}
   let log = []
-  v(o, ({x, y}) =>{
+  v.from(o, ({x, y}) =>{
     log.push(x, y)
   })
   t.is(log, [1,1])
@@ -205,15 +205,21 @@ t('v: object deps', async t => {
 t('v: recursion', async t => {
   let x = {a: 1}
   x.x = x
-  let vx = v(x)
+  let vx = v.from(x)
   t.is(vx().a, 1)
+})
+t('v: internal observers are ... unwrapped', async t => {
+  let x = [{x: v(0)}]
+  let log = []
+  v.from(x)(v => log.push(v))
+  t.is(log, [[{x: 0}]])
 })
 
 // from
 t('v: from promise', async t => {
   let log = []
 
-  let vp = v(time(10).then(() => 1))
+  let vp = v.from(time(10).then(() => 1))
   vp(v => log.push(v))
 
   t.is(vp(), undefined)
@@ -235,7 +241,7 @@ t('v: from promise / observable / observ', async t => {
 
   let log = []
 
-  let op = v(p), oO = v(O), ov = v(c), oo = v(o)
+  let op = v.from(p), oO = v.from(O), ov = v.from(c), oo = v.from(o)
   oo(v => log.push(v))
   op(v => log.push(v))
   ov(v => log.push(v))
@@ -262,7 +268,7 @@ t('v: from async generator', async t => {
     yield 3
   }
   const log = []
-  let a = v([x(), x()], ([x1, x2]) => {
+  let a = v.from([x(), x()], ([x1, x2]) => {
     log.push(x1, x2)
   })
   await tick(12)
@@ -273,18 +279,18 @@ t('v: from async generator', async t => {
 })
 t('v: mapper from v', async t => {
   let v0 = v()
-  let v1 = v(0, x => x + 1)
+  let v1 = v.from(0, x => x + 1)
   v1(v0)
   t.is(v0(), 1)
 })
 t('v: to value', async t => {
   let x = v(0)
   const y = v()
-  v(x)(y)
+  v.from(x)(y)
   t.is(y(), 0)
 })
 t('v: subscribed observable setter', async t => {
-  let a = v(0), b = v(a), c = v(b)
+  let a = v(0), b = v.from(a), c = v.from(b)
   a(1)
   t.is(b(), 1)
   b(2)
@@ -296,7 +302,7 @@ t('v: subscribed observable setter', async t => {
 })
 t('v: init non-input elements', async t => {
   let el = document.createElement('div')
-  let vel = v(el)
+  let vel = v.from(el)
   t.is(vel(), el)
   vel.cancel()
 
@@ -311,7 +317,7 @@ t('v: init non-input elements', async t => {
   // vel3.cancel()
 })
 t('v: expose deps observables', async t => {
-  let a = v(0), b = v(1), c = v({a, b})
+  let a = v(0), b = v(1), c = v.from({a, b})
   t.is(c.a(), 0)
   t.is(c.b(), 1)
   t.is(c(), {a:0, b:1})
@@ -321,10 +327,10 @@ t('v: expose deps observables', async t => {
 t('v: fx core', async t => {
   let a = v(0)
   let o = { b: 1 }
-  let b = v(o)
+  let b = v.from(o)
 
   let log = []
-  v([a, b], ([a, b]) => {
+  v.from([a, b], ([a, b]) => {
     log.push(a, b.b)
   })
 
@@ -345,7 +351,7 @@ t('v: fx core', async t => {
 t('v: fx destructor', async t => {
   let log = []
   let a = v(0), b = v(0)
-  v([a,b])(([a, b]) => {
+  v.from([a,b])(([a, b]) => {
     log.push('in', a, b)
     return () => {
       log.push('out', a, b)
@@ -366,7 +372,7 @@ t.todo('v: fx disposed by unmounted element automatically')
 t('v: fx runs unchanged', async t => {
   let a = v(0)
   let log = []
-  v(a)(a => {
+  v.from(a)(a => {
     log.push(a)
   })
 
@@ -380,16 +386,16 @@ t('v: fx runs unchanged', async t => {
 t('v: fx no-deps/empty deps runs once after deps', async t => {
   let log = []
   const c = v(0)
-  v([c])(([c]) => {
+  v.from([c])(([c]) => {
     log.push(c)
   })
-  v([])(() => {
+  v.from([])(() => {
     log.push(1)
   })
-  v()(() => {
+  v.from()(() => {
     log.push(2)
   })
-  v([c])(() => {
+  v.from([c])(() => {
     log.push(c())
   })
 
@@ -399,7 +405,7 @@ t('v: fx no-deps/empty deps runs once after deps', async t => {
 t('v: fx async fn', async t => {
   let count = v(0)
   let log = []
-  v(count)(async c => {
+  v.from(count)(async c => {
     log.push(c)
     if (c > 3) return
     await tick()
@@ -416,7 +422,7 @@ t('v: fx promise / observable / direct dep', async t => {
   let c = 1
 
   let log = []
-  let unsub = v([p, O, c, o])(([p, O, c, o]) => {
+  let unsub = v.from([p, O, c, o])(([p, O, c, o]) => {
     log.push(c, p, O, o)
   })
 
@@ -451,7 +457,7 @@ t.skip('v: fx thenable', async t => {
 })
 t('v: fx simple values', async t => {
   const o = {x:1}, log = []
-  let unsub = v([o, o.x])(([o, x]) => {
+  let unsub = v.from([o, o.x])(([o, x]) => {
     log.push(o, x)
   })
   await tick(8)
@@ -474,7 +480,7 @@ t.todo('v: deps updated to new length', async t => {
 })
 t('v: fx sync must not call twice init const', async t => {
   let log = []
-  v('x')((v) => {
+  v.from('x')((v) => {
     log.push(v)
   })
 
@@ -484,7 +490,7 @@ t('v: fx sync must not call twice init const', async t => {
 })
 t('v: fx aync callback', async t => {
   let log = []
-  v(1)(async () => {
+  v.from(1)(async () => {
     await time(10)
     log.push(10)
   })
@@ -497,8 +503,8 @@ t('v: fx aync callback', async t => {
 t('v: calc core', async t => {
 
   const f = v(32), c = v(0)
-  const celsius = v(f, f => (f - 32) / 1.8)
-  const fahren = v(c, c => (c * 9) / 5 + 32)
+  const celsius = v.from(f, f => (f - 32) / 1.8)
+  const fahren = v.from(c, c => (c * 9) / 5 + 32)
 
   await tick(8)
 
@@ -510,8 +516,8 @@ t('v: calc core', async t => {
   t.is(fahren(), 68)
 })
 t('v: calc must be sync', async t => {
-  const x = v(0)
-  const x2 = v(x, x => x * 2)
+  const x = v.from(0)
+  const x2 = v.from(x, x => x * 2)
   t.is(x2(), 0)
 
   x(1)
@@ -520,7 +526,7 @@ t('v: calc must be sync', async t => {
 })
 t.skip('v: calc async calculator', async t => {
   // NOTE: for async effects use subscriptions, mapper can only be sync
-  const x = v(1, async () => {
+  const x = v.from(1, async () => {
     await time(10)
     return 10
   })
@@ -531,7 +537,7 @@ t.skip('v: calc async calculator', async t => {
 t('v: calc promises/changeables must return undefined', async t => {
   const p = Promise.resolve(1)
   const log = []
-  v(p, x => log.push(x))
+  v.from(p, x => log.push(x))
   await tick(8)
   t.is(log, [1])
 })
@@ -542,21 +548,21 @@ t('v: calc async generator is fine', async t => {
     yield 2
   }
   let log = []
-  v(ag(), x => {
+  v.from(ag(), x => {
     log.push(x)
   })
   await tick(12)
   t.is(log, [1, 2])
 })
 t('v: calc empty-deps case calls calc once', async t => {
-  let v1 = v(null, () => 1)
+  let v1 = v.from(null, () => 1)
   t.is(v1(), 1)
-  let v2 = v([], () => 1)
+  let v2 = v.from([], () => 1)
   t.is(v2(), 1)
 })
 t('v: calc reading recalcs value', async t => {
-  let x = v(1)
-  let y = v(x, (x) => x * 2)
+  let x = v.from(1)
+  let y = v.from(x, (x) => x * 2)
   t.is(y(), 2)
   x(2)
   t.is(x(), 2)
@@ -564,7 +570,7 @@ t('v: calc reading recalcs value', async t => {
 })
 t('v: calc promises must be resolved fine', async t => {
   let p = new Promise(ok => setTimeout(() => ok(2)))
-  let x = v(p, value => value)
+  let x = v.from(p, value => value)
   t.is(x(), undefined)
   await time()
   t.is(x(), 2)
@@ -574,25 +580,25 @@ t('v: calc promises must be resolved fine', async t => {
 t('v: input text', async t => {
   let el = document.createElement('input')
   document.body.appendChild(el)
-  let text = v(el)
+  let text = v.from(el)
   text(v => console.log(v))
 
   let cb = document.createElement('input')
   cb.setAttribute('type', 'checkbox')
   document.body.appendChild(cb)
-  let bool = v(cb)
+  let bool = v.from(cb)
   bool(v => console.log(v))
 
   let sel = document.createElement('select')
   sel.innerHTML = `<option value=1>A</option><option value=2>B</option>`
   document.body.appendChild(sel)
-  let enm = v(sel)
+  let enm = v.from(sel)
   enm(v => console.log(v))
 })
 t('v: input updates by changing value directly', async t => {
   let el = document.createElement('input')
   el.value = 0
-  let value = v(el)
+  let value = v.from(el)
   t.is(value(), '0')
 
   // observer 1
@@ -634,7 +640,7 @@ t('v: input updates by changing value directly', async t => {
 })
 t('v: input get/set', async t => {
   let el = document.createElement('input')
-  let value = v(el)
+  let value = v.from(el)
   value(0)
   t.is(el.value, '0', 'set is ok')
   t.is(value(), '0', 'get is ok')
@@ -678,7 +684,7 @@ t('v: input checkbox', async t => {
   let el = document.createElement('input')
   el.type = 'checkbox'
   document.body.appendChild(el)
-  let bool = v(el)
+  let bool = v.from(el)
   t.is(bool(), false)
   t.is(el.checked, false)
   t.is(el.value, '')
@@ -705,7 +711,7 @@ t('v: input select', async t => {
   let el = document.createElement('select')
   el.innerHTML = '<option value=1 selected>A</option><option value=2>B</option>'
   // document.body.appendChild(el)
-  let value = v(el)
+  let value = v.from(el)
   t.is(value(), '1')
   t.is(el.value, '1')
 

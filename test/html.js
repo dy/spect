@@ -172,7 +172,7 @@ t.skip('html: element should be observable', async t => {
   let a = v(1)
   let el = html`<a>${a}</a>`
   let log = []
-  v(el)(el => log.push(el.textContent))
+  v.from(el)(el => log.push(el.textContent))
   a(2)
   t.is(log, ['1', '2'])
 })
@@ -531,8 +531,8 @@ t('html: update own children', t => {
 })
 
 t('html: [legacy] prop', async t => {
-  let obj = v({ x: 1 })
-  let el = html`<div>${ v(obj, obj => obj.x) }</div>`
+  let obj = v.from({ x: 1 })
+  let el = html`<div>${ v.from(obj, obj => obj.x) }</div>`
 
   t.is(el.outerHTML, '<div>1</div>')
 

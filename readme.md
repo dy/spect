@@ -36,7 +36,7 @@
 -->
 
 
-_Spect_ is radical minimalistic [_aspect-oriented_](https://en.wikipedia.org/wiki/Aspect-oriented_programming) FRP library enabling super-compact UI code. _Spect_ is a successor of [_observable_](https://www.npmjs.com/package/observable), inspired by [_react hooks_](https://reactjs.org/docs/hooks-intro.html) and [_jquery_](https://ghub.io/jquery). It is compatible with [_observable_](https://github.com/tc39/proposal-observable) and [_observ_](https://ghub.io/observ)-[_*_](https://ghub.io/mutant).
+_Spect_ is radical minimalistic [_aspect-oriented_](https://en.wikipedia.org/wiki/Aspect-oriented_programming) FRP library enabling super-compact UI code. _Spect_ is a successor of [_observable_](https://www.npmjs.com/package/observable), inspired by [_react hooks_](https://reactjs.org/docs/hooks-intro.html) and [_jquery_](https://ghub.io/jquery). It is compatible with [_standard observable_](https://github.com/tc39/proposal-observable) and [_observ_](https://ghub.io/observ)-[_*_](https://ghub.io/mutant).
 
 ## Principles
 
@@ -91,13 +91,13 @@ import { $, h, v } from 'spect'
 $('.user', async el => {
   const username = v('guest')
   h`<${el}>Hello, ${ username }!</>`
-  const user = v((await fetch('/user')).json())
+  const user = v.from((await fetch('/user')).json())
 })
 </script>
 ```
 
-`$` defines a `.user` rule, assigning an _aspect_ callback for matching elements, similar to _CSS_ or _jQuery_, but live.
-`h` is _hyperscript_ / _htm_ in one, declaring markup effect. It rerenders automatically whenever `username` changes.
+`$` defines a `.user` rule, assigning an _aspect_ callback for matching elements, similar to _CSS_ or _jQuery_, but live.<br/>
+`h` is _hyperscript_ / _htm_ in one, declaring markup effect. It rerenders automatically whenever `username` changes.<br/>
 `v` is _observable_ acting as _useState_.
 
 <!--
@@ -302,9 +302,9 @@ const foo = h`<${foo}>${ bar }</>`
 import { v, h } from 'spect'
 
 $('#clock', el => {
-  let date = v(new Date())
+  let date = v.from(new Date())
   setInterval(() => date(new Date()), 1000)
-  h`<${el}>${ v(date => date.toISOString())} </>`
+  h`<${el}>${ v.from(date, date => date.toISOString())} </>`
 })
 ```
 
@@ -315,13 +315,14 @@ $('#clock', el => {
 </details>
 
 
-<details><summary><strong>v − varying value</strong></summary>
+<details><summary><strong>v − value observable</strong></summary>
 
-> value = v( from? , map?, inmap? )<br/>
+> value = v( init? )<br/>
+> value = v.from( source , map? , inmap? )
 
-Value observable − creates a getter/setter function with [observable](https://ghub.io/observable) API. May act as _transform_, taking optional `map` and `inmap` mappers.
+Value observable − creates a getter/setter function with [observable](https://ghub.io/observable) API.
 
-`from` can be:
+`v.from` acts as _transform_, taking optional `map` and `inmap` mappers, where `source` can be:
 
 * _Primitive_ value − creates simple observable state.
 * _Function_ (_v_, [observ-*](https://ghub.io/observ), [observable](https://ghub.io/observable), [mutant](https://ghub.io/mutant) etc.) − creates 2-way bound observable.
@@ -329,10 +330,8 @@ Value observable − creates a getter/setter function with [observable](https://
 * _Promise_ or _thenable_ − subscribes to promise state.
 * _Standard observable_ or target with [`Symbol.observable`](https://ghub.io/symbol-observable) ([rxjs](https://ghub.io/rxjs), [zen-observable](https://ghub.io/zen-observable) etc.) − creates 1-way bound observable.
 * _Input_ (_radio_, _checkbox_), or _Select_ − creates 2-way bound observable for input value, normalizes attributes.
-* _Array_ or _Object_ with any combination of the above.
+* _Array_ or _Object_ with any combination of the above. Observable props are exposed on the created observable.
 * Any other value − creates simple observable state.
-
-_v_ exposes observable properties on `value`.
 
 ```js
 import { v } from 'spect'
@@ -354,26 +353,27 @@ v1(value => {
 })
 
 // from value
-let v2 = v(v1, v1 => v1 * 2)
+let v2 = v.from(v1, v1 => v1 * 2)
 v2() // 2
 
 // from multiple values
-let v3 = v([v1, v2], ([v1, v2]) => v1 + v2)
+let v3 = v.from([v1, v2], ([v1, v2]) => v1 + v2)
 v3() // 3
 v3[0]() // 1
 
 // run effect on every change
-v([v1, v2, v3])(([v1, v2, v3]) => {
+v.from([v1, v2, v3])(([v1, v2, v3]) => {
   console.log(v1, v2, v3)
   return () => console.log('teardown', v1, v2, v3)
 })
 // 1, 2, 3
 
 // from input
-let v4 = v(...$('#input'))
+let v4 = v.from($('#input'))
+v4(value => console.log(value))
 
 // from object
-let v5 = v({ done: v(true) })
+let v5 = v.from({ done: v(true) })
 v5.done()
 // true
 
@@ -386,9 +386,9 @@ v5().done
 ```js
 import { $, v } from 'spect'
 
-const f = v(...$`#fahren`), c = v(...$`#celsius`)
-const celsius = v(f, f => (f - 32) / 1.8)
-const fahren = v(c, c => (c * 9) / 5 + 32)
+const f = v.from($`#fahren`), c = v.from($`#celsius`)
+const celsius = v.from(f, f => (f - 32) / 1.8)
+const fahren = v.from(c, c => (c * 9) / 5 + 32)
 
 celsius() // 0
 fahren() // 32

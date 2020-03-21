@@ -3,7 +3,14 @@ import c, { observer } from './channel.js'
 
 const depsCache = new WeakMap
 
-export default function v(init, map=v=>v, unmap=v=>v) {
+export default function v(...args) {
+  let value = f()
+  if (args.length) value(args[0])
+  return value
+}
+
+v.from = f
+export function f(source, map=v=>v, unmap=v=>v) {
   const channel = c(), { subscribe, observers, push } = channel
 
   const fn = (...args) => {
@@ -26,20 +33,20 @@ export default function v(init, map=v=>v, unmap=v=>v) {
   //   get(fn, prop) {
   //     if (channel.canceled) return
   //     if (prop !== 'length' && prop in fn) return fn[prop]
-  //     if (init) return init[prop]
+  //     if (source) return source[prop]
   //   },
   //   has(fn, prop) {
   //     if (channel.canceled) return
-  //     return prop in fn || (init && prop in init)
+  //     return prop in fn || (source && prop in source)
   //   },
   //   set(fn, prop, v) {
   //     if (channel.canceled) return true
-  //     else init[prop] = v
+  //     else source[prop] = v
   //     // need reinit
   //     return true
   //   },
   //   deleteProperty(fn, prop) {
-  //     delete init[prop]
+  //     delete source[prop]
   //     // need reinit
   //     return true
   //   }
@@ -54,26 +61,26 @@ export default function v(init, map=v=>v, unmap=v=>v) {
   fn.cancel = channel.cancel
   // observ
   // if (arguments.length) {
-    if (typeof init === 'function') {
-      set = v => init(unmap(v))
-      subscribe(null, null, init(v => push(fn.current = map(v))))
+    if (typeof source === 'function') {
+      set = v => source(unmap(v))
+      subscribe(null, null, source(v => push(fn.current = map(v))))
     }
     // Observable (stateless)
-    else if (init && init[_observable]) {
-      let unsubscribe = init[_observable]().subscribe({next: v => push(fn.current = map(v))})
+    else if (source && source[_observable]) {
+      let unsubscribe = source[_observable]().subscribe({next: v => push(fn.current = map(v))})
       unsubscribe = unsubscribe.unsubscribe || unsubscribe
       subscribe(null, null, unsubscribe)
     }
     // group
     // NOTE: array/object may have _observable, which redefines default deps behavior
-    else if (Array.isArray(init) || object(init)) {
-      let vals = fn.current = new init.constructor
+    else if (Array.isArray(source) || object(source)) {
+      let vals = fn.current = new source.constructor
       let deps = []
       deps.channel = c()
       value[Symbol.iterator] = deps[Symbol.iterator].bind(deps)
-      if (!depsCache.has(init)) depsCache.set(fn.init = init, value)
-      for (let name in init) {
-        const dep = init[name], depv = depsCache.has(dep) ? depsCache.get(dep) : v(dep)
+      if (!depsCache.has(source)) depsCache.set(fn.source = source, value)
+      for (let name in source) {
+        const dep = source[name], depv = depsCache.has(dep) ? depsCache.get(dep) : f(dep)
         // console.log(dep, depsCache.has(dep), depv)
         depv(v => {
           vals[name] = v
@@ -83,7 +90,7 @@ export default function v(init, map=v=>v, unmap=v=>v) {
         deps.push(value[name] = depv)
       }
       deps.channel(v => push(fn.current = map(v)))
-      if (Object.keys(vals).length || !Object.keys(init).length) deps.channel(vals)
+      if (Object.keys(vals).length || !Object.keys(source).length) deps.channel(vals)
       set = v => push(fn.current = map(unmap(v)))
       // set = v => deps.push(unmap(v))
       subscribe(null, null, () => {
@@ -92,8 +99,8 @@ export default function v(init, map=v=>v, unmap=v=>v) {
       })
     }
     // input
-    else if (input(init)) {
-      const el = init
+    else if (input(source)) {
+      const el = source
 
       const iget = el.type === 'checkbox' ? () => el.checked : () => el.value
 
@@ -122,10 +129,10 @@ export default function v(init, map=v=>v, unmap=v=>v) {
       })
     }
     // async iterator (stateful, initial undefined)
-    else if (init && (init.next || init[Symbol.asyncIterator])) {
+    else if (source && (source.next || source[Symbol.asyncIterator])) {
       let stop
       ;(async () => {
-        for await (let v of init) {
+        for await (let v of source) {
           if (stop) break
           push(fn.current = map(v))
         }
@@ -133,14 +140,14 @@ export default function v(init, map=v=>v, unmap=v=>v) {
       subscribe(null, null, () => stop = true)
     }
     // promise (stateful, initial undefined)
-    else if (init && init.then) {
+    else if (source && source.then) {
       set = p => (delete fn.current, p.then(v => push(fn.current = map(v))))
-      set(init)
+      set(source)
     }
     // plain value
     else {
       set = v => push(fn.current = map(unmap(v)))
-      if (arguments.length) set(init)
+      if (arguments.length) set(source)
     }
   // }
 
@@ -148,7 +155,7 @@ export default function v(init, map=v=>v, unmap=v=>v) {
   subscribe(null, null, () => {
     // get = set = () => {throw Error('closed')}
     get = set = () => {}
-    depsCache.delete(fn.init)
+    depsCache.delete(fn.source)
     delete fn.current
   })
 
