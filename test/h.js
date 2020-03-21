@@ -6,6 +6,7 @@ import { h, v } from '../index.js'
 // import { $, state, fx, prop, store, calc, list, ref, attr, on, html } from '../dist/spect.min.js'
 import { tick, frame, idle, time } from 'wait-please'
 import observable from './observable.js'
+import { Reactor, v as iv } from 'ironjs'
 
 t('h: single attribute', async t => {
   const a = v(0)
@@ -505,4 +506,15 @@ t('h: object props preserve internal observables, only high-levels are handled',
   let props, el = h('x', props = {x: v(0), y: {x: v(0)}})
   t.is(el.outerHTML, `<x x="0" y="x: 0;"></x>`)
   t.is(el.y, props.y)
+})
+
+t('h: iron support', t => {
+  const noun = iv('world')
+  const message = iv(() => `Hello ${noun.v}`)
+
+  let el = h('x', message)
+  t.is(el.outerHTML, `<x>Hello world</x>`)
+
+  noun.v = 'Iron'
+  t.is(el.outerHTML, `<x>Hello Iron</x>`)
 })

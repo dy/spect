@@ -145,6 +145,12 @@ export default function v(source, map=v=>v, unmap=v=>v) {
       set = p => (delete fn.current, p.then(v => push(fn.current = map(v))))
       set(source)
     }
+    // ironjs
+    else if (source && source.mutation && '_state' in source) {
+      const Reactor = source.constructor
+      const reaction = new Reactor(() => set(source.state))
+      set(source.state)
+    }
     // plain value
     else {
       set(source)
@@ -169,7 +175,14 @@ export function primitive(val) {
 
 export function observable(arg) {
   if (!arg) return false
-  return !!(arg[_observable] || (typeof arg === 'function' && arg.set) || arg[Symbol.asyncIterator] || arg.next || arg.then)
+  return !!(
+    arg[_observable]
+    || (typeof arg === 'function' && arg.set)
+    || arg[Symbol.asyncIterator]
+    || arg.next
+    || arg.then
+    || arg && arg.mutation && '_state' in arg
+  )
 }
 
 export function object (value) {

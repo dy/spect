@@ -6,6 +6,7 @@ import { augmentor, useState, useEffect, useMemo } from 'augmentor'
 import Observable from 'zen-observable/esm'
 import observable from './observable.js'
 import morph from './morph.js'
+import { v as iv } from 'ironjs'
 
 t('html: single attribute', async t => {
   const a = v(0)
@@ -668,4 +669,15 @@ t('html: 50+ elements shouldnt invoke recursion', t => {
 
   t.is(el[2].textContent, 'x: ')
   t.ok(el.length >= 100, 'many els created')
+})
+
+t('html: iron support', t => {
+  const noun = iv('world')
+  const message = iv(() => `Hello ${noun.v}`)
+
+  let el = html`<x>${message}</x>`
+  t.is(el.outerHTML, `<x>Hello world</x>`)
+
+  noun.v = 'Iron'
+  t.is(el.outerHTML, `<x>Hello Iron</x>`)
 })

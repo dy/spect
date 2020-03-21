@@ -334,6 +334,7 @@ Value observable − creates a getter/setter function with [observable](https://
 * _Promise_ or _thenable_ − subscribes to promise state.
 * _Standard observable_ or target with [`Symbol.observable`](https://ghub.io/symbol-observable) ([rxjs](https://ghub.io/rxjs), [zen-observable](https://ghub.io/zen-observable) etc.) − creates 1-way bound observable.
 * _Input_ (_radio_, _checkbox_), or _Select_ − creates 2-way bound observable for input value, normalizes attributes.
+* [_Ironjs Reactor_](https://ghub.io/ironjs)
 * _Array_ or _Object_ with any combination of the above. Observable props are exposed on the created observable.
 * Any other value − creates observable with the initial state.
 
