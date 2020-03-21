@@ -2,6 +2,7 @@
 
 Version | Changes
 ---|---
+19.1.0 | `v` now has initializer.
 19.0.0 | Reduced API: `$`, `h`, `v`.
 18.0.0 | Reduced API: `$`, `h`, `v`, `o`, `e`.
 17.0.0 | Removed `list`. `$` now creates live collection.
