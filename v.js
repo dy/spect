@@ -6,15 +6,6 @@ const depsCache = new WeakMap
 export default function v(source, map=v=>v, unmap=v=>v) {
   const channel = c(), { subscribe, observers, push } = channel
 
-  // v(map, unmap) vs v(v, map)
-  if (typeof source === 'function') {
-    if (!observable(source)) {
-      unmap = map
-      map = source
-      source = undefined
-    }
-  }
-
   const fn = (...args) => {
     if (!args.length) return get()
     if (observer(...args)) {
@@ -65,8 +56,14 @@ export default function v(source, map=v=>v, unmap=v=>v) {
   if (arguments.length) {
     // v / observ
     if (typeof source === 'function') {
-      set = v => source(unmap(v))
-      subscribe(null, null, source(v => push(fn.current = map(v))))
+      // NOTE: we can't simply check args.length, because v(fn)(fx) is valid case for observable input
+      if (observable(source)) {
+        set = v => source(unmap(v))
+        subscribe(null, null, source(v => push(fn.current = map(v))))
+      }
+      else {
+        set(source())
+      }
     }
     // Observable (stateless)
     else if (source && source[_observable]) {

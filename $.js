@@ -29,8 +29,7 @@ export default function spect(context, target, callback) {
     context = document
   }
 
-  let collection = [], value = v()
-  value(collection)
+  let collection = [], value = v(() => collection)
   collection.cancel = value.cancel
 
   // spect(list, fn)
@@ -102,8 +101,7 @@ function $(scope, selector, callback) {
     })
   }
 
-  const collection = [], value = v()
-  value(collection)
+  const collection = [], value = v(() => collection)
   collection.cancel = value.cancel
 
   const aspect = el => {

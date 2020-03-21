@@ -189,8 +189,7 @@ t('h: rerendering with props: must persist', async t => {
   h(el, null, h('div'), h('x'))
   t.equal(el.firstChild, div)
   t.equal(el.childNodes.length, 2)
-
-  h(el, null, h('div', {class:'foo', items:[]}), h('x'))
+  document.body.appendChild(h(el, null, h('div', {class:'foo', items:[]}), h('x')))
   t.equal(el.firstChild, div)
   t.equal(el.childNodes.length, 2)
   t.equal(el.firstChild.className, 'foo')
@@ -497,7 +496,13 @@ t('h: direct children', t => {
   t.is(el3.outerHTML, '<x>x</x>')
 })
 
-t.todo('h: array component', t => {
+t('h: array component', t => {
   let el = h(() => [1, 2])
-  t.is(el.textContent, '1,2')
+  t.is(el.textContent, '12')
+})
+
+t('h: object props preserve internal observables, only high-levels are handled', t => {
+  let props, el = h('x', props = {x: v(0), y: {x: v(0)}})
+  t.is(el.outerHTML, `<x x="0" y="x: 0;"></x>`)
+  t.is(el.y, props.y)
 })

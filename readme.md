@@ -323,15 +323,15 @@ Value observable − creates a getter/setter function with [observable](https://
 
 `from` can be:
 
-* _Primitive_ value − creates simple observable state.
-* _Function_ with _map_ / _inmap_ (_v_, [observ-*](https://ghub.io/observ), [observable](https://ghub.io/observable), [mutant](https://ghub.io/mutant) etc.) − creates 2-way bound observable.
+* _Primitive_ value − creates observable with the initial state.
+* _Function_ − creates observable with state initialized by the function.
+* _Observable_ (_v_, [observ-*](https://ghub.io/observ), [observable](https://ghub.io/observable), [mutant](https://ghub.io/mutant) etc.) − creates 2-way bound observable.
 * _AsyncIterator_ or target with [`Symbol.asyncIterator`](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Symbol/asyncIterator) − creates 1-way bound observable with optional mapping.
 * _Promise_ or _thenable_ − subscribes to promise state.
 * _Standard observable_ or target with [`Symbol.observable`](https://ghub.io/symbol-observable) ([rxjs](https://ghub.io/rxjs), [zen-observable](https://ghub.io/zen-observable) etc.) − creates 1-way bound observable.
 * _Input_ (_radio_, _checkbox_), or _Select_ − creates 2-way bound observable for input value, normalizes attributes.
 * _Array_ or _Object_ with any combination of the above. Observable props are exposed on the created observable.
-* none − then _map_ function is used as initalizer.
-* Any other value − creates simple observable state.
+* Any other value − creates observable with the initial state.
 
 ```js
 import { v } from 'spect'

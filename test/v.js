@@ -215,8 +215,14 @@ t('v: internal observers are ... unwrapped', async t => {
   t.is(log, [[{x: 0}]])
 })
 t('v: initializer', async t => {
-  let a = v(0), b = v(() => a), c = v((v = 0) => v + 2, (v = 0) => v - 2)
+  let a = v(0), b = v(() => a), c = v(0, (v) => v + 2, (v) => v - 2)
   t.is(b(), a)
+
+  a(1)
+  t.is(a(), 1)
+
+  b(2)
+  t.is(b(), 2)
 
   t.is(c(), 0)
   c(4)

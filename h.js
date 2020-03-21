@@ -53,32 +53,34 @@ export default function h(tag, ...children) {
   // element
   if (el.nodeType === ELEMENT) {
     // props (dynamic)
-    el[_props] = v(props)
+    el[_props] = v(() => props)
     el[_props]((props) => {
-      let cleanup
+      let vprop
       for (let name in props) {
         let value = props[name]
-        if (observable(value) || Array.isArray(value) || object(value)) {
-          cleanup = v(value, value => (el[name] = value, setAttribute(el, name, value)))
+        if (observable(value)) {
+          vprop = v(value, value => (
+            el[name] = value,
+            setAttribute(el, name, value)
+          ))
+        }
+        else if (Array.isArray(value) || object(value)) {
+          el[name] = value
+          vprop = v(value, value => setAttribute(el, name, value))
         }
         else {
           el[name] = value
           setAttribute(el, name, value)
         }
       }
-      return () => cleanup && cleanup.cancel()
+      return () => vprop && vprop.cancel()
     })
 
     // children
     if (children.length) render(children, el)
   }
   // text
-  else if (el.nodeType === TEXT) {
-    // if (el[_group]) {
-    //   el =
-    // }
-    // el =
-  }
+  else if (el.nodeType === TEXT) {}
   // fragment
   else {
     if (children.length) render(children, el)
@@ -109,11 +111,18 @@ export function render(children, el) {
       cur[i] = !cur[i] ? alloc(el, nodify(child)) : replaceWith(cur[i], nodify(child))
       // if sync init did not hit - create placeholder, no hydration possible
       if (!cur[i]) cur[i] = alloc(el, nodify(''))
+
+      // clear placeholder content
+      if (cur[i][_group]) cur[i].textContent = ''
     })
   })
 
   // trim unused nodes
-  while(el.childNodes[el[_ptr]]) el.childNodes[el[_ptr]].remove()
+  while(el.childNodes[el[_ptr]]) {
+    let child = el.childNodes[el[_ptr]]
+    if (child[_props]) (child[_props].cancel(), delete child[_props])
+    child.remove()
+  }
 }
 
 function nodify(arg) {
@@ -130,6 +139,8 @@ function nodify(arg) {
   if (arg[Symbol.iterator]) {
     let marker = document.createTextNode('')
     marker[_group] = [...arg].flat().map(arg => nodify(arg))
+    // create placeholder content (will be ignored by ops)
+    marker.textContent = marker[_group].map(n => n.textContent).join('')
     return marker
   }
 
@@ -182,7 +193,11 @@ function alloc(parent, el) {
     ) {
       match = node
       // migrate props (triggers fx that mutates them)
-      if (el !== match && el[_props] && match[_props]) match[_props](el[_props]())
+      if (el !== match && el[_props] && match[_props]) {
+        match[_props](el[_props]())
+        el[_props].cancel()
+        delete el[_props]
+      }
       render([...el.childNodes], match)
       break
     }
@@ -205,7 +220,9 @@ function alloc(parent, el) {
 // group-aware manipulations
 function appendChild(parent, el) {
   parent.appendChild(el)
-  if (el[_group]) el[_group].map(el => parent.appendChild(el))
+  if (el[_group]) {
+    el[_group].map(el => parent.appendChild(el))
+  }
   parent[_ptr] += 1 + (el[_group] ? el[_group].length : 0)
 }
 function insertBefore(parent, el, before) {
@@ -248,6 +265,8 @@ function setAttribute (el, name, value) {
     let values = Object.values(value)
     el.setAttribute(name, Object.keys(value).map((key, i) => `${key}: ${values[i]};`).join(' '))
   }
+  // onclick={} - just ignore
+  else if (typeof value === 'function') {}
   else {
     el.setAttribute(name, value === true ? '' : value)
   }
