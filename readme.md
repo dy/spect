@@ -134,7 +134,7 @@ Input element here is uncontrolled and logic closely follows native js to provid
 
 ### Examples
 
-* [todomvc](https://spectjs.github.io/examples/todomvc.html)
+* [todomvc](https://spectjs.github.io/spect/examples/todomvc.html)
 
 See [/examples](examples) folder.
 
