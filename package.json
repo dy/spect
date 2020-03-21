@@ -1,6 +1,6 @@
 {
   "name": "spect",
-  "version": "18.1.0",
+  "version": "19.0.0",
   "description": "Aspect-oriented FRP with observables",
   "main": "index.js",
   "module": "index.js",
