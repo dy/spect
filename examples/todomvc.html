@@ -41,28 +41,37 @@
     import { $, h, v } from "https://unpkg.com/spect?module"
     // import { $, h, v } from "../index.js"
 
+    let [list] = $`.todo-list`
     let items = v([])
     items.remove = item => {
+      item.cancel()
       items().splice(items().indexOf(item) >>> 0, 1)
       items(items())
     }
+    items.add = item => {
+      item = v(item)
+      items().push(item)
+      let li
+      list.appendChild(li = h`<li item=${v(() => item)}/>`)
+      item(item => items(items()), null, () => li.remove())
+    }
+
+    // init store
+    let str = localStorage.getItem('todomvc.items')
+    if (str) JSON.parse(str).map(item => items.add(item))
+    items(items => localStorage.setItem('todomvc.items', JSON.stringify(items.map(item => item()))))
+
     const remains = v(items, items => items.filter(item => !item().done).length)
     const allComplete = v(items, items => items.every(item => item.done()))
 
-    let [list] = $`.todo-list`
 
-    const hash = v(() => window.location.hash)
+    const hash = v(() => window.location.hash || '#/')
     window.addEventListener('hashchange', e => hash(window.location.hash))
 
     $('.new-todo', el => {
       el.addEventListener('keypress', e => {
         if (e.key === 'Enter') {
-          let item = v({ text: v(e.target.value), done: v(false) })
-          items().push(item)
-          v(item)((item) => items(items()))
-          let li
-          list.appendChild(li = h`<li item=${v(() => item)}/>`)
-          item(null, null, () => li.remove())
+          items.add({ text: v(e.target.value), done: v(false) })
           e.target.value = ''
         }
       })
@@ -78,7 +87,7 @@
         <div class="view">
           ${ toggle = h`<input class="toggle" type="checkbox" checked=${ item.done }/>` }
           <label>${ item.text }</label>
-          <button class="destroy" onclick=${e => (items.remove(item), li.remove())}></button>
+          <button class="destroy" onclick=${e => (items.remove(item))}></button>
         </div>
         ${ edit = h`<input class=edit value=${ item.text } />` }
       </>`
@@ -109,7 +118,7 @@
       el.addEventListener('click', e => {
         items(items().filter(item => !item.done() ? true : (item.cancel(), false)))
       })
-      h`<${el} hidden=${allComplete}/>`
+      h`<${el} hidden=${v(items, items => items.every(item => !item.done()))}/>`
     })
 
     // if $ is observable that can be done simpler
