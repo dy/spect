@@ -602,6 +602,7 @@ foobus.cancel()
 
 ## Inspiration / R&D
 
+* [iron](https://github.com/ironjs/iron) − alternative approach to reactive js.
 * [selector-observer](https://ghub.io/selector-observer) − same idea with object-based API.
 * [unihooks](https://ghub.io/unihooks) − cross-framework hooks collection.
 * [observable](https://ghub.io/observable), [observ](https://ghub.io/observ), [mutant](https://ghub.io/mutant) − elegant observable implementation.
