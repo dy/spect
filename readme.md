@@ -269,7 +269,7 @@ $timer[0]
 > el = h( tag , props? , ...children )<br/>
 > el = h\`...content\`<br/>
 
-[Hyperscript](https://ghub.io/hyperscript)-compatible element constructor. Can be used via JSX or template literal with [_htm_](https://ghub.io/xhtm) syntax.
+[Hyperscript](https://ghub.io/hyperscript)-compatible element constructor with observable support. Can be used via JSX or template literal with extended [_htm_](https://ghub.io/xhtm) syntax.
 
 ```js
 import { h, v } from 'spect'
@@ -323,20 +323,20 @@ $('#clock', el => {
 
 > value = v( from? , map? , inmap? )<br/>
 
-Value observable − creates a getter/setter function with [observable](https://ghub.io/observable) API. May act as _transform_, taking optional `map` and `inmap` mappers.
+Value observable − creates a getter/setter function with [observable](https://ghub.io/observable) API.<br/>
+May act as _transform_, taking optional `map` and `inmap` mappers.
 
 `from` can be:
 
 * _Primitive_ value − creates observable with the initial state.
-* _Function_ − creates observable with state initialized by the function.
-* _Observable_ (_v_, [observ-*](https://ghub.io/observ), [observable](https://ghub.io/observable), [mutant](https://ghub.io/mutant) etc.) − creates 2-way bound observable.
-* _AsyncIterator_ or target with [`Symbol.asyncIterator`](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Symbol/asyncIterator) − creates 1-way bound observable with optional mapping.
-* _Promise_ or _thenable_ − subscribes to promise state.
-* _Standard observable_ or target with [`Symbol.observable`](https://ghub.io/symbol-observable) ([rxjs](https://ghub.io/rxjs), [zen-observable](https://ghub.io/zen-observable) etc.) − creates 1-way bound observable.
-* _Input_ (_radio_, _checkbox_), or _Select_ − creates 2-way bound observable for input value, normalizes attributes.
-* [_Ironjs Reactor_](https://ghub.io/ironjs)
-* _Array_ or _Object_ with any combination of the above. Observable props are exposed on the created observable.
-* Any other value − creates observable with the initial state.
+* _Function_ − initializes state with the result of the function.
+* _Observable_ (_v_, [observ-*](https://ghub.io/observ), [observable](https://ghub.io/observable), [mutant](https://ghub.io/mutant) etc.) − wraps observable 2-way with optional mapping in/out.
+* _AsyncIterator_ or [`[Symbol.asyncIterator]`](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Symbol/asyncIterator) − mirrors iterator 1-way with optional mapping.
+* _Promise_ or _thenable_ − tracks/maps promise state.
+* _Standard observable_ or [`[Symbol.observable]`](https://ghub.io/symbol-observable) ([rxjs](https://ghub.io/rxjs), [zen-observable](https://ghub.io/zen-observable) etc.) − mirrors observable with optional mapping.
+* _Input_ (_radio_, _checkbox_), or _Select_ − creates 2-way bound observable for the input value.
+* [_Ironjs_](https://ghub.io/ironjs) _Reactor_.
+* _Array_ or _Object_ − creates observable with tracked props.
 
 ```js
 import { v } from 'spect'
@@ -378,18 +378,16 @@ let v4 = v($('#input'))
 v4(value => console.log(value))
 
 // from object
-let v5 = v({ done: v(true) })
-v5.done()
-// true
+let v5 = v({ done: true })
+v5.done // true
 
-v5().done
-// true
+// set property, notify
+v5.done = false
+v5().done // false
 
-// observable as value
+// initialize value
 let v6 = v(() => v5)
-
-v6()
-// v5
+v6() // v5
 ```
 
 #### Example
@@ -407,73 +405,13 @@ fahren() // 32
 
 <!-- <sub>_v_ is a single-character replacement to _useState_, _useEffect_, _useMemo_, _rxjs/from_, _zen-observable_, _mobx@computed_ etc. Its design is derived from _react hooks_, [_observable_](https://ghut.io/observable), [_rxjs_](https://ghub.io/rxjs), [_iron_](https://github.com/ironjs/iron) and others.</sub> -->
 
-<br/>
-
-</details>
-
-
-<!--
-<details><summary><strong>o − object state</strong></summary>
-
-> state = o( target = {} , props? )<br/>
-
-Object state with reflection to attributes. Creates a `state` proxy to any `target`, with optionally defined `props` to observe on the target. Adding, changing, or deleting `state` props mutates `target` and emits changes. If `target` is an _Element_, then `state` also reflects values as attributes.
-
-`props` define obseved props on `target` and their type − one of _Boolean_, _String_, _Number_, _Array_, _Object_ or `null`. If `props` are undefined, then only own target safe props are observed without coercion.
-
-```js
-import { o, v } from 'spect'
-
-// object
-const obj = o({ foo: null })
-
-// set
-obj.foo = 'bar'
-
-// subscribe to changes
-v(obj, ({ foo }) => console.log(foo))
-// > 'bar'
-
-
-// array
-let arr = o([1, 2, 3])
-
-// set
-arr[3] = 4
-
-// mutate
-arr.push(5, 6)
-arr.unshift(0)
-
-// subscribe
-v(arr, arr => console.log(arr))
-// > [0, 1, 2, 3, 4, 5, 6]
-
-
-// element
-let props = o(el, { loading: Boolean })
-
-// set
-props.loading = true
-
-// get
-props.loading
-// > true
-
-// attr
-el.getAttribute('loading')
-// > ''
-
-// subscribe
-v(props, ({loading}) => console.log(loading))
-```
 
 #### Example
 
 ```js
-import { o, v } from 'spect'
+import { v } from 'spect'
 
-let likes = o({
+let likes = v({
   count: null,
   loading: false,
   async load() {
@@ -487,86 +425,13 @@ $('.likes-count', el => h`<${el}>${
     v(likes, ({loading, count}) => loading ? `Loading...` : `Likes: ${ likes.count }`)
   }</>`
 })
-```
--->
 
-<!-- <sub>_o_ is a single-character alternative to _react props_, _redux_, _react-redux_, _useReducer_, _mobx@observable_, _unistore_, _use-store_ etc. It incorporates _prop-types_, _lit-element props_, _typescript_ etc logic.</sub> -->
-
-<!--
-<details><summary><strong>e − events</strong></summary>
-
-> e( scope? , selector , event , callback? )<br/>
-> e( target | list , event , callback? )<br/>
-
-Event stateless observable for an element, runs `callback` on `target` / `list` events or by `selector`. For the `selector` case it delegates events to `scope` container, by default `globalThis`.
-
-```js
-import { e } from 'spect'
-
-// target events
-e(document.querySelector('button'), 'click', e => {
-  console.log('clicked', e)
-})
-
-// delegate events
-const submit = e('form', 'submit', e => console.log(e))
-
-// cancel submit events listener
-submit.cancel()
-
-// multiple events
-e('.draggable', 'touchstart mousedown', e => {})
+likes.load()
 ```
 
-#### Example
-
-```js
-import { e } from 'spect'
-
-const ticks = e('.timer', 'tick', e => {
-  console.log('Seconds', e.detail.count)
-})
-
-let count = 0, timer = document.querySelector('.timer')
-setInterval(() => {
-  timer.dispatchEvent(new CustomEvent('tick', { detail: ++count}))
-}, 1000)
-
-// cancel ticks
-ticks.cancel()
-```
--->
-<!-- <sub>_e_ simplest alternative to _rxjsEvent_, _jQuery.on_ etc. is designed with reference to [delegated-events](https://www.npmjs.com/package/delegated-events), [emmy](https://ghub.io/emmy) and others.</sub> -->
-
-
-<!--
-<details><summary><strong>cancel</strong></summary>
-
-> cancel( ...observables )
-
-Cancel observables in the list.
-
-```js
-import { $, cancel } from 'spect'
-
-let $items = $('.item')
-let clicks = on($items, 'click')
-
-cancel($items, clicks)
-```
-
-#### Example
-
-```js
-import { from } from 'spect'
-
-let date = state(new Date())
-setInterval(() => date(new Date()), 1000)
-from(date, date => date.toISOString())(date => console.log(date))
-```
+<br/>
 
 </details>
--->
 
 
 <!--
