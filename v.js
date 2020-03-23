@@ -60,31 +60,27 @@ export default function v(source, map=v=>v, unmap=v=>v) {
 
       // init observables
       for (let name in source) {
-        if (observable(source[name])) {
-          const dep = deps[name] = depsCache.get(source[name]) || v(source[name])
-          Object.defineProperty(fn, name, {
-            writable: false,
-            enumerable: true,
-            configurable: false,
-            value: dep
-          })
-          dep(val => {
-            vals[name] = val
-            // avoid self-recursion
-            if (fn !== dep) dchannel(vals)
-          })
-        }
+        let dep
+        if (observable(source[name])) dep = deps[name] = depsCache.get(source[name]) || v(source[name])
+        // redefine source property to observe it
         else {
-          vals[name] = source[name]
-          Object.defineProperty(fn, name, {
-            get(){ return source[name] },
-            set(value){
-              vals[name] = source[name] = value
-              dchannel(vals)
-            }
+          dep = deps[name] = v(() => vals[name] = source[name])
+          let orig = Object.getOwnPropertyDescriptor(source, name)
+          Object.defineProperty(source, name, {
+            enumerable: true,
+            get: dep,
+            set: orig && orig.set ? v => (orig.set.call(source, v), dep(orig.get())) : v => dep(v)
           })
         }
+        dep(val => {
+          vals[name] = val
+          // avoid self-recursion
+          if (fn !== dep) dchannel(vals)
+        })
+        Object.defineProperty(fn, name, { writable: false, enumerable: true, configurable: false, value: dep})
       }
+      // we can handle only static deps
+      Object.seal(source)
 
       // any deps change triggers update
       dchannel(v => push(channel.current = map(v)))

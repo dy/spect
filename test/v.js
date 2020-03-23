@@ -57,7 +57,26 @@ t('v: readme', async t => {
   t.is(log, [1, 2, 3])
   // > 1, 2, 3
 
-  v1[Symbol.dispose]()
+
+  // from object
+  let item = { done: false }
+  let v5 = v(item)
+  log = []
+  v5(v => log.push({...v}))
+  t.is(v5.done(), false, 'internal props') // false
+  t.is(log, [{done: false}], 'emit props')
+
+  // set property, notify
+  item.done = true
+  t.is(v5().done, true) // false
+  t.is(log, [{done: false}, {done: true}])
+
+  // initialize value
+  let v6 = v(() => v5)
+  t.is(v6(), v5) // v5
+
+  // dispose
+  ;[v6, v5, v3, v2, v1].map(v => v[Symbol.dispose]())
 })
 t('v: core', async t => {
   let s = v(0)

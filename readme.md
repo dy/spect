@@ -378,11 +378,12 @@ let v4 = v($('#input'))
 v4(value => console.log(value))
 
 // from object
-let v5 = v({ done: true })
-v5.done // true
+let item = { done: false }
+let v5 = v(item)
+v5.done() // false
 
 // set property, notify
-v5.done = false
+item.done = true
 v5().done // false
 
 // initialize value
