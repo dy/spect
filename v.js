@@ -159,8 +159,6 @@ export default function v(source, map=v=>v, unmap=v=>v) {
     delete channel.current
   })
 
-  Object.seal(fn)
-
   return fn
 }
 

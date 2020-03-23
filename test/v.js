@@ -250,6 +250,11 @@ t('v: initializer', async t => {
   c(4)
   t.is(c(), 4)
 })
+t('v: stringify', async t => {
+  let v1 = v(1), v2 = v({x:1})
+  t.is(JSON.stringify(v1()), '1')
+  t.is(JSON.stringify(v2()), `{"x":1}`)
+})
 
 // from
 t('v: from promise', async t => {

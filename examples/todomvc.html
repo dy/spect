@@ -38,22 +38,22 @@
   <script src="https://unpkg.com/todomvc-common/base.js"></script>
   <script type="module">
     import plur from 'https://cdn.pika.dev/plur'
-    import { $, h, v } from "https://unpkg.com/spect?module"
-    // import { $, h, v } from "../index.js"
+    // import { $, h, v } from "https://unpkg.com/spect?module"
+    import { $, h, v } from "../index.js"
 
     let [list] = $`.todo-list`
-    let items = v([])
-    items.remove = item => {
-      item.cancel()
-      items().splice(items().indexOf(item) >>> 0, 1)
-      items(items())
-    }
+    let items = v(() => [])
     items.add = item => {
       item = v(item)
       items().push(item)
       let li
-      list.appendChild(li = h`<li item=${v(() => item)}/>`)
-      item(item => items(items()), null, () => li.remove())
+      list.appendChild(li = h`<li/>`).item = item
+      item(() => items(items()), null, () => li.remove())
+    }
+    items.remove = item => {
+      item[Symbol.dispose]()
+      items().splice(items().indexOf(item) >>> 0, 1)
+      items(items())
     }
 
     // init store
@@ -61,7 +61,7 @@
     if (str) JSON.parse(str).map(item => items.add(item))
     items(items => localStorage.setItem('todomvc.items', JSON.stringify(items.map(item => item()))))
 
-    const remains = v(items, items => items.filter(item => !item().done).length)
+    const remains = v(items, items => items.filter(item => !item.done()).length)
     const allComplete = v(items, items => items.every(item => item.done()))
 
 
@@ -71,7 +71,7 @@
     $('.new-todo', el => {
       el.addEventListener('keypress', e => {
         if (e.key === 'Enter') {
-          items.add({ text: v(e.target.value), done: v(false) })
+          items.add({ text: e.target.value, done: false })
           e.target.value = ''
         }
       })
@@ -80,10 +80,10 @@
     $('.todo-list li', li => {
       const { item } = li
 
-      const hidden = v(hash, hash => hash === '#/active' ? item.done() : hash === '#/completed' ? !item.done() : false )
+      const hidden = v(([hash, item]), ([hash, item]) => hash === '#/active' ? item.done : hash === '#/completed' ? !item.done : false )
 
       let toggle, edit, destroy
-      h`<${li} class="${ v(item.done, done => done ? 'completed' : '') }" hidden=${ hidden }>
+      h`<${li} class="${ v(item, ({done}) => done ? 'completed' : '') }" hidden=${ hidden }>
         <div class="view">
           ${ toggle = h`<input class="toggle" type="checkbox" checked=${ item.done }/>` }
           <label>${ item.text }</label>
@@ -112,20 +112,20 @@
 
     $('.toggle-all', el => el.addEventListener('click', e => {
       const all = allComplete()
-      items().map(item => item.done(all ? false : true ))
+      items.map(item => item.done(all ? false : true ))
     }))
     $('.clear-completed', el => {
       el.addEventListener('click', e => {
-        items(items().filter(item => !item.done() ? true : (item.cancel(), false)))
+        items(items().filter(item => !item.done() ? true : (item[Symbol.dispose](), false)))
       })
-      h`<${el} hidden=${v(items, items => items.every(item => !item.done()))}/>`
+      h(el, {hidden: v(items, items => items.every(item => !item.done()))})
     })
 
     // if $ is observable that can be done simpler
-    $('.main', el => items(items => !items.length ? el.setAttribute('hidden', '') : el.removeAttribute('hidden')))
-    $('.footer', el => items(items => !items.length ? el.setAttribute('hidden', '') : el.removeAttribute('hidden')))
+    $('.main', el => items(items => h(el, {hidden: !items.length})))
+    $('.footer', el => items(items => h(el, {hidden: !items.length})))
     $('.filters li a', el => {
-      v(hash, hash => {
+      v(hash, (hash) => {
         if (hash === el.hash) el.classList.add('selected')
         else el.classList.remove('selected')
       })
