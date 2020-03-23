@@ -31,8 +31,8 @@ t('$: tag selector', async t => {
   t.deepEqual(proplog, [1, 1, 1, 1], 'additional aspect')
 
   document.body.removeChild(container)
-  x1.cancel(null)
-  x2.cancel(null)
+  x1[Symbol.dispose](null)
+  x2[Symbol.dispose](null)
 
   t.end()
 })
@@ -49,7 +49,7 @@ t('$: init existing elements', async t => {
   await Promise.resolve()
   t.is(log, ['x', 'x'], 'simple creation')
 
-  xs.cancel()
+  xs[Symbol.dispose]()
   document.body.removeChild(container)
 })
 t('$: dynamically assigned selector', async t => {
@@ -70,7 +70,7 @@ t('$: dynamically assigned selector', async t => {
 
   t.is(log, [el])
 
-  xs.cancel()
+  xs[Symbol.dispose]()
   // xs(null)
   document.body.removeChild(el)
 
@@ -90,7 +90,7 @@ t('$: simple hooks', async t => {
   await frame()
   t.is(el.count, 1)
 
-  hx.cancel()
+  hx[Symbol.dispose]()
   // hx(null)
 })
 t.skip('$: aspects must be called in order', async t => {
@@ -106,7 +106,7 @@ t.skip('$: aspects must be called in order', async t => {
   t.deepEqual(log, [1, 2, 3])
 
   document.body.removeChild(a)
-  as.cancel()
+  as[Symbol.dispose]()
   // as(null)
 })
 t('$: throwing error must not create recursion', async t => {
@@ -120,7 +120,7 @@ t('$: throwing error must not create recursion', async t => {
   await tick()
 
   document.body.removeChild(a)
-  as.cancel()
+  as[Symbol.dispose]()
   // as(null)
   t.end()
 })
@@ -137,7 +137,7 @@ t('$: remove/add should not retrigger element', async t => {
   t.deepEqual(log, ['a'])
 
   document.body.removeChild(a)
-  as.cancel()
+  as[Symbol.dispose]()
   // as(null)
   await frame()
   t.end()
@@ -155,7 +155,7 @@ t('$: remove/add internal should not retrigger element', async t => {
   t.deepEqual(log, ['b'])
 
   document.body.removeChild(a)
-  abs.cancel()
+  abs[Symbol.dispose]()
   // abs(null)
   await frame()
   t.end()
@@ -174,7 +174,7 @@ t('$: destructor is called on unmount', async t => {
   el.innerHTML = ''
   await frame(2)
   t.deepEqual(log, [1, 1, 2, 2], 'clear up')
-  all.cancel()
+  all[Symbol.dispose]()
   // all(null)
   el.innerHTML = 'x<a></a><a></a>x'
   await tick()
@@ -218,8 +218,8 @@ t('$: changed attribute matches new nodes', async t => {
   await frame(2)
   t.is(log, ['+2', '+3', '-2', '-3'])
 
-  abb.cancel()
-  abbc.cancel()
+  abb[Symbol.dispose]()
+  abbc[Symbol.dispose]()
   // abb(null)
   // abbc(null)
 })
@@ -453,7 +453,7 @@ t('$: init on list of elements', async t => {
   })
   t.deepEqual(log, ['1', '2'])
   el.innerHTML = ''
-  chldrn.cancel()
+  chldrn[Symbol.dispose]()
   // chldrn(null)
   await frame(2)
   t.deepEqual(log, ['1', '2', 'un1', 'un2'])

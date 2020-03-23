@@ -388,6 +388,10 @@ v5().done // false
 // initialize value
 let v6 = v(() => v5)
 v6() // v5
+
+
+// dispose
+[v6, v5, v4, v3, v2, v1].map(v => v[Symbol.dispose]())
 ```
 
 #### Example

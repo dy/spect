@@ -1,6 +1,6 @@
+import * as symbol from './symbols.js'
 import SelectorSet from 'selector-set'
 import tuple from 'immutable-tuple'
-import _observable from 'symbol-observable'
 import v from './v.js'
 
 // global to avold multiple spect instances collision
@@ -30,7 +30,7 @@ export default function spect(context, target, callback) {
   }
 
   let collection = [], value = v(() => collection)
-  collection.cancel = value.cancel
+  collection[symbol.dispose] = value[symbol.dispose]
 
   // spect(list, fn)
   // spect(target, fn)
@@ -102,7 +102,15 @@ function $(scope, selector, callback) {
   }
 
   const collection = [], value = v(() => collection)
-  collection.cancel = value.cancel
+  collection[symbol.dispose] = () => {
+    value[symbol.dispose]()
+    set.queryAll(scope).forEach(rule => rule.elements.forEach(el => unmatched(el, rule.data)))
+    set.remove(selector, aspect)
+    if (!set.size) {
+      scope[_observer].disconnect()
+      delete scope[_observer]
+    }
+  }
 
   const aspect = el => {
     let destroy
@@ -128,16 +136,6 @@ function $(scope, selector, callback) {
   }
 
   set.add(selector, aspect)
-
-  collection.cancel = () => {
-    value[_observable]().cancel()
-    set.queryAll(scope).forEach(rule => rule.elements.forEach(el => unmatched(el, rule.data)))
-    set.remove(selector, aspect)
-    if (!set.size) {
-      scope[_observer].disconnect()
-      delete scope[_observer]
-    }
-  }
 
   // set.matches(scope).forEach(rule => matched(scope, rule.data))
   set.queryAll(scope).forEach(rule => rule.elements.forEach(el => matched(el, rule.data)))

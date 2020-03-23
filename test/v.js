@@ -56,6 +56,8 @@ t('v: readme', async t => {
   })
   t.is(log, [1, 2, 3])
   // > 1, 2, 3
+
+  v1[Symbol.dispose]()
 })
 t('v: core', async t => {
   let s = v(0)
@@ -208,11 +210,12 @@ t('v: recursion', async t => {
   let vx = v(x)
   t.is(vx().a, 1)
 })
-t('v: internal observers are ... unwrapped', async t => {
+t('v: internal observers are preserved', async t => {
+  // NOTE: we preserve internal observers to let object props be rewritable
   let x = [{x: v(0)}]
   let log = []
   v(x)(v => log.push(v))
-  t.is(log, [[{x: 0}]])
+  t.is(log, [x])
 })
 t('v: initializer', async t => {
   let a = v(0), b = v(() => a), c = v(0, (v) => v + 2, (v) => v - 2)
@@ -287,7 +290,7 @@ t('v: from async generator', async t => {
   })
   await tick(12)
   t.is(log, [1,undefined,1,1,2,1,2,2])
-  a.cancel()
+  a[Symbol.dispose]()
   await time(10)
   t.is(log, [1,undefined,1,1,2,1,2,2])
 })
@@ -318,17 +321,17 @@ t('v: init non-input elements', async t => {
   let el = document.createElement('div')
   let vel = v(el)
   t.is(vel(), el)
-  vel.cancel()
+  vel[Symbol.dispose]()
 
   let vel2 = v()
   vel2(el)
   t.is(vel2(), el)
-  vel2.cancel()
+  vel2[Symbol.dispose]()
 
   // let vel3 = v()
   // vel3.set(el)
   // t.is(vel3(), el)
-  // vel3.cancel()
+  // vel3[Symbol.dispose]()
 })
 t('v: expose deps observables', async t => {
   let a = v(0), b = v(1), c = v({a, b})
@@ -646,7 +649,7 @@ t('v: input updates by changing value directly', async t => {
   await tick(8)
   t.is(log.slice(-1), ['6'], 'reading has no side-effects')
 
-  value.cancel()
+  value[Symbol.dispose]()
   el.value = 7
   el.dispatchEvent(new Event('change'))
   t.is(el.value, '7', 'end destructs inputerty')
@@ -715,7 +718,7 @@ t('v: input checkbox', async t => {
   t.is(el.checked, false)
   t.is(el.value, '')
 
-  bool.cancel()
+  bool[Symbol.dispose]()
   // t.throws(() => bool(true))
   bool(true)
   t.any(bool(), [null, undefined, false])
@@ -741,7 +744,7 @@ t('v: input select', async t => {
   t.is(el.innerHTML, '<option value="1" selected="">A</option><option value="2">B</option>')
   t.is(el.value, '1')
 
-  value.cancel()
+  value[Symbol.dispose]()
   // t.throws(() => value('2'))
   value('2')
   t.any(value(), [null, undefined, '1'])
@@ -760,7 +763,7 @@ t('v: error in source')
 
 
 // object
-t('v: object init', t => {
+t.todo('v: object init', t => {
   let b = v({})
   t.is(b, {})
 
@@ -778,7 +781,7 @@ t('v: object init', t => {
   let f = v(el)
   t.is({...f}, c)
 })
-t('o: readme', t => {
+t.todo('v: readme', t => {
   // object
   const obj = v({ foo: null })
 
@@ -787,13 +790,13 @@ t('o: readme', t => {
 
   // subscribe to changes
   let log = []
-  v(obj, ({ foo }) => log.push(foo))
+  v(({ foo }) => log.push(foo))
   // > 'bar'
   t.is(log, ['bar'])
 
 
   // array
-  let arr = o([1, 2, 3])
+  let arr = v([1, 2, 3])
 
   // set
   arr[3] = 4
@@ -804,32 +807,27 @@ t('o: readme', t => {
 
   // subscribe
   log = []
-  v(arr, arr => log.push(...arr))
+  arr(arr => log.push(...arr))
   // > [0, 1, 2, 3, 4, 5, 6]
   t.is(log, [0,1,2,3,4,5,6])
 
 
   // element
   let el = document.createElement('x')
-  let props = o(el, { loading: Boolean })
+  let props = v(el)
 
   // set
   props.loading = true
 
   // get
   t.is(props.loading, true)
-  // > true
-
-  // attr
-  t.is(el.getAttribute('loading'), '')
-  // > ''
 
   // subscribe
   log = []
-  v(props, ({loading}) => log.push(loading))
+  props(({loading}) => log.push(loading))
   t.is(log, [true])
 })
-t('o: hidden proptypes unhide props', t => {
+t.todo('o: hidden proptypes unhide props', t => {
   let x = {[Symbol.for('x')]: 1}
   let ox = o(x, {[Symbol.for('x')]: null})
   t.is(ox, {[Symbol.for('x')]: 1})
@@ -838,7 +836,7 @@ t('o: hidden proptypes unhide props', t => {
   x[Symbol.for('x')] = 2
   t.is(log, [1, 2])
 })
-t('o: store core', async t => {
+t.todo('o: store core', async t => {
   let s = o({x: 1})
   let log = []
   v(s, s => {
@@ -868,7 +866,7 @@ t('o: store core', async t => {
   await tick(8)
   t.is(log, [{y: 'foo'}], 'delete props')
 })
-t('o: store must not expose internal props', async t => {
+t.todo('o: store must not expose internal props', async t => {
   let s = o({x: 1})
   let log  =[]
   for (let p in s) {
@@ -876,7 +874,7 @@ t('o: store must not expose internal props', async t => {
   }
   t.is(log, ['x'])
 })
-t('o: list core', async t => {
+t.todo('o: list core', async t => {
   let s = o([1])
   let l
   v(s)(s => (l = s))
@@ -929,7 +927,7 @@ t('o: list core', async t => {
   await tick(8)
   t.is(l, [1,2,3], 'shift')
 })
-t('o: list must not expose internal props', async t => {
+t.todo('o: list must not expose internal props', async t => {
   let s = o([])
   let log = []
   for (let p in []) {
@@ -953,7 +951,7 @@ t.skip('o: list bubbles up internal item updates', async t => {
   await tick(8)
   t.is(log, [[s], [s]])
 })
-t('o: list fx sync init', async t => {
+t.todo('o: list fx sync init', async t => {
   let l = o([])
   let log = []
   v(l, item => log.push(item.slice()))
@@ -966,7 +964,7 @@ t('o: list fx sync init', async t => {
   await tick(8)
   t.any(log, [[[], [1]], [[], [1], [1]]])
 })
-t('o: prop subscription', async t => {
+t.todo('o: prop subscription', async t => {
   let obj = { x: 0 }
   let oobj = o(obj)
   t.is(oobj.x, 0)
@@ -1002,7 +1000,7 @@ t('o: prop subscription', async t => {
   await tick(8)
   t.is(log.slice(-1), [6], 'changing and back does not trigger too many times')
 
-  oobj[Symbol.observable]().cancel()
+  oobj[Symbol.observable]()[Symbol.dispose]()
   // xs(null)
   obj.x = 7
   obj.x = 8
@@ -1010,14 +1008,14 @@ t('o: prop subscription', async t => {
   await tick(10)
   t.is(log.slice(-1), [6], 'end destructs property')
 })
-t('o: prop get/set', async t => {
+t.todo('o: prop get/set', async t => {
   let ob = { x: () => { t.fail('Should not be called') } }
   let ox = o(ob)
   ox.x = 0
   t.is(ob, {x:0}, 'set is ok')
   t.is(ox, {x:0}, 'get is ok')
 })
-t('o: prop multiple instances', async t => {
+t.todo('o: prop multiple instances', async t => {
   let x = { x: 1 }
   let xs1 = o(x)
   let xs2 = o(x)
@@ -1027,7 +1025,7 @@ t('o: prop multiple instances', async t => {
   t.is(xs1.x, xs2.x, 'same value')
   t.is(x.x, xs1.x, 'same value')
 })
-t('o: prop minimize get/set invocations', async t => {
+t.todo('o: prop minimize get/set invocations', async t => {
   let log = []
   let obj = {
     _x: 0,
@@ -1063,7 +1061,7 @@ t('o: prop minimize get/set invocations', async t => {
   t.is(log, ['get', 0, 'changed', 0, 'get', 0, 'set', 1, 'get', 1, 'changed', 1])
 
   log = []
-  xs[Symbol.observable]().cancel(null)
+  xs[Symbol.observable]()[Symbol.dispose](null)
   t.is(log, [])
 
   obj.x
@@ -1102,7 +1100,7 @@ t.skip('o: attr core', async t => {
   // t.is(el.x, 6, 'reading applies value')
   await tick(8)
   // t.is(log, [null, '2', '5', '5', '6'], 'reading applies value')
-  attrs[Symbol.observable]().cancel()
+  attrs[Symbol.observable]()[Symbol.dispose]()
   el.setAttribute('x', '7')
   await tick(8)
   t.is(el.getAttribute('x'), '7', 'end destroys property')
@@ -1128,7 +1126,7 @@ t.skip('o: attr get/set', async t => {
   await tick(8)
   t.is(el.x, null)
 
-  ox[Symbol.observable]().cancel()
+  ox[Symbol.observable]()[Symbol.dispose]()
   ox.x = 123
   await tick(8)
   t.is(el.x, null)

@@ -12,14 +12,14 @@ export default (...args) => {
         })
     }
 
-    const cancel = () => {
+    const close = () => {
         let unsubs = observers.map(sub => {
             if (sub.out && sub.out.call) sub.out()
             return sub.unsubscribe
         })
         observers.length = 0
         unsubs.map(unsub => unsub())
-        channel.canceled = true
+        channel.closed = true
     }
 
     const subscribe = (next, error, complete) => {
@@ -30,10 +30,10 @@ export default (...args) => {
         const unsubscribe = () => {
             if (observers.length) observers.splice(observers.indexOf(subscription) >>> 0, 1)
             if (complete) complete()
-            unsubscribe.canceled = true
+            unsubscribe.closed = true
         }
         unsubscribe.unsubscribe = unsubscribe
-        unsubscribe.canceled = false
+        unsubscribe.closed = false
 
         const subscription = { next, error, complete, unsubscribe }
         observers.push(subscription)
@@ -45,10 +45,10 @@ export default (...args) => {
 
     return Object.assign(channel, {
         observers,
-        canceled: false,
+        closed: false,
         push,
         subscribe,
-        cancel
+        close
     })
 }
 

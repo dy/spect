@@ -1,4 +1,4 @@
-import _observable from 'symbol-observable'
+import * as symbol from './symbols.js'
 import c, { observer } from './channel.js'
 
 const depsCache = new WeakMap
@@ -6,52 +6,33 @@ const depsCache = new WeakMap
 export default function v(source, map=v=>v, unmap=v=>v) {
   const channel = c(), { subscribe, observers, push } = channel
 
-  const fn = (...args) => {
+  let fn = (...args) => {
     if (!args.length) return get()
     if (observer(...args)) {
       let unsubscribe = subscribe(...args)
       // callback is registered as the last channel subscription, so send it immediately as value
-      if ('current' in fn) push(get(), observers.slice(-1))
+      if ('current' in channel) push(get(), observers.slice(-1))
       return unsubscribe
     }
     return set(...args)
   }
-  // we define props on fn - must hide own props
-  Object.defineProperties(fn, {
-    length: {value: null, writable: true, enumerable: false},
-    name: {value: null, writable: true, enumerable: false},
-  })
-  const value = fn
-  // const value = new Proxy(fn, {
-  //   get(fn, prop) {
-  //     if (channel.canceled) return
-  //     if (prop !== 'length' && prop in fn) return fn[prop]
-  //     if (source) return source[prop]
-  //   },
-  //   has(fn, prop) {
-  //     if (channel.canceled) return
-  //     return prop in fn || (source && prop in source)
-  //   },
-  //   set(fn, prop, v) {
-  //     if (channel.canceled) return true
-  //     else source[prop] = v
-  //     // need reinit
-  //     return true
-  //   },
-  //   deleteProperty(fn, prop) {
-  //     delete source[prop]
-  //     // need reinit
-  //     return true
-  //   }
-  // })
 
   // current is mapped value (map can be heavy to call each get)
-  let get = () => fn.current
-  let set = v => push(fn.current = map(unmap(v)))
+  let get = () => channel.current
+  let set = v => push(channel.current = map(unmap(v)))
 
-  fn.valueOf = fn.toString = fn[Symbol.toPrimitive] = get
-  fn[_observable] = () => channel
-  fn.cancel = channel.cancel
+  // we define props on fn - must hide own props
+  delete fn.length
+  delete fn.name
+  delete fn.arguments
+  delete fn.caller
+  Object.defineProperties(fn, {
+    valueOf: {value: get, writable: false, enumerable: false},
+    toString: {value: get, writable: false, enumerable: false},
+    [Symbol.toPrimitive]: {value: get, writable: false, enumerable: false},
+    [symbol.observable]: {value: () => channel, writable: false, enumerable: false},
+    [symbol.dispose]: {value: channel.close, writable: false, enumerable: false}
+  })
 
   if (arguments.length) {
     // v / observ
@@ -59,43 +40,62 @@ export default function v(source, map=v=>v, unmap=v=>v) {
       // NOTE: we can't simply check args.length, because v(fn)(fx) is valid case for observable input
       if (observable(source)) {
         set = v => source(unmap(v))
-        subscribe(null, null, source(v => push(fn.current = map(v))))
+        subscribe(null, null, source(v => push(channel.current = map(v))))
       }
       else {
         set(source())
       }
     }
     // Observable (stateless)
-    else if (source && source[_observable]) {
+    else if (source && source[symbol.observable]) {
       set = () => {}
-      let unsubscribe = source[_observable]().subscribe({next: v => push(fn.current = map(v))})
+      let unsubscribe = source[symbol.observable]().subscribe({next: v => push(channel.current = map(v))})
       unsubscribe = unsubscribe.unsubscribe || unsubscribe
       subscribe(null, null, unsubscribe)
     }
     // group
-    // NOTE: array/object may have _observable, which redefines default deps behavior
+    // NOTE: array/object may have symbol.observable, which redefines default deps behavior
     else if (Array.isArray(source) || object(source)) {
-      let vals = fn.current = new source.constructor
-      let deps = []
-      deps.channel = c()
-      value[Symbol.iterator] = deps[Symbol.iterator].bind(deps)
-      if (!depsCache.has(source)) depsCache.set(fn.source = source, value)
+      let vals = new source.constructor, deps = {}, dchannel = c()
+
+      // init observables
       for (let name in source) {
-        const dep = source[name], depv = depsCache.has(dep) ? depsCache.get(dep) : v(dep)
-        // console.log(dep, depsCache.has(dep), depv)
-        depv(v => {
-          vals[name] = v
-          // avoid self-recursion here
-          if (value !== depv) deps.channel(vals)
-        })
-        deps.push(value[name] = depv)
+        if (observable(source[name])) {
+          const dep = deps[name] = depsCache.get(source[name]) || v(source[name])
+          Object.defineProperty(fn, name, {
+            writable: false,
+            enumerable: true,
+            configurable: false,
+            value: dep
+          })
+          dep(val => {
+            vals[name] = val
+            // avoid self-recursion
+            if (fn !== dep) dchannel(vals)
+          })
+        }
+        else {
+          vals[name] = source[name]
+          Object.defineProperty(fn, name, {
+            get(){ return source[name] },
+            set(value){
+              vals[name] = source[name] = value
+              dchannel(vals)
+            }
+          })
+        }
       }
-      deps.channel(v => push(fn.current = map(v)))
-      if (Object.keys(vals).length || !Object.keys(source).length) deps.channel(vals)
-      set = v => deps.channel.push(unmap(v))
+
+      // any deps change triggers update
+      dchannel(v => push(channel.current = map(v)))
+
+      if (Object.keys(vals).length || !Object.keys(source).length) dchannel(vals)
+
+      set = v => dchannel(unmap(v))
       subscribe(null, null, () => {
-        deps.map(depv => depv.cancel())
-        deps.channel.cancel()
+        depsCache.delete(source)
+        dchannel.close()
+        for (let name in deps) deps[name][symbol.dispose]()
       })
     }
     // input
@@ -114,7 +114,7 @@ export default function v(source, map=v=>v, unmap=v=>v) {
         }
       }[el.type]
 
-      set = v => (iset(unmap(v)), push(fn.current = iget()))
+      set = v => (iset(unmap(v)), push(channel.current = iget()))
       const update = e => set(iget())
 
       // normalize initial value
@@ -123,7 +123,6 @@ export default function v(source, map=v=>v, unmap=v=>v) {
       el.addEventListener('change', update)
       el.addEventListener('input', update)
       subscribe(null, null, () => {
-        // set = () => {}
         el.removeEventListener('change', update)
         el.removeEventListener('input', update)
       })
@@ -135,14 +134,14 @@ export default function v(source, map=v=>v, unmap=v=>v) {
       ;(async () => {
         for await (let v of source) {
           if (stop) break
-          push(fn.current = map(v))
+          push(channel.current = map(v))
         }
       })()
       subscribe(null, null, () => stop = true)
     }
     // promise (stateful, initial undefined)
     else if (source && source.then) {
-      set = p => (delete fn.current, p.then(v => push(fn.current = map(v))))
+      set = p => (delete channel.current, p.then(v => push(channel.current = map(v))))
       set(source)
     }
     // ironjs
@@ -161,11 +160,12 @@ export default function v(source, map=v=>v, unmap=v=>v) {
   subscribe(null, null, () => {
     // get = set = () => {throw Error('closed')}
     get = set = () => {}
-    depsCache.delete(fn.source)
-    delete fn.current
+    delete channel.current
   })
 
-  return value
+  Object.seal(fn)
+
+  return fn
 }
 
 export function primitive(val) {
@@ -176,7 +176,7 @@ export function primitive(val) {
 export function observable(arg) {
   if (!arg) return false
   return !!(
-    arg[_observable]
+    arg[symbol.observable]
     || (typeof arg === 'function' && arg.set)
     || arg[Symbol.asyncIterator]
     || arg.next

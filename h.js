@@ -1,5 +1,6 @@
 import v, { observable, primitive, object, input } from './v.js'
 import htm from 'xhtm/index.js'
+import * as symbol from './symbols.js'
 
 const _group = Symbol.for('@spect.group'),
       _ptr = Symbol.for('@spect.ptr'),
@@ -73,7 +74,7 @@ export default function h(tag, ...children) {
           setAttribute(el, name, value)
         }
       }
-      return () => vprop && vprop.cancel()
+      return () => vprop && vprop[symbol.dispose]()
     })
 
     // children
@@ -91,7 +92,7 @@ export default function h(tag, ...children) {
 
 export function render(children, el) {
   // clean up prev observers
-  if (el[_children]) el[_children].cancel()
+  if (el[_children]) el[_children][symbol.dispose]()
   el[_children] = v(children.map((child) => {
     // ignore input el
     if (input(child)) {
@@ -120,7 +121,7 @@ export function render(children, el) {
   // trim unused nodes
   while(el.childNodes[el[_ptr]]) {
     let child = el.childNodes[el[_ptr]]
-    if (child[_props]) (child[_props].cancel(), delete child[_props])
+    if (child[_props]) (child[_props][symbol.dispose](), delete child[_props])
     child.remove()
   }
 }
@@ -195,7 +196,7 @@ function alloc(parent, el) {
       // migrate props (triggers fx that mutates them)
       if (el !== match && el[_props] && match[_props]) {
         match[_props](el[_props]())
-        el[_props].cancel()
+        el[_props][symbol.dispose]()
         delete el[_props]
       }
       render([...el.childNodes], match)
