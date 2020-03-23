@@ -469,3 +469,24 @@ t('$: template literal', async t => {
   let els = $`div.${'x'}`
   t.is(els, [...el.childNodes])
 })
+
+
+t.skip('$: FOUC on unmatch', async t => {
+  let style = document.createElement('style')
+  style.innerHTML = '.x { color: red; font-style: italic; }'
+  document.body.appendChild(style)
+
+  $('.x', el => {
+    el.style.cssText = `font-size: 10rem;`
+    return () => {
+      el.style.cssText = ``
+    }
+  })
+
+  let x = document.createElement('div')
+  x.innerHTML = '123'
+  document.body.appendChild(x)
+  x.classList.add('x')
+
+  setTimeout(() => x.classList.remove('x'), 1000)
+})
