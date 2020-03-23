@@ -1,38 +1,53 @@
 import t from 'tst'
 // import { $, state, fx, prop, store, calc, attr, on } from '../dist/spect.min.js'
-import { $ } from '../index.js'
+// import { $ } from '../index.js'
+import $ from '../$-selector.js'
 import { tick, frame, idle, time } from 'wait-please'
 import { augmentor, useState, useEffect, useMemo } from 'augmentor'
 
-t('$: tag selector', async t => {
+t.only('$: tag selector', async t => {
   let ellog = []
   let proplog = []
   let container = document.body.appendChild(document.createElement('div'))
 
+
   let x1 = $('x', el => {
+    console.log(1)
+    el.textContent = '123456'
     ellog.push(el.tagName.toLowerCase())
+    frame().then(() => console.log(2))
   })
 
-  container.appendChild(document.createElement('x'))
-  await Promise.resolve()
+  let el = document.createElement('x')
+  el.innerHTML = 123
+  container.appendChild(el)
+  container.appendChild(document.createTextNode('end'))
+  let c = 0
+  function check() {
+    if (c++ > 10) return
+    console.log(ellog)
+    requestAnimationFrame(check)
+  }
+  requestAnimationFrame(check)
+  await frame(2)
   t.deepEqual(ellog, ['x'], 'simple creation')
 
-  container.appendChild(document.createElement('x'))
-  container.appendChild(document.createElement('x'))
-  await Promise.resolve()
-  t.deepEqual(ellog, ['x', 'x', 'x'], 'create multiple')
+  // container.appendChild(document.createElement('x'))
+  // container.appendChild(document.createElement('x'))
+  // await tick()
+  // t.deepEqual(ellog, ['x', 'x', 'x'], 'create multiple')
 
-  let x2 = $('x', el => {
-    proplog.push(1)
-  })
-  container.appendChild(document.createElement('x'))
-  await Promise.resolve()
-  t.deepEqual(ellog, ['x', 'x', 'x', 'x'], 'additional aspect')
-  t.deepEqual(proplog, [1, 1, 1, 1], 'additional aspect')
+  // let x2 = $('x', el => {
+  //   proplog.push(1)
+  // })
+  // container.appendChild(document.createElement('x'))
+  // await tick()
+  // t.deepEqual(ellog, ['x', 'x', 'x', 'x'], 'additional aspect')
+  // t.deepEqual(proplog, [1, 1, 1, 1], 'additional aspect')
 
-  document.body.removeChild(container)
-  x1[Symbol.dispose](null)
-  x2[Symbol.dispose](null)
+  // document.body.removeChild(container)
+  // x1[Symbol.dispose](null)
+  // x2[Symbol.dispose](null)
 
   t.end()
 })
