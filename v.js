@@ -53,15 +53,20 @@ export default function v(source, map=v=>v, unmap=v=>v) {
       unsubscribe = unsubscribe.unsubscribe || unsubscribe
       subscribe(null, null, unsubscribe)
     }
-    // group
+    // deps
     // NOTE: array/object may have symbol.observable, which redefines default deps behavior
     else if (Array.isArray(source) || object(source)) {
       let vals = new source.constructor, deps = {}, dchannel = c()
 
+      // prevent recursion
+      if (!depsCache.has(source)) depsCache.set(source, fn)
+
       // init observables
       for (let name in source) {
         let dep
-        if (observable(source[name])) dep = deps[name] = depsCache.get(source[name]) || v(source[name])
+        if (observable(source[name]) || object(source[name]) || Array.isArray(source[name])) {
+          dep = deps[name] = depsCache.get(source[name]) || v(source[name])
+        }
         // redefine source property to observe it
         else {
           dep = deps[name] = v(() => vals[name] = source[name])

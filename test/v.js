@@ -231,10 +231,11 @@ t('v: recursion', async t => {
 })
 t('v: internal observers are preserved', async t => {
   // NOTE: we preserve internal observers to let object props be rewritable
+  // DENOTE: internal objects/arrays are expected to be non-changeable props, only primitives can be rewritable
   let x = [{x: v(0)}]
   let log = []
   v(x)(v => log.push(v))
-  t.is(log, [x])
+  t.is(log, [[{x: 0}]])
 })
 t('v: initializer', async t => {
   let a = v(0), b = v(() => a), c = v(0, (v) => v + 2, (v) => v - 2)
@@ -254,6 +255,37 @@ t('v: stringify', async t => {
   let v1 = v(1), v2 = v({x:1})
   t.is(JSON.stringify(v1()), '1')
   t.is(JSON.stringify(v2()), `{"x":1}`)
+})
+t('v: propagates internal item updates', async t => {
+  let a = v(0), deps = {a, x: 1}, b = v(deps)
+  let log = []
+  let unb = b(v => log.push({...v}))
+  t.is(log, [{x: 1, a: 0}])
+
+  a(1)
+  t.is(log, [{x: 1, a: 0}, {x: 1, a: 1}])
+
+  deps.x = 2
+  t.is(log, [{x: 1, a: 0}, {x: 1, a: 1}, {x: 2, a: 1}])
+
+  let c = v({b})
+  log = []
+  c(v => log.push(v))
+  t.is(log, [{b: {x:2, a: 1}}])
+
+  unb()
+  log = []
+  a(2)
+  t.is(log, [{b: {x:2, a: 2}}])
+})
+t('v: deep propagate internal props updates', async t => {
+  let a = v(0), b = v([[a]])
+  let log
+  b(v => log = v)
+  t.is(log, [[0]])
+
+  a(1)
+  t.is(log, [[1]])
 })
 
 // from
@@ -506,7 +538,7 @@ t('v: fx simple values', async t => {
   t.is(log, [{x: 1}, 1])
   unsub()
 })
-t.todo('v: deps updated to new length', async t => {
+t.skip('v: deps updated to new length', async t => {
   let deps = v([v(1)])
   let log = []
   v(deps, (args) => {
@@ -566,8 +598,8 @@ t('v: calc must be sync', async t => {
   await tick(8)
   t.is(x2(), 2)
 })
-t.skip('v: calc async calculator', async t => {
-  // NOTE: for async effects use subscriptions, mapper can only be sync
+t.todo('v: calc async calculator', async t => {
+  // NOTE: for async effects use subscriptions, mapper can only be sync - but why? wb uses async calculator... it can even be generator.
   const x = v(1, async () => {
     await time(10)
     return 10
@@ -787,7 +819,7 @@ t('v: error in source')
 
 
 // object
-t.todo('v: object init', t => {
+t.skip('v: object init', t => {
   let b = v({})
   t.is(b, {})
 
@@ -958,22 +990,6 @@ t.todo('o: list must not expose internal props', async t => {
     log.push(p)
   }
   t.is(log, [])
-})
-t.skip('o: list bubbles up internal item updates', async t => {
-  let l = list(), s = state(0)
-  l.push(s)
-
-  let log = []
-  fx(l => {
-    log.push(l)
-  }, [l])
-
-  await tick(8)
-  t.is(log, [[s]])
-
-  s(1)
-  await tick(8)
-  t.is(log, [[s], [s]])
 })
 t.todo('o: list fx sync init', async t => {
   let l = o([])
