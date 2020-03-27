@@ -210,14 +210,12 @@ Pending...
 
 <details><summary><strong>$ − selector</strong></summary>
 
-> elements = $( scope? , selector , callback? )<br/>
-> elements = $( element | list , callback? )<br/>
+> elements = $( scope? , selector? , callback? )<br/>
 
 Selector observer, creates live collection of elements matching the `selector`. Optional `callback` runs for each new element matching the selector. If `callback` returns a teardown, it is run when the element is unmatched.
 
 * `selector` is a valid CSS selector.
-* `scope` is optional container element to observe, by default that is `globalThis`.
-* `element` is _HTMLElement_ or a `list` of elements (array or array-like).
+* `scope` is optional element to narrow down observation, an _HTMLElement_ or a list of elements (array or array-like).
 * `callback` is a function with `(element) => teardown?` signature.
 * `elements` is live array with matched elements (similar to [HTMLCollection](https://developer.mozilla.org/en-US/docs/Web/API/HTMLCollection)).
 
@@ -257,7 +255,10 @@ $timer[0]
 // > <div.timer></div>
 ```
 
-<!-- <sub>_$_ is reverence to _jQuery_, designed with regards to [_HTMLCollection_](https://developer.mozilla.org/en-US/docs/Web/API/HTMLCollection), [_selector-observer_](https://github.com/josh/selector-observer) and _aspect-oriended-programming_.</sub> -->
+<sub>
+_$_ design is inspired by jQuery, [fast-on-load](https://ghub.io/fast-on-load), [selector-set](https://github.com/josh/selector-set), [selector-observer](https://github.com/josh/selector-observer), [insertionQuery](https://github.com/naugtur/insertionQuery), [regular-elements](https://github.com/WebReflection/regular-elements), [_HTMLCollection_](https://developer.mozilla.org/en-US/docs/Web/API/HTMLCollection), [_selector-observer_](https://github.com/josh/selector-observer) and _aspect-oriended-programming_.<br/>
+It uses combination of highly optimized selector-observer O(n) and animation events for complex cases.
+</sub>
 
 <br/>
 

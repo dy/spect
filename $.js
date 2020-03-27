@@ -1,106 +1,8 @@
-// 2 priorities of aspects: primary and secondary
-// _primary_ are run sync by MutationObserver, they're expected to be content/style-modifying so don't have FOUC
-// _secondary_ are run by anim-events skipping 1 frame and may have FOUC, they're considered of the same importance as animations
-//
-// _primary_ are:
-// 1. direct simplets: #a, .a, a, [name=a]
-// each added node is checked against `getElementBy*`
-// 2. simplet combos: #a.a, .a.b.c, .a[name=a]
-// each added node is checked against each simplet set `getElementBy*`, min simplet set is checked by `matches`
-// 3. star - can safely run all nodes
-//
-// _secondary_ are:
-// 1. pseudos - too difficult to run over all elems in set
-// 2. attributes (except name) - that complicated mutation observer and mutations testing
-// 3. +, ~, > combinations
-
-
 const _dispose = typeof Symbol !== 'undefined' ? (Symbol.dispose || (Symbol.dispose = Symbol.for('dispose'))) : '@@dispose'
 
 const SPECT_CLASS = '👁'
 const ELEMENT = 1
 let count = 0
-
-const rparts = /^(\s*)(?:#([\w-]+)|(\w+)|\.([\w-]+)|\[\s*name=([\w]+)\s*\])([^]*)/
-
-export default function $(selector, fn) {
-  if (selector.nodeType) selector = [selector]
-  if (!selector.nodeType && selector[0].nodeType) {
-    selector = [...selector]
-    selector.map(el => enable(el, fn))
-    selector[Symbol.dispose] = () => selector.map(el => disable(el, fn))
-    return selector
-  }
-
-  let op, id, tag, cls, name, sel, style, handler
-
-  // const ruleId = `${SPECT_CLASS}-${count++}`
-  const ruleId = `spect-${count++}`
-
-  // TODO: handle multiple simple parts
-  const parts = selector.match(rparts)
-
-  // init existing elements
-  const collection = [...document.querySelectorAll(selector)]
-  collection.map(el => enable(el, fn))
-
-  // non-simple selectors are considered secondary aspects
-  if (parts) {
-    [, op, id, tag, cls, name, sel ] = parts
-
-    // 1/2-component selectors
-    if (id) (idRules[id] = idRules[id] || []).push([fn, sel])
-    if (cls) (classRules[cls] = classRules[cls] || []).push([fn, sel])
-    if (tag && (tag = tag.toUpperCase())) (tagRules[tag] = tagRules[tag] || []).push([fn, sel])
-    if (name) (nameRules[name] = nameRules[name] || []).push([fn, sel])
-  }
-
-  // assign secondary aspects via animation observer:
-  // - for dynamically added attributes (we don't observe attribs via mutation obserever)
-  // - for complex selectors (we avoid long sync mutations check)
-  // - simple tag selectors or star are meaningless to observe
-  if (!/^(?:\w+|\*)$/.test(selector)) {
-    (style = document.createElement('style')).innerHTML = `
-    @keyframes ${ ruleId } { from { outline: 1px transparent} to { outline: 0px transparent } }
-    ${ selector } {
-    animation-delay: -1ms !important; animation-duration: 0ms !important;
-    animation-iteration-count: 1 !important; animation-name: ${ ruleId };
-    }
-    .${ ruleId }:not(${ selector }) {
-    animation-delay: -1ms !important; animation-duration: 0ms !important;
-    animation-iteration-count: 1 !important; animation-name: ${ ruleId };
-    }`
-
-    handler = e => {
-      if (e.animationName !== ruleId) return
-      let {target} = e
-      if (!target.classList.contains(ruleId)) {
-        target.classList.add(ruleId)
-        enable(target, fn)
-      }
-      else {
-        target.classList.remove(ruleId)
-        disable(target, fn)
-      }
-    }
-
-    document.head.appendChild(style)
-    document.addEventListener('animationstart', handler)
-  }
-
-  collection[_dispose] = () => {
-    collection.map(el => disable(el, fn))
-    if (id) idRules[id].splice(idRules[id].findIndex(rule => rule[0] === fn) >>> 0, 1)
-    if (cls) classRules[cls].splice(classRules[cls].findIndex(rule => rule[0] === fn) >>> 0, 1)
-    if (tag) tagRules[tag].splice(tagRules[tag].findIndex(rule => rule[0] === fn) >>> 0, 1)
-    if (name) nameRules[name].splice(nameRules[name].findIndex(rule => rule[0] === fn) >>> 0, 1)
-    if (style) document.head.removeChild(style)
-    if (handler) document.removeEventListener('animationstart', handler)
-  }
-
-  return collection
-}
-
 
 // both ruleset and query rules for target
 // (it's safe to store ids on function, even `arguments` and `length`)
@@ -130,10 +32,112 @@ const nameRules = (target) => {
   for (let name in nameRules) addMatched(arr, target.getElementsByName(name), nameRules[name])
   return arr
 }
+
+
+export default function $(scope, selector, fn) {
+  // spect`#x`
+  if (scope && scope.raw) return $(null, String.raw(...arguments))
+  // spect(selector, fn)
+  if (typeof scope === 'string') return $(null, scope, selector)
+
+  // spect(target, fn)
+  if (!selector ||  typeof selector === 'function') {
+    fn = selector
+    let target = scope
+    if (target.nodeType) target = [target]
+    if (!target.nodeType && target[0].nodeType) {
+      target = [...target]
+      target.map(el => enable(el, fn))
+      target[Symbol.dispose] = () => target.map(el => disable(el, fn))
+    }
+    return target
+  }
+
+  let op, id, tag, cls, name, sel, style, handler
+
+  // const ruleId = `${SPECT_CLASS}-${count++}`
+  const ruleId = `spect-${count++}`
+  const scopeClass = scope ? `spect-scope-${count}` : ''
+
+  const parts = selector.match(/^(\s*)(?:#([\w-]+)|(\w+)|\.([\w-]+)|\[\s*name=([\w]+)\s*\])([^]*)/)
+
+  // init existing elements
+  const collection = [...(scope || document).querySelectorAll(selector)]
+  collection.map(el => enable(el, fn))
+
+  // non-simple selectors are considered secondary aspects
+  if (parts) {
+  // TODO: handle multiple simple parts, make sure rulesets don't overlap
+    [, op, id, tag, cls, name, sel ] = parts
+
+    // 1/2-component selectors
+    if (id) (idRules[id] = idRules[id] || []).push([fn, sel, scope])
+    else if (name) (nameRules[name] = nameRules[name] || []).push([fn, sel, scope])
+    else if (cls) (classRules[cls] = classRules[cls] || []).push([fn, sel, scope])
+    else if (tag && (tag = tag.toUpperCase())) (tagRules[tag] = tagRules[tag] || []).push([fn, sel, scope])
+  }
+
+  // assign secondary aspects via animation observer:
+  // - for dynamically added attributes (we don't observe attribs via mutation obserever)
+  // - for complex selectors (we avoid long sync mutations check)
+  // - simple tag selectors are meaningless to observe - they're never going to dynamically match
+  // NOTE: only connected scope supports anim observer
+  if (!/^\w+$/.test(selector)) {
+    if (scope) scope.classList.add(scopeClass)
+
+    ;(style = document.createElement('style')).innerHTML = `
+    @keyframes ${ ruleId } { from { outline: 1px transparent} to { outline: 0px transparent } }
+    ${ scope ? '.' + scopeClass : '' } ${ selector } {
+    animation-delay: -1ms !important; animation-duration: 0ms !important;
+    animation-iteration-count: 1 !important; animation-name: ${ ruleId };
+    }
+    .${ ruleId }:not(${ scope ? '.' + scopeClass : '' } ${ selector }) {
+    animation-delay: -1ms !important; animation-duration: 0ms !important;
+    animation-iteration-count: 1 !important; animation-name: ${ ruleId };
+    }`
+
+    handler = e => {
+      if (e.animationName !== ruleId) return
+      let {target} = e
+      if (!target.classList.contains(ruleId)) {
+        target.classList.add(ruleId)
+        enable(target, fn)
+      }
+      else {
+        target.classList.remove(ruleId)
+        disable(target, fn)
+      }
+    }
+
+    document.head.appendChild(style)
+    document.addEventListener('animationstart', handler)
+  }
+
+  collection[_dispose] = () => {
+    collection.map(el => disable(el, fn))
+    if (id) idRules[id].splice(idRules[id].findIndex(rule => rule[0] === fn) >>> 0, 1)
+    if (cls) classRules[cls].splice(classRules[cls].findIndex(rule => rule[0] === fn) >>> 0, 1)
+    if (tag) tagRules[tag].splice(tagRules[tag].findIndex(rule => rule[0] === fn) >>> 0, 1)
+    if (name) nameRules[name].splice(nameRules[name].findIndex(rule => rule[0] === fn) >>> 0, 1)
+    if (style) document.head.removeChild(style)
+    if (handler) document.removeEventListener('animationstart', handler)
+    if (scope) scope.classList.remove(scopeClass)
+  }
+
+  return collection
+}
+
+
 const addMatched = (arr, el, rules) => {
   if (!rules || !el) return
   if (!el.nodeType && el.item) return [].map.call(el, el => addMatched(arr, el, rules))
-  rules.map(([fn, sel]) => {
+  rules.map(([fn, sel, scope]) => {
+    // ignore out-of-scope rules
+    if (scope) {
+      if (scope.nodeType) if (!scope.contains(el)) return
+      if ([].every.call(scope, scope => !scope.contains(el))) return
+    }
+
     // a, .a, #a
     if (!sel) arr.push([el, fn])
     // a.a, #a[name=b]
@@ -142,6 +146,7 @@ const addMatched = (arr, el, rules) => {
     // a > b, a b, a~b, a+b
   })
 }
+
 
 const observer = new MutationObserver((list) => {
   for (let mutation of list) {

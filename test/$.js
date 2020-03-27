@@ -92,35 +92,18 @@ t('$: simple hooks', async t => {
 
   hx[Symbol.dispose]()
 })
-t.skip('$: aspects must be called in order', async t => {
-  let log = []
-  let a = document.createElement('a')
-
-  let as = $(a, [() => (log.push(1)), () => log.push(2), () => log.push(3)])
-
-  document.body.appendChild(a)
-
-  await tick()
-
-  t.deepEqual(log, [1, 2, 3])
-
-  document.body.removeChild(a)
-  as[Symbol.dispose]()
-  // as(null)
-})
 t('$: throwing error must not create recursion', async t => {
   let a = document.createElement('a')
   document.body.appendChild(a)
   console.groupCollapsed('error here')
-  let as = $('a', el => {
+  t.throws(() => $('a', el => {
     throw Error('That error is planned')
-  })
+  }), 'That error is planned')
   console.groupEnd()
   await tick()
 
   document.body.removeChild(a)
-  as[Symbol.dispose]()
-  // as(null)
+  // as[Symbol.dispose]()
   t.end()
 })
 t('$: remove/add should not retrigger element', async t => {
@@ -150,7 +133,8 @@ t('$: remove/add internal should not retrigger element', async t => {
   let abs = $('a b', el => log.push('b'))
   setTimeout(() => document.body.appendChild(a))
 
-  await time(10)
+  await time()
+  await frame(2)
   t.deepEqual(log, ['b'])
 
   document.body.removeChild(a)
@@ -158,6 +142,21 @@ t('$: remove/add internal should not retrigger element', async t => {
   // abs(null)
   await frame()
   t.end()
+})
+t('$: scoped asterisk selector', async t => {
+  let log = [], el = document.body.appendChild(document.createElement('div'))
+  let list = $(el, '*', el => log.push(el))
+  let x, y, z
+  el.appendChild(x = document.createElement('x'))
+  el.appendChild(y = document.createElement('y'))
+  await frame(2)
+  t.is(log, [x, y])
+
+  list[Symbol.dispose]()
+  el.appendChild(z = document.createElement('y'))
+  t.is(log, [x, y])
+
+  document.body.removeChild(el)
 })
 t('$: destructor is called on unmount', async t => {
   let el = document.createElement('div')
