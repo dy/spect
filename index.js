@@ -1,4 +1,4 @@
-import $ from './$-selector.js'
+import $ from './$.js'
 import h from './h.js'
 import v from './v.js'
 
