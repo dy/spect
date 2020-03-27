@@ -4,7 +4,7 @@ import { $ } from '../index.js'
 import { tick, frame, idle, time } from 'wait-please'
 import { augmentor, useState, useEffect, useMemo } from 'augmentor'
 
-t.only('$: tag selector', async t => {
+t('$: tag selector', async t => {
   let ellog = []
   let proplog = []
   let container = document.body.appendChild(document.createElement('div'))
@@ -33,8 +33,8 @@ t.only('$: tag selector', async t => {
   t.deepEqual(proplog, [1, 1, 1, 1], 'additional aspect')
 
   document.body.removeChild(container)
-  // x1[Symbol.dispose](null)
-  // x2[Symbol.dispose](null)
+  x1[Symbol.dispose](null)
+  x2[Symbol.dispose](null)
 
   t.end()
 })
@@ -68,14 +68,12 @@ t('$: dynamically assigned selector', async t => {
   t.is(log, [])
 
   el.classList.add('x')
-  await tick()
+  await frame(2)
 
   t.is(log, [el])
 
   xs[Symbol.dispose]()
-  // xs(null)
   document.body.removeChild(el)
-
 })
 t('$: simple hooks', async t => {
   let el = document.createElement('div')
@@ -89,11 +87,10 @@ t('$: simple hooks', async t => {
   }))
 
   t.is(el.count, 0)
-  await frame()
+  await frame(2)
   t.is(el.count, 1)
 
   hx[Symbol.dispose]()
-  // hx(null)
 })
 t.skip('$: aspects must be called in order', async t => {
   let log = []
