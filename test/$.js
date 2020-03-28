@@ -116,11 +116,11 @@ t('$: remove/add should not retrigger element', async t => {
   setTimeout(() => document.body.appendChild(a))
 
   await time(10)
-  t.deepEqual(log, ['a'])
+  t.is(log, ['a'])
 
   document.body.removeChild(a)
   as[Symbol.dispose]()
-  // as(null)
+
   await frame()
   t.end()
 })
@@ -159,7 +159,7 @@ t('$: scoped asterisk selector', async t => {
   document.body.removeChild(el)
 })
 t('$: destructor is called on unmount', async t => {
-  let el = document.createElement('div')
+  let el = document.body.appendChild(document.createElement('div'))
   let log = []
   let all = $(el, '*', el => {
     log.push(1)
@@ -167,15 +167,16 @@ t('$: destructor is called on unmount', async t => {
   })
   t.deepEqual(log, [])
   el.innerHTML = 'x<a></a><a></a>x'
-  await tick()
+  await frame(2)
   t.deepEqual(log, [1, 1])
+
   el.innerHTML = ''
   await frame(2)
   t.deepEqual(log, [1, 1, 2, 2], 'clear up')
   all[Symbol.dispose]()
-  // all(null)
+
   el.innerHTML = 'x<a></a><a></a>x'
-  await tick()
+  await frame(2)
   t.deepEqual(log, [1, 1, 2, 2])
   t.end()
 })

@@ -91,7 +91,7 @@ export default function $(scope, selector, fn) {
     animation-delay: -1ms !important; animation-duration: 0ms !important;
     animation-iteration-count: 1 !important; animation-name: ${ ruleId };
     }
-    .${ ruleId }:not(${ scope ? '.' + scopeClass : '' } ${ selector }) {
+    ${ scope ? '.' + scopeClass : '' } .${ ruleId }:not(${ selector }) {
     animation-delay: -1ms !important; animation-duration: 0ms !important;
     animation-iteration-count: 1 !important; animation-name: ${ ruleId };
     }`
@@ -179,6 +179,7 @@ observer.observe(document, {
 
 
 const _aspects = Symbol.for('@spect')
+const _unspect = Symbol('unspect')
 function enable(target, aspect) {
   if (!target[_aspects]) {
     target[_aspects] = new Map
@@ -187,15 +188,25 @@ function enable(target, aspect) {
   if (!target[_aspects].has(aspect)) {
     target[_aspects].set(aspect, aspect(target))
   }
+  if (target[_unspect]) delete target[_unspect]
 }
 
 function disable(target, aspect) {
-  let unaspect = target[_aspects].get(aspect)
-  if (unaspect && unaspect.call) unaspect(target)
-  target[_aspects].delete(aspect)
+  if (!aspect) return [...target[_aspects].keys()].map(aspect => disable(target, aspect))
 
-  if (!target[_aspects].size) {
-    delete target[_aspects]
-    target.classList.remove(SPECT_CLASS)
-  }
+  target[_unspect] = true
+
+  requestAnimationFrame(() => {
+    if (!target[_unspect]) return
+    if (!target[_aspects]) return
+
+    let unaspect = target[_aspects].get(aspect)
+    target[_aspects].delete(aspect)
+    if (unaspect && unaspect.call) unaspect(target)
+
+    if (!target[_aspects].size) {
+      delete target[_aspects]
+      target.classList.remove(SPECT_CLASS)
+    }
+  })
 }
