@@ -32,7 +32,25 @@ const nameRules = (target) => {
   for (let name in nameRules) addMatched(arr, target.getElementsByName(name), nameRules[name])
   return arr
 }
-const animRules = () => {}
+const addMatched = (arr, el, rules) => {
+  if (!rules || !el) return
+  if (!el.nodeType && el.item) return [].map.call(el, el => addMatched(arr, el, rules))
+  rules.map(([fn, sel, scope]) => {
+    // ignore out-of-scope rules
+    if (scope) {
+      if (scope.nodeType) if (!scope.contains(el)) return
+      if ([].every.call(scope, scope => !scope.contains(el))) return
+    }
+
+    // a, .a, #a
+    if (!sel) arr.push([el, fn])
+    // a.a, #a[name=b]
+    else if (el.matches(sel)) arr.push([el, fn])
+    // else
+    // a > b, a b, a~b, a+b
+  })
+}
+const animRules = {}
 
 export default function $(scope, selector, fn) {
   // spect`#x`
@@ -53,9 +71,8 @@ export default function $(scope, selector, fn) {
     return target
   }
 
-  let op, id, tag, cls, name, sel, style, anim
+  let op, id, tag, cls, name, sel, anim
 
-  const ruleId = `spect-${count++}`
   const parts = selector.match(/^(\s*)(?:#([\w-]+)|(\w+)|\.([\w-]+)|\[\s*name=([\w]+)\s*\])([^]*)/)
 
   // init existing elements
@@ -74,53 +91,44 @@ export default function $(scope, selector, fn) {
     else if (tag && (tag = tag.toUpperCase())) (tagRules[tag] = tagRules[tag] || []).push([fn, sel, scope])
   }
 
-  // assign secondary aspects via animation observer (technique inspired by insertionQuery). Cases:
-  // - dynamically added attributes (we don't observe attribs via mutation obserever)
-  // - complex selectors (we avoid long sync mutations check)
-  // - simple tag selectors are meaningless to observe - they're never going to dynamically match
+  // assign secondary aspects via animation observer (technique from insertionQuery). Cases:
+  // - dynamically added attributes so that existing nodes match (we don't observe attribs in mutation obserever)
+  // - complex selectors, inc * - we avoid >O(c) sync mutations check
+  // Simple tag selectors are meaningless to observe - they're never going to dynamically match.
   // NOTE: only connected scope supports anim observer
-  // tracking unmathed elements is done via transition events
+  // FIXME: if complex selectors have `animation`redefined by user-styles it may conflict
   if (!/^\w+$/.test(selector)) {
     anim = animRules[selector]
     if (!anim) {
-      anim = animRules[selector] = []
+      anim = []
       anim.sel = selector
-      anim.id = 'spect-anim-' + Object.keys(animRules).length
+      anim.id = 'spect-' + count++
+      animRules[selector] = anim
       anim.style = document.createElement('style')
       anim.style.innerHTML = `
       @keyframes ${ anim.id } { from {} to {} }
-      ${ selector }:not(.${ anim.id }) {
-        animation-delay: -1ms; animation-duration: 0ms;
-        animation-iteration-count: 1; animation-name: ${ anim.id };
-      }
-      .${ anim.id } {
-        transition: 1ms linear;
-        outline: 1px transparent;
-      }
-      ${ selector }.${ anim.id } {
-        outline: 0px transparent;
-      }
+      ${ selector }:not(.${ anim.id }) { animation-name: ${ anim.id } }
+      .${ anim.id } { animation-name: ${ anim.id } }
+      ${ selector }.${ anim.id } { animation-name: unset; animation-name: revert; }
       `
       anim.onanim = e => {
         if (e.animationName !== anim.id) return
+        e.stopPropagation()
+        e.preventDefault()
         let {target} = e
         if (scope) if (scope === target || !scope.contains(target)) return
 
         if (!target.classList.contains(anim.id)) {
           target.classList.add(anim.id)
-          // target.addEventListener('transitionend', e => console.log('end', anim.id, target, e))
           anim.map(([fn]) => enable(target, fn))
         }
-      }
-      anim.ontrans = e => {
-        // console.log(e)
-        // else {
-        //   target.classList.remove(ruleId)
-        //   disable(target, fn)
-        // }
+        else {
+          target.classList.remove(anim.id)
+          anim.map(([fn]) => disable(target, fn))
+        }
       }
       document.head.appendChild(anim.style)
-      document.addEventListener('animationstart', anim.onanim)
+      document.addEventListener('animationstart', anim.onanim, true)
     }
 
     anim.push([fn])
@@ -145,25 +153,6 @@ export default function $(scope, selector, fn) {
   return collection
 }
 
-
-const addMatched = (arr, el, rules) => {
-  if (!rules || !el) return
-  if (!el.nodeType && el.item) return [].map.call(el, el => addMatched(arr, el, rules))
-  rules.map(([fn, sel, scope]) => {
-    // ignore out-of-scope rules
-    if (scope) {
-      if (scope.nodeType) if (!scope.contains(el)) return
-      if ([].every.call(scope, scope => !scope.contains(el))) return
-    }
-
-    // a, .a, #a
-    if (!sel) arr.push([el, fn])
-    // a.a, #a[name=b]
-    else if (el.matches(sel)) arr.push([el, fn])
-    // else
-    // a > b, a b, a~b, a+b
-  })
-}
 
 
 const observer = new MutationObserver((list) => {

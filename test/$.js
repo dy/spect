@@ -72,8 +72,10 @@ t('$: dynamically assigned selector', async t => {
 
   t.is(log, [el])
 
+  el.remove()
   xs[Symbol.dispose]()
-  document.body.removeChild(el)
+
+  await frame(2)
 })
 t('$: simple hooks', async t => {
   let el = document.createElement('div')
@@ -118,10 +120,11 @@ t('$: remove/add should not retrigger element', async t => {
   await time(10)
   t.is(log, ['a'])
 
-  document.body.removeChild(a)
+  b.remove()
+  a.remove()
   as[Symbol.dispose]()
 
-  await frame()
+  await frame(2)
   t.end()
 })
 t('$: remove/add internal should not retrigger element', async t => {
@@ -132,15 +135,13 @@ t('$: remove/add internal should not retrigger element', async t => {
   let log = []
   let abs = $('a b', el => log.push('b'))
   setTimeout(() => document.body.appendChild(a))
-
-  await time()
+  await time(5)
   await frame(2)
   t.deepEqual(log, ['b'])
 
-  document.body.removeChild(a)
+  a.remove()
   abs[Symbol.dispose]()
-  // abs(null)
-  await frame()
+  await frame(2)
   t.end()
 })
 t('$: scoped asterisk selector', async t => {
@@ -167,21 +168,21 @@ t('$: destructor is called on unmount', async t => {
   })
   t.deepEqual(log, [])
   el.innerHTML = 'x<a></a><a></a>x'
-  await frame(2)
+  await frame(4)
   t.deepEqual(log, [1, 1])
 
   el.innerHTML = ''
-  await frame(2)
+  await frame(4)
   t.deepEqual(log, [1, 1, 2, 2], 'clear up')
   all[Symbol.dispose]()
 
   el.innerHTML = 'x<a></a><a></a>x'
-  await frame(2)
+  await frame(4)
   t.deepEqual(log, [1, 1, 2, 2])
   t.end()
 })
 t('$: changed attribute matches new nodes', async t => {
-  let el = document.createElement('div')
+  let el = document.body.appendChild(document.createElement('div'))
   el.innerHTML = '<a><b><c></c></b></a>'
 
   let log = []
@@ -189,6 +190,7 @@ t('$: changed attribute matches new nodes', async t => {
     log.push('+2')
     return () => log.push('-2')
   })
+  const abb2 = $(el, 'a b.b', e => { log.push('+2a')})
   const abbc = $(el, 'a b.b c', e => {
     log.push('+3')
     return () => log.push('-3')
@@ -199,28 +201,37 @@ t('$: changed attribute matches new nodes', async t => {
   await frame(2)
   t.is(log, [])
 
+  console.log('add .b')
   el.querySelector('b').classList.add('b')
   await frame(2)
-  t.is(log, ['+2', '+3'])
+  t.is(log, ['+2', '+2a', '+3'])
 
+  console.log('remove .b')
   el.querySelector('b').classList.remove('b')
   await frame(2)
-  t.is(log, ['+2', '+3', '-2', '-3'])
+  t.is(log, ['+2', '+2a', '+3', '-2', '-3'])
 
 
+  console.log('add .b again')
   log = []
   el.querySelector('b').classList.add('b')
   await frame(2)
-  t.is(log, ['+2', '+3'])
+  t.is(log, ['+2', '+2a', '+3'])
 
+  console.log('remove .b again')
   el.querySelector('b').classList.remove('b')
   await frame(2)
-  t.is(log, ['+2', '+3', '-2', '-3'])
+  t.is(log, ['+2', '+2a', '+3', '-2', '-3'])
 
   abb[Symbol.dispose]()
+  abb2[Symbol.dispose]()
   abbc[Symbol.dispose]()
-  // abb(null)
-  // abbc(null)
+
+  console.log('destructed')
+  log = []
+  el.querySelector('b').classList.add('b')
+  await frame(2)
+  t.is(log, [])
 })
 t('$: contextual query with self-matching', async t => {
   let el = document.createElement('x')
