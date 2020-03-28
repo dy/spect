@@ -18,30 +18,34 @@ export default function $(scope, selector, fn) {
     if (target.nodeType) target = [target]
     if (!target.nodeType && target[0].nodeType) {
       target = [...target]
-      target.map(el => enable(el, fn))
-      target[Symbol.dispose] = () => target.map(el => disable(el, fn))
+      target.fn = fn
+      target.map(el => enable(el, target))
+      target[Symbol.dispose] = () => target.map(el => disable(el, target))
     }
     return target
   }
 
-  let op, id, tag, cls, name, sel, anim
+  let op, id, tag, cls, name, match, anim
 
   const parts = selector.match(/^(\s*)(?:#([\w-]+)|(\w+)|\.([\w-]+)|\[\s*name=([\w]+)\s*\])([^]*)/)
 
   // init existing elements
-  const collection = [...(scope || document).querySelectorAll(selector)]
-  collection.map(el => enable(el, fn))
+  const set = []
+  set.fn = fn
+  set.scope = scope
+  ;(scope || document).querySelectorAll(selector).forEach(el => enable(el, set))
 
   // non-simple selectors are considered secondary aspects
   if (parts) {
   // TODO: handle multiple simple parts, make sure rulesets don't overlap
-    [, op, id, tag, cls, name, sel ] = parts
+    [, op, id, tag, cls, name, match ] = parts
+    set.match = match
 
     // 1/2-component selectors
-    if (id) (idRules[id] = idRules[id] || []).push([fn, sel, scope])
-    else if (name) (nameRules[name] = nameRules[name] || []).push([fn, sel, scope])
-    else if (cls) (classRules[cls] = classRules[cls] || []).push([fn, sel, scope])
-    else if (tag) (tag = tag.toUpperCase(), tagRules[tag] = tagRules[tag] || []).push([fn, sel, scope])
+    if (id) (idRules[id] = idRules[id] || []).push(set)
+    else if (name) (nameRules[name] = nameRules[name] || []).push(set)
+    else if (cls) (classRules[cls] = classRules[cls] || []).push(set)
+    else if (tag) (tag = tag.toUpperCase(), tagRules[tag] = tagRules[tag] || []).push(set)
   }
 
   // assign secondary aspects via animation observer (technique from insertionQuery). Cases:
@@ -73,28 +77,28 @@ export default function $(scope, selector, fn) {
 
         if (!target.classList.contains(anim.id)) {
           target.classList.add(anim.id)
-          anim.map(([fn]) => enable(target, fn))
+          anim.map(set => enable(target, set))
         }
         else {
           target.classList.remove(anim.id)
-          anim.map(([fn]) => disable(target, fn))
+          anim.map(set => disable(target, set))
         }
       }
       document.head.appendChild(anim.style)
       document.addEventListener('animationstart', anim.onanim, true)
     }
 
-    anim.push([fn])
+    anim.push(set)
   }
 
-  collection[_dispose] = () => {
-    collection.map(el => disable(el, fn))
-    if (id) idRules[id].splice(idRules[id].findIndex(rule => rule[0] === fn) >>> 0, 1)
-    if (cls) classRules[cls].splice(classRules[cls].findIndex(rule => rule[0] === fn) >>> 0, 1)
-    if (tag) tagRules[tag].splice(tagRules[tag].findIndex(rule => rule[0] === fn) >>> 0, 1)
-    if (name) nameRules[name].splice(nameRules[name].findIndex(rule => rule[0] === fn) >>> 0, 1)
+  set[_dispose] = () => {
+    set.map(el => disable(el, set))
+    if (id) idRules[id].splice(idRules[id].findIndex(rule => rule[0] === set) >>> 0, 1)
+    if (cls) classRules[cls].splice(classRules[cls].findIndex(rule => rule[0] === set) >>> 0, 1)
+    if (tag) tagRules[tag].splice(tagRules[tag].findIndex(rule => rule[0] === set) >>> 0, 1)
+    if (name) nameRules[name].splice(nameRules[name].findIndex(rule => rule[0] === set) >>> 0, 1)
     if (anim) {
-      anim.splice(anim.findIndex(rule => rule[0] === fn) >>> 0, 1)
+      anim.splice(anim.findIndex(rule => rule === set) >>> 0, 1)
       if (!anim.length) {
         document.head.removeChild(anim.style)
         document.removeEventListener('animationstart', anim.onanim)
@@ -103,10 +107,40 @@ export default function $(scope, selector, fn) {
     }
   }
 
-  return collection
+  return set
 }
 
 const animRules = {}
+
+
+const observer = new MutationObserver((list) => {
+  for (let mutation of list) {
+    let { addedNodes, removedNodes, target } = mutation
+    if (mutation.type === 'childList') {
+      removedNodes.forEach(target => {
+        if (target.nodeType !== ELEMENT) return
+        if (target.classList.contains(SPECT_CLASS)) disable(target)
+        ;[].map.call(target.getElementsByClassName(SPECT_CLASS), node => disable(node))
+      })
+
+      addedNodes.forEach(target => {
+        if (target.nodeType !== ELEMENT) return
+
+        // selector-set optimization:
+        // instead of walking full ruleset for each node, we detect which rules are applicable for the node
+        // ruleset checks target itself and its children, returns list of [el, aspect] tuples
+        if (target.id) idRules(target)
+        if (target.className) classRules(target)
+        if (target.attributes.name) nameRules(target)
+        tagRules(target)
+      })
+    }
+  }
+})
+observer.observe(document, {
+  childList: true,
+  subtree: true
+})
 
 // both ruleset and query rules for target
 // (it's safe to store ids on function, even `arguments` and `length`)
@@ -132,7 +166,9 @@ const nameRules = (target) => {
 const enableMatched = (el, rules) => {
   if (!rules || !el) return
   if (!el.nodeType && el.item) return [].map.call(el, el => enableMatched(el, rules))
-  rules.map(([fn, sel, scope]) => {
+  rules.map(set => {
+    const { match, scope } = set
+
     // ignore out-of-scope rules
     if (scope) {
       if (scope.nodeType) {if (!scope.contains(el)) return}
@@ -140,73 +176,50 @@ const enableMatched = (el, rules) => {
     }
 
     // a, .a, #a
-    if (!sel) enable(el, fn)
+    if (!match) enable(el, set)
     // a.a, #a[name=b]
-    else if (el.matches(sel)) enable(el, fn)
+    else if (el.matches(match)) enable(el, set)
     // else
     // a > b, a b, a~b, a+b
   })
 }
 
-const observer = new MutationObserver((list) => {
-  for (let mutation of list) {
-    let { addedNodes, removedNodes, target } = mutation
-    if (mutation.type === 'childList') {
-      removedNodes.forEach(target => {
-        if (target.nodeType !== ELEMENT) return
-        if (target.classList.contains(SPECT_CLASS)) disable(target)
-        ;[...target.getElementsByClassName(SPECT_CLASS)].map(node => disable(node))
-      })
-
-      addedNodes.forEach(target => {
-        if (target.nodeType !== ELEMENT) return
-
-        // selector-set optimization:
-        // instead of walking full ruleset for each node, we detect which rules are applicable for the node
-        // ruleset checks target itself and its children, returns list of [el, aspect] tuples
-        if (target.id) idRules(target)
-        if (target.className) classRules(target)
-        if (target.attributes.name) nameRules(target)
-        tagRules(target)
-      })
-    }
-  }
-})
-observer.observe(document, {
-  childList: true,
-  subtree: true
-})
-
-
-const _aspects = Symbol.for('@spect')
+const _sets = Symbol.for('@spect')
 const _unaspect = Symbol('unaspect')
-function enable(target, aspect) {
-  if (!target[_aspects]) {
-    target[_aspects] = new Map
+function enable(target, set) {
+  if (!target[_sets]) {
+    target[_sets] = new Map
     target.classList.add(SPECT_CLASS)
   }
-  if (!target[_aspects].has(aspect)) {
-    target[_aspects].set(aspect, aspect(target))
+  if (!target[_sets].has(set)) {
+    set.push(target)
+    target[_sets].set(set, set.fn && set.fn.call && set.fn(target))
   }
-  if (target[_unaspect]) delete target[_unaspect]
+
+  if (target[_unaspect]) {
+    delete target[_unaspect]
+    ;[...target[_sets].keys()].map(set => set.push(target))
+  }
 }
 
-function disable(target, aspect) {
-  if (!aspect) return [...target[_aspects].keys()].map(aspect => disable(target, aspect))
+function disable(target, set) {
+  if (!target[_sets]) return
+  if (!set) return [...target[_sets].keys()].map(set => disable(target, set))
+
+  // remove from sets
+  if (target[_sets]) [...target[_sets].keys()].map(set => set.splice(set.indexOf(target >>> 0), 1))
 
   target[_unaspect] = true
-
   requestAnimationFrame(() => {
-    if (!target[_unaspect]) return
-    if (!target[_aspects]) return
+    if (!target[_unaspect] || !target[_sets]) return
 
-    let unaspect = target[_aspects].get(aspect)
-    target[_aspects].delete(aspect)
-    if (unaspect) if (unaspect.call) unaspect(target); else if (unaspect.then) unaspect.then(fn => fn && fn.call && fn())
-
-    if (!target[_aspects].size) {
-      delete target[_aspects]
+    let unaspect = target[_sets].get(set)
+    target[_sets].delete(set)
+    if (!target[_sets].size) {
+      delete target[_sets]
       target.classList.remove(SPECT_CLASS)
     }
+
+    if (unaspect) if (unaspect.call) unaspect(target); else if (unaspect.then) unaspect.then(fn => fn && fn.call && fn())
   })
 }

@@ -54,7 +54,7 @@ t('$: init existing elements', async t => {
   xs[Symbol.dispose]()
   document.body.removeChild(container)
 })
-t('$: dynamically assigned selector', async t => {
+t.browser('$: dynamically assigned selector', async t => {
   let log = []
 
   let xs = $('.x', el => {
@@ -127,7 +127,7 @@ t('$: remove/add should not retrigger element', async t => {
   await frame(2)
   t.end()
 })
-t('$: remove/add internal should not retrigger element', async t => {
+t.browser('$: remove/add internal should not retrigger element', async t => {
   let a = document.createElement('a')
   let b = document.createElement('b')
   a.appendChild(b)
@@ -144,7 +144,7 @@ t('$: remove/add internal should not retrigger element', async t => {
   await frame(2)
   t.end()
 })
-t('$: scoped asterisk selector', async t => {
+t.browser('$: scoped asterisk selector', async t => {
   let log = [], el = document.body.appendChild(document.createElement('div'))
   let list = $(el, '*', el => log.push(el))
   let x, y, z
@@ -159,7 +159,7 @@ t('$: scoped asterisk selector', async t => {
 
   document.body.removeChild(el)
 })
-t('$: destructor is called on unmount', async t => {
+t.browser('$: destructor is called on unmount', async t => {
   let el = document.body.appendChild(document.createElement('div'))
   let log = []
   let all = $(el, '*', el => {
@@ -177,11 +177,12 @@ t('$: destructor is called on unmount', async t => {
   all[Symbol.dispose]()
 
   el.innerHTML = 'x<a></a><a></a>x'
-  await frame(4)
+  await frame(2)
   t.deepEqual(log, [1, 1, 2, 2])
+  el.innerHTML = ''
   t.end()
 })
-t('$: changed attribute matches new nodes', async t => {
+t.browser('$: changed attribute matches new nodes', async t => {
   let el = document.body.appendChild(document.createElement('div'))
   el.innerHTML = '<a><b><c></c></b></a>'
 
@@ -232,8 +233,10 @@ t('$: changed attribute matches new nodes', async t => {
   el.querySelector('b').classList.add('b')
   await frame(2)
   t.is(log, [])
+
+  el.remove()
 })
-t('$: contextual query', async t => {
+t.browser('$: contextual query', async t => {
   let el = document.body.appendChild(document.createElement('div'))
   let log = []
   $(el, '.x y', y => {
@@ -252,7 +255,7 @@ t('$: contextual query', async t => {
   await frame(3)
   t.same(log, ['.x y', '.x', '-', ' y'])
 })
-t('$: adding/removing attribute with attribute selector, mixed with direct selector', async t => {
+t.browser('$: adding/removing attribute with attribute selector, mixed with direct selector', async t => {
   let el = document.body.appendChild(document.createElement('div'))
   const log = []
   el.innerHTML = '<x></x>'
@@ -272,7 +275,7 @@ t('$: adding/removing attribute with attribute selector, mixed with direct selec
   t.is(log, [1, 2])
   el.remove()
 })
-t('$: matching nodes in added subtrees', async t => {
+t.browser('$: matching nodes in added subtrees', async t => {
   let el = document.body.appendChild(document.createElement('div'))
   let log = []
   $(el, 'a b c d', el => {
@@ -421,22 +424,22 @@ t.skip('empty selectors', t => {
   t.notEqual($x, $z)
   // t.notEqual($x, $w)
 })
-t.todo('$: returned result is live collection', async t => {
+t('$: returned result is live collection', async t => {
   let scope = document.body.appendChild(document.createElement('div'))
   let els = $(scope, '.x')
   t.is(els, [])
   scope.innerHTML = '<a class="x"></a>'
-  await tick(8)
+  await frame(2)
   t.is(els.length, 1)
   scope.innerHTML = '<a class="x"><b class="x"/></a>'
-  await frame(2)
+  await frame(4)
   t.is(els.length, 2)
   scope.innerHTML = ''
   await frame(2)
   t.is(els.length, 0)
   scope.remove()
 })
-t.todo('$: handles input live collections')
+t.todo('$: handles passed live collections like HTMLCollection')
 t.todo('$: selecting by name', t => {
   let $f = $`<form><input name="a"/><input name="b"/></form>`
 
@@ -450,7 +453,7 @@ t.todo('$: selecting by name', t => {
 })
 t('$: init on list of elements', async t => {
   let log = []
-  let el = document.createElement('div')
+  let el = document.body.appendChild(document.createElement('div'))
   el.innerHTML = '<a>1</a><a>2</a>'
   let chldrn = $(el.childNodes, el => {
     log.push(el.textContent)
@@ -459,9 +462,11 @@ t('$: init on list of elements', async t => {
   t.deepEqual(log, ['1', '2'])
   el.innerHTML = ''
   chldrn[Symbol.dispose]()
-  // chldrn(null)
+
   await frame(2)
   t.deepEqual(log, ['1', '2', 'un1', 'un2'])
+
+  el.remove()
 })
 
 t('$: init/destroy in body of web-component')
