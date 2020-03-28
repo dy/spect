@@ -253,7 +253,7 @@ t('$: contextual query', async t => {
   t.same(log, ['.x y', '.x', '-', ' y'])
 })
 t('$: adding/removing attribute with attribute selector, mixed with direct selector', async t => {
-  let el = document.createElement('div')
+  let el = document.body.appendChild(document.createElement('div'))
   const log = []
   el.innerHTML = '<x></x>'
   const x = el.firstChild
@@ -262,17 +262,18 @@ t('$: adding/removing attribute with attribute selector, mixed with direct selec
     log.push(1)
     return () => log.push(2)
   })
-  await tick(8)
+  await frame(2)
   t.is(log, [])
   x.setAttribute('y', true)
-  await tick(8)
+  await frame(2)
   t.is(log, [1])
   x.removeAttribute('y')
   await frame(2)
   t.is(log, [1, 2])
+  el.remove()
 })
 t('$: matching nodes in added subtrees', async t => {
-  let el = document.createElement('div')
+  let el = document.body.appendChild(document.createElement('div'))
   let log = []
   $(el, 'a b c d', el => {
     log.push('+')
@@ -281,7 +282,7 @@ t('$: matching nodes in added subtrees', async t => {
     }
   })
   el.innerHTML = '<a><b><c><d></d></c></b></a>'
-  await tick(8)
+  await frame(2)
   t.is(log, ['+'])
   el.innerHTML = ''
   await frame(2)
@@ -319,12 +320,6 @@ t.todo('new custom element', t => {
   $('custom-element', () => {
 
   })
-})
-t.todo('aspects must be called in order', async t => {
-  let log = []
-  let a = {}
-  await spect(a).use([() => log.push(1), () => log.push(2), () => log.push(3)])
-  t.deepEqual(log, [1, 2, 3])
 })
 t.todo('duplicates are ignored', async t => {
   let log = []
@@ -388,24 +383,24 @@ t('async aspects', async t => {
   let log = []
   $('a', async el => {
     log.push(1)
-    await Promise.resolve().then()
+    await tick()
     log.push(2)
     return () => log.push(3)
   })
-  await tick(10)
+  await frame(2)
   document.body.removeChild(a)
   await frame(2)
   t.is(log, [1, 2, 3])
 })
 t('rebinding to other document', async t => {
-  let { default: undom} = await import('undom/src/undom')
-  let document = undom()
+  let all = await import('nodom')
+  let document = new Document()
 
   var div = document.createElement("div")
   div.className = "foo bar"
 
   $(div, el => {
-    t.is(el.nodeName, 'DIV')
+    t.is(el.nodeName.toUpperCase(), 'DIV')
   })
 })
 t.skip('empty selectors', t => {
@@ -426,19 +421,20 @@ t.skip('empty selectors', t => {
   t.notEqual($x, $z)
   // t.notEqual($x, $w)
 })
-t('$: returned result is live collection', async t => {
-  let scope = document.createElement('div')
+t.todo('$: returned result is live collection', async t => {
+  let scope = document.body.appendChild(document.createElement('div'))
   let els = $(scope, '.x')
   t.is(els, [])
   scope.innerHTML = '<a class="x"></a>'
   await tick(8)
   t.is(els.length, 1)
   scope.innerHTML = '<a class="x"><b class="x"/></a>'
-  await tick(2)
+  await frame(2)
   t.is(els.length, 2)
   scope.innerHTML = ''
-  await tick(2)
+  await frame(2)
   t.is(els.length, 0)
+  scope.remove()
 })
 t.todo('$: handles input live collections')
 t.todo('$: selecting by name', t => {

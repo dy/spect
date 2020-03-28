@@ -4,53 +4,6 @@ const SPECT_CLASS = '👁'
 const ELEMENT = 1
 let count = 0
 
-// both ruleset and query rules for target
-// (it's safe to store ids on function, even `arguments` and `length`)
-const idRules = (target) => {
-  let arr = []
-  addMatched(arr, target, idRules[target.id])
-  for (let id in idRules) addMatched(arr, target.getElementById(id), idRules[id])
-  return arr
-}
-const classRules = (target) => {
-  let arr = []
-  target.classList.forEach(cls => addMatched(arr, target, classRules[cls]))
-  for (let cls in classRules) addMatched(arr, target.getElementsByClassName(cls), classRules[cls])
-  return arr
-}
-const tagRules = (target) => {
-  let arr = []
-  addMatched(arr, target, tagRules[target.tagName])
-  for (let tag in tagRules) {
-    addMatched(arr, target.getElementsByTagName(tag), tagRules[tag])
-  }
-  return arr
-}
-const nameRules = (target) => {
-  let arr = [], name = target.attributes.name.value
-  addMatched(arr, target, nameRules[name])
-  for (let name in nameRules) addMatched(arr, target.getElementsByName(name), nameRules[name])
-  return arr
-}
-const addMatched = (arr, el, rules) => {
-  if (!rules || !el) return
-  if (!el.nodeType && el.item) return [].map.call(el, el => addMatched(arr, el, rules))
-  rules.map(([fn, sel, scope]) => {
-    // ignore out-of-scope rules
-    if (scope) {
-      if (scope.nodeType) {if (!scope.contains(el)) return}
-      else if ([].every.call(scope, scope => !scope.contains(el))) return
-    }
-
-    // a, .a, #a
-    if (!sel) arr.push([el, fn])
-    // a.a, #a[name=b]
-    else if (el.matches(sel)) arr.push([el, fn])
-    // else
-    // a > b, a b, a~b, a+b
-  })
-}
-const animRules = {}
 
 export default function $(scope, selector, fn) {
   // spect`#x`
@@ -153,6 +106,47 @@ export default function $(scope, selector, fn) {
   return collection
 }
 
+const animRules = {}
+
+// both ruleset and query rules for target
+// (it's safe to store ids on function, even `arguments` and `length`)
+const idRules = (target) => {
+  enableMatched(target, idRules[target.id])
+  for (let id in idRules) enableMatched(target.getElementById(id), idRules[id])
+}
+const classRules = (target) => {
+  target.classList.forEach(cls => enableMatched(target, classRules[cls]))
+  for (let cls in classRules) enableMatched(target.getElementsByClassName(cls), classRules[cls])
+}
+const tagRules = (target) => {
+  enableMatched(target, tagRules[target.tagName])
+  for (let tag in tagRules) {
+    enableMatched(target.getElementsByTagName(tag), tagRules[tag])
+  }
+}
+const nameRules = (target) => {
+  const name = target.attributes.name.value
+  enableMatched(target, nameRules[name])
+  for (let name in nameRules) enableMatched(target.getElementsByName(name), nameRules[name])
+}
+const enableMatched = (el, rules) => {
+  if (!rules || !el) return
+  if (!el.nodeType && el.item) return [].map.call(el, el => enableMatched(el, rules))
+  rules.map(([fn, sel, scope]) => {
+    // ignore out-of-scope rules
+    if (scope) {
+      if (scope.nodeType) {if (!scope.contains(el)) return}
+      else if ([].every.call(scope, scope => !scope.contains(el))) return
+    }
+
+    // a, .a, #a
+    if (!sel) enable(el, fn)
+    // a.a, #a[name=b]
+    else if (el.matches(sel)) enable(el, fn)
+    // else
+    // a > b, a b, a~b, a+b
+  })
+}
 
 const observer = new MutationObserver((list) => {
   for (let mutation of list) {
@@ -170,10 +164,10 @@ const observer = new MutationObserver((list) => {
         // selector-set optimization:
         // instead of walking full ruleset for each node, we detect which rules are applicable for the node
         // ruleset checks target itself and its children, returns list of [el, aspect] tuples
-        if (target.id) idRules(target).map(rule => enable(...rule))
-        if (target.className) classRules(target).map(rule => enable(...rule))
-        if (target.attributes.name) nameRules(target).map(rule => enable(...rule))
-        tagRules(target).map(rule => enable(...rule))
+        if (target.id) idRules(target)
+        if (target.className) classRules(target)
+        if (target.attributes.name) nameRules(target)
+        tagRules(target)
       })
     }
   }
@@ -185,7 +179,7 @@ observer.observe(document, {
 
 
 const _aspects = Symbol.for('@spect')
-const _unspect = Symbol('unspect')
+const _unaspect = Symbol('unaspect')
 function enable(target, aspect) {
   if (!target[_aspects]) {
     target[_aspects] = new Map
@@ -194,21 +188,21 @@ function enable(target, aspect) {
   if (!target[_aspects].has(aspect)) {
     target[_aspects].set(aspect, aspect(target))
   }
-  if (target[_unspect]) delete target[_unspect]
+  if (target[_unaspect]) delete target[_unaspect]
 }
 
 function disable(target, aspect) {
   if (!aspect) return [...target[_aspects].keys()].map(aspect => disable(target, aspect))
 
-  target[_unspect] = true
+  target[_unaspect] = true
 
   requestAnimationFrame(() => {
-    if (!target[_unspect]) return
+    if (!target[_unaspect]) return
     if (!target[_aspects]) return
 
     let unaspect = target[_aspects].get(aspect)
     target[_aspects].delete(aspect)
-    if (unaspect && unaspect.call) unaspect(target)
+    if (unaspect) if (unaspect.call) unaspect(target); else if (unaspect.then) unaspect.then(fn => fn && fn.call && fn())
 
     if (!target[_aspects].size) {
       delete target[_aspects]

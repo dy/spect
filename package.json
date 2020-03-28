@@ -59,17 +59,16 @@
   "devDependencies": {
     "@rollup/plugin-node-resolve": "^7.1.1",
     "augmentor": "^2.1.5",
-    "dom-lite": "^0.5.1",
     "es-dev-server": "^1.32.0",
     "esm": "^3.2.25",
     "ironjs": "0.0.17-alpha",
     "jsdom": "^16.1.0",
     "nanomorph": "^5.4.0",
+    "nodom": "^2.4.0",
     "observable": "^2.1.4",
     "rollup": "^1.31.1",
     "terser": "^4.6.6",
     "tst": "^5.3.3",
-    "undom": "^0.4.0",
     "unihooks": "^1.4.5",
     "wait-please": "^3.0.0",
     "zen-observable": "^0.8.15"
