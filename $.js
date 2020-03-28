@@ -38,8 +38,8 @@ const addMatched = (arr, el, rules) => {
   rules.map(([fn, sel, scope]) => {
     // ignore out-of-scope rules
     if (scope) {
-      if (scope.nodeType) if (!scope.contains(el)) return
-      if ([].every.call(scope, scope => !scope.contains(el))) return
+      if (scope.nodeType) {if (!scope.contains(el)) return}
+      else if ([].every.call(scope, scope => !scope.contains(el))) return
     }
 
     // a, .a, #a
@@ -88,7 +88,7 @@ export default function $(scope, selector, fn) {
     if (id) (idRules[id] = idRules[id] || []).push([fn, sel, scope])
     else if (name) (nameRules[name] = nameRules[name] || []).push([fn, sel, scope])
     else if (cls) (classRules[cls] = classRules[cls] || []).push([fn, sel, scope])
-    else if (tag && (tag = tag.toUpperCase())) (tagRules[tag] = tagRules[tag] || []).push([fn, sel, scope])
+    else if (tag) (tag = tag.toUpperCase(), tagRules[tag] = tagRules[tag] || []).push([fn, sel, scope])
   }
 
   // assign secondary aspects via animation observer (technique from insertionQuery). Cases:
@@ -152,7 +152,6 @@ export default function $(scope, selector, fn) {
 
   return collection
 }
-
 
 
 const observer = new MutationObserver((list) => {

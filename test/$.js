@@ -233,25 +233,24 @@ t('$: changed attribute matches new nodes', async t => {
   await frame(2)
   t.is(log, [])
 })
-t('$: contextual query with self-matching', async t => {
-  let el = document.createElement('x')
+t('$: contextual query', async t => {
+  let el = document.body.appendChild(document.createElement('div'))
   let log = []
   $(el, '.x y', y => {
-    log.push('y')
+    log.push('.x y')
   })
   $(el, '.x', el => {
-    log.push('x')
+    log.push('.x')
   })
   $(el, () => {
     log.push('-')
   })
-  $(el, ' y', el => {
+  $(el, 'y', el => {
     log.push(' y')
   })
-  el.innerHTML = '<y></y>'
-  el.classList.add('x')
-  await tick(8)
-  t.same(log, ['y', 'x', '-', ' y'])
+  el.innerHTML = '<x class="x"><y></y></x>'
+  await frame(3)
+  t.same(log, ['.x y', '.x', '-', ' y'])
 })
 t('$: adding/removing attribute with attribute selector, mixed with direct selector', async t => {
   let el = document.createElement('div')
