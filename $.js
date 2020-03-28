@@ -53,7 +53,7 @@ export default function $(scope, selector, fn) {
     return target
   }
 
-  let op, id, tag, cls, name, sel, style, handler
+  let op, id, tag, cls, name, sel, style, anim, trans
 
   // const ruleId = `${SPECT_CLASS}-${count++}`
   const ruleId = `spect-${count++}`
@@ -77,40 +77,51 @@ export default function $(scope, selector, fn) {
     else if (tag && (tag = tag.toUpperCase())) (tagRules[tag] = tagRules[tag] || []).push([fn, sel, scope])
   }
 
-  // assign secondary aspects via animation observer:
-  // - for dynamically added attributes (we don't observe attribs via mutation obserever)
-  // - for complex selectors (we avoid long sync mutations check)
+  // assign secondary aspects via animation observer (technique inspired by insertionQuery). Cases:
+  // - dynamically added attributes (we don't observe attribs via mutation obserever)
+  // - complex selectors (we avoid long sync mutations check)
   // - simple tag selectors are meaningless to observe - they're never going to dynamically match
   // NOTE: only connected scope supports anim observer
+  // tracking unmathed elements is done via transition events
   if (!/^\w+$/.test(selector)) {
     if (scope) scope.classList.add(scopeClass)
 
-    ;(style = document.createElement('style')).innerHTML = `
-    @keyframes ${ ruleId } { from { outline: 1px transparent} to { outline: 0px transparent } }
-    ${ scope ? '.' + scopeClass : '' } ${ selector } {
-    animation-delay: -1ms !important; animation-duration: 0ms !important;
-    animation-iteration-count: 1 !important; animation-name: ${ ruleId };
+    style = document.createElement('style')
+    style.innerHTML = `
+    @keyframes ${ ruleId } { from {} to {} }
+    ${ scope ? '.' + scopeClass : '' } ${ selector }:not(${ ruleId }) {
+    animation-delay: -1ms; animation-duration: 0ms;
+    animation-iteration-count: 1; animation-name: ${ ruleId };
     }
-    ${ scope ? '.' + scopeClass : '' } .${ ruleId }:not(${ selector }) {
-    animation-delay: -1ms !important; animation-duration: 0ms !important;
-    animation-iteration-count: 1 !important; animation-name: ${ ruleId };
-    }`
+    .${ ruleId } {
+      transition: 1s linear;
+      outline: 1px transparent;
+    }
+    ${ selector }.${ ruleId } {
+      outline: 0px transparent;
+    }
+    `
+    console.log(style.innerHTML)
 
-    handler = e => {
+    anim = e => {
       if (e.animationName !== ruleId) return
       let {target} = e
       if (!target.classList.contains(ruleId)) {
+        target.addEventListener('transitionstart', trans)
         target.classList.add(ruleId)
         enable(target, fn)
       }
-      else {
-        target.classList.remove(ruleId)
-        disable(target, fn)
-      }
+    }
+    trans = e => {
+      console.log(e)
+      // else {
+      //   target.classList.remove(ruleId)
+      //   disable(target, fn)
+      // }
     }
 
     document.head.appendChild(style)
-    document.addEventListener('animationstart', handler)
+    document.addEventListener('animationstart', anim)
   }
 
   collection[_dispose] = () => {
@@ -120,7 +131,7 @@ export default function $(scope, selector, fn) {
     if (tag) tagRules[tag].splice(tagRules[tag].findIndex(rule => rule[0] === fn) >>> 0, 1)
     if (name) nameRules[name].splice(nameRules[name].findIndex(rule => rule[0] === fn) >>> 0, 1)
     if (style) document.head.removeChild(style)
-    if (handler) document.removeEventListener('animationstart', handler)
+    if (animHandler) document.removeEventListener('animationstart', animHandler)
     if (scope) scope.classList.remove(scopeClass)
   }
 
