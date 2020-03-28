@@ -32,7 +32,7 @@ const nameRules = (target) => {
   for (let name in nameRules) addMatched(arr, target.getElementsByName(name), nameRules[name])
   return arr
 }
-
+const animRules = () => {}
 
 export default function $(scope, selector, fn) {
   // spect`#x`
@@ -53,12 +53,9 @@ export default function $(scope, selector, fn) {
     return target
   }
 
-  let op, id, tag, cls, name, sel, style, anim, trans
+  let op, id, tag, cls, name, sel, style, anim
 
-  // const ruleId = `${SPECT_CLASS}-${count++}`
   const ruleId = `spect-${count++}`
-  const scopeClass = scope ? `spect-scope-${count}` : ''
-
   const parts = selector.match(/^(\s*)(?:#([\w-]+)|(\w+)|\.([\w-]+)|\[\s*name=([\w]+)\s*\])([^]*)/)
 
   // init existing elements
@@ -84,44 +81,49 @@ export default function $(scope, selector, fn) {
   // NOTE: only connected scope supports anim observer
   // tracking unmathed elements is done via transition events
   if (!/^\w+$/.test(selector)) {
-    if (scope) scope.classList.add(scopeClass)
-
-    style = document.createElement('style')
-    style.innerHTML = `
-    @keyframes ${ ruleId } { from {} to {} }
-    ${ scope ? '.' + scopeClass : '' } ${ selector }:not(${ ruleId }) {
-    animation-delay: -1ms; animation-duration: 0ms;
-    animation-iteration-count: 1; animation-name: ${ ruleId };
-    }
-    .${ ruleId } {
-      transition: 1s linear;
-      outline: 1px transparent;
-    }
-    ${ selector }.${ ruleId } {
-      outline: 0px transparent;
-    }
-    `
-    console.log(style.innerHTML)
-
-    anim = e => {
-      if (e.animationName !== ruleId) return
-      let {target} = e
-      if (!target.classList.contains(ruleId)) {
-        target.addEventListener('transitionstart', trans)
-        target.classList.add(ruleId)
-        enable(target, fn)
+    anim = animRules[selector]
+    if (!anim) {
+      anim = animRules[selector] = []
+      anim.sel = selector
+      anim.id = 'spect-anim-' + Object.keys(animRules).length
+      anim.style = document.createElement('style')
+      anim.style.innerHTML = `
+      @keyframes ${ anim.id } { from {} to {} }
+      ${ selector }:not(.${ anim.id }) {
+        animation-delay: -1ms; animation-duration: 0ms;
+        animation-iteration-count: 1; animation-name: ${ anim.id };
       }
-    }
-    trans = e => {
-      console.log(e)
-      // else {
-      //   target.classList.remove(ruleId)
-      //   disable(target, fn)
-      // }
+      .${ anim.id } {
+        transition: 1ms linear;
+        outline: 1px transparent;
+      }
+      ${ selector }.${ anim.id } {
+        outline: 0px transparent;
+      }
+      `
+      anim.onanim = e => {
+        if (e.animationName !== anim.id) return
+        let {target} = e
+        if (scope) if (scope === target || !scope.contains(target)) return
+
+        if (!target.classList.contains(anim.id)) {
+          target.classList.add(anim.id)
+          // target.addEventListener('transitionend', e => console.log('end', anim.id, target, e))
+          anim.map(([fn]) => enable(target, fn))
+        }
+      }
+      anim.ontrans = e => {
+        // console.log(e)
+        // else {
+        //   target.classList.remove(ruleId)
+        //   disable(target, fn)
+        // }
+      }
+      document.head.appendChild(anim.style)
+      document.addEventListener('animationstart', anim.onanim)
     }
 
-    document.head.appendChild(style)
-    document.addEventListener('animationstart', anim)
+    anim.push([fn])
   }
 
   collection[_dispose] = () => {
@@ -130,9 +132,14 @@ export default function $(scope, selector, fn) {
     if (cls) classRules[cls].splice(classRules[cls].findIndex(rule => rule[0] === fn) >>> 0, 1)
     if (tag) tagRules[tag].splice(tagRules[tag].findIndex(rule => rule[0] === fn) >>> 0, 1)
     if (name) nameRules[name].splice(nameRules[name].findIndex(rule => rule[0] === fn) >>> 0, 1)
-    if (style) document.head.removeChild(style)
-    if (animHandler) document.removeEventListener('animationstart', animHandler)
-    if (scope) scope.classList.remove(scopeClass)
+    if (anim) {
+      anim.splice(anim.findIndex(rule => rule[0] === fn) >>> 0, 1)
+      if (!anim.length) {
+        document.head.removeChild(anim.style)
+        document.removeEventListener('animationstart', anim.onanim)
+        delete animRules[anim.sel]
+      }
+    }
   }
 
   return collection
