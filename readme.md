@@ -217,7 +217,7 @@ Selector observer, creates live collection of elements matching the `selector`. 
 * `selector` is a valid CSS selector.
 * `scope` is optional element to narrow down observation, an _HTMLElement_ or a list of elements (array or array-like).
 * `callback` is a function with `(element) => teardown?` signature.
-* `elements` is live array with matched elements, compatible with [HTMLCollection](https://developer.mozilla.org/en-US/docs/Web/API/HTMLCollection), [WeakSet](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/WeakSet) and [Array](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array). Also it implements `Symbol.dispose` and `Symbol.observable`.
+* `elements` is live array with matched elements, compatible with [HTMLCollection](https://developer.mozilla.org/en-US/docs/Web/API/HTMLCollection), [WeakSet](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/WeakSet) and [Array](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array).
 
 ```js
 import { $, v } from 'spect'
@@ -267,8 +267,8 @@ $timer[0]
 // > <div.timer></div>
 ```
 
-_**$**_ uses highly optimized selector observing algorighm, a technique derived from [fast-on-load](https://ghub.io/fast-on-load) and [selector-set](https://github.com/josh/selector-set) for simple selectors and animation events observer (like [insertionQuery](https://github.com/naugtur/insertionQuery)) for complex selectors.<br/>
-Its design is inspired by jQuery, [_HTMLCollection_](https://developer.mozilla.org/en-US/docs/Web/API/HTMLCollection), [_selector-observer_](https://github.com/josh/selector-observer) and _aspect-oriended-programming_.<br/>
+_**$**_ uses technique derived from [fast-on-load](https://ghub.io/fast-on-load) and [selector-set](https://github.com/josh/selector-set) for common selectors and [insertionQuery](https://github.com/naugtur/insertionQuery) animation observer method for complex selectors.<br/>
+Its design is inspired by _jQuery_, [_selector-observer_](https://github.com/josh/selector-observer) and _aspect-oriended-programming_.<br/>
 
 
 <br/>
@@ -324,7 +324,7 @@ $('#clock', el => {
 })
 ```
 
-_**h**_ is direct remake on [hyperscript](https://ghub.io/hyperscript) with extended observable support and unique in class [html syntax parser](https://ghub.io/xhtm) − remake of [_htm_](https://ghub.io/htm).<br/>
+_**h**_ is direct remake on [hyperscript](https://ghub.io/hyperscript) and [htm](https://ghub.io/htm).<br/>
 
 
 <br/>
@@ -440,8 +440,8 @@ $('.likes-count', el => h`<${el}>${
 likes.load()
 ```
 
-_**v**_ design is based on [research of react hooks](https://ghub.io/unihooks), [_observable_](https://ghub.io/observable), [_mutant_](https://ghub.io/mutant), [observable proposal](https://github.com/tc39/proposal-observable), [_rxjs_](https://ghub.io/rxjs), [_iron_](https://github.com/ironjs/iron) and others.<br/>
-It elegantly comprises functionality of heavy store solutions like [redux](https://ghub.io/redux), [mobx](https://ghub.io/mobx), and hooks _useState_, _useEffect_, _useMemo_, with simplicity of [dlv](https://github.com/developit/dlv).
+_**v**_ design is based on [research of react hooks](https://ghub.io/unihooks), [observable proposal](https://github.com/tc39/proposal-observable), [_observable_](https://ghub.io/observable), [_mutant_](https://ghub.io/mutant), [_rxjs_](https://ghub.io/rxjs), [_iron_](https://github.com/ironjs/iron) and others.<br/>
+It comprises functionality of stores ([redux](https://ghub.io/redux), [mobx](https://ghub.io/mobx)), hooks (_useState_, _useEffect_, _useMemo_), observables and selectors ([dlv](https://github.com/developit/dlv)).
 
 <br/>
 
