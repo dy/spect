@@ -15,7 +15,7 @@ const observer = new MutationObserver((list) => {
       removedNodes.forEach(target => {
         if (target.nodeType !== ELEMENT) return
         ;[target.classList.contains(SPECT_CLASS) ? target : null, ...target.getElementsByClassName(SPECT_CLASS)]
-        .forEach(node => node?.[_spect].forEach(set => set.delete(node)))
+        .forEach(node => node && node[_spect].forEach(set => set.delete(node)))
       })
 
       addedNodes.forEach(target => {
@@ -25,20 +25,20 @@ const observer = new MutationObserver((list) => {
         // instead of walking full ruleset for each node, we detect which rules are applicable for the node
         // ruleset checks target itself and its children, returns list of [el, aspect] tuples
         if (target.id) {
-          idSets[target.id]?.forEach(c => c.add(target))
+          idSets[target.id] && idSets[target.id].forEach(c => c.add(target))
           let node
           for (let id in idSets) if (node = target.getElementById(id)) idSets[id].forEach(c => c.add(node))
         }
         if (target.className) {
-          target.classList.forEach(cls => classSets[cls]?.forEach(c => c.add(target)))
+          target.classList.forEach(cls => classSets[cls] && classSets[cls].forEach(c => c.add(target)))
           for (let cls in classSets) [].forEach.call(target.getElementsByClassName(cls), node => classSets[cls].forEach(c => c.add(node)))
         }
         if (target.attributes.name) {
           const name = target.attributes.name.value
-          nameSets[name]?.forEach(c => c.add(target))
+          nameSets[name] && nameSets[name].forEach(c => c.add(target))
           for (let name in nameSets) [].forEach.call(target.getElementsByName(name), node => nameSets[name].forEach(c => c.add(node)))
         }
-        tagSets[target.tagName]?.forEach(c => c.add(target))
+        tagSets[target.tagName] && tagSets[target.tagName].forEach(c => c.add(target))
         for (let tag in tagSets) [].forEach.call(target.getElementsByTagName(tag), node => tagSets[tag].forEach(c => c.add(node)))
       })
     }
@@ -52,7 +52,7 @@ observer.observe(document, {
 
 export default function $(scope, selector, fn) {
   // spect`#x`
-  if (scope?.raw) return new $Collection(null, String.raw(...arguments))
+  if (scope && scope.raw) return new $Collection(null, String.raw(...arguments))
   // spect(selector, fn)
   if (typeof scope === 'string') return new $Collection(null, scope, selector)
   // spect(target, fn)
@@ -72,18 +72,6 @@ export default function $(scope, selector, fn) {
 }
 
 export class $Collection extends Array {
-  #scope
-  #selector
-  #fn
-  #match
-  #id
-  #tag
-  #name
-  #class
-  #animation
-  #channel = channel()
-  #items = new WeakMap
-  #delete = new WeakSet
 
   constructor(scope, selector, fn){
     // self-call, like splice, map, slice etc. fall back to array
@@ -91,26 +79,35 @@ export class $Collection extends Array {
 
     super()
 
-    this.#scope = scope
-    this.#selector = selector
-    this.#fn = fn
+    this._scope = scope
+    this._selector = selector
+    this._fn = fn
+    this._match
+    this._id
+    this._tag
+    this._name
+    this._class
+    this._animation
+    this._channel = channel()
+    this._items = new WeakMap
+    this._delete = new WeakSet
 
     // init existing elements
     ;[].forEach.call((scope || document).querySelectorAll(selector), node => this.add(node))
 
-    const parts = selector?.match(/^(\s*)(?:#([\w-]+)|(\w+)|\.([\w-]+)|\[\s*name=([\w]+)\s*\])([^]*)/)
+    const parts = selector && selector.match(/^(\s*)(?:#([\w-]+)|(\w+)|\.([\w-]+)|\[\s*name=([\w]+)\s*\])([^]*)/)
 
     if (parts) {
     // TODO: handle multiple simple parts, make sure rulesets don't overlap
       let [, op, id, tag, cls, name, match ] = parts
 
-      this.#match = match
+      this._match = match
 
       // indexable selectors
-      if (id) (idSets[id] = idSets[this.#id = id] || []).push(this)
-      else if (name) (nameSets[name] = nameSets[this.#name = name] || []).push(this)
-      else if (cls) (classSets[cls] = classSets[this.#class = cls] || []).push(this)
-      else if (tag) (this.#tag = tag = tag.toUpperCase(), tagSets[tag] = tagSets[tag] || []).push(this)
+      if (id) (idSets[id] = idSets[this._id = id] || []).push(this)
+      else if (name) (nameSets[name] = nameSets[this._name = name] || []).push(this)
+      else if (cls) (classSets[cls] = classSets[this._class = cls] || []).push(this)
+      else if (tag) (this._tag = tag = tag.toUpperCase(), tagSets[tag] = tagSets[tag] || []).push(this)
     }
 
     // complex selectors are handled via anim events (technique from insertionQuery). Cases:
@@ -121,9 +118,9 @@ export class $Collection extends Array {
     // FIXME: if complex selectors have `animation`redefined by user-styles it may conflict
     if (!/^\w+$/.test(selector)) {
       // TODO: track selectors globally and assign class per selector, not per-anim
-      this.#animation = animSets[selector]
-      if (!this.#animation) {
-        const anim = animSets[selector] = this.#animation = []
+      this._animation = animSets[selector]
+      if (!this._animation) {
+        const anim = animSets[selector] = this._animation = []
         anim.id = 'spect-' + count++
         (anim.style = document.createElement('style'))
         .innerHTML = `@keyframes ${ anim.id } { from{} to{} }
@@ -150,7 +147,7 @@ export class $Collection extends Array {
         document.addEventListener('animationstart', anim.onanim, true)
         document.head.appendChild(anim.style)
       }
-      this.#animation.push(this)
+      this._animation.push(this)
     }
   }
 
@@ -158,16 +155,16 @@ export class $Collection extends Array {
     if (!el) return
 
     // ignore existing items
-    if (el[_spect]?.has(this)) return
+    if (el[_spect] && el[_spect].has(this)) return
 
     // ignore out-of-scope
-    if (this.#scope) {
-      if (this.#scope === el) return
-      if (this.#scope.nodeType) { if (!this.#scope.contains(el)) return }
-      else if ([].every.call(this.#scope, scope => !scope.contains(el))) return
+    if (this._scope) {
+      if (this._scope === el) return
+      if (this._scope.nodeType) { if (!this._scope.contains(el)) return }
+      else if ([].every.call(this._scope, scope => !scope.contains(el))) return
     }
     // ignore not-matching
-    if (this.#match) if (!el.matches(this.#match)) return
+    if (this._match) if (!el.matches(this._match)) return
 
 
     // expose refs
@@ -183,14 +180,14 @@ export class $Collection extends Array {
     el.classList.add(SPECT_CLASS)
 
     // cancel planned delete
-    if (this.#delete.has(el)) this.#delete.delete(el)
+    if (this._delete.has(el)) this._delete.delete(el)
 
     // track collection
     this.push(el)
-    this.#items.set(el, this.#fn?.(el))
+    this._items.set(el, this._fn && this._fn(el))
 
     // notify
-    this.#channel.push(this)
+    this._channel.push(this)
   }
 
   delete(el, immediate = false) {
@@ -199,24 +196,26 @@ export class $Collection extends Array {
     if (el.id) delete this[el.id]
 
     // remove element from list sync
-    const teardown = this.#items.get(el)
-    this.#items.delete(el)
+    const teardown = this._items.get(el)
+    this._items.delete(el)
     if (this.length) {
       this.splice(this.indexOf(el >>> 0, 1), 1)
-      this.#channel.push(this)
+      this._channel.push(this)
     }
 
     // plan destructor async
-    this.#delete.add(el)
+    this._delete.add(el)
 
     const del = () => {
-      if (!this.#delete.has(el)) return
-      this.#delete.delete(el)
+      if (!this._delete.has(el)) return
+      this._delete.delete(el)
 
       if (!el[_spect]) return
 
-      if (teardown?.call) teardown(el)
-      else if (teardown?.then) teardown.then(fn => fn?.call && fn())
+      if (teardown) {
+        if (teardown.call) teardown(el)
+        else if (teardown.then) teardown.then(fn => fn && fn.call && fn())
+      }
 
       el[_spect].delete(this)
 
@@ -231,31 +230,31 @@ export class $Collection extends Array {
   }
 
   [symbol.dispose]() {
-    if (this.#id) idSets[this.#id].splice(idSets[this.#id].indexOf(this) >>> 0, 1)
-    if (this.#class) classSets[this.#class].splice(classSets[this.#class].indexOf(this) >>> 0, 1)
-    if (this.#tag) tagSets[this.#tag].splice(tagSets[this.#tag].indexOf(this) >>> 0, 1)
-    if (this.#name) nameSets[this.#name].splice(nameSets[this.#name].indexOf(this) >>> 0, 1)
-    if (this.#animation) {
-      const anim = this.#animation
+    if (this._id) idSets[this._id].splice(idSets[this._id].indexOf(this) >>> 0, 1)
+    if (this._class) classSets[this._class].splice(classSets[this._class].indexOf(this) >>> 0, 1)
+    if (this._tag) tagSets[this._tag].splice(tagSets[this._tag].indexOf(this) >>> 0, 1)
+    if (this._name) nameSets[this._name].splice(nameSets[this._name].indexOf(this) >>> 0, 1)
+    if (this._animation) {
+      const anim = this._animation
       anim.splice(anim.indexOf(this) >>> 0, 1)
       if (!anim.length) {
         document.head.removeChild(anim.style)
         document.removeEventListener('animationstart', anim.onanim)
-        delete animSets[this.#selector]
+        delete animSets[this._selector]
       }
     }
 
-    this.#channel.close()
+    this._channel.close()
     let els = [...this]
     this.length = 0
     els.forEach(el => this.delete(el, true))
   }
 
-  [symbol.observable]() { return this.#channel }
+  [symbol.observable]() { return this._channel }
 
   item(n) { return n < 0 ? this[this.length + n] : this[n] }
 
   namedItem(name) { return this[name] }
 
-  has(item) { return this.#items.has(item) }
+  has(item) { return this._items.has(item) }
 }

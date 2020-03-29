@@ -10,6 +10,7 @@
     "start": "es-dev-server --app-index test/index.html --node-resolve --dedupe",
     "test": "node -r esm -r ./test/register.js test/index.js",
     "bundle": "rollup -c rollup.config.js",
+    "esbuild": "esbuild --name=spect --outfile=dist/spect.js --bundle index.js",
     "minify": "terser dist/spect.js -c -m --module --source-map -o dist/spect.min.js",
     "build": "npm run bundle && npm run minify",
     "prepublishOnly": "npm run build"
@@ -66,16 +67,18 @@
     "xhtm": "^1.5.3"
   },
   "devDependencies": {
+    "@rollup/plugin-commonjs": "^11.0.2",
     "@rollup/plugin-node-resolve": "^7.1.1",
     "augmentor": "^2.1.5",
     "es-dev-server": "^1.32.0",
+    "esbuild-windows-64": "0.0.9",
     "esm": "^3.2.25",
     "ironjs": "0.0.17-alpha",
     "jsdom": "^16.1.0",
     "nanomorph": "^5.4.0",
     "nodom": "^2.4.0",
     "observable": "^2.1.4",
-    "rollup": "^1.31.1",
+    "rollup": "^2.2.0",
     "terser": "^4.6.6",
     "tst": "^5.3.3",
     "unihooks": "^1.4.5",
