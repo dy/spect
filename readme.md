@@ -25,9 +25,9 @@
   $('#clock', el => {
     const date = v(new Date())
 
-    h`<${el} datetime=${ date }>${
-      v(date, date => date.toLocaleTimeString())
-    }</>`
+    h`<${el} datetime=${ date }>
+      ${ date`toLocaleTimeString` }
+    </>`
 
     let id = setInterval(() => date(new Date()), 1000)
     return () => clearInterval(id)
@@ -208,7 +208,7 @@ Pending...
 
 ## API
 
-<details><summary><strong>$ − selector observer</strong></summary>
+<details><summary><strong>$ − selector</strong></summary>
 
 > elements = $( scope? , selector? , callback? )<br/>
 
@@ -217,9 +217,7 @@ Selector observer, creates live collection of elements matching the `selector`. 
 * `selector` is a valid CSS selector.
 * `scope` is optional element to narrow down observation, an _HTMLElement_ or a list of elements (array or array-like).
 * `callback` is a function with `(element) => teardown?` signature.
-* `elements` is live array with matched elements.
-
-The `elements` collection is compatible with [HTMLCollection](https://developer.mozilla.org/en-US/docs/Web/API/HTMLCollection), [WeakSet](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/WeakSet) and [Array](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array). Also it implements `Symbol.dispose` and `Symbol.observable` methods.
+* `elements` is live array with matched elements, compatible with [HTMLCollection](https://developer.mozilla.org/en-US/docs/Web/API/HTMLCollection), [WeakSet](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/WeakSet) and [Array](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array). Also it implements `Symbol.dispose` and `Symbol.observable`.
 
 ```js
 import { $, v } from 'spect'
@@ -269,23 +267,21 @@ $timer[0]
 // > <div.timer></div>
 ```
 
-<sub>
-
 _**$**_ uses highly optimized selector observing algorighm, a technique derived from [fast-on-load](https://ghub.io/fast-on-load) and [selector-set](https://github.com/josh/selector-set) for simple selectors and animation events observer (like [insertionQuery](https://github.com/naugtur/insertionQuery)) for complex selectors.<br/>
 Its design is inspired by jQuery, [_HTMLCollection_](https://developer.mozilla.org/en-US/docs/Web/API/HTMLCollection), [_selector-observer_](https://github.com/josh/selector-observer) and _aspect-oriended-programming_.<br/>
-</sub>
+
 
 <br/>
 
 </details>
 
 
-<details><summary><strong>h − hyperscript / html</strong></summary>
+<details><summary><strong>h − hyperscript</strong></summary>
 
 > el = h( tag , props? , ...children )<br/>
 > el = h\`...content\`<br/>
 
-[Hyperscript](https://ghub.io/hyperscript)-compatible element constructor with observable support. Can be used via JSX or template literal with extended [_htm_](https://ghub.io/xhtm) syntax.
+[Hyperscript](https://ghub.io/hyperscript) with observable support. Can be used via JSX or template literal with HTML syntax ([xhtm](https://ghub.io/xhtm)).
 
 ```js
 import { h, v } from 'spect'
@@ -328,16 +324,15 @@ $('#clock', el => {
 })
 ```
 
-<sub>
 _**h**_ is direct remake on [hyperscript](https://ghub.io/hyperscript) with extended observable support and unique in class [html syntax parser](https://ghub.io/xhtm) − remake of [_htm_](https://ghub.io/htm).<br/>
-</sub>
+
 
 <br/>
 
 </details>
 
 
-<details><summary><strong>v − value observable</strong></summary>
+<details><summary><strong>v − value</strong></summary>
 
 > value = v( source? , map? , inmap? )<br/>
 
@@ -349,9 +344,8 @@ Universal observable − creates a getter/setter function with [observable](http
 * _AsyncIterator_ or [`[Symbol.asyncIterator]`](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Symbol/asyncIterator) − mirrors iterator 1-way with optional mapping.
 * _Promise_ or _thenable_ − tracks and maps promise state.
 * _Standard observable_ or [`[Symbol.observable]`](https://ghub.io/symbol-observable) ([rxjs](https://ghub.io/rxjs), [zen-observable](https://ghub.io/zen-observable) etc.) − mirrors observable with optional mapping.
-<!-- * _Input_ (_radio_, _checkbox_), or _Select_ − creates 2-way bound observable for the input value. -->
 * [_Ironjs_](https://ghub.io/ironjs) wraps _Reactor_.
-* _Array_, _Object_, _Element_ − tracks properties and internal observables, including input element `.value`.
+* _Array_, _Object_, _Element_ − tracks properties and internal observables, including _input_ / _select_ value.
 
 ```js
 import { v } from 'spect'
@@ -415,7 +409,7 @@ v6() // v5
 ```js
 import { $, v } from 'spect'
 
-const f = v($`#fahren`[0]), c = v($`#celsius`[0])
+const f = v(...$`#fahren`), c = v(...$`#celsius`)
 const celsius = v(f, f => (f - 32) / 1.8)
 const fahren = v(c, c => (c * 9) / 5 + 32)
 
@@ -446,10 +440,8 @@ $('.likes-count', el => h`<${el}>${
 likes.load()
 ```
 
-<sub>
 _**v**_ design is based on [research of react hooks](https://ghub.io/unihooks), [_observable_](https://ghub.io/observable), [_mutant_](https://ghub.io/mutant), [observable proposal](https://github.com/tc39/proposal-observable), [_rxjs_](https://ghub.io/rxjs), [_iron_](https://github.com/ironjs/iron) and others.<br/>
 It elegantly comprises functionality of heavy store solutions like [redux](https://ghub.io/redux), [mobx](https://ghub.io/mobx), and hooks _useState_, _useEffect_, _useMemo_, with simplicity of [dlv](https://github.com/developit/dlv).
-</sub>
 
 <br/>
 
