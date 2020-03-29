@@ -485,5 +485,6 @@ t('$: observable', async t => {
 
   let x
   $l.add(x = document.createElement('div'))
+  console.log($l)
   t.is(log, [[], [x]])
 })

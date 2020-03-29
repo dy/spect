@@ -50,11 +50,11 @@ observer.observe(document, {
 })
 
 
-export default function $(scope, selector, fn) {
+export default function spect(scope, selector, fn) {
   // spect`#x`
-  if (scope && scope.raw) return new $Collection(null, String.raw(...arguments))
+  if (scope && scope.raw) return new $(null, String.raw(...arguments))
   // spect(selector, fn)
-  if (typeof scope === 'string') return new $Collection(null, scope, selector)
+  if (typeof scope === 'string') return new $(null, scope, selector)
   // spect(target, fn)
   if (!selector ||  typeof selector === 'function') {
     fn = selector
@@ -62,15 +62,15 @@ export default function $(scope, selector, fn) {
     if (!target) target = []
     if (target.nodeType) target = [target]
 
-    const set = new $Collection(null, null, fn)
-    target.forEach(node => set.add(node))
+    const set = new $(null, null, fn)
+    set.add(...target)
     return set
   }
 
-  return new $Collection(scope, selector, fn)
+  return new $(scope, selector, fn)
 }
 
-export class $Collection extends Array {
+export class $ extends Array {
 
   constructor(scope, selector, fn){
     // self-call, like splice, map, slice etc. fall back to array
@@ -92,7 +92,7 @@ export class $Collection extends Array {
     this._delete = new WeakSet
 
     // init existing elements
-    ;[].forEach.call((scope || document).querySelectorAll(selector), node => this.add(node))
+    this.add(...(scope || document).querySelectorAll(selector))
 
     const parts = selector && selector.match(/^(\s*)(?:#([\w-]+)|(\w+)|\.([\w-]+)|\[\s*name=([\w]+)\s*\])([^]*)/)
 
@@ -187,6 +187,8 @@ export class $Collection extends Array {
 
     // notify
     this._channel.push(this)
+
+    if (els.length) this.add(...els)
   }
 
   delete(el, immediate = false) {
