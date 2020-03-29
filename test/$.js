@@ -1,5 +1,5 @@
 import t from 'tst'
-import { $ } from '../index.js'
+import { $, h } from '../index.js'
 // import $ from '../$.js'
 import { tick, frame, idle, time } from 'wait-please'
 import { augmentor, useState, useEffect, useMemo } from 'augmentor'
@@ -33,8 +33,8 @@ t('$: tag selector', async t => {
   t.deepEqual(proplog, [1, 1, 1, 1], 'additional aspect')
 
   document.body.removeChild(container)
-  x1[Symbol.dispose](null)
-  x2[Symbol.dispose](null)
+  x1[Symbol.dispose]()
+  x2[Symbol.dispose]()
 
   t.end()
 })
@@ -427,7 +427,7 @@ t.skip('empty selectors', t => {
 t('$: returned result is live collection', async t => {
   let scope = document.body.appendChild(document.createElement('div'))
   let els = $(scope, '.x')
-  t.is(els, [])
+  t.is([...els], [])
   scope.innerHTML = '<a class="x"></a>'
   await frame(2)
   t.is(els.length, 1)
@@ -441,13 +441,11 @@ t('$: returned result is live collection', async t => {
 })
 t.todo('$: handles passed live collections like HTMLCollection')
 t.todo('$: selecting by name', t => {
-  let $f = $`<form><input name="a"/><input name="b"/></form>`
+  let $f = $(h`<form><input name="a"/><input name="b"/></form>`)
 
-  let $form = $($f)
-
-  t.is($f, $form)
-  t.is($form[0].childNodes.length, 2)
-  t.is($form[0], $f[0])
+  t.is($f[0].childNodes.length, 2)
+  t.is($f.a, $f[0].childNodes[0])
+  t.is($f.b, $f[0].childNodes[1])
 
   t.end()
 })
@@ -459,12 +457,12 @@ t('$: init on list of elements', async t => {
     log.push(el.textContent)
     return () => log.push('un' + el.textContent)
   })
-  t.deepEqual(log, ['1', '2'])
+  t.is(log, ['1', '2'])
   el.innerHTML = ''
   chldrn[Symbol.dispose]()
 
   await frame(2)
-  t.deepEqual(log, ['1', '2', 'un1', 'un2'])
+  t.is(log, ['1', '2', 'un1', 'un2'])
 
   el.remove()
 })
@@ -477,5 +475,5 @@ t('$: template literal', async t => {
   el.innerHTML = '<div class="x"></div><div class="x"></div>'
 
   let els = $`div.${'x'}`
-  t.is(els, [...el.childNodes])
+  t.is([...els], [...el.childNodes])
 })

@@ -1,6 +1,4 @@
-import _observable from 'symbol-observable'
-
-export default (...args) => {
+export default () => {
     const observers = []
 
     const push = (val, observers=channel.observers) => {
