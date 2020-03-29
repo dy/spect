@@ -1,7 +1,7 @@
 <div align="center"><img src="https://avatars3.githubusercontent.com/u/53097200?s=200&v=4" width=108 /></div>
 <p align="center"><h1 align="center">spect</h1></p>
 <p align="center">
-  Aspect-oriented FRP with <em>observables</em>.<br/>
+  Hyperobservable aspects.<br/>
   <!-- Build reactive UIs with rules, similar to CSS.<br/> -->
   <!-- Each rule specifies an <em>aspect</em> function, carrying a piece of logic.<br/> -->
 </p>
@@ -208,19 +208,21 @@ Pending...
 
 ## API
 
-<details><summary><strong>$ − selector</strong></summary>
+<details><summary><strong>$ − selector observer</strong></summary>
 
 > elements = $( scope? , selector? , callback? )<br/>
 
-Selector observer, creates live collection of elements matching the `selector`. Optional `callback` runs for each new element matching the selector. If `callback` returns a teardown, it is run when the element is unmatched.
+Selector observer, creates live collection of elements matching the `selector`. Optional `callback` is triggered for each new element matching the selector. If `callback` returns a teardown, it is run when the element is unmatched.
 
 * `selector` is a valid CSS selector.
 * `scope` is optional element to narrow down observation, an _HTMLElement_ or a list of elements (array or array-like).
 * `callback` is a function with `(element) => teardown?` signature.
-* `elements` is live array with matched elements (similar to [HTMLCollection](https://developer.mozilla.org/en-US/docs/Web/API/HTMLCollection)).
+* `elements` is live array with matched elements.
+
+The `elements` collection is compatible with [HTMLCollection](https://developer.mozilla.org/en-US/docs/Web/API/HTMLCollection), [WeakSet](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/WeakSet) and [Array](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array). Also it implements `Symbol.dispose` and `Symbol.observable` methods.
 
 ```js
-import { $ } from 'spect'
+import { $, v } from 'spect'
 
 let $foo = $('foo', el => {
   console.log('active')
@@ -236,6 +238,18 @@ $foo[0] === foo
 
 foo.replaceWith(null)
 // > "inactive"
+
+
+// observe changes
+v($foo)(els => (console.log(els), () => console.log('off', els)))
+document.body.appendChild(foo)
+// > "active"
+// > [ foo ]
+
+// destroy
+$foo[Symbol.dispose]()
+// > "inactive"
+// > "off", [ foo ]
 ```
 
 #### Example
@@ -256,8 +270,9 @@ $timer[0]
 ```
 
 <sub>
-_$_ design is inspired by jQuery, [fast-on-load](https://ghub.io/fast-on-load), [selector-set](https://github.com/josh/selector-set), [selector-observer](https://github.com/josh/selector-observer), [insertionQuery](https://github.com/naugtur/insertionQuery), [regular-elements](https://github.com/WebReflection/regular-elements), [_HTMLCollection_](https://developer.mozilla.org/en-US/docs/Web/API/HTMLCollection), [_selector-observer_](https://github.com/josh/selector-observer) and _aspect-oriended-programming_.<br/>
-It uses combination of highly optimized selector-observer O(n) and animation events for complex cases.
+
+_**$**_ uses highly optimized selector observing algorighm, a technique derived from [fast-on-load](https://ghub.io/fast-on-load) and [selector-set](https://github.com/josh/selector-set) for simple selectors and animation events observer (like [insertionQuery](https://github.com/naugtur/insertionQuery)) for complex selectors.<br/>
+Its design is inspired by jQuery, [_HTMLCollection_](https://developer.mozilla.org/en-US/docs/Web/API/HTMLCollection), [_selector-observer_](https://github.com/josh/selector-observer) and _aspect-oriended-programming_.<br/>
 </sub>
 
 <br/>
@@ -313,7 +328,9 @@ $('#clock', el => {
 })
 ```
 
-<!-- <sub>_h_ is direct remake on [hyperscript](https://ghub.io/hyperscript) with extended observable support and unique in class [html syntax parser](https://ghub.io/xhtm).</sub> -->
+<sub>
+_**h**_ is direct remake on [hyperscript](https://ghub.io/hyperscript) with extended observable support and unique in class [html syntax parser](https://ghub.io/xhtm) − remake of [_htm_](https://ghub.io/htm).<br/>
+</sub>
 
 <br/>
 
@@ -322,22 +339,19 @@ $('#clock', el => {
 
 <details><summary><strong>v − value observable</strong></summary>
 
-> value = v( from? , map? , inmap? )<br/>
+> value = v( source? , map? , inmap? )<br/>
 
-Value observable − creates a getter/setter function with [observable](https://ghub.io/observable) API.<br/>
-May act as _transform_, taking optional `map` and `inmap` mappers.
+Universal observable − creates a getter/setter function with [observable](https://ghub.io/observable) interface from any `source`:
 
-`from` can be:
-
-* _Primitive_ value − creates observable with the initial state.
+* _Primitive_ value − creates value observable with the initial state.
 * _Function_ − initializes state with the result of the function.
 * _Observable_ (_v_, [observ-*](https://ghub.io/observ), [observable](https://ghub.io/observable), [mutant](https://ghub.io/mutant) etc.) − wraps observable 2-way with optional mapping in/out.
 * _AsyncIterator_ or [`[Symbol.asyncIterator]`](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Symbol/asyncIterator) − mirrors iterator 1-way with optional mapping.
-* _Promise_ or _thenable_ − tracks/maps promise state.
+* _Promise_ or _thenable_ − tracks and maps promise state.
 * _Standard observable_ or [`[Symbol.observable]`](https://ghub.io/symbol-observable) ([rxjs](https://ghub.io/rxjs), [zen-observable](https://ghub.io/zen-observable) etc.) − mirrors observable with optional mapping.
-* _Input_ (_radio_, _checkbox_), or _Select_ − creates 2-way bound observable for the input value.
-* [_Ironjs_](https://ghub.io/ironjs) _Reactor_.
-* _Array_ or _Object_ − creates observable with tracked props.
+<!-- * _Input_ (_radio_, _checkbox_), or _Select_ − creates 2-way bound observable for the input value. -->
+* [_Ironjs_](https://ghub.io/ironjs) wraps _Reactor_.
+* _Array_, _Object_, _Element_ − tracks properties and internal observables, including input element `.value`.
 
 ```js
 import { v } from 'spect'
@@ -375,8 +389,8 @@ v([v1, v2, v3])(([v1, v2, v3]) => {
 // 1, 2, 3
 
 // from input
-let v4 = v($('#input'))
-v4(value => console.log(value))
+let v4 = v($('#input')[0])
+v4(input => console.log(input.value))
 
 // from object
 let item = { done: false }
@@ -401,7 +415,7 @@ v6() // v5
 ```js
 import { $, v } from 'spect'
 
-const f = v($`#fahren`), c = v($`#celsius`)
+const f = v($`#fahren`[0]), c = v($`#celsius`[0])
 const celsius = v(f, f => (f - 32) / 1.8)
 const fahren = v(c, c => (c * 9) / 5 + 32)
 
@@ -409,10 +423,7 @@ celsius() // 0
 fahren() // 32
 ```
 
-<!-- <sub>_v_ is a single-character replacement to _useState_, _useEffect_, _useMemo_, _rxjs/from_, _zen-observable_, _mobx@computed_ etc. Its design is derived from _react hooks_, [_observable_](https://ghut.io/observable), [_rxjs_](https://ghub.io/rxjs), [_iron_](https://github.com/ironjs/iron) and others.</sub> -->
-
-
-#### Example
+#### Example 2
 
 ```js
 import { v } from 'spect'
@@ -434,6 +445,11 @@ $('.likes-count', el => h`<${el}>${
 
 likes.load()
 ```
+
+<sub>
+_**v**_ design is based on [research of react hooks](https://ghub.io/unihooks), [_observable_](https://ghub.io/observable), [_mutant_](https://ghub.io/mutant), [observable proposal](https://github.com/tc39/proposal-observable), [_rxjs_](https://ghub.io/rxjs), [_iron_](https://github.com/ironjs/iron) and others.<br/>
+It elegantly comprises functionality of heavy store solutions like [redux](https://ghub.io/redux), [mobx](https://ghub.io/mobx), and hooks _useState_, _useEffect_, _useMemo_, with simplicity of [dlv](https://github.com/developit/dlv).
+</sub>
 
 <br/>
 
