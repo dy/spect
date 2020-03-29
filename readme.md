@@ -1,7 +1,7 @@
 <div align="center"><img src="https://avatars3.githubusercontent.com/u/53097200?s=200&v=4" width=108 /></div>
 <p align="center"><h1 align="center">spect</h1></p>
 <p align="center">
-  Hyperobservable aspects.<br/>
+  Hyper Observable Aspects.<br/>
   <!-- Build reactive UIs with rules, similar to CSS.<br/> -->
   <!-- Each rule specifies an <em>aspect</em> function, carrying a piece of logic.<br/> -->
 </p>
@@ -267,9 +267,7 @@ $timer[0]
 // > <div.timer></div>
 ```
 
-_**$**_ uses technique derived from [fast-on-load](https://ghub.io/fast-on-load) and [selector-set](https://github.com/josh/selector-set) for common selectors and [insertionQuery](https://github.com/naugtur/insertionQuery) animation observer method for complex selectors.<br/>
-Its design is inspired by _jQuery_, [_selector-observer_](https://github.com/josh/selector-observer) and _aspect-oriended-programming_.<br/>
-
+_**$**_ uses technique derived from [fast-on-load](https://ghub.io/fast-on-load) and [selector-set](https://github.com/josh/selector-set) for common selectors and [insertionQuery](https://github.com/naugtur/insertionQuery) animation observer method for complex selectors. Its design is inspired by _jQuery_, [_selector-observer_](https://github.com/josh/selector-observer) and _aspect-oriended-programming_.
 
 <br/>
 
@@ -341,10 +339,10 @@ Universal observable − creates a getter/setter function with [observable](http
 * _Primitive_ value − creates value observable with the initial state.
 * _Function_ − initializes state with the result of the function.
 * _Observable_ (_v_, [observ-*](https://ghub.io/observ), [observable](https://ghub.io/observable), [mutant](https://ghub.io/mutant) etc.) − wraps observable 2-way with optional mapping in/out.
-* _AsyncIterator_ or [`[Symbol.asyncIterator]`](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Symbol/asyncIterator) − mirrors iterator 1-way with optional mapping.
-* _Promise_ or _thenable_ − tracks and maps promise state.
-* _Standard observable_ or [`[Symbol.observable]`](https://ghub.io/symbol-observable) ([rxjs](https://ghub.io/rxjs), [zen-observable](https://ghub.io/zen-observable) etc.) − mirrors observable with optional mapping.
-* [_Ironjs_](https://ghub.io/ironjs) wraps _Reactor_.
+* _AsyncIterator_ or [`[Symbol.asyncIterator]`](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Symbol/asyncIterator) − tracks / maps iterator.
+* _Promise_ or _thenable_ − tracks / maps promise state.
+* _Standard observable_ or [`[Symbol.observable]`](https://ghub.io/symbol-observable) ([rxjs](https://ghub.io/rxjs), [zen-observable](https://ghub.io/zen-observable) etc.) − tracks / maps observable.
+* [_Ironjs_](https://ghub.io/ironjs) _Reactor_ − creates 2-way bound observable.
 * _Array_, _Object_, _Element_ − tracks properties and internal observables, including _input_ / _select_ value.
 
 ```js
@@ -441,7 +439,7 @@ likes.load()
 ```
 
 _**v**_ design is based on [research of react hooks](https://ghub.io/unihooks), [observable proposal](https://github.com/tc39/proposal-observable), [_observable_](https://ghub.io/observable), [_mutant_](https://ghub.io/mutant), [_rxjs_](https://ghub.io/rxjs), [_iron_](https://github.com/ironjs/iron) and others.<br/>
-It comprises functionality of stores ([redux](https://ghub.io/redux), [mobx](https://ghub.io/mobx)), hooks (_useState_, _useEffect_, _useMemo_), observables and selectors ([dlv](https://github.com/developit/dlv)).
+It comprises functionality of stores ([redux](https://ghub.io/redux), [mobx](https://ghub.io/mobx)), hooks (_useState_, _useEffect_, _useMemo_), observables ([zen-observable](https://ghub.io/zen-observable), [observ](https://ghub.io/observ)) and selectors ([dlv](https://github.com/developit/dlv), [idx](https://github.com/facebookincubator/idx)) in a single function.
 
 <br/>
 

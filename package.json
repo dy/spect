@@ -1,7 +1,7 @@
 {
   "name": "spect",
   "version": "19.1.0",
-  "description": "Aspect-oriented FRP with observables",
+  "description": "Hyper observable aspects",
   "main": "index.js",
   "module": "index.js",
   "unpkg": "dist/spect.min.js",
