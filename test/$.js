@@ -3,6 +3,7 @@ import { $, h } from '../index.js'
 // import $ from '../$.js'
 import { tick, frame, idle, time } from 'wait-please'
 import { augmentor, useState, useEffect, useMemo } from 'augmentor'
+import v from '../v.js'
 
 t('$: tag selector', async t => {
   let ellog = []
@@ -466,9 +467,7 @@ t('$: init on list of elements', async t => {
 
   el.remove()
 })
-
-t('$: init/destroy in body of web-component')
-
+t.todo('$: init/destroy in body of web-component')
 t('$: template literal', async t => {
   let el = document.createElement('div')
   document.body.appendChild(el)
@@ -476,4 +475,15 @@ t('$: template literal', async t => {
 
   let els = $`div.${'x'}`
   t.is([...els], [...el.childNodes])
+})
+t('$: observable', async t => {
+  let $l = $()
+  let vl = v($l)
+  let log = []
+  vl(list => log.push([...list]))
+  t.is(log, [[]])
+
+  let x
+  $l.add(x = document.createElement('div'))
+  t.is(log, [[], [x]])
 })

@@ -91,7 +91,7 @@ import { $, h, v } from 'spect'
 $('.user', async el => {
   const user = v((await fetch('/user')).json())
 
-  h`<${el}>Hello, ${ user()?.name || 'guest' }!</>`
+  h`<${el}>Hello, ${ v(user, u => u.name || 'guest') }!</>`
 })
 </script>
 ```
@@ -212,7 +212,7 @@ Pending...
 
 > elements = $( scope? , selector? , callback? )<br/>
 
-Selector observer, creates live collection of elements matching the `selector`. Optional `callback` is triggered for each new element matching the selector. If `callback` returns a teardown, it is run when the element is unmatched.
+Creates live collection of elements matching the `selector` in `scope`. Optional `callback` is triggered for each new matched element with optionally returned teardown.
 
 * `selector` is a valid CSS selector.
 * `scope` is optional element to narrow down observation, an _HTMLElement_ or a list of elements (array or array-like).
@@ -236,6 +236,9 @@ $foo[0] === foo
 
 foo.replaceWith(null)
 // > "inactive"
+
+$foo[0]
+// > undefined
 
 
 // observe changes
@@ -267,7 +270,8 @@ $timer[0]
 // > <div.timer></div>
 ```
 
-_**$**_ uses technique derived from [fast-on-load](https://ghub.io/fast-on-load) and [selector-set](https://github.com/josh/selector-set) for common selectors and [insertionQuery](https://github.com/naugtur/insertionQuery) animation observer method for complex selectors. Its design is inspired by _jQuery_, [_selector-observer_](https://github.com/josh/selector-observer) and _aspect-oriended-programming_.
+_**$**_ uses technique derived from [fast-on-load](https://ghub.io/fast-on-load) and [selector-set](https://github.com/josh/selector-set) for common selectors and animation observer (similar to [insertionQuery](https://github.com/naugtur/insertionQuery)) for complex selectors.<br/>
+Its design is inspired by _jQuery_, [_selector-observer_](https://github.com/josh/selector-observer) and _aspect-oriended-programming_ (eg. [reuse](https://ghub.io/reuse)).
 
 <br/>
 
@@ -279,7 +283,7 @@ _**$**_ uses technique derived from [fast-on-load](https://ghub.io/fast-on-load)
 > el = h( tag , props? , ...children )<br/>
 > el = h\`...content\`<br/>
 
-[Hyperscript](https://ghub.io/hyperscript) with observable support. Can be used via JSX or template literal with HTML syntax ([xhtm](https://ghub.io/xhtm)).
+[Hyperscript](https://ghub.io/hyperscript) with observable support. Can be used via JSX or template literal with [HTML syntax](https://ghub.io/xhtm).
 
 ```js
 import { h, v } from 'spect'
@@ -336,14 +340,14 @@ _**h**_ is direct remake on [hyperscript](https://ghub.io/hyperscript) and [htm]
 
 Universal observable − creates a getter/setter function with [observable](https://ghub.io/observable) interface from any `source`:
 
-* _Primitive_ value − creates value observable with the initial state.
-* _Function_ − initializes state with the result of the function.
-* _Observable_ (_v_, [observ-*](https://ghub.io/observ), [observable](https://ghub.io/observable), [mutant](https://ghub.io/mutant) etc.) − wraps observable 2-way with optional mapping in/out.
-* _AsyncIterator_ or [`[Symbol.asyncIterator]`](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Symbol/asyncIterator) − tracks / maps iterator.
-* _Promise_ or _thenable_ − tracks / maps promise state.
-* _Standard observable_ or [`[Symbol.observable]`](https://ghub.io/symbol-observable) ([rxjs](https://ghub.io/rxjs), [zen-observable](https://ghub.io/zen-observable) etc.) − tracks / maps observable.
-* [_Ironjs_](https://ghub.io/ironjs) _Reactor_ − creates 2-way bound observable.
-* _Array_, _Object_, _Element_ − tracks properties and internal observables, including _input_ / _select_ value.
+* _Primitive_ − simple observable state.
+* _Function_ − initialized observable state.
+* _Observable_ (_v_, [observ-*](https://ghub.io/observ), [observable](https://ghub.io/observable), [mutant](https://ghub.io/mutant) etc.) − 2-way bound wrapper observable.
+* _AsyncIterator_ or [`[Symbol.asyncIterator]`](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Symbol/asyncIterator) − mapped iterator observable.
+* _Promise_ or _thenable_ − promise state observable.
+* _Standard observable_ or [`[Symbol.observable]`](https://ghub.io/symbol-observable) ([rxjs](https://ghub.io/rxjs), [zen-observable](https://ghub.io/zen-observable) etc.) − mapped source observable.
+* [_Ironjs_](https://ghub.io/ironjs) _Reactor_ − 2-way bound reactor observable.
+* _Array_, _Object_, _Element_ − props / group observable, including _input_ or _select_ value.
 
 ```js
 import { v } from 'spect'
@@ -439,7 +443,7 @@ likes.load()
 ```
 
 _**v**_ design is based on [research of react hooks](https://ghub.io/unihooks), [observable proposal](https://github.com/tc39/proposal-observable), [_observable_](https://ghub.io/observable), [_mutant_](https://ghub.io/mutant), [_rxjs_](https://ghub.io/rxjs), [_iron_](https://github.com/ironjs/iron) and others.<br/>
-It comprises functionality of stores ([redux](https://ghub.io/redux), [mobx](https://ghub.io/mobx)), hooks (_useState_, _useEffect_, _useMemo_), observables ([zen-observable](https://ghub.io/zen-observable), [observ](https://ghub.io/observ)) and selectors ([dlv](https://github.com/developit/dlv), [idx](https://github.com/facebookincubator/idx)) in a single function.
+It comprises functionality of stores ([redux](https://ghub.io/redux), [mobx](https://ghub.io/mobx)), hooks (_useState_, _useEffect_, _useMemo_), observables ([zen-observable](https://ghub.io/zen-observable), [observ](https://ghub.io/observ)) and selectors ([dlv](https://github.com/developit/dlv), [idx](https://github.com/facebookincubator/idx)).
 
 <br/>
 
@@ -477,19 +481,5 @@ foobus.cancel()
 <br/>
 -->
 
-
-## Inspiration / R&D
-
-* [iron](https://github.com/ironjs/iron) − alternative approach to reactive js.
-* [selector-observer](https://ghub.io/selector-observer) − same idea with object-based API.
-* [unihooks](https://ghub.io/unihooks) − cross-framework hooks collection.
-* [observable](https://ghub.io/observable), [observ](https://ghub.io/observ), [mutant](https://ghub.io/mutant) − elegant observable implementation.
-* [zen-observable](https://ghub.io/zen-observable), [es-observable](https://ghub.io/es-observable) et al − foundational research / proposal.
-* [reuse](https://ghub.io/reuse) − aspects attempt for react world.
-* [tonic](https://ghub.io/tonic), [etch](https://ghub.io/etch), [turbine](https://github.com/funkia/turbine), [hui](https://ghub.io/hui) − nice takes on web-component frameworks.
-* [atomico](https://ghub.io/atomico), [haunted](https://ghub.io/haunted), [fuco](https://ghub.io/fuco), [hooked-elements](https://github.com/WebReflection/hooked-elements) − react-less hooks implementations.
-* [jquery](https://ghub.io/jquery) − the old school spaghettiful DOM aspects.
-
-<br/>
 
 <p align="center">ॐ</p>

@@ -59,13 +59,12 @@ export default function $(scope, selector, fn) {
   if (!selector ||  typeof selector === 'function') {
     fn = selector
     let target = scope
+    if (!target) target = []
     if (target.nodeType) target = [target]
-    if (!target.nodeType && target[0].nodeType) {
-      const set = new $Collection(null, null, fn)
-      target.forEach(node => set.add(node))
-      return set
-    }
-    throw 'Unknown argument'
+
+    const set = new $Collection(null, null, fn)
+    target.forEach(node => set.add(node))
+    return set
   }
 
   return new $Collection(scope, selector, fn)
@@ -250,7 +249,17 @@ export class $Collection extends Array {
     els.forEach(el => this.delete(el, true))
   }
 
-  [symbol.observable]() { return this._channel }
+  [symbol.observable]() {
+    const { subscribe, observers, push } = this._channel
+    const set = this
+    return {
+      subscribe(){
+        const unsubscribe = subscribe(...arguments)
+        push(set, observers.slice(-1))
+        return unsubscribe
+      }
+    }
+  }
 
   item(n) { return n < 0 ? this[this.length + n] : this[n] }
 
