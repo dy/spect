@@ -485,6 +485,10 @@ t('$: observable', async t => {
 
   let x
   $l.add(x = document.createElement('div'))
-  console.log($l)
   t.is(log, [[], [x]])
+})
+t.demo('$: debugger cases', async t => {
+  console.log('*', $('*'))
+  console.log('empty', $())
+  console.log('list', $([h`<a/>`, h`<b/>`, h`<c/>`]))
 })

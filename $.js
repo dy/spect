@@ -3,7 +3,7 @@ import channel from './channel.js'
 
 const SPECT_CLASS = '👁'
 const ELEMENT = 1
-let count = 0
+let code = 0x1F700
 const _spect = Symbol.for('@spect')
 const animSets = {}, idSets = {}, classSets = {}, tagSets = {}, nameSets = {}
 
@@ -78,9 +78,9 @@ export class $ extends Array {
 
     super()
 
-    this._scope = scope
-    this._selector = selector
-    this._fn = fn
+    if (scope) this._scope = scope
+    if (selector) this._selector = selector
+    if (fn) this._fn = fn
     this._match
     this._id
     this._tag
@@ -120,8 +120,8 @@ export class $ extends Array {
       this._animation = animSets[selector]
       if (!this._animation) {
         const anim = animSets[selector] = this._animation = []
-        anim.id = 'spect-' + count++
-        (anim.style = document.createElement('style'))
+        anim.id = String.fromCodePoint(code++)
+        ;(anim.style = document.createElement('style'))
         .innerHTML = `@keyframes ${ anim.id } { from{} to{} }
         ${ selector }:not(.${ anim.id }) { animation-name: ${ anim.id } }
         .${ anim.id } { animation-name: ${ anim.id } }
