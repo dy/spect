@@ -3,10 +3,13 @@ import channel from './channel.js'
 
 const SPECT_CLASS = '👁'
 const ELEMENT = 1
-let code = 0x1F700
+const CLASS_OFFSET = 0x1F700
+let count = 0
 const _spect = Symbol.for('@spect')
 const animSets = {}, idSets = {}, classSets = {}, tagSets = {}, nameSets = {}
-
+const style = document.head.appendChild(document.createElement('style'))
+style.classList.add('spect-style')
+const {sheet} = style
 
 const observer = new MutationObserver((list) => {
   for (let mutation of list) {
@@ -116,16 +119,15 @@ export class $ extends Array {
     // NOTE: only connected scope supports anim observer
     // FIXME: if complex selectors have `animation`redefined by user-styles it may conflict
     if (!/^\w+$/.test(selector)) {
-      // TODO: track selectors globally and assign class per selector, not per-anim
       this._animation = animSets[selector]
       if (!this._animation) {
         const anim = animSets[selector] = this._animation = []
-        anim.id = String.fromCodePoint(code++)
-        ;(anim.style = document.createElement('style'))
-        .innerHTML = `@keyframes ${ anim.id } { from{} to{} }
-        ${ selector }:not(.${ anim.id }) { animation-name: ${ anim.id } }
-        .${ anim.id } { animation-name: ${ anim.id } }
-        ${ selector }.${ anim.id } { animation-name: unset; animation-name: revert; }`
+        anim.id = String.fromCodePoint(CLASS_OFFSET + count++)
+        sheet.insertRule(`@keyframes ${ anim.id }{}`, sheet.rules.length)
+        sheet.insertRule(`${ selector }:not(.${ anim.id }){animation:${ anim.id }}`, sheet.rules.length)
+        sheet.insertRule(`.${ anim.id }{animation:${ anim.id }}`, sheet.rules.length)
+        sheet.insertRule(`${ selector }.${ anim.id }{animation:unset;animation:revert}`, sheet.rules.length)
+        anim.rules = [].slice.call(sheet.rules, -4)
 
         anim.onanim = e => {
           if (e.animationName !== anim.id) return
@@ -144,7 +146,6 @@ export class $ extends Array {
           }
         }
         document.addEventListener('animationstart', anim.onanim, true)
-        document.head.appendChild(anim.style)
       }
       this._animation.push(this)
     }
@@ -230,27 +231,6 @@ export class $ extends Array {
     else requestAnimationFrame(del)
   }
 
-  [symbol.dispose]() {
-    if (this._id) idSets[this._id].splice(idSets[this._id].indexOf(this) >>> 0, 1)
-    if (this._class) classSets[this._class].splice(classSets[this._class].indexOf(this) >>> 0, 1)
-    if (this._tag) tagSets[this._tag].splice(tagSets[this._tag].indexOf(this) >>> 0, 1)
-    if (this._name) nameSets[this._name].splice(nameSets[this._name].indexOf(this) >>> 0, 1)
-    if (this._animation) {
-      const anim = this._animation
-      anim.splice(anim.indexOf(this) >>> 0, 1)
-      if (!anim.length) {
-        document.head.removeChild(anim.style)
-        document.removeEventListener('animationstart', anim.onanim)
-        delete animSets[this._selector]
-      }
-    }
-
-    this._channel.close()
-    let els = [...this]
-    this.length = 0
-    els.forEach(el => this.delete(el, true))
-  }
-
   [symbol.observable]() {
     const { subscribe, observers, push } = this._channel
     const set = this
@@ -268,4 +248,29 @@ export class $ extends Array {
   namedItem(name) { return this[name] }
 
   has(item) { return this._items.has(item) }
+
+  [symbol.dispose]() {
+    if (this._id) idSets[this._id].splice(idSets[this._id].indexOf(this) >>> 0, 1)
+    if (this._class) classSets[this._class].splice(classSets[this._class].indexOf(this) >>> 0, 1)
+    if (this._tag) tagSets[this._tag].splice(tagSets[this._tag].indexOf(this) >>> 0, 1)
+    if (this._name) nameSets[this._name].splice(nameSets[this._name].indexOf(this) >>> 0, 1)
+    if (this._animation) {
+      const anim = this._animation
+      anim.splice(anim.indexOf(this) >>> 0, 1)
+      if (!anim.length) {
+        // document.head.removeChild(anim.style)
+        document.removeEventListener('animationstart', anim.onanim)
+        delete animSets[this._selector]
+      }
+      anim.rules.forEach(rule => {
+        let idx = [].indexOf.call(sheet.rules, rule)
+        if (~idx) sheet.deleteRule(idx)
+      })
+    }
+
+    this._channel.close()
+    let els = [...this]
+    this.length = 0
+    els.forEach(el => this.delete(el, true))
+  }
 }

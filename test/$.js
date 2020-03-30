@@ -476,7 +476,7 @@ t('$: template literal', async t => {
   let els = $`div.${'x'}`
   t.is([...els], [...el.childNodes])
 })
-t('$: observable', async t => {
+t('$: v($)', async t => {
   let $l = $()
   let vl = v($l)
   let log = []
@@ -486,6 +486,15 @@ t('$: observable', async t => {
   let x
   $l.add(x = document.createElement('div'))
   t.is(log, [[], [x]])
+})
+t.todo('$: changed attribute name', async t => {
+
+})
+t.skip('$: complex sync selector cases', async t => {
+  $('a b c', e => {
+
+  })
+  $('')
 })
 t.demo('$: debugger cases', async t => {
   console.log('*', $('*'))
