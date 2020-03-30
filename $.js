@@ -6,10 +6,10 @@ const ELEMENT = 1
 const CLASS_OFFSET = 0x1F700
 let count = 0
 const _spect = Symbol.for('@spect')
-const animSets = {}, idSets = {}, classSets = {}, tagSets = {}, nameSets = {}
+const ids = {}, classes = {}, tags = {}, names = {}, animations = {}
 const style = document.head.appendChild(document.createElement('style'))
 style.classList.add('spect-style')
-const {sheet} = style
+const { sheet } = style
 
 const observer = new MutationObserver((list) => {
   for (let mutation of list) {
@@ -28,21 +28,21 @@ const observer = new MutationObserver((list) => {
         // instead of walking full ruleset for each node, we detect which rules are applicable for the node
         // ruleset checks target itself and its children, returns list of [el, aspect] tuples
         if (target.id) {
-          idSets[target.id] && idSets[target.id].forEach(c => c.add(target))
+          ids[target.id] && ids[target.id].forEach(c => c.add(target))
           let node
-          for (let id in idSets) if (node = target.getElementById(id)) idSets[id].forEach(c => c.add(node))
+          for (let id in ids) if (node = target.getElementById(id)) ids[id].forEach(c => c.add(node))
         }
         if (target.className) {
-          target.classList.forEach(cls => classSets[cls] && classSets[cls].forEach(c => c.add(target)))
-          for (let cls in classSets) [].forEach.call(target.getElementsByClassName(cls), node => classSets[cls].forEach(c => c.add(node)))
+          target.classList.forEach(cls => classes[cls] && classes[cls].forEach(c => c.add(target)))
+          for (let cls in classes) [].forEach.call(target.getElementsByClassName(cls), node => classes[cls].forEach(c => c.add(node)))
         }
         if (target.attributes.name) {
           const name = target.attributes.name.value
-          nameSets[name] && nameSets[name].forEach(c => c.add(target))
-          for (let name in nameSets) [].forEach.call(target.getElementsByName(name), node => nameSets[name].forEach(c => c.add(node)))
+          names[name] && names[name].forEach(c => c.add(target))
+          for (let name in names) [].forEach.call(target.getElementsByName(name), node => names[name].forEach(c => c.add(node)))
         }
-        tagSets[target.tagName] && tagSets[target.tagName].forEach(c => c.add(target))
-        for (let tag in tagSets) [].forEach.call(target.getElementsByTagName(tag), node => tagSets[tag].forEach(c => c.add(node)))
+        tags[target.tagName] && tags[target.tagName].forEach(c => c.add(target))
+        for (let tag in tags) [].forEach.call(target.getElementsByTagName(tag), node => tags[tag].forEach(c => c.add(node)))
       })
     }
   }
@@ -89,7 +89,6 @@ export class $ extends Array {
     this._tag
     this._name
     this._class
-    this._animation
     this._channel = channel()
     this._items = new WeakMap
     this._delete = new WeakSet
@@ -106,10 +105,10 @@ export class $ extends Array {
       this._match = match
 
       // indexable selectors
-      if (id) (idSets[id] = idSets[this._id = id] || []).push(this)
-      else if (name) (nameSets[name] = nameSets[this._name = name] || []).push(this)
-      else if (cls) (classSets[cls] = classSets[this._class = cls] || []).push(this)
-      else if (tag) (this._tag = tag = tag.toUpperCase(), tagSets[tag] = tagSets[tag] || []).push(this)
+      if (id) (ids[id] = ids[this._id = id] || []).push(this)
+      else if (name) (names[name] = names[this._name = name] || []).push(this)
+      else if (cls) (classes[cls] = classes[this._class = cls] || []).push(this)
+      else if (tag) (this._tag = tag = tag.toUpperCase(), tags[tag] = tags[tag] || []).push(this)
     }
 
     // complex selectors are handled via anim events (technique from insertionQuery). Cases:
@@ -119,10 +118,10 @@ export class $ extends Array {
     // NOTE: only connected scope supports anim observer
     // FIXME: if complex selectors have `animation`redefined by user-styles it may conflict
     if (!/^\w+$/.test(selector)) {
-      this._animation = animSets[selector]
-      if (!this._animation) {
-        const anim = animSets[selector] = this._animation = []
-        anim.id = String.fromCodePoint(CLASS_OFFSET + count++)
+      let anim = animations[selector]
+      if (!anim) {
+        anim = animations[selector] = []
+        this._animation = anim.id = String.fromCodePoint(CLASS_OFFSET + count++)
         sheet.insertRule(`@keyframes ${ anim.id }{}`, sheet.rules.length)
         sheet.insertRule(`${ selector }:not(.${ anim.id }){animation:${ anim.id }}`, sheet.rules.length)
         sheet.insertRule(`.${ anim.id }{animation:${ anim.id }}`, sheet.rules.length)
@@ -147,7 +146,8 @@ export class $ extends Array {
         }
         document.addEventListener('animationstart', anim.onanim, true)
       }
-      this._animation.push(this)
+      this._animation = anim.id
+      anim.push(this)
     }
   }
 
@@ -250,22 +250,21 @@ export class $ extends Array {
   has(item) { return this._items.has(item) }
 
   [symbol.dispose]() {
-    if (this._id) idSets[this._id].splice(idSets[this._id].indexOf(this) >>> 0, 1)
-    if (this._class) classSets[this._class].splice(classSets[this._class].indexOf(this) >>> 0, 1)
-    if (this._tag) tagSets[this._tag].splice(tagSets[this._tag].indexOf(this) >>> 0, 1)
-    if (this._name) nameSets[this._name].splice(nameSets[this._name].indexOf(this) >>> 0, 1)
+    if (this._id) ids[this._id].splice(ids[this._id].indexOf(this) >>> 0, 1)
+    if (this._class) classes[this._class].splice(classes[this._class].indexOf(this) >>> 0, 1)
+    if (this._tag) tags[this._tag].splice(tags[this._tag].indexOf(this) >>> 0, 1)
+    if (this._name) names[this._name].splice(names[this._name].indexOf(this) >>> 0, 1)
     if (this._animation) {
-      const anim = this._animation
+      const anim = animations[this._selector]
       anim.splice(anim.indexOf(this) >>> 0, 1)
       if (!anim.length) {
-        // document.head.removeChild(anim.style)
         document.removeEventListener('animationstart', anim.onanim)
-        delete animSets[this._selector]
+        delete animations[this._selector]
+        anim.rules.forEach(rule => {
+          let idx = [].indexOf.call(sheet.rules, rule)
+          if (~idx) sheet.deleteRule(idx)
+        })
       }
-      anim.rules.forEach(rule => {
-        let idx = [].indexOf.call(sheet.rules, rule)
-        if (~idx) sheet.deleteRule(idx)
-      })
     }
 
     this._channel.close()

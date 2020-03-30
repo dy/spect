@@ -55,7 +55,7 @@ t('$: init existing elements', async t => {
   xs[Symbol.dispose]()
   document.body.removeChild(container)
 })
-t.browser('$: dynamically assigned selector', async t => {
+t('$: dynamically assigned selector', async t => {
   let log = []
 
   let xs = $('.x', el => {
@@ -183,7 +183,7 @@ t.browser('$: destructor is called on unmount', async t => {
   el.innerHTML = ''
   t.end()
 })
-t.browser('$: changed attribute matches new nodes', async t => {
+t('$: changed attribute matches new nodes', async t => {
   let el = document.body.appendChild(document.createElement('div'))
   el.innerHTML = '<a><b><c></c></b></a>'
 
@@ -491,10 +491,10 @@ t.todo('$: changed attribute name', async t => {
 
 })
 t.skip('$: complex sync selector cases', async t => {
-  $('a b c', e => {
-
+  $('a#b c.d', el => {
+    log.push(el)
   })
-  $('')
+  document.body.appendChild(h`<a#b><c/><c.d/></a><a><c.d/></a>`)
 })
 t.demo('$: debugger cases', async t => {
   console.log('*', $('*'))
