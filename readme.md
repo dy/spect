@@ -212,45 +212,46 @@ Pending...
 
 > elements = $( scope? , selector? , callback? )<br/>
 
-Creates live collection of elements matching the `selector` in `scope`. Optional `callback` is triggered for each new matched element with optionally returned teardown.
+Creates live collection of elements matching the `selector` in `scope`. `callback` is fired for each matched element.
 
 * `selector` is a valid CSS selector.
-* `scope` is optional element to narrow down observation, an _HTMLElement_ or a list of elements (array or array-like).
+* `scope` is optional _HTMLElement_ or a list of elements to narrow down observation.
 * `callback` is a function with `(element) => teardown?` signature.
-* `elements` is live array with matched elements, compatible with [HTMLCollection](https://developer.mozilla.org/en-US/docs/Web/API/HTMLCollection), [WeakSet](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/WeakSet) and [Array](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array).
+* `elements` is live array with matched elements, implements [HTMLCollection](https://developer.mozilla.org/en-US/docs/Web/API/HTMLCollection), [WeakSet](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/WeakSet) and [Array](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array).
 
 ```js
-import { $, v } from 'spect'
+import { $, v, h } from 'spect'
 
-let $foo = $('foo', el => {
+let $foo = $('.foo', el => {
   console.log('active')
   return () => console.log('inactive')
 })
 
-let foo = document.createElement('foo')
-document.body.appendChild(foo)
-// > "active"
+document.body.append(...h`<div.foo/><div#bar/>`)
 
-$foo[0] === foo
-// > true
+// ... "active"
 
-foo.replaceWith(null)
-// > "inactive"
+$foo[0] // <div class="foo"></div>
 
-$foo[0]
-// > undefined
+$foo.bar // <div id="bar"></div>
+
+foo.remove()
+
+// ... "inactive"
+
+$foo[0] // undefined
 
 
 // observe changes
 v($foo)(els => (console.log(els), () => console.log('off', els)))
-document.body.appendChild(foo)
-// > "active"
-// > [ foo ]
+document.body.append(foo)
+
+// ... "active", [ foo ]
 
 // destroy
 $foo[Symbol.dispose]()
-// > "inactive"
-// > "off", [ foo ]
+
+// ... "inactive", "off", [ foo ]
 ```
 
 #### Example
@@ -265,9 +266,6 @@ const $timer = $('.timer', el => {
   }, 1000)
   return () => clearInterval(id)
 })
-
-$timer[0]
-// > <div.timer></div>
 ```
 
 _**$**_ uses technique derived from [fast-on-load](https://ghub.io/fast-on-load) and [selector-set](https://github.com/josh/selector-set) for common selectors and animation observer (similar to [insertionQuery](https://github.com/naugtur/insertionQuery)) for complex selectors.<br/>
