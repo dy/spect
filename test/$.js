@@ -487,14 +487,45 @@ t('$: v($)', async t => {
   $l.add(x = document.createElement('div'))
   t.is(log, [[], [x]])
 })
-t.todo('$: changed attribute name', async t => {
+t('$: changed attribute name rewires refefence', async t => {
+  let el = document.body.appendChild(h`<div><a/><a/></div>`)
+  let x = $(el, '#a, #b')
+  el.childNodes[1].id = 'a'
+  await frame(2)
+  t.is([...x], [el.childNodes[1]])
+  t.is(x.a, el.childNodes[1])
 
+  console.log('set b')
+  el.childNodes[1].id = 'b'
+  await tick(2)
+  t.is([...x], [el.childNodes[1]])
+  t.is(x.a, undefined)
+  t.is(x.b, el.childNodes[1])
+
+  el.innerHTML = ''
+  await frame(2)
+  t.is([...x], [])
+  t.is(x.a, undefined)
+
+  x[Symbol.dispose]()
+  await frame(2)
 })
-t.skip('$: complex sync selector cases', async t => {
-  $('a#b c.d', el => {
-    log.push(el)
+t.todo('$: comma-separated simple selectors are still simple')
+t.todo('$: simple selector cases', async t => {
+  let log = []
+  // $('a#b c.d', el => {
+  //   log.push(el)
+  // })
+  // document.body.append(...h`<a#b><c/><c.d/></a><a><c.d/></a>`)
+  // $('a b#c.d[name=e] f')
+
+  // $('a[name~="b"]')
+})
+t.skip('$: complex selectors', async t => {
+  $('a [x] b', el => {
   })
-  document.body.appendChild(h`<a#b><c/><c.d/></a><a><c.d/></a>`)
+
+  $('a b > c')
 })
 t.demo('$: debugger cases', async t => {
   console.log('*', $('*'))
