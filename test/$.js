@@ -20,6 +20,7 @@ t('$: tag selector', async t => {
   await tick()
   t.deepEqual(ellog, ['x'], 'simple creation')
 
+  console.log('add 2')
   container.appendChild(document.createElement('x'))
   container.appendChild(document.createElement('x'))
   await tick()

@@ -29,7 +29,7 @@ export default function (scope, selector, fn) {
     if (target.nodeType) target = [target]
 
     const set = new $(null, null, fn)
-    set.add(...target)
+    target.forEach(set.add, set)
     return set
   }
 
@@ -53,64 +53,43 @@ class $ extends Array {
     // ignore non-selector collections
     if (!selector) return
 
-    this._selector = selector
-
     // init existing elements
-    this.add(...(scope || document).querySelectorAll(selector))
+    ;(scope || document).querySelectorAll(selector).forEach(this.add, this)
 
-    const selectors = selector.split(/\s*,\s*/)
+    // if last selector part is simple (id|name|class|tag), followed by classes - index that
+    const rtokens = /(?:#([\w-]+)|\[\s*name=['"]?([\w-]+)['"]?\s*\]|\.([\w-]+)|(\w+))(\[[^\]]+\]|\..+)*$/
 
-    const rpart = /^\s*(?:#([\w-]+)|\[\s*name=([\w-]+)\s*\]|\.([\w-]+)|(\w+))/
-    const rmatch = /^(?:\[[^\]]+\]|[^\s>+~\[]+)+/
+    this._selector = selector.split(/\s*,\s*/).map(selector => {
+      selector = new String(selector)
 
-    let complex = false
-    this._parts = selectors.map(selector => {
-      let parts = [], match
+      const match = selector.match(rtokens)
 
-      while (selector && (match = selector.match(rpart))) {
-        const [chunk, ...part] = match
-        selector = selector.slice(chunk.length)
-        if (part[3]) part[3] = part[3].toUpperCase()
+      if (!match) return selector
 
-        // parse filters
-        if (match = selector.match(rmatch)) {
-          part.push(match[0])
-          selector = selector.slice(match[0].length)
-        }
+      let [str, id, name, cls, tag, filter] = match
+      if (id) (ids[selector.id = id] = ids[id] || []).push(this)
+      else if (name) (names[selector.name = name] = names[name] || []).push(this)
+      else if (cls) (classes[selector.class = cls] = classes[cls] || []).push(this)
+      else if (tag) (selector.tag = tag = tag.toUpperCase(), tags[tag] = tags[tag] || []).push(this)
 
-        parts.push(part)
-      }
+      selector.match = selector.slice(0, match.index) + (filter ? selector.slice(-filter.length) : '')
 
-      // if exited with non-empty string - selector is not trivial, delegate to anim events
-      if (selector) return complex = true
-
-      // indexable selectors
-      const [id, name, cls, tag, filter] = parts[0]
-      if (id) (ids[id] = ids[id] || []).push(this)
-      else if (name) (names[name] = names[name] || []).push(this)
-      else if (cls) (classes[cls] = classes[cls] || []).push(this)
-      else if (tag) (tag, tags[tag] = tags[tag] || []).push(this)
-
-      // elements can't be turned to match tag selectors without remove/add, so anim observer is not required
-      if (parts.some(([i,n,c, tag, filter]) => !tag || filter)) complex = true
-
-      return parts
+      return selector
     })
-
 
     // complex selectors are handled via anim events (technique from insertionQuery). Cases:
     // - dynamically added attributes so that existing nodes match (we don't observe attribs in mutation obserever)
     // - complex selectors, inc * - we avoid > O(c) sync mutations check
     // NOTE: only connected scope supports anim observer
-    if (complex) {
-      let anim = animations[selector]
+    if (!this._selector.every(sel => sel.tag && !sel.match)) {
+      let anim = animations[this._selector]
       if (!anim) {
-        anim = animations[selector] = []
+        anim = animations[this._selector] = []
         this._animation = anim.id = String.fromCodePoint(CLASS_OFFSET + count++)
         sheet.insertRule(`@keyframes ${ anim.id }{}`, sheet.rules.length)
-        sheet.insertRule(`${ selectors.map(sel => sel + `:not(.${ anim.id })`) }{animation:${ anim.id }}`, sheet.rules.length)
+        sheet.insertRule(`${ this._selector.map(sel => sel + `:not(.${ anim.id })`) }{animation:${ anim.id }}`, sheet.rules.length)
         sheet.insertRule(`.${ anim.id }{animation:${ anim.id }}`, sheet.rules.length)
-        sheet.insertRule(`${ selectors.map(sel => sel + `.${ anim.id }`) }{animation:unset;animation:revert}`, sheet.rules.length)
+        sheet.insertRule(`${ this._selector.map(sel => sel + `.${ anim.id }`) }{animation:unset;animation:revert}`, sheet.rules.length)
         anim.rules = [].slice.call(sheet.rules, -4)
 
         anim.onanim = e => {
@@ -136,19 +115,14 @@ class $ extends Array {
     }
   }
 
-  add(el, ...els) {
+  add(el) {
     if (!el) return
 
-    // track collection
-    this.push(el)
-    this._items.add(el)
-    if (el.name) this[el.name] = el
-    if (el.id) this[el.id] = el
-    // cancel planned delete
-    if (this._delete.has(el)) this._delete.delete(el)
+    // ignore existing
+    if (this._items.has(el)) return
 
-    // ignore existing items
-    if (el[_spect] && el[_spect].has(this)) return
+    // ignore not-matching
+    if (this._selector) if (!el.matches(this._selector)) return
 
     // ignore out-of-scope
     if (this._scope) {
@@ -156,23 +130,33 @@ class $ extends Array {
       if (this._scope.nodeType) { if (!this._scope.contains(el)) return }
       else if ([].every.call(this._scope, scope => !scope.contains(el))) return
     }
-    // ignore not-matching
-    if (this._match) if (!el.matches(this._match)) return
+
+    // track collection
+    this.push(el)
+    this._items.add(el)
+    if (el.name) this[el.name] = el
+    if (el.id) this[el.id] = el
+
+    // cancel planned delete
+    if (this._delete.has(el)) this._delete.delete(el)
+
+    // ignore existing items
+    if (el[_spect] && el[_spect].has(this)) return
 
     // NOTE: this does not hook props added after
-    // if ((el.name || el.id)) {
-    //   if (!el[_observer]) {
-    //     let name = el.name, id = el.id
-    //     // id/name mutation observer tracks refs and handles unmatch
-    //     ;(el[_observer] = new MutationObserver(records => {
-    //       if (name && (el.name !== name)) if (names[name]) names[name].forEach(c => (delete c[name], c.delete(el)))
-    //       if (name = el.name) if (names[name]) names[name].forEach(c => c.add(el))
-    //       if (id && (el.id !== id)) if (ids[id]) ids[id].forEach(c => (delete c[id], c.delete(el)))
-    //       if (id = el.id) if (ids[id]) ids[id].forEach(c => c.add(el))
-    //     }))
-    //     .observe(el, {attributes: true, attributeFilter: ['name', 'id']})
-    //   }
-    // }
+    if ((el.name || el.id)) {
+      if (!el[_observer]) {
+        let name = el.name, id = el.id
+        // id/name mutation observer tracks refs and handles unmatch
+        ;(el[_observer] = new MutationObserver(records => {
+          if (name && (el.name !== name)) if (names[name]) names[name].forEach(c => (delete c[name], c.delete(el)))
+          if (name = el.name) if (names[name]) names[name].forEach(c => c.add(el))
+          if (id && (el.id !== id)) if (ids[id]) ids[id].forEach(c => (delete c[id], c.delete(el)))
+          if (id = el.id) if (ids[id]) ids[id].forEach(c => c.add(el))
+        }))
+        .observe(el, {attributes: true, attributeFilter: ['name', 'id']})
+      }
+    }
 
     // enable item
     if (!el[_spect]) el[_spect] = new Set
@@ -184,8 +168,6 @@ class $ extends Array {
     // notify
     this._teardown.set(el, this._fn && this._fn(el))
     this._channel.push(this)
-
-    if (els.length) this.add(...els)
   }
 
   delete(el, immediate = false) {
@@ -245,8 +227,8 @@ class $ extends Array {
   has(item) { return this._items.has(item) }
 
   [symbol.dispose]() {
-    if (this._parts) {
-      this._parts.forEach(([sel, [id, name, cls, tag]]) => {
+    if (this._selector) {
+      this._selector.forEach(({id, class:cls, name, tag}) => {
         id && ids[id].splice(ids[id].indexOf(this) >>> 0, 1)
         name && names[name].splice(names[name].indexOf(this) >>> 0, 1)
         cls && classes[cls].splice(classes[cls].indexOf(this) >>> 0, 1)
@@ -275,6 +257,10 @@ class $ extends Array {
 
 
 const observer = new MutationObserver((list) => {
+  const queryAdd = (targets, sets) => {
+    if (!sets || !targets) return
+    ;[].forEach.call(targets.nodeType ? [targets] : targets, target => sets.forEach(set => set.add(target)))
+  }
   for (let mutation of list) {
     let { addedNodes, removedNodes, target } = mutation
     if (mutation.type === 'childList') {
@@ -288,26 +274,22 @@ const observer = new MutationObserver((list) => {
         if (target.nodeType !== ELEMENT) return
 
         // selector-set optimization:
-        // instead of walking full ruleset for each node, we detect which rules are applicable for the node
-        // ruleset checks target itself and its children, returns list of [el, aspect] tuples
+        // instead of walking all registered selectors for each node, we detect which selectors are applicable for the node
         if (target.id) {
-          // ids(target).map(el => )
-          ids[target.id] && ids[target.id].forEach(c => c.add(target))
-          let node
+          queryAdd(target, ids[target.id])
           // NOTE: <a> and other inlines may not have `getElementById`
-          if (target.getElementById) for (let id in ids) if (node = target.getElementById(id)) ids[id].forEach(c => c.add(node))
+          if (target.getElementById) for (let id in ids) queryAdd(target.getElementById(id), ids[id])
+        }
+        if (target.name) {
+          queryAdd(target, names[target.name])
+          for (let name in names) queryAdd(target.getElementsByName(name), names[name])
         }
         if (target.className) {
-          target.classList.forEach(cls => classes[cls] && classes[cls].forEach(c => c.add(target)))
-          for (let cls in classes) [].forEach.call(target.getElementsByClassName(cls), node => classes[cls].forEach(c => c.add(node)))
+          target.classList.forEach(cls => queryAdd(target, classes[cls]))
+          for (let cls in classes) queryAdd(target.getElementsByClassName(cls), classes[cls])
         }
-        if (target.attributes.name) {
-          const name = target.attributes.name.value
-          names[name] && names[name].forEach(c => c.add(target))
-          for (let name in names) [].forEach.call(target.getElementsByName(name), node => names[name].forEach(c => c.add(node)))
-        }
-        tags[target.tagName] && tags[target.tagName].forEach(c => c.add(target))
-        for (let tag in tags) [].forEach.call(target.getElementsByTagName(tag), node => tags[tag].forEach(c => c.add(node)))
+        queryAdd(target, tags[target.tagName])
+        for (let tag in tags) queryAdd(target.getElementsByTagName(tag), tags[tag])
       })
     }
   }
@@ -316,4 +298,3 @@ observer.observe(document, {
   childList: true,
   subtree: true
 })
-
