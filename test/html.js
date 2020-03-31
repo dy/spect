@@ -681,3 +681,10 @@ t('html: iron support', t => {
   noun.v = 'Iron'
   t.is(el.outerHTML, `<x>Hello Iron</x>`)
 })
+
+t('html: empty children should clean up content', t => {
+  let a = h`<div><a/><a/></div>`
+  t.is(a.childNodes.length, 2)
+  h`<${a}></>`
+  t.is(a.childNodes.length, 0)
+})
