@@ -208,7 +208,7 @@ Pending...
 
 ## API
 
-<details><summary><strong>$ − selector</strong></summary>
+<details><summary><strong>$ − selector aspect</strong></summary>
 
 > elements = $( scope? , selector? , callback? )<br/>
 
@@ -332,7 +332,7 @@ _**h**_ is direct remake on [hyperscript](https://ghub.io/hyperscript) and [htm]
 </details>
 
 
-<details><summary><strong>v − value</strong></summary>
+<details><summary><strong>v − value observable</strong></summary>
 
 > value = v( source? , map? , inmap? )<br/>
 
