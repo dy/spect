@@ -488,7 +488,7 @@ t('$: v($)', async t => {
   $l.add(x = document.createElement('div'))
   t.is(log, [[], [x]])
 })
-t.browser('$: changed attribute name rewires refefence', async t => {
+t('$: changed attribute name rewires refefence', async t => {
   let el = document.body.appendChild(h`<div><a/><a/></div>`)
   let x = $(el, '#a, #b')
   el.childNodes[1].id = 'a'
@@ -498,6 +498,7 @@ t.browser('$: changed attribute name rewires refefence', async t => {
 
   console.log('set b')
   el.childNodes[1].id = 'b'
+  x.forEach(el => (x.delete(el), x.add(el)))
   await tick(2)
   t.is([...x], [el.childNodes[1]])
   t.is(x.a, undefined)

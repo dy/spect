@@ -683,8 +683,8 @@ t('html: iron support', t => {
 })
 
 t('html: empty children should clean up content', t => {
-  let a = h`<div><a/><a/></div>`
+  let a = html`<div><a/><a/></div>`
   t.is(a.childNodes.length, 2)
-  h`<${a}></>`
+  html`<${a}></>`
   t.is(a.childNodes.length, 0)
 })

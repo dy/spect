@@ -47,7 +47,7 @@ class $ extends Array {
 
     Object.defineProperties(this, {
       _channel: desc(channel()),
-      _items: desc(new WeakSet),
+      _items: desc(new WeakMap),
       _delete: desc(new WeakSet),
       _teardown: desc(new WeakMap),
       _scope: desc(scope),
@@ -151,7 +151,7 @@ class $ extends Array {
 
     // track collection
     this.push(el)
-    this._items.add(el)
+    this._items.set(el, [el.id, el.name])
     if (el.name) this[el.name] = el
     if (el.id) this[el.id] = el
 
@@ -161,20 +161,21 @@ class $ extends Array {
     // ignore existing items
     if (el[_spect] && el[_spect].has(this)) return
 
+    // FIXME: name/id ref obsever - seems like overkill, waiting for real-case demand
     // NOTE: this does not hook props added after
-    if ((el.name || el.id)) {
-      if (!el[_observer]) {
-        let name = el.name, id = el.id
-        // id/name mutation observer tracks refs and handles unmatch
-        ;(el[_observer] = new MutationObserver(records => {
-          if (name && (el.name !== name)) if (names[name]) names[name].forEach(c => (delete c[name], c.delete(el)))
-          if (name = el.name) if (names[name]) names[name].forEach(c => c.add(el))
-          if (id && (el.id !== id)) if (ids[id]) ids[id].forEach(c => (delete c[id], c.delete(el)))
-          if (id = el.id) if (ids[id]) ids[id].forEach(c => c.add(el))
-        }))
-        .observe(el, {attributes: true, attributeFilter: ['name', 'id']})
-      }
-    }
+    // if ((el.name || el.id)) {
+    //   if (!el[_observer]) {
+    //     let name = el.name, id = el.id
+    //     // id/name mutation observer tracks refs and handles unmatch
+    //     ;(el[_observer] = new MutationObserver(records => {
+    //       if (name && (el.name !== name)) if (names[name]) names[name].forEach(c => (delete c[name], c.delete(el)))
+    //       if (name = el.name) if (names[name]) names[name].forEach(c => c.add(el))
+    //       if (id && (el.id !== id)) if (ids[id]) ids[id].forEach(c => (delete c[id], c.delete(el)))
+    //       if (id = el.id) if (ids[id]) ids[id].forEach(c => c.add(el))
+    //     }))
+    //     .observe(el, {attributes: true, attributeFilter: ['name', 'id']})
+    //   }
+    // }
 
     // enable item
     if (!el[_spect]) el[_spect] = new Set
@@ -190,10 +191,11 @@ class $ extends Array {
 
   delete(el, immediate = false) {
     // remove element from list sync
-    this._items.delete(el)
     if (this.length) this.splice(this.indexOf(el >>> 0, 1), 1)
-    if (el.name) delete this[el.name]
-    if (el.id) delete this[el.id]
+    const [id, name] = this._items.get(el)
+    if (name) delete this[name]
+    if (id) delete this[id]
+    this._items.delete(el)
     // plan destroy async (can be re-added)
     this._delete.add(el)
 
@@ -215,10 +217,10 @@ class $ extends Array {
       if (!el[_spect].size) {
         delete el[_spect]
         el.classList.remove(SPECT_CLASS)
-        if (el[_observer]) {
-          el[_observer].disconnect()
-          delete el[_observer]
-        }
+        // if (el[_observer]) {
+        //   el[_observer].disconnect()
+        //   delete el[_observer]
+        // }
       }
     }
 
