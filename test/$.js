@@ -512,15 +512,31 @@ t('$: changed attribute name rewires refefence', async t => {
   await frame(2)
 })
 t.todo('$: comma-separated simple selectors are still simple')
-t.todo('$: simple selector cases', async t => {
-  let log = []
-  // $('a#b c.d', el => {
-  //   log.push(el)
-  // })
-  // document.body.append(...h`<a#b><c/><c.d/></a><a><c.d/></a>`)
-  // $('a b#c.d[name=e] f')
+t('$: simple selector cases', async t => {
+  let root = document.body.appendChild(h`<div.root/>`)
 
-  // $('a[name~="b"]')
+  let a = $(root, 'a#b c.d')
+  root.append(...h`<a#b><c/><c.d/></a><a><c.d/></a>`)
+  await tick()
+  t.is([...a], [root.childNodes[0].childNodes[1]])
+
+  let b = $('a b#c.d[name=e] f')
+  root.append(h`<a><b><f/></b><b#c.d><f/></b><b#c.d name=e><d/><f/></b></a>`)
+  await tick()
+  t.is([...b], [root.childNodes[2].childNodes[2].childNodes[1]])
+
+  let c = $('a[name~="b"]')
+  root.append(h`<a name="b c"></a>`)
+  await tick()
+  t.is([...c], [root.childNodes[3]])
+
+  root.remove()
+  a[Symbol.dispose]()
+  b[Symbol.dispose]()
+  c[Symbol.dispose]()
+})
+t('$: does not expose private props', t => {
+  t.is(Object.keys($`privates`), [])
 })
 t.skip('$: complex selectors', async t => {
   $('a [x] b', el => {
@@ -531,5 +547,5 @@ t.skip('$: complex selectors', async t => {
 t.demo('$: debugger cases', async t => {
   console.log('*', $('*'))
   console.log('empty', $())
-  console.log('list', $([h`<a/>`, h`<b/>`, h`<c/>`]))
+  console.log('list', $([h`<a#a/>`, h`<b#b/>`, h`<c name=c/>`]))
 })

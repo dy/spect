@@ -36,6 +36,8 @@ export default function (scope, selector, fn) {
   return new $(scope, selector, fn)
 }
 
+const desc = value => ({configurable: false, enumerable: false, writable: value === undefined, value})
+
 class $ extends Array {
   constructor(scope, selector, fn){
     // self-call, like splice, map, slice etc. fall back to array
@@ -43,12 +45,16 @@ class $ extends Array {
 
     super()
 
-    this._channel = channel()
-    this._items = new WeakSet
-    this._delete = new WeakSet
-    this._teardown = new WeakMap
-    if (scope) this._scope = scope
-    if (fn) this._fn = fn
+    Object.defineProperties(this, {
+      _channel: desc(channel()),
+      _items: desc(new WeakSet),
+      _delete: desc(new WeakSet),
+      _teardown: desc(new WeakMap),
+      _scope: desc(scope),
+      _fn: desc(fn),
+      _selector: desc(),
+      _animation: desc()
+    })
 
     // ignore non-selector collections
     if (!selector) return
@@ -57,13 +63,12 @@ class $ extends Array {
     ;(scope || document).querySelectorAll(selector).forEach(this.add, this)
 
     // if last selector part is simple (id|name|class|tag), followed by classes - index that
-    const rtokens = /(?:#([\w-]+)|\[\s*name=['"]?([\w-]+)['"]?\s*\]|\.([\w-]+)|(\w+))(\[[^\]]+\]|\..+)*$/
+    const rtokens = /(?:#([\w-]+)|\[\s*name=['"]?([\w-]+)['"]?\s*\]|\.([\w-]+)|(\w+))(\[[^\]]+\]|\.[\w-]+)*$/
 
     this._selector = selector.split(/\s*,\s*/).map(selector => {
       selector = new String(selector)
 
       const match = selector.match(rtokens)
-
       if (!match) return selector
 
       let [str, id, name, cls, tag, filter] = match
