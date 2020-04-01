@@ -211,8 +211,9 @@ Pending...
 <details><summary><strong>$ − selector aspect</strong></summary>
 
 > elements = $( scope? , selector? , callback? )<br/>
+> elements = $`.selector`<br/>
 
-Creates live collection of elements matching the `selector` in `scope`. `callback` is fired for each matched element.
+Creates live collection of elements matching the `selector` in `scope`, firing `callback` for each element in the set.
 
 * `selector` is a valid CSS selector.
 * `scope` is optional _HTMLElement_ or a list of elements to narrow down observation.
@@ -268,8 +269,7 @@ const $timer = $('.timer', el => {
 })
 ```
 
-_**$**_ uses technique derived from [fast-on-load](https://ghub.io/fast-on-load) and [selector-set](https://github.com/josh/selector-set) for common selectors and animation observer (similar to [insertionQuery](https://github.com/naugtur/insertionQuery)) for complex selectors.<br/>
-Its design is inspired by _jQuery_, [_selector-observer_](https://github.com/josh/selector-observer) and _aspect-oriended-programming_ (eg. [reuse](https://ghub.io/reuse)).
+_**$**_ derives technique from [fast-on-load](https://ghub.io/fast-on-load), [selector-set](https://github.com/josh/selector-set) and [insertionQuery](https://github.com/naugtur/insertionQuery) for optimal performance. Inspired by _jQuery_, [_selector-observer_](https://github.com/josh/selector-observer), [reuse](https://ghub.io/reuse) and _aspect-oriended-programming_.
 
 <br/>
 
@@ -281,7 +281,7 @@ Its design is inspired by _jQuery_, [_selector-observer_](https://github.com/jos
 > el = h( tag , props? , ...children )<br/>
 > el = h\`...content\`<br/>
 
-[Hyperscript](https://ghub.io/hyperscript) with observable support. Can be used via JSX or template literal with [HTML syntax](https://ghub.io/xhtm).
+[Hyperscript](https://ghub.io/hyperscript) with observables. Can be used via JSX or template literal with [HTML syntax](https://ghub.io/xhtm).
 
 ```js
 import { h, v } from 'spect'
@@ -308,8 +308,8 @@ const [foo1, foo2] = h`<foo>1</foo><foo>2</foo>`
 // create document fragment
 const fooFrag = h`<><foo/></>`
 
-// hydrate element
-const foo = h`<${foo}>${ bar }</>`
+// hydrate / render
+const foo = h`<${foo} ...${foo}>${ foo.childNodes }</>`
 ```
 
 #### Example
@@ -335,6 +335,7 @@ _**h**_ is direct remake on [hyperscript](https://ghub.io/hyperscript) and [htm]
 <details><summary><strong>v − value observable</strong></summary>
 
 > value = v( source? , map? , inmap? )<br/>
+> value = v`...content`<br/>
 
 Universal observable − creates a getter/setter function with [observable](https://ghub.io/observable) interface from any `source`:
 
@@ -345,7 +346,8 @@ Universal observable − creates a getter/setter function with [observable](http
 * _Promise_ or _thenable_ − promise state observable.
 * _Standard observable_ or [`[Symbol.observable]`](https://ghub.io/symbol-observable) ([rxjs](https://ghub.io/rxjs), [zen-observable](https://ghub.io/zen-observable) etc.) − mapped source observable.
 * [_Ironjs_](https://ghub.io/ironjs) _Reactor_ − 2-way bound reactor observable.
-* _Array_, _Object_, _Element_ − props / group observable, including _input_ or _select_ value.
+* _Array_, _Object_, _Element_ − props / group observable, inc. _input_ / _select_ value.
+* _Template string_ − observable string with dynamic fields.
 
 ```js
 import { v } from 'spect'
@@ -360,7 +362,7 @@ v1(1)
 
 // subscribe
 v1(value => {
-  // 1
+  // value === 1
   return () => {
     // ...teardown
   }
@@ -382,8 +384,12 @@ v([v1, v2, v3])(([v1, v2, v3]) => {
 })
 // 1, 2, 3
 
+// live string
+let vsum = v`${v1} + ${v2} = ${v3}`()
+vsum() // "1 + 2 = 3"
+
 // from input
-let v4 = v($('#input')[0])
+let v4 = v(h`<input#id value=1/>`)
 v4(input => console.log(input.value))
 
 // from object
@@ -399,9 +405,8 @@ v5().done // false
 let v6 = v(() => v5)
 v6() // v5
 
-
 // dispose
-[v6, v5, v4, v3, v2, v1].map(v => v[Symbol.dispose]())
+;[v6, v5, v4, v3, v2, v1].map(v => v[Symbol.dispose]())
 ```
 
 #### Example
@@ -440,8 +445,7 @@ $('.likes-count', el => h`<${el}>${
 likes.load()
 ```
 
-_**v**_ design is based on [research of react hooks](https://ghub.io/unihooks), [observable proposal](https://github.com/tc39/proposal-observable), [_observable_](https://ghub.io/observable), [_mutant_](https://ghub.io/mutant), [_rxjs_](https://ghub.io/rxjs), [_iron_](https://github.com/ironjs/iron) and others.<br/>
-It comprises functionality of stores ([redux](https://ghub.io/redux), [mobx](https://ghub.io/mobx)), hooks (_useState_, _useEffect_, _useMemo_), observables ([zen-observable](https://ghub.io/zen-observable), [observ](https://ghub.io/observ)) and selectors ([dlv](https://github.com/developit/dlv), [idx](https://github.com/facebookincubator/idx)).
+_**v**_ design is based on R&D of [react hooks](https://ghub.io/unihooks), [observable proposal](https://github.com/tc39/proposal-observable), [_observable_](https://ghub.io/observable), [_mutant_](https://ghub.io/mutant), [_rxjs_](https://ghub.io/rxjs), [_iron_](https://github.com/ironjs/iron) and others. It comprises functionality of stores ([redux](https://ghub.io/redux), [mobx](https://ghub.io/mobx)), hooks (_useState_, _useEffect_, _useMemo_), observables ([zen-observable](https://ghub.io/zen-observable), [observ](https://ghub.io/observ)) and selectors ([dlv](https://github.com/developit/dlv), [idx](https://github.com/facebookincubator/idx)).
 
 <br/>
 

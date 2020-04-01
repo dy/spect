@@ -2,7 +2,8 @@
 
 Version | Changes
 ---|---
-19.1.0 | Static deps, dep props are observed.
+20.0.0 | Stage 3: `$` live collections, `h` caching & templates, `v` errors & template literals.
+19.1.0 | Sealed deps; observed dep props.
 19.0.0 | Reduced API: `$`, `h`, `v`.
 18.0.0 | Reduced API: `$`, `h`, `v`, `o`, `e`.
 17.0.0 | Removed `list`. `$` now creates live collection.
