@@ -11,7 +11,7 @@ const _spect = Symbol.for('@spect')
 
 const ids = {}, classes = {}, tags = {}, names = {}, animations = {}
 
-const hasAnimevent =  typeof AnimationEvent !== 'undefined'
+const hasAnimevent = typeof AnimationEvent !== 'undefined'
 const style = document.head.appendChild(document.createElement('style'))
 
 export default function (scope, selector, fn) {
@@ -283,9 +283,9 @@ class $ extends Array {
 }
 
 ;(new MutationObserver((list) => {
-  const queryAdd = (targets, sets) => {
+  const queryAdd = (targets, sets, check) => {
     if (!sets || !targets) return
-    ;[].forEach.call(targets.nodeType ? [targets] : targets, target => sets.forEach(set => set.add(target)))
+    ;[].forEach.call(targets.nodeType ? [targets] : targets, target => sets.forEach(set => set.add(target, check)))
   }
   const queryDelete = target => [target.classList.contains(SPECT_CLASS) ? target : null, ...target.getElementsByClassName(SPECT_CLASS)]
   .forEach(node => node && node[_spect].forEach(set => set.delete(node)))
@@ -297,7 +297,7 @@ class $ extends Array {
     // WARN: O(n*m) or worse performance (insignificant for small docs)
     if (!hasAnimevent) {
       queryDelete(target)
-      for (let sel in animations) queryAdd([target, ...target.querySelectorAll(sel)], animations[sel])
+      for (let sel in animations) queryAdd([target, ...target.querySelectorAll(sel)], animations[sel], true)
     }
 
     if (mutation.type === 'childList') {
