@@ -1,38 +1,42 @@
 import t from 'tst'
-// import { $, state, fx, prop, store, calc, attr, on } from '../dist/spect.min.js'
-import { $ } from '../index.js'
+import { $, h } from '../index.js'
+// import $ from '../$.js'
 import { tick, frame, idle, time } from 'wait-please'
 import { augmentor, useState, useEffect, useMemo } from 'augmentor'
+import v from '../v.js'
 
 t('$: tag selector', async t => {
   let ellog = []
   let proplog = []
   let container = document.body.appendChild(document.createElement('div'))
 
+
   let x1 = $('x', el => {
     ellog.push(el.tagName.toLowerCase())
   })
 
-  container.appendChild(document.createElement('x'))
-  await Promise.resolve()
+  let el = document.createElement('x')
+  container.appendChild(el)
+  await tick()
   t.deepEqual(ellog, ['x'], 'simple creation')
 
+  console.log('add 2')
   container.appendChild(document.createElement('x'))
   container.appendChild(document.createElement('x'))
-  await Promise.resolve()
+  await tick()
   t.deepEqual(ellog, ['x', 'x', 'x'], 'create multiple')
 
   let x2 = $('x', el => {
     proplog.push(1)
   })
   container.appendChild(document.createElement('x'))
-  await Promise.resolve()
+  await tick()
   t.deepEqual(ellog, ['x', 'x', 'x', 'x'], 'additional aspect')
   t.deepEqual(proplog, [1, 1, 1, 1], 'additional aspect')
 
   document.body.removeChild(container)
-  x1[Symbol.dispose](null)
-  x2[Symbol.dispose](null)
+  x1[Symbol.dispose]()
+  x2[Symbol.dispose]()
 
   t.end()
 })
@@ -52,7 +56,7 @@ t('$: init existing elements', async t => {
   xs[Symbol.dispose]()
   document.body.removeChild(container)
 })
-t('$: dynamically assigned selector', async t => {
+t.browser('$: dynamically assigned selector', async t => {
   let log = []
 
   let xs = $('.x', el => {
@@ -66,14 +70,14 @@ t('$: dynamically assigned selector', async t => {
   t.is(log, [])
 
   el.classList.add('x')
-  await tick()
+  await frame(2)
 
   t.is(log, [el])
 
+  el.remove()
   xs[Symbol.dispose]()
-  // xs(null)
-  document.body.removeChild(el)
 
+  await frame(2)
 })
 t('$: simple hooks', async t => {
   let el = document.createElement('div')
@@ -87,41 +91,23 @@ t('$: simple hooks', async t => {
   }))
 
   t.is(el.count, 0)
-  await frame()
+  await frame(2)
   t.is(el.count, 1)
 
   hx[Symbol.dispose]()
-  // hx(null)
-})
-t.skip('$: aspects must be called in order', async t => {
-  let log = []
-  let a = document.createElement('a')
-
-  let as = $(a, [() => (log.push(1)), () => log.push(2), () => log.push(3)])
-
-  document.body.appendChild(a)
-
-  await tick()
-
-  t.deepEqual(log, [1, 2, 3])
-
-  document.body.removeChild(a)
-  as[Symbol.dispose]()
-  // as(null)
 })
 t('$: throwing error must not create recursion', async t => {
   let a = document.createElement('a')
   document.body.appendChild(a)
   console.groupCollapsed('error here')
-  let as = $('a', el => {
+  t.throws(() => $('a', el => {
     throw Error('That error is planned')
-  })
+  }), 'That error is planned')
   console.groupEnd()
   await tick()
 
   document.body.removeChild(a)
-  as[Symbol.dispose]()
-  // as(null)
+  // as[Symbol.dispose]()
   t.end()
 })
 t('$: remove/add should not retrigger element', async t => {
@@ -134,15 +120,16 @@ t('$: remove/add should not retrigger element', async t => {
   setTimeout(() => document.body.appendChild(a))
 
   await time(10)
-  t.deepEqual(log, ['a'])
+  t.is(log, ['a'])
 
-  document.body.removeChild(a)
+  b.remove()
+  a.remove()
   as[Symbol.dispose]()
-  // as(null)
-  await frame()
+
+  await frame(2)
   t.end()
 })
-t('$: remove/add internal should not retrigger element', async t => {
+t.browser('$: remove/add internal should not retrigger element', async t => {
   let a = document.createElement('a')
   let b = document.createElement('b')
   a.appendChild(b)
@@ -150,18 +137,32 @@ t('$: remove/add internal should not retrigger element', async t => {
   let log = []
   let abs = $('a b', el => log.push('b'))
   setTimeout(() => document.body.appendChild(a))
-
-  await time(10)
+  await time(5)
+  await frame(2)
   t.deepEqual(log, ['b'])
 
-  document.body.removeChild(a)
+  a.remove()
   abs[Symbol.dispose]()
-  // abs(null)
-  await frame()
+  await frame(2)
   t.end()
 })
-t('$: destructor is called on unmount', async t => {
-  let el = document.createElement('div')
+t.browser('$: scoped asterisk selector', async t => {
+  let log = [], el = document.body.appendChild(document.createElement('div'))
+  let list = $(el, '*', el => log.push(el))
+  let x, y, z
+  el.appendChild(x = document.createElement('x'))
+  el.appendChild(y = document.createElement('y'))
+  await frame(2)
+  t.is(log, [x, y])
+
+  list[Symbol.dispose]()
+  el.appendChild(z = document.createElement('y'))
+  t.is(log, [x, y])
+
+  document.body.removeChild(el)
+})
+t.browser('$: destructor is called on unmount', async t => {
+  let el = document.body.appendChild(document.createElement('div'))
   let log = []
   let all = $(el, '*', el => {
     log.push(1)
@@ -169,20 +170,22 @@ t('$: destructor is called on unmount', async t => {
   })
   t.deepEqual(log, [])
   el.innerHTML = 'x<a></a><a></a>x'
-  await tick()
+  await frame(4)
   t.deepEqual(log, [1, 1])
+
   el.innerHTML = ''
-  await frame(2)
+  await frame(4)
   t.deepEqual(log, [1, 1, 2, 2], 'clear up')
   all[Symbol.dispose]()
-  // all(null)
+
   el.innerHTML = 'x<a></a><a></a>x'
-  await tick()
+  await frame(2)
   t.deepEqual(log, [1, 1, 2, 2])
+  el.innerHTML = ''
   t.end()
 })
-t('$: changed attribute matches new nodes', async t => {
-  let el = document.createElement('div')
+t.browser('$: changed attribute matches new nodes', async t => {
+  let el = document.body.appendChild(document.createElement('div'))
   el.innerHTML = '<a><b><c></c></b></a>'
 
   let log = []
@@ -190,6 +193,7 @@ t('$: changed attribute matches new nodes', async t => {
     log.push('+2')
     return () => log.push('-2')
   })
+  const abb2 = $(el, 'a b.b', e => { log.push('+2a')})
   const abbc = $(el, 'a b.b c', e => {
     log.push('+3')
     return () => log.push('-3')
@@ -200,51 +204,61 @@ t('$: changed attribute matches new nodes', async t => {
   await frame(2)
   t.is(log, [])
 
+  console.log('add .b')
   el.querySelector('b').classList.add('b')
   await frame(2)
-  t.is(log, ['+2', '+3'])
+  t.is(log, ['+2', '+2a', '+3'])
 
+  console.log('remove .b')
   el.querySelector('b').classList.remove('b')
   await frame(2)
-  t.is(log, ['+2', '+3', '-2', '-3'])
+  t.is(log, ['+2', '+2a', '+3', '-2', '-3'])
 
 
+  console.log('add .b again')
   log = []
   el.querySelector('b').classList.add('b')
   await frame(2)
-  t.is(log, ['+2', '+3'])
+  t.is(log, ['+2', '+2a', '+3'])
 
+  console.log('remove .b again')
   el.querySelector('b').classList.remove('b')
   await frame(2)
-  t.is(log, ['+2', '+3', '-2', '-3'])
+  t.is(log, ['+2', '+2a', '+3', '-2', '-3'])
 
   abb[Symbol.dispose]()
+  abb2[Symbol.dispose]()
   abbc[Symbol.dispose]()
-  // abb(null)
-  // abbc(null)
+
+  console.log('destructed')
+  log = []
+  el.querySelector('b').classList.add('b')
+  await frame(2)
+  t.is(log, [])
+
+  el.remove()
 })
-t('$: contextual query with self-matching', async t => {
-  let el = document.createElement('x')
+t.browser('$: contextual query', async t => {
+  let el = document.body.appendChild(document.createElement('div'))
   let log = []
   $(el, '.x y', y => {
-    log.push('y')
+    log.push('.x y')
   })
   $(el, '.x', el => {
-    log.push('x')
+    log.push('.x')
   })
   $(el, () => {
     log.push('-')
   })
-  $(el, ' y', el => {
+  $(el, 'y', el => {
     log.push(' y')
   })
-  el.innerHTML = '<y></y>'
-  el.classList.add('x')
-  await tick(8)
-  t.same(log, ['y', 'x', '-', ' y'])
+  el.innerHTML = '<x class="x"><y></y></x>'
+  await frame(3)
+  t.same(log, ['.x y', '.x', '-', ' y'])
 })
-t('$: adding/removing attribute with attribute selector, mixed with direct selector', async t => {
-  let el = document.createElement('div')
+t.browser('$: adding/removing attribute with attribute selector, mixed with direct selector', async t => {
+  let el = document.body.appendChild(document.createElement('div'))
   const log = []
   el.innerHTML = '<x></x>'
   const x = el.firstChild
@@ -253,17 +267,18 @@ t('$: adding/removing attribute with attribute selector, mixed with direct selec
     log.push(1)
     return () => log.push(2)
   })
-  await tick(8)
+  await frame(2)
   t.is(log, [])
   x.setAttribute('y', true)
-  await tick(8)
+  await frame(2)
   t.is(log, [1])
   x.removeAttribute('y')
   await frame(2)
   t.is(log, [1, 2])
+  el.remove()
 })
-t('$: matching nodes in added subtrees', async t => {
-  let el = document.createElement('div')
+t.browser('$: matching nodes in added subtrees', async t => {
+  let el = document.body.appendChild(document.createElement('div'))
   let log = []
   $(el, 'a b c d', el => {
     log.push('+')
@@ -272,7 +287,7 @@ t('$: matching nodes in added subtrees', async t => {
     }
   })
   el.innerHTML = '<a><b><c><d></d></c></b></a>'
-  await tick(8)
+  await frame(2)
   t.is(log, ['+'])
   el.innerHTML = ''
   await frame(2)
@@ -310,12 +325,6 @@ t.todo('new custom element', t => {
   $('custom-element', () => {
 
   })
-})
-t.todo('aspects must be called in order', async t => {
-  let log = []
-  let a = {}
-  await spect(a).use([() => log.push(1), () => log.push(2), () => log.push(3)])
-  t.deepEqual(log, [1, 2, 3])
 })
 t.todo('duplicates are ignored', async t => {
   let log = []
@@ -379,24 +388,24 @@ t('async aspects', async t => {
   let log = []
   $('a', async el => {
     log.push(1)
-    await Promise.resolve().then()
+    await tick()
     log.push(2)
     return () => log.push(3)
   })
-  await tick(10)
+  await frame(2)
   document.body.removeChild(a)
   await frame(2)
   t.is(log, [1, 2, 3])
 })
 t('rebinding to other document', async t => {
-  let { default: undom} = await import('undom/src/undom')
-  let document = undom()
+  let all = await import('nodom')
+  let document = new Document()
 
   var div = document.createElement("div")
   div.className = "foo bar"
 
   $(div, el => {
-    t.is(el.nodeName, 'DIV')
+    t.is(el.nodeName.toUpperCase(), 'DIV')
   })
 })
 t.skip('empty selectors', t => {
@@ -418,56 +427,128 @@ t.skip('empty selectors', t => {
   // t.notEqual($x, $w)
 })
 t('$: returned result is live collection', async t => {
-  let scope = document.createElement('div')
+  let scope = document.body.appendChild(document.createElement('div'))
   let els = $(scope, '.x')
-  t.is(els, [])
+  t.is([...els], [])
   scope.innerHTML = '<a class="x"></a>'
-  await tick(8)
+  await frame(2)
   t.is(els.length, 1)
   scope.innerHTML = '<a class="x"><b class="x"/></a>'
-  await tick(2)
+  await frame(4)
   t.is(els.length, 2)
   scope.innerHTML = ''
-  await tick(2)
+  await frame(2)
   t.is(els.length, 0)
+  scope.remove()
 })
-t.todo('$: handles input live collections')
-t.todo('$: selecting by name', t => {
-  let $f = $`<form><input name="a"/><input name="b"/></form>`
+t.todo('$: handles passed live collections like HTMLCollection')
+t('$: selecting by name', async t => {
+  let $f = $(h`<form><input name="a"/><input name="b"/></form>`, 'input')
 
-  let $form = $($f)
-
-  t.is($f, $form)
-  t.is($form[0].childNodes.length, 2)
-  t.is($form[0], $f[0])
+  t.is($f.length, 2)
+  t.ok($f.a)
+  t.ok($f.b)
 
   t.end()
 })
 t('$: init on list of elements', async t => {
   let log = []
-  let el = document.createElement('div')
+  let el = document.body.appendChild(document.createElement('div'))
   el.innerHTML = '<a>1</a><a>2</a>'
   let chldrn = $(el.childNodes, el => {
     log.push(el.textContent)
     return () => log.push('un' + el.textContent)
   })
-  t.deepEqual(log, ['1', '2'])
+  t.is(log, ['1', '2'])
   el.innerHTML = ''
   chldrn[Symbol.dispose]()
-  // chldrn(null)
+
   await frame(2)
-  t.deepEqual(log, ['1', '2', 'un1', 'un2'])
+  t.is(log, ['1', '2', 'un1', 'un2'])
+
+  el.remove()
 })
-
-t('$: init/destroy in body of web-component')
-
+t.todo('$: init/destroy in body of web-component')
 t('$: template literal', async t => {
   let el = document.createElement('div')
   document.body.appendChild(el)
   el.innerHTML = '<div class="x"></div><div class="x"></div>'
 
   let els = $`div.${'x'}`
-  t.is(els, [...el.childNodes])
+  t.is([...els], [...el.childNodes])
+})
+t('$: v($)', async t => {
+  let $l = $()
+  let vl = v($l)
+  let log = []
+  vl(list => log.push([...list]))
+  t.is(log, [[]])
+
+  let x
+  $l.add(x = document.createElement('div'))
+  t.is(log, [[], [x]])
+})
+t('$: changed attribute name rewires refefence', async t => {
+  let el = document.body.appendChild(h`<div><a/><a/></div>`)
+  let x = $(el, '#a, #b')
+  el.childNodes[1].id = 'a'
+  await frame(2)
+  t.is([...x], [el.childNodes[1]])
+  t.is(x.a, el.childNodes[1])
+
+  console.log('set b')
+  el.childNodes[1].id = 'b'
+  x.forEach(el => (x.delete(el), x.add(el)))
+  await tick(2)
+  t.is([...x], [el.childNodes[1]])
+  t.is(x.a, undefined)
+  t.is(x.b, el.childNodes[1])
+
+  el.innerHTML = ''
+  await frame(2)
+  t.is([...x], [])
+  t.is(x.a, undefined)
+
+  x[Symbol.dispose]()
+  await frame(2)
+})
+t.todo('$: comma-separated simple selectors are still simple')
+t.browser('$: simple selector cases', async t => {
+  let root = document.body.appendChild(h`<div.root/>`)
+
+  let a = $(root, 'a#b c.d')
+  root.append(...h`<a#b><c/><c.d/></a><a><c.d/></a>`)
+  await tick()
+  t.is([...a], [root.childNodes[0].childNodes[1]])
+
+  let b = $('a b#c.d[name=e] f')
+  root.append(h`<a><b><f/></b><b#c.d><f/></b><b#c.d name=e><d/><f/></b></a>`)
+  await tick()
+  t.is([...b], [root.childNodes[2].childNodes[2].childNodes[1]])
+
+  let c = $('a[name~="b"]')
+  root.append(h`<a name="b c"></a>`)
+  await tick()
+  t.is([...c], [root.childNodes[3]])
+
+  root.remove()
+  a[Symbol.dispose]()
+  b[Symbol.dispose]()
+  c[Symbol.dispose]()
+})
+t('$: does not expose private props', t => {
+  t.is(Object.keys($`privates`), [])
+})
+t.skip('$: complex selectors', async t => {
+  $('a [x] b', el => {
+  })
+
+  $('a b > c')
+})
+t.demo('$: debugger cases', async t => {
+  console.log('*', $('*'))
+  console.log('empty', $())
+  console.log('list', $([h`<a#a/>`, h`<b#b/>`, h`<c name=c/>`]))
 })
 
 

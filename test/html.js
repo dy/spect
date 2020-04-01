@@ -130,9 +130,9 @@ t('html: delayed init', async t => {
 
 t('html: 2-level fragment', async t => {
   let w = html`<x> <y> </y> </x>`
-  t.is(w.outerHTML, `<x> <y> </y> </x>`)
+  t.is(w.outerHTML, `<x><y></y></x>`)
   await tick(28)
-  t.is(w.outerHTML, `<x> <y> </y> </x>`)
+  t.is(w.outerHTML, `<x><y></y></x>`)
 })
 
 t('html: mount to another element', async t => {
@@ -269,7 +269,7 @@ t('html: select case', async t => {
     </select>
   </>`
   await tick(8)
-  t.is(w.outerHTML, `<> <select> <option value="a"></option> </select> </>`)
+  t.is(w.outerHTML, `<><select><option value="a"></option></select></>`)
 })
 
 t('html: promises', async t => {
@@ -680,4 +680,11 @@ t('html: iron support', t => {
 
   noun.v = 'Iron'
   t.is(el.outerHTML, `<x>Hello Iron</x>`)
+})
+
+t('html: empty children should clean up content', t => {
+  let a = html`<div><a/><a/></div>`
+  t.is(a.childNodes.length, 2)
+  html`<${a}></>`
+  t.is(a.childNodes.length, 0)
 })
