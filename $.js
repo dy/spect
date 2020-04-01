@@ -55,8 +55,18 @@ class $ extends Array {
       _selector: desc(),
       _animation: desc()
     })
+    // an alternative way to hide props is creating 1-level prototype
+    // this._channel = (channel())
+    // this._items = (new WeakSet)
+    // this._delete = (new WeakSet)
+    // this._teardown = (new WeakMap)
+    // this._scope = scope
+    // this._fn = fn
+    // this._selector = null
+    // this._animation = null
 
     // ignore non-selector collections
+    // if (!selector) return this.$ = Object.create(this)
     if (!selector) return
 
     // init existing elements
@@ -118,6 +128,8 @@ class $ extends Array {
       this._animation = anim.id
       anim.push(this)
     }
+    // return this.$ = Object.create(this)
+    return this
   }
 
   add(el) {
@@ -232,20 +244,23 @@ class $ extends Array {
   has(item) { return this._items.has(item) }
 
   [symbol.dispose]() {
-    if (this._selector) {
-      this._selector.forEach(({id, class:cls, name, tag}) => {
-        id && ids[id].splice(ids[id].indexOf(this) >>> 0, 1)
-        name && names[name].splice(names[name].indexOf(this) >>> 0, 1)
-        cls && classes[cls].splice(classes[cls].indexOf(this) >>> 0, 1)
-        tag && tags[tag].splice(tags[tag].indexOf(this) >>> 0, 1)
+    // const self = Object.getPrototypeOf(this)
+    const self = this
+
+    if (self._selector) {
+      self._selector.forEach(({id, class:cls, name, tag}) => {
+        id && ids[id].splice(ids[id].indexOf(self) >>> 0, 1)
+        name && names[name].splice(names[name].indexOf(self) >>> 0, 1)
+        cls && classes[cls].splice(classes[cls].indexOf(self) >>> 0, 1)
+        tag && tags[tag].splice(tags[tag].indexOf(self) >>> 0, 1)
       })
     }
-    if (this._animation) {
-      const anim = animations[this._selector]
-      anim.splice(anim.indexOf(this) >>> 0, 1)
+    if (self._animation) {
+      const anim = animations[self._selector]
+      anim.splice(anim.indexOf(self) >>> 0, 1)
       if (!anim.length) {
         document.removeEventListener('animationstart', anim.onanim)
-        delete animations[this._selector]
+        delete animations[self._selector]
         anim.rules.forEach(rule => {
           let idx = [].indexOf.call(sheet.rules, rule)
           if (~idx) sheet.deleteRule(idx)
@@ -253,15 +268,14 @@ class $ extends Array {
       }
     }
 
-    this._channel.close()
-    let els = [...this]
-    this.length = 0
-    els.forEach(el => this.delete(el, true))
+    self._channel.close()
+    let els = [...self]
+    self.length = 0
+    els.forEach(el => self.delete(el, true))
   }
 }
 
-
-const observer = new MutationObserver((list) => {
+;(new MutationObserver((list) => {
   const queryAdd = (targets, sets) => {
     if (!sets || !targets) return
     ;[].forEach.call(targets.nodeType ? [targets] : targets, target => sets.forEach(set => set.add(target)))
@@ -298,8 +312,8 @@ const observer = new MutationObserver((list) => {
       })
     }
   }
-})
-observer.observe(document, {
+}))
+.observe(document, {
   childList: true,
   subtree: true
 })

@@ -161,7 +161,7 @@ t.browser('$: scoped asterisk selector', async t => {
 
   document.body.removeChild(el)
 })
-t.browser('$: destructor is called on unmount', async t => {
+t('$: destructor is called on unmount', async t => {
   let el = document.body.appendChild(document.createElement('div'))
   let log = []
   let all = $(el, '*', el => {
@@ -442,12 +442,12 @@ t('$: returned result is live collection', async t => {
   scope.remove()
 })
 t.todo('$: handles passed live collections like HTMLCollection')
-t.todo('$: selecting by name', t => {
-  let $f = $(h`<form><input name="a"/><input name="b"/></form>`)
+t('$: selecting by name', async t => {
+  let $f = $(h`<form><input name="a"/><input name="b"/></form>`, 'input')
 
-  t.is($f[0].childNodes.length, 2)
-  t.is($f.a, $f[0].childNodes[0])
-  t.is($f.b, $f[0].childNodes[1])
+  t.is($f.length, 2)
+  t.ok($f.a)
+  t.ok($f.b)
 
   t.end()
 })
