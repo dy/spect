@@ -269,7 +269,7 @@ const $timer = $('.timer', el => {
 })
 ```
 
-_**$**_ derives technique from [fast-on-load](https://ghub.io/fast-on-load), [selector-set](https://github.com/josh/selector-set) and [insertionQuery](https://github.com/naugtur/insertionQuery) for optimal performance. Inspired by _jQuery_, [_selector-observer_](https://github.com/josh/selector-observer), [reuse](https://ghub.io/reuse) and _aspect-oriended-programming_.
+_**$**_ uses technique from [fast-on-load](https://ghub.io/fast-on-load), [selector-set](https://github.com/josh/selector-set) and [insertionQuery](https://github.com/naugtur/insertionQuery) for optimal performance. Inspired by _jQuery_, [_selector-observer_](https://github.com/josh/selector-observer), [reuse](https://ghub.io/reuse) and _aspect-oriended-programming_.
 
 <br/>
 
