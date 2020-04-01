@@ -18,21 +18,21 @@ t('$: tag selector', async t => {
   let el = document.createElement('x')
   container.appendChild(el)
   await tick()
-  t.deepEqual(ellog, ['x'], 'simple creation')
+  t.is(ellog, ['x'], 'simple creation')
 
-  console.log('add 2')
   container.appendChild(document.createElement('x'))
   container.appendChild(document.createElement('x'))
   await tick()
-  t.deepEqual(ellog, ['x', 'x', 'x'], 'create multiple')
+  t.is(ellog, ['x', 'x', 'x'], 'create multiple')
 
   let x2 = $('x', el => {
     proplog.push(1)
   })
+  t.is(proplog, [1,1,1])
   container.appendChild(document.createElement('x'))
   await tick()
-  t.deepEqual(ellog, ['x', 'x', 'x', 'x'], 'additional aspect')
-  t.deepEqual(proplog, [1, 1, 1, 1], 'additional aspect')
+  t.is(ellog, ['x', 'x', 'x', 'x'], 'additional aspect')
+  t.is(proplog, [1, 1, 1, 1], 'additional aspect')
 
   document.body.removeChild(container)
   x1[Symbol.dispose]()
@@ -548,6 +548,11 @@ t.skip('$: complex selectors', async t => {
 })
 t.demo('$: debugger cases', async t => {
   console.log('*', $('*'))
+  console.log('a', $('a'))
+  console.log('#a', $('#a'))
+  console.log('.a', $('.a'))
+  console.log('a#b', $('a#b'))
+  console.log('a b', $('a b'))
   console.log('empty', $())
   console.log('list', $([h`<a#a/>`, h`<b#b/>`, h`<c name=c/>`]))
 })
