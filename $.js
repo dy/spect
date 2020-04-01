@@ -13,7 +13,7 @@ const ids = {}, classes = {}, tags = {}, names = {}, animations = {}
 
 const style = document.head.appendChild(document.createElement('style'))
 style.classList.add('spect-style')
-const { sheet } = style
+const { sheet } = style, { cssRules } = sheet
 
 
 export default function (scope, selector, fn) {
@@ -56,6 +56,7 @@ class $ extends Array {
       _animation: desc()
     })
     // an alternative way to hide props is creating 1-level prototype
+    // FIXME: wait for real private props to come
     // this._channel = (channel())
     // this._items = (new WeakSet)
     // this._delete = (new WeakSet)
@@ -101,11 +102,11 @@ class $ extends Array {
       if (!anim) {
         anim = animations[this._selector] = []
         this._animation = anim.id = String.fromCodePoint(CLASS_OFFSET + count++)
-        sheet.insertRule(`@keyframes ${ anim.id }{}`, sheet.rules.length)
-        sheet.insertRule(`${ this._selector.map(sel => sel + `:not(.${ anim.id })`) }{animation:${ anim.id }}`, sheet.rules.length)
-        sheet.insertRule(`.${ anim.id }{animation:${ anim.id }}`, sheet.rules.length)
-        sheet.insertRule(`${ this._selector.map(sel => sel + `.${ anim.id }`) }{animation:unset;animation:revert}`, sheet.rules.length)
-        anim.rules = [].slice.call(sheet.rules, -4)
+        sheet.insertRule(`@keyframes ${ anim.id }{}`, cssRules.length)
+        sheet.insertRule(`${ this._selector.map(sel => sel + `:not(.${ anim.id })`) }{animation:${ anim.id }}`, cssRules.length)
+        sheet.insertRule(`.${ anim.id }{animation:${ anim.id }}`, cssRules.length)
+        sheet.insertRule(`${ this._selector.map(sel => sel + `.${ anim.id }`) }{animation:unset;animation:revert}`, cssRules.length)
+        anim.rules = [].slice.call(cssRules, -4)
 
         anim.onanim = e => {
           if (e.animationName !== anim.id) return
@@ -262,7 +263,7 @@ class $ extends Array {
         document.removeEventListener('animationstart', anim.onanim)
         delete animations[self._selector]
         anim.rules.forEach(rule => {
-          let idx = [].indexOf.call(sheet.rules, rule)
+          let idx = [].indexOf.call(cssRules, rule)
           if (~idx) sheet.deleteRule(idx)
         })
       }

@@ -56,7 +56,7 @@ t('$: init existing elements', async t => {
   xs[Symbol.dispose]()
   document.body.removeChild(container)
 })
-t('$: dynamically assigned selector', async t => {
+t.browser('$: dynamically assigned selector', async t => {
   let log = []
 
   let xs = $('.x', el => {
@@ -161,7 +161,7 @@ t.browser('$: scoped asterisk selector', async t => {
 
   document.body.removeChild(el)
 })
-t('$: destructor is called on unmount', async t => {
+t.browser('$: destructor is called on unmount', async t => {
   let el = document.body.appendChild(document.createElement('div'))
   let log = []
   let all = $(el, '*', el => {
@@ -184,7 +184,7 @@ t('$: destructor is called on unmount', async t => {
   el.innerHTML = ''
   t.end()
 })
-t('$: changed attribute matches new nodes', async t => {
+t.browser('$: changed attribute matches new nodes', async t => {
   let el = document.body.appendChild(document.createElement('div'))
   el.innerHTML = '<a><b><c></c></b></a>'
 
@@ -488,7 +488,7 @@ t('$: v($)', async t => {
   $l.add(x = document.createElement('div'))
   t.is(log, [[], [x]])
 })
-t('$: changed attribute name rewires refefence', async t => {
+t.browser('$: changed attribute name rewires refefence', async t => {
   let el = document.body.appendChild(h`<div><a/><a/></div>`)
   let x = $(el, '#a, #b')
   el.childNodes[1].id = 'a'
@@ -512,7 +512,7 @@ t('$: changed attribute name rewires refefence', async t => {
   await frame(2)
 })
 t.todo('$: comma-separated simple selectors are still simple')
-t('$: simple selector cases', async t => {
+t.browser('$: simple selector cases', async t => {
   let root = document.body.appendChild(h`<div.root/>`)
 
   let a = $(root, 'a#b c.d')
