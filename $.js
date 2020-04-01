@@ -27,7 +27,7 @@ export default function (scope, selector, fn) {
     if (target.nodeType) target = [target]
 
     const set = new $(null, null, fn)
-    target.forEach(set.add, set)
+    target.forEach(el => set.add(el))
     return set
   }
 
@@ -51,6 +51,7 @@ class $ extends Array {
       _scope: desc(scope),
       _fn: desc(fn),
       _selector: desc(),
+      _match: desc(),
       _animation: desc()
     })
     // an alternative way to hide props is creating 1-level prototype
@@ -69,7 +70,7 @@ class $ extends Array {
     if (!selector) return
 
     // init existing elements
-    ;(scope || document).querySelectorAll(selector).forEach(this.add, this)
+    ;(scope || document).querySelectorAll(selector).forEach(el => this.add(el))
 
     // if last selector part is simple (id|name|class|tag), followed by classes - index that
     const rtokens = /(?:#([\w-]+)|\[\s*name=['"]?([\w-]+)['"]?\s*\]|\.([\w-]+)|(\w+))(\[[^\]]+\]|\.[\w-]+)*$/
@@ -78,6 +79,7 @@ class $ extends Array {
       selector = new String(selector)
 
       const match = selector.match(rtokens)
+      selector.filter = selector != '*' && selector
       if (!match) return selector
 
       let [str, id, name, cls, tag, filter] = match
@@ -86,16 +88,19 @@ class $ extends Array {
       else if (cls) (classes[selector.class = cls] = classes[cls] || []).push(this)
       else if (tag) (selector.tag = tag = tag.toUpperCase(), tags[tag] = tags[tag] || []).push(this)
 
-      selector.match = selector.slice(0, match.index) + (filter ? selector.slice(-filter.length) : '')
+      if (filter) selector.filter = selector.slice(0, match.index) + selector.slice(-filter.length)
+      // `match.index` === 0 means selector is simple and need no match check
+      else if (!match.index) delete selector.filter
 
       return selector
     })
+    this._match = this._selector.some(sel => sel.filter)
 
     // complex selectors are handled via anim events (technique from insertionQuery). Cases:
     // - dynamically added attributes so that existing nodes match (we don't observe attribs in mutation obserever)
     // - complex selectors, inc * - we avoid > O(c) sync mutations check
     // NOTE: only connected scope supports anim observer
-    if (!this._selector.every(sel => sel.tag && !sel.match)) {
+    if (!this._selector.every(sel => sel.tag && !sel.filter)) {
       let anim = animations[this._selector]
       if (!anim) {
         const { sheet } = style, { cssRules } = sheet
@@ -116,7 +121,7 @@ class $ extends Array {
 
           if (!target.classList.contains(anim.id)) {
             target.classList.add(anim.id)
-            anim.forEach(set => set.add(target))
+            anim.forEach(set => set.add(target, false))
           }
           else {
             target.classList.remove(anim.id)
@@ -130,14 +135,14 @@ class $ extends Array {
     }
   }
 
-  add(el) {
+  add(el, check=this._match) {
     if (!el) return
 
     // ignore existing
     if (this._items.has(el)) return
 
     // ignore not-matching
-    if (this._selector) if (!el.matches(this._selector)) return
+    if (check) if (!el.matches(this._selector)) return
 
     // ignore out-of-scope
     if (this._scope) {
