@@ -74,7 +74,7 @@
     "esbuild-windows-64": "0.0.9",
     "esm": "^3.2.25",
     "ironjs": "0.0.17-alpha",
-    "jsdom": "^16.1.0",
+    "jsdom": "^16.2.2",
     "nanomorph": "^5.4.0",
     "nodom": "^2.4.0",
     "observable": "^2.1.4",

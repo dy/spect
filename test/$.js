@@ -56,7 +56,7 @@ t('$: init existing elements', async t => {
   xs[Symbol.dispose]()
   document.body.removeChild(container)
 })
-t.browser('$: dynamically assigned selector', async t => {
+t('$: dynamically assigned selector', async t => {
   let log = []
 
   let xs = $('.x', el => {
@@ -69,6 +69,7 @@ t.browser('$: dynamically assigned selector', async t => {
   await idle()
   t.is(log, [])
 
+  console.log('add class')
   el.classList.add('x')
   await frame(2)
 
@@ -129,7 +130,7 @@ t('$: remove/add should not retrigger element', async t => {
   await frame(2)
   t.end()
 })
-t.browser('$: remove/add internal should not retrigger element', async t => {
+t('$: remove/add internal should not retrigger element', async t => {
   let a = document.createElement('a')
   let b = document.createElement('b')
   a.appendChild(b)
@@ -146,7 +147,7 @@ t.browser('$: remove/add internal should not retrigger element', async t => {
   await frame(2)
   t.end()
 })
-t.browser('$: scoped asterisk selector', async t => {
+t('$: scoped asterisk selector', async t => {
   let log = [], el = document.body.appendChild(document.createElement('div'))
   let list = $(el, '*', el => log.push(el))
   let x, y, z
@@ -161,7 +162,7 @@ t.browser('$: scoped asterisk selector', async t => {
 
   document.body.removeChild(el)
 })
-t.browser('$: destructor is called on unmount', async t => {
+t('$: destructor is called on unmount', async t => {
   let el = document.body.appendChild(document.createElement('div'))
   let log = []
   let all = $(el, '*', el => {
@@ -184,7 +185,7 @@ t.browser('$: destructor is called on unmount', async t => {
   el.innerHTML = ''
   t.end()
 })
-t.browser('$: changed attribute matches new nodes', async t => {
+t('$: changed attribute matches new nodes', async t => {
   let el = document.body.appendChild(document.createElement('div'))
   el.innerHTML = '<a><b><c></c></b></a>'
 
@@ -238,7 +239,7 @@ t.browser('$: changed attribute matches new nodes', async t => {
 
   el.remove()
 })
-t.browser('$: contextual query', async t => {
+t('$: contextual query', async t => {
   let el = document.body.appendChild(document.createElement('div'))
   let log = []
   $(el, '.x y', y => {
@@ -257,7 +258,7 @@ t.browser('$: contextual query', async t => {
   await frame(3)
   t.same(log, ['.x y', '.x', '-', ' y'])
 })
-t.browser('$: adding/removing attribute with attribute selector, mixed with direct selector', async t => {
+t('$: adding/removing attribute with attribute selector, mixed with direct selector', async t => {
   let el = document.body.appendChild(document.createElement('div'))
   const log = []
   el.innerHTML = '<x></x>'
@@ -277,7 +278,7 @@ t.browser('$: adding/removing attribute with attribute selector, mixed with dire
   t.is(log, [1, 2])
   el.remove()
 })
-t.browser('$: matching nodes in added subtrees', async t => {
+t('$: matching nodes in added subtrees', async t => {
   let el = document.body.appendChild(document.createElement('div'))
   let log = []
   $(el, 'a b c d', el => {
@@ -513,7 +514,7 @@ t('$: changed attribute name rewires refefence', async t => {
   await frame(2)
 })
 t.todo('$: comma-separated simple selectors are still simple')
-t.browser('$: simple selector cases', async t => {
+t('$: simple selector cases', async t => {
   let root = document.body.appendChild(h`<div.root/>`)
 
   let a = $(root, 'a#b c.d')

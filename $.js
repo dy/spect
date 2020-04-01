@@ -7,14 +7,12 @@ const SPECT_CLASS = '👁'
 const CLASS_OFFSET = 0x1F700
 let count = 0
 
-const _spect = Symbol.for('@spect'), _observer = Symbol.for('@spect.observer')
+const _spect = Symbol.for('@spect')
 
 const ids = {}, classes = {}, tags = {}, names = {}, animations = {}
 
+const hasAnimevent =  typeof AnimationEvent !== 'undefined'
 const style = document.head.appendChild(document.createElement('style'))
-style.classList.add('spect-style')
-const { sheet } = style, { cssRules } = sheet
-
 
 export default function (scope, selector, fn) {
   // spect`#x`
@@ -100,6 +98,7 @@ class $ extends Array {
     if (!this._selector.every(sel => sel.tag && !sel.match)) {
       let anim = animations[this._selector]
       if (!anim) {
+        const { sheet } = style, { cssRules } = sheet
         anim = animations[this._selector] = []
         this._animation = anim.id = String.fromCodePoint(CLASS_OFFSET + count++)
         sheet.insertRule(`@keyframes ${ anim.id }{}`, cssRules.length)
@@ -129,8 +128,6 @@ class $ extends Array {
       this._animation = anim.id
       anim.push(this)
     }
-    // return this.$ = Object.create(this)
-    return this
   }
 
   add(el) {
@@ -190,6 +187,8 @@ class $ extends Array {
   }
 
   delete(el, immediate = false) {
+    if (!this._items.has(el)) return
+
     // remove element from list sync
     if (this.length) this.splice(this.indexOf(el >>> 0, 1), 1)
     const [id, name] = this._items.get(el)
@@ -265,8 +264,8 @@ class $ extends Array {
         document.removeEventListener('animationstart', anim.onanim)
         delete animations[self._selector]
         anim.rules.forEach(rule => {
-          let idx = [].indexOf.call(cssRules, rule)
-          if (~idx) sheet.deleteRule(idx)
+          let idx = [].indexOf.call(style.sheet.cssRules, rule)
+          if (~idx) style.sheet.deleteRule(idx)
         })
       }
     }
@@ -283,13 +282,23 @@ class $ extends Array {
     if (!sets || !targets) return
     ;[].forEach.call(targets.nodeType ? [targets] : targets, target => sets.forEach(set => set.add(target)))
   }
+  const queryDelete = target => [target.classList.contains(SPECT_CLASS) ? target : null, ...target.getElementsByClassName(SPECT_CLASS)]
+  .forEach(node => node && node[_spect].forEach(set => set.delete(node)))
+
   for (let mutation of list) {
     let { addedNodes, removedNodes, target } = mutation
+
+    // fallback for no-animevents env (like SSR)
+    // WARN: O(n*m) or worse performance (insignificant for small docs)
+    if (!hasAnimevent) {
+      queryDelete(target)
+      for (let sel in animations) queryAdd([target, ...target.querySelectorAll(sel)], animations[sel])
+    }
+
     if (mutation.type === 'childList') {
       removedNodes.forEach(target => {
         if (target.nodeType !== ELEMENT) return
-        ;[target.classList.contains(SPECT_CLASS) ? target : null, ...target.getElementsByClassName(SPECT_CLASS)]
-        .forEach(node => node && node[_spect].forEach(set => set.delete(node)))
+        queryDelete(target)
       })
 
       addedNodes.forEach(target => {
@@ -318,5 +327,6 @@ class $ extends Array {
 }))
 .observe(document, {
   childList: true,
-  subtree: true
+  subtree: true,
+  attributes: !hasAnimevent
 })
