@@ -7,12 +7,125 @@ const _group = Symbol.for('@spect.group'),
       _props = Symbol.for('@spect.props'),
       _children = Symbol.for('@spect.children')
 
-const TEXT = 3, ELEMENT = 1
+const TEXT = 3, ELEMENT = 1, COMMENT = 8, SHOW_ELEMENT = 1, SHOW_TEXT = 4
+
+const tplCache = {}
+
+const PLACEHOLDER = 'h:::'
+
+export default function h (statics, ...fields) {
+  // hyperscript - turn to tpl literal call
+  if (!statics.raw) {
+    // h(tag, ...children)
+    if (!object(fields[0]) && fields[0] != null) fields.push(null)
+
+    statics = [
+      ...(primitive(statics) ? [`<${statics} ...`] : ['<', ' ...']),
+      ...(!fields.length ? ['/>'] : ['>', ...Array(fields.length - 1).fill(''), '</>'])
+    ]
+  }
+
+  const key = statics.join(PLACEHOLDER)
+  const tpl = tplCache[key] || (tplCache[key] = createTpl(statics))
+
+  let node = tpl.content.cloneNode(true)
+
+  return evaluate(node, fields)
+}
+
+function createTpl(statics) {
+  let c = 0
+  const tpl = document.createElement('template')
+  tpl.innerHTML = statics.join(PLACEHOLDER).replace(/h:::/g, m => m + c++)
+
+  const walker = document.createTreeWalker(tpl.content, SHOW_TEXT | SHOW_ELEMENT, null), split = []
+  while (walker.nextNode()) {
+    const node = walker.currentNode
+    if (node.nodeType === TEXT) {
+      let curr = []
+      node.data.replace(/h:::\d+/g, (m, idx) => {
+        curr.push(idx, idx + m.length)
+      })
+      if (curr.length) split.push(node, curr)
+    }
+    else {
+      for (let i = 0, n = node.attributes.length; i < n; i++) {
+        let {name, value} = node.attributes[i]
+        // <a ...${x} → <a ${x}
+        if (/^\.\.\./.test(name)) {
+          node.removeAttribute(name), --i, --n;
+          node.setAttribute(name.slice(3), value)
+        }
+      }
+    }
+  }
+  for (let i = 0; i < split.length; i+= 2) {
+    let node = split[i], idx = split[i + 1], prev = 0
+    idx.map(id => (node = node.splitText(id - prev), prev = id))
+  }
+
+  return tpl
+}
+
+// evaluate template element with fields
+function evaluate (frag, fields) {
+  const walker = document.createTreeWalker(frag, SHOW_ELEMENT | SHOW_TEXT, null)
+
+  const replace = []
+  while (walker.nextNode()) {
+    const node = walker.currentNode
+    const attributes = node.attributes;
+    if (node.nodeType === ELEMENT) {
+      for (let i = 0, n = attributes.length; i < n; ++i) {
+        let {name, value} = attributes[i];
+        if (/^h:::/.test(value)) {
+          value = fields[+value.slice(4)];
+          node.setAttribute(name, value)
+        }
+        if (/^h:::/.test(name)) {
+          node.removeAttribute(name), --i, --n;
+          const field = fields[+name.slice(4)];
+          if (object(field)) {
+            for (let prop in field) {
+              node.setAttribute(prop, field[prop])
+            }
+          }
+          else {
+            node.setAttribute(field, value)
+          }
+        }
+      }
+    }
+    else if (node.nodeType === TEXT) {
+      if (/^h:::/.test(node.data)) replace.push(node, nodify(fields[+node.data.slice(4)]))
+    }
+  }
+  while (replace.length) {
+    replace.shift().replaceWith(replace.shift())
+  }
+
+  return frag.childNodes.length > 1 ? frag.childNodes : frag.firstChild
+}
 
 
-export function html (...args) {
-  let result = htm.apply(h, args)
+
+
+
+
+
+
+
+
+
+
+
+
+/*
+
+export function html (statics, ...fields) {
+  let result = htm.apply(h, arguments)
   if (!result) return document.createTextNode('')
+
   let container = []
   container.childNodes = container
   container.appendChild = el => container.push(el)
@@ -22,12 +135,14 @@ export function html (...args) {
   return container.length > 1 ? container : container[0]
 }
 
-export default function h(tag, ...children) {
+
+export function h(tag, ...children) {
   // h`...content`
   if (tag.raw) return html(...arguments)
 
   // h(tag, child1, child2)
   const props = object(children[0]) || children[0] == null ? children.shift() || {} : {}
+
 
   let el
 
@@ -125,6 +240,7 @@ export function render(children, el) {
     child.remove()
   }
 }
+*/
 
 function nodify(arg) {
   if (arg == null) return document.createTextNode('')
@@ -138,6 +254,7 @@ function nodify(arg) {
 
   // can be an array / array-like
   if (arg[Symbol.iterator]) {
+    // FIXME: replace with comment
     let marker = document.createTextNode('')
     marker[_group] = [...arg].flat().map(arg => nodify(arg))
     // create placeholder content (will be ignored by ops)

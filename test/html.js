@@ -1,6 +1,5 @@
 import t from 'tst'
-import { v, h as html } from '../index.js'
-// import { $, state, fx, prop, store, calc, list, ref, attr, on, html } from '../dist/spect.min.js'
+import { v, h } from '../index.js'
 import { tick, frame, idle, time } from 'wait-please'
 import { augmentor, useState, useEffect, useMemo } from 'augmentor'
 import Observable from 'zen-observable/esm'
@@ -11,7 +10,7 @@ import { v as iv } from 'ironjs'
 t('html: single attribute', async t => {
   const a = v(0)
 
-  let el = html`<div a=${a}></div>`
+  let el = h`<div a=${a}></div>`
 
   t.is(el.outerHTML, `<div a="0"></div>`)
   await tick(28)
@@ -32,7 +31,7 @@ t('html: single attribute on mounted node', async t => {
   const a = v(0)
   let div = document.createElement('div')
 
-  let el = html`<${div} a=${a}></>`
+  let el = h`<${div} a=${a}></>`
 
   t.is(el, div)
   t.is(el.outerHTML, `<div a="0"></div>`)
@@ -53,7 +52,7 @@ t('html: single attribute on mounted node', async t => {
 t('html: text content', async t => {
   const a = v(0)
 
-  let el = html`<div>${ a }</div>`
+  let el = h`<div>${ a }</div>`
 
   t.is(el.outerHTML, `<div>0</div>`)
   await tick(8)
@@ -71,8 +70,8 @@ t('html: text content', async t => {
 
 t('html: child node', async t => {
   const text = v(0)
-  const a = html`<a>${ text }</a>`
-  const b = html`<b>${ a }</b>`
+  const a = h`<a>${ text }</a>`
+  const b = h`<b>${ a }</b>`
 
   t.is(b.outerHTML, `<b><a>0</a></b>`)
 
@@ -82,11 +81,11 @@ t('html: child node', async t => {
 })
 
 t('html: mixed static content', async t => {
-  const foo = html`<foo></foo>`
+  const foo = h`<foo></foo>`
   const bar = `bar`
-  const baz = html`<baz/>`
+  const baz = h`<baz/>`
 
-  const a = html`<a> ${foo} ${bar} ${baz} </a>`
+  const a = h`<a> ${foo} ${bar} ${baz} </a>`
 
   t.is(a.outerHTML, `<a> <foo></foo> bar <baz></baz> </a>`)
   await tick(28)
@@ -94,18 +93,18 @@ t('html: mixed static content', async t => {
 })
 
 t('html: dynamic list', async t => {
-  const foo = html`<foo></foo>`
+  const foo = h`<foo></foo>`
   const bar = `bar`
-  const baz = html`<baz/>`
+  const baz = h`<baz/>`
   const content = v()
   content([foo, bar, baz])
 
-  const a = html`<a>${ content }</a>`
+  const a = h`<a>${ content }</a>`
   t.is(a.outerHTML, `<a><foo></foo>bar<baz></baz></a>`)
   await tick(8)
   t.is(a.outerHTML, `<a><foo></foo>bar<baz></baz></a>`)
 
-  content().push(html`qux`)
+  content().push(h`qux`)
   content(content())
   await tick(8)
   t.is(a.outerHTML, `<a><foo></foo>bar<baz></baz>qux</a>`)
@@ -122,23 +121,23 @@ t('html: dynamic list', async t => {
 })
 
 t('html: delayed init', async t => {
-  let w = html`<x></x>`
+  let w = h`<x></x>`
   t.is(w.outerHTML, `<x></x>`)
   await tick(28)
   t.is(w.outerHTML, `<x></x>`)
 })
 
 t('html: 2-level fragment', async t => {
-  let w = html`<x> <y> </y> </x>`
+  let w = h`<x> <y> </y> </x>`
   t.is(w.outerHTML, `<x><y></y></x>`)
   await tick(28)
   t.is(w.outerHTML, `<x><y></y></x>`)
 })
 
 t('html: mount to another element', async t => {
-  const a = html`<a></a>`
+  const a = h`<a></a>`
   const c = v(0)
-  const b = html`<${a}>${ c }</>`
+  const b = h`<${a}>${ c }</>`
 
   t.is(a, b)
   t.is(b.outerHTML, `<a>0</a>`)
@@ -148,22 +147,22 @@ t('html: mount to another element', async t => {
 
 t('html: render new children to mounted element', async t => {
   let a = document.createElement('a')
-  let el = html`<${a}>foo <bar><baz class="qux"/></></>`
+  let el = h`<${a}>foo <bar><baz class="qux"/></></>`
   t.is(el.outerHTML, `<a>foo <bar><baz class="qux"></baz></bar></a>`)
 })
 
 t('html: simple hydrate', async t => {
   let a = document.createElement('a')
   a.innerHTML = 'foo '
-  let el = html`<${a}>foo <bar><baz class="qux"/></></>`
+  let el = h`<${a}>foo <bar><baz class="qux"/></></>`
   t.is(el.outerHTML, `<a>foo <bar><baz class="qux"></baz></bar></a>`)
 })
 
 t('html: function renders external component', async t => {
-  let el = html`<a>foo <${bar}/></><b/>`
+  let el = h`<a>foo <${bar}/></><b/>`
 
   function bar () {
-    return html`<bar/><baz/>`
+    return h`<bar/><baz/>`
   }
   t.is(el[0].outerHTML, `<a>foo <bar></bar><baz></baz></a>`)
   t.is(el[1].outerHTML, `<b></b>`)
@@ -171,7 +170,7 @@ t('html: function renders external component', async t => {
 t.skip('html: element should be observable', async t => {
   // NOTE: Observable support is dropped - no much use
   let a = v(1)
-  let el = html`<a>${a}</a>`
+  let el = h`<a>${a}</a>`
   let log = []
   v(el)(el => log.push(el.textContent))
   a(2)
@@ -182,24 +181,24 @@ t('html: rerendering with props: must persist', async t => {
   let el = document.createElement('x')
   let div = document.createElement('div')
 
-  html`<${el}>${div}<x/></>`
+  h`<${el}>${div}<x/></>`
   t.equal(el.firstChild, div)
   t.equal(el.childNodes.length, 2)
 
-  html`<${el}><${div}/><x/></>`
+  h`<${el}><${div}/><x/></>`
   t.equal(el.firstChild, div)
   t.equal(el.childNodes.length, 2)
 
-  html`<${el}><${div}/><x/></>`
+  h`<${el}><${div}/><x/></>`
   t.equal(el.firstChild, div)
   t.equal(el.childNodes.length, 2)
 
-  html`<${el}><div/><x/></>`
+  h`<${el}><div/><x/></>`
   // FIXME: this is being cloned by preact
   t.equal(el.firstChild, div)
   t.equal(el.childNodes.length, 2)
 
-  html`<${el}><div class="foo" items=${[]}/><x/></>`
+  h`<${el}><div class="foo" items=${[]}/><x/></>`
   t.equal(el.firstChild, div)
   t.equal(el.childNodes.length, 2)
   t.equal(el.firstChild.className, 'foo')
@@ -207,18 +206,18 @@ t('html: rerendering with props: must persist', async t => {
 })
 
 t('html: must not lose attributes', async t => {
-  let a = html`<tr colspan=2/>`
+  let a = h`<tr colspan=2/>`
   t.is(a.getAttribute('colspan'), "2")
 })
 
 t('html: fragments', async t => {
-  let el = html`<foo/><bar/>`
+  let el = h`<foo/><bar/>`
   t.is(el.length, 2)
 
-  let el2 = html`<>foo</>`
+  let el2 = h`<>foo</>`
   t.is(el2.textContent, 'foo')
 
-  let el3 = html`foo`
+  let el3 = h`foo`
   t.is(el3.textContent, 'foo')
 })
 
@@ -228,7 +227,7 @@ t('html: reinsert self content', async t => {
 
   let childNodes = [...el.childNodes]
 
-  html`<${el}>${ childNodes }</>`
+  h`<${el}>${ childNodes }</>`
 
   t.is(el.outerHTML, `<div>a <b>c <d>e <f></f> g</d> h</b> i</div>`)
 
@@ -242,7 +241,7 @@ t('html: wrapping', async t => {
   let foo = root.firstChild
   foo.x = 1
 
-  let wrapped = html`<div><${foo} class="foo"><bar/></></div>`
+  let wrapped = h`<div><${foo} class="foo"><bar/></></div>`
 
   t.is(wrapped.outerHTML, '<div><foo class="foo"><bar></bar></foo></div>')
   t.is(wrapped.firstChild, foo)
@@ -255,7 +254,7 @@ t('html: wrapping with children', async t => {
   let foo = root.firstChild
   foo.x = 1
 
-  let wrapped = html`<div><${foo} class=foo>${ [...foo.childNodes] }</></div>`
+  let wrapped = h`<div><${foo} class=foo>${ [...foo.childNodes] }</></div>`
 
   t.is(wrapped.outerHTML, '<div><foo class="foo"><bar></bar><baz></baz></foo></div>')
   t.is(wrapped.firstChild, foo)
@@ -263,7 +262,7 @@ t('html: wrapping with children', async t => {
 })
 
 t('html: select case', async t => {
-  let w = html`<>
+  let w = h`<>
     <select>
       <option value="a"></option>
     </select>
@@ -283,7 +282,7 @@ t('html: promises', async t => {
   let el = document.createElement('div')
   document.body.appendChild(el)
 
-  html`<${el}>${p}</>`
+  h`<${el}>${p}</>`
   t.is(el.outerHTML, '<div></div>')
 
   return p
@@ -291,7 +290,7 @@ t('html: promises', async t => {
 
 t('html: render to fragment', async t => {
   let frag = document.createDocumentFragment()
-  let el = html`<${frag}>1</>`
+  let el = h`<${frag}>1</>`
   t.is(frag, el)
   t.is(el.outerHTML, '<>1</>')
   t.is(frag.outerHTML, '<>1</>')
@@ -300,14 +299,14 @@ t('html: render to fragment', async t => {
 t('html: observable', async t => {
   let v = observable(1)
 
-  let el = html`<div x=1>${v}</div>`
+  let el = h`<div x=1>${v}</div>`
 
   await tick(8)
   t.is(el.outerHTML, `<div x="1">1</div>`)
 })
 
 t.skip('html: generator', async t => {
-  let el = html`<div>${ function* ({}) {
+  let el = h`<div>${ function* ({}) {
     yield 1
     yield 2
   }}</div>`
@@ -320,7 +319,7 @@ t.skip('html: generator', async t => {
 })
 
 t('html: async generator', async t => {
-  let el = html`<div>${(async function* () {
+  let el = h`<div>${(async function* () {
     await tick(4)
     yield 1
     await tick(4)
@@ -335,34 +334,34 @@ t('html: async generator', async t => {
 
 t('html: put data directly to props', async t => {
   let x = {}
-  let el = html`<div x=${x}/>`
+  let el = h`<div x=${x}/>`
   t.is(el.x, x)
 })
 
 t('html: rerender real dom', async t => {
-  let virt = html`<div/>`
+  let virt = h`<div/>`
   let el = document.createElement('div')
   el.innerHTML = '<div></div>'
   let real = el.firstElementChild
 
-  html`<${el}>${real}</>`
+  h`<${el}>${real}</>`
   t.is(el.outerHTML, '<div><div></div></div>')
   t.is(el.firstElementChild, real)
 
-  html`<${el}>${virt}</>`
+  h`<${el}>${virt}</>`
   await tick(8)
   t.is(el.outerHTML, '<div><div></div></div>')
   t.is(el.firstElementChild, real)
 
-  html`<${el}>${virt}</>`
+  h`<${el}>${virt}</>`
   t.is(el.outerHTML, '<div><div></div></div>')
   t.is(el.firstElementChild, real)
 
-  html`<${el}>${real}</>`
+  h`<${el}>${real}</>`
   t.is(el.outerHTML, '<div><div></div></div>')
   t.is(el.firstElementChild, real)
 
-  html`<${el}>${virt}</>`
+  h`<${el}>${virt}</>`
   t.is(el.outerHTML, '<div><div></div></div>')
   t.is(el.firstElementChild, real)
 })
@@ -374,7 +373,7 @@ t('html: preserve rendering target classes/ids/attribs', t => {
   el.id = 'x'
   el.x = '1'
 
-  html`<${el} id="y" class="x z w" w=2/>`
+  h`<${el} id="y" class="x z w" w=2/>`
 
   t.is(el.outerHTML, `<div x="1" class="x z w" id="y" w="2"></div>`)
   t.is(el.x, '1')
@@ -384,13 +383,13 @@ t('html: preserve rendering target classes/ids/attribs', t => {
 t('html: does not duplicate classes for container', t => {
   let el = document.createElement('div')
   el.classList.add('x')
-  html`<${el} class=x/>`
+  h`<${el} class=x/>`
   t.is(el.outerHTML, '<div class="x"></div>')
 })
 
 t('html: component static props', async t => {
   let log = []
-  let el = html`<div><${C} id="x" class="y z"/></>`
+  let el = h`<div><${C} id="x" class="y z"/></>`
 
   function C (props) {
     log.push(props.id, props.class)
@@ -400,7 +399,7 @@ t('html: component static props', async t => {
 })
 
 t('html: classes must recognize false props', t => {
-  let el = html`<div class="${false}${null}${undefined}${'foo'}${false}"/>`
+  let el = h`<div class="${false}${null}${undefined}${'foo'}${false}"/>`
   t.is(el.outerHTML, `<div class="foo"></div>`)
 })
 
@@ -408,16 +407,16 @@ t('html: preserves hidden attribute', t => {
   let el = document.createElement('div')
   el.innerHTML = '<div hidden></div>'
 
-  let elr = html`<${el.firstChild} class="foo"/>`
+  let elr = h`<${el.firstChild} class="foo"/>`
 
   t.is(elr.outerHTML, '<div hidden="" class="foo"></div>')
   t.is(el.innerHTML, '<div hidden="" class="foo"></div>')
 })
 
 t('html: falsey prev attrs', t => {
-  let el = html`<div hidden=${true}/>`
+  let el = h`<div hidden=${true}/>`
   t.is(el.hidden, true)
-  html`<${el} hidden=${false}/>`
+  h`<${el} hidden=${false}/>`
   t.is(el.hidden, false)
 })
 
@@ -427,15 +426,15 @@ t('html: initial content should be morphed/hydrated', t => {
   let foo = el.firstChild
   let bar = el.lastChild
 
-  const res = html`<${el}><foo/><bar/></>`
+  const res = h`<${el}><foo/><bar/></>`
 
   t.equal(res, el)
   t.equal(el.childNodes.length, 2)
   t.equal(el.firstChild, foo)
   t.equal(el.lastChild, bar)
 
-  let foo1 = html`<foo/>`
-  html`<${el}>${foo1}<bar/></>`
+  let foo1 = h`<foo/>`
+  h`<${el}>${foo1}<bar/></>`
 
   // t.notEqual(el.firstChild, foo)
   // t.equal(el.firstChild, foo1)
@@ -444,7 +443,7 @@ t('html: initial content should be morphed/hydrated', t => {
 })
 
 t('html: newline nodes should have space in between', t => {
-  let el = html`<>
+  let el = h`<>
     ${'a'}
     ${'b'}
   </>`
@@ -452,22 +451,22 @@ t('html: newline nodes should have space in between', t => {
 })
 
 t('legacy html: direct component rerendering should keep children', async t => {
-  let el = html`<div><${fn}/></div>`
+  let el = h`<div><${fn}/></div>`
   let abc = el.firstChild
 
   t.is(el.outerHTML, '<div><abc></abc></div>')
 
-  html`<${el}><${fn} class="foo"/></>`
+  h`<${el}><${fn} class="foo"/></>`
   t.is(el.outerHTML, '<div><abc class="foo"></abc></div>')
   let abc1 = el.firstChild
   t.equal(abc1, abc)
 
-  function fn () { return html`<abc/>` }
+  function fn () { return h`<abc/>` }
 })
 
 t('html: functional components create element', t => {
   let log = []
-  let el = html`<${el => {
+  let el = h`<${el => {
     let e = document.createElement('a')
     log.push(e)
     return e
@@ -476,64 +475,64 @@ t('html: functional components create element', t => {
 })
 
 t('html: must update text content', async t => {
-  const foo = html`foo`
-  const bar = html`bar`
+  const foo = h`foo`
+  const bar = h`bar`
 
-  let el = html`<div/>`
+  let el = h`<div/>`
 
-  html`<${el}>${ foo }</>`
+  h`<${el}>${ foo }</>`
   t.is(el.textContent, 'foo')
   t.is(foo.textContent, 'foo')
   t.is(bar.textContent, 'bar')
-  html`<${el}>${ bar }</>`
+  h`<${el}>${ bar }</>`
   t.is(el.textContent, 'bar')
   t.is(foo.textContent, 'foo')
   t.is(bar.textContent, 'bar')
-  html`<${el}>${ foo }</>`
+  h`<${el}>${ foo }</>`
   t.is(el.textContent, 'foo')
   t.is(foo.textContent, 'foo')
   t.is(bar.textContent, 'bar')
-  html`<${el}>${ bar }</>`
+  h`<${el}>${ bar }</>`
   t.is(el.textContent, 'bar')
   t.is(foo.textContent, 'foo')
   t.is(bar.textContent, 'bar')
 })
 
 t('html: must not morph inserted nodes', async t => {
-  const foo = html`<p>foo</p>`
-  const bar = html`<p>bar</p>`
+  const foo = h`<p>foo</p>`
+  const bar = h`<p>bar</p>`
 
-  let el = html`<div/>`
+  let el = h`<div/>`
 
-  html`<${el}>${foo}</>`
+  h`<${el}>${foo}</>`
   t.equal(el.firstChild, foo, 'keep child')
   t.is(el.innerHTML, '<p>foo</p>')
   t.is(foo.outerHTML, '<p>foo</p>')
   t.is(bar.outerHTML, '<p>bar</p>')
-  html`<${el}>${bar}</>`
+  h`<${el}>${bar}</>`
   t.equal(el.firstChild, bar, 'keep child')
   t.is(el.innerHTML, '<p>bar</p>')
   t.is(foo.outerHTML, '<p>foo</p>')
   t.is(bar.outerHTML, '<p>bar</p>')
-  html`<${el}>${foo}</>`
+  h`<${el}>${foo}</>`
   t.is(el.innerHTML, '<p>foo</p>')
   t.is(foo.outerHTML, '<p>foo</p>')
   t.is(bar.outerHTML, '<p>bar</p>')
-  html`<${el}>${bar}</>`
+  h`<${el}>${bar}</>`
   t.is(el.innerHTML, '<p>bar</p>')
   t.is(foo.outerHTML, '<p>foo</p>')
   t.is(bar.outerHTML, '<p>bar</p>')
 })
 
 t('html: update own children', t => {
-  let el = html`<div>123</div>`
-  html`<${el}>${ el.childNodes }</>`
+  let el = h`<div>123</div>`
+  h`<${el}>${ el.childNodes }</>`
   t.is(el.outerHTML, '<div>123</div>')
 })
 
 t('html: [legacy] prop', async t => {
   let obj = v(() => ({ x: 1 }))
-  let el = html`<div>${ v(obj, obj => obj.x) }</div>`
+  let el = h`<div>${ v(obj, obj => obj.x) }</div>`
 
   t.is(el.outerHTML, '<div>1</div>')
 
@@ -543,7 +542,7 @@ t('html: [legacy] prop', async t => {
 })
 
 t('html: direct value', async t => {
-  let x = html`${1}`
+  let x = h`${1}`
   t.is(x.nodeType, 3)
 })
 
@@ -553,14 +552,14 @@ t('html: insert nodes list', t => {
 
   let orig = [...el.childNodes]
 
-  html`<${el}><div class="prepended" /> foo ${ el.childNodes } qux <div class="appended" /></>`
+  h`<${el}><div class="prepended" /> foo ${ el.childNodes } qux <div class="appended" /></>`
   t.equal(el.innerHTML, `<div class="prepended"></div> foo |bar <baz></baz>| qux <div class="appended"></div>`)
 
-  html`<${el}>foo ${ orig } qux</>`
+  h`<${el}>foo ${ orig } qux</>`
   t.equal(el.innerHTML, `foo |bar <baz></baz>| qux`)
 
 // console.log('set', ...orig)
-  html`<${el}><div class="prepended" /> foo ${ orig } qux <div class="appended" /></>`
+  h`<${el}><div class="prepended" /> foo ${ orig } qux <div class="appended" /></>`
   t.equal(el.innerHTML, `<div class="prepended"></div> foo |bar <baz></baz>| qux <div class="appended"></div>`)
 })
 
@@ -571,7 +570,7 @@ t('legacy html: handle collections', t => {
   b.setAttribute('icon', 'phone_in_talk')
   let content = b.childNodes
 
-  html`<${b}><i class="material-icons">${ b.getAttribute('icon') }</i> ${ content }</>`
+  h`<${b}><i class="material-icons">${ b.getAttribute('icon') }</i> ${ content }</>`
 
   t.equal(b.innerHTML, '<i class="material-icons">phone_in_talk</i> Click <span>-</span>')
   document.body.removeChild(b)
@@ -583,13 +582,13 @@ t('html: insert self/array of nodes', t => {
   let a2 = document.createElement('a')
   a1.id = 'x'
   a2.id = 'y'
-  html`<${el}>${[ a1, a2 ]}</>`
+  h`<${el}>${[ a1, a2 ]}</>`
   t.equal(el.innerHTML, `<a id="x"></a><a id="y"></a>`)
 })
 
 t.todo('legacy html: re-rendering inner nodes shouldn\'t trigger mount callback', async t => {
   let log = []
-  let $a = html`<div.a><div.b use=${fn}/></>`
+  let $a = h`<div.a><div.b use=${fn}/></>`
   document.body.appendChild($a[0])
 
   function fn ({ mount }) {
@@ -603,21 +602,21 @@ t.todo('legacy html: re-rendering inner nodes shouldn\'t trigger mount callback'
   await $a
   t.is(log, [0, 1])
 
-  $a.html``
+  $a.h``
   await $a
   t.is(log, [0, 1, 2])
 
-  $a.html`<div.b use=${fn}/>`
+  $a.h`<div.b use=${fn}/>`
   await $a
   t.is(log, [0, 1, 2, 0, 1])
 
-  $a.html``
+  $a.h``
   await $a
   t.is(log, [0, 1, 2, 0, 1, 2])
 })
 
 t.todo('html: nested fragments', t => {
-  let el = html`<><a>a</a><b><>b<c/></></b></>`
+  let el = h`<><a>a</a><b><>b<c/></></b></>`
   t.equal(el.outerHTML, '<><a>a</a><b>b<c></c></b></>')
 })
 
@@ -626,33 +625,33 @@ t.skip('html: class components', async t => {
 })
 
 t('html: null-like insertions', t => {
-  let a = html`<a>foo ${ null } ${ undefined } ${ false } ${0}</a>`
+  let a = h`<a>foo ${ null } ${ undefined } ${ false } ${0}</a>`
 
   t.is(a.innerHTML, 'foo   false 0')
 
-  let b = html`${ null } ${ undefined } ${ false } ${0}`
+  let b = h`${ null } ${ undefined } ${ false } ${0}`
   t.is(b.map(e => e.textContent).join(''), '  false 0')
-  let c = html``
+  let c = h``
   t.is(c.textContent, '')
 })
 
 t.todo('html: component siblings', t => {
-  let a = html`<x/> ${1}`
+  let a = h`<x/> ${1}`
 })
 
 t('html: non-observables create flat string', t => {
-  let b = html`1 ${2} <${() => 3}/> ${[4, ' ', html`5 ${6}`]}`
+  let b = h`1 ${2} <${() => 3}/> ${[4, ' ', h`5 ${6}`]}`
   t.is(b.map(n => n.textContent).join(''), `1 2 3 4 5 6`)
 
-  let c = html`1 ${v(2)} 3`
+  let c = h`1 ${v(2)} 3`
   t.is(c.map(n => n.textContent).join(''), `1 2 3`)
 })
 
 t('html: recursion case', t => {
-  let el = html`${ [html`<${fn} x=1/>`] }`
+  let el = h`${ [h`<${fn} x=1/>`] }`
 
   function fn ({x}) {
-    return html`x: ${x}`
+    return h`x: ${x}`
   }
 
   t.is(el.map(n => n.textContent).join(''), `x: 1`)
@@ -661,10 +660,10 @@ t('html: recursion case', t => {
 t('html: 50+ elements shouldnt invoke recursion', t => {
   let data = Array(100).fill({x:1})
 
-  let el = html`${ data.map(item => html`<${fn} ...${item}/>`) }`
+  let el = h`${ data.map(item => h`<${fn} ...${item}/>`) }`
 
   function fn ({x}) {
-    return html`x: ${x}`
+    return h`x: ${x}`
   }
 
   t.is(el[2].textContent, 'x: ')
@@ -675,7 +674,7 @@ t('html: iron support', t => {
   const noun = iv('world')
   const message = iv(() => `Hello ${noun.v}`)
 
-  let el = html`<x>${message}</x>`
+  let el = h`<x>${message}</x>`
   t.is(el.outerHTML, `<x>Hello world</x>`)
 
   noun.v = 'Iron'
@@ -683,8 +682,14 @@ t('html: iron support', t => {
 })
 
 t('html: empty children should clean up content', t => {
-  let a = html`<div><a/><a/></div>`
+  let a = h`<div><a/><a/></div>`
   t.is(a.childNodes.length, 2)
-  html`<${a}></>`
+  h`<${a}></>`
   t.is(a.childNodes.length, 0)
 })
+
+t.only('html: caching attr cases', async t => {
+  let a = h`<a x=1 ${'y'}=2 z=${3} ${'w'}=${4} ...${{_: 5}}>a${ 6 }b${ 7 }c</a>`
+  t.is(a.outerHTML, `<a x="1" z="3" y="2" w="4" _="5">a6b7c</a>`)
+})
+

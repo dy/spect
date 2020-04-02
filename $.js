@@ -7,7 +7,7 @@ const SPECT_CLASS = '👁'
 const CLASS_OFFSET = 0x1F700
 let count = 0
 
-const _spect = Symbol.for('@spect')
+const _spect = Symbol.for('@spect.set')
 
 const ids = {}, classes = {}, tags = {}, names = {}, animations = {}
 

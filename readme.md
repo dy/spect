@@ -211,7 +211,7 @@ Pending...
 <details><summary><strong>$ − selector aspect</strong></summary>
 
 > elements = $( scope? , selector? , callback? )<br/>
-> elements = $`.selector`<br/>
+> elements = $\`.selector\`<br/>
 
 Creates live collection of elements matching the `selector` in `scope`, firing `callback` for each element in the set.
 
@@ -315,7 +315,7 @@ const foo = h`<${foo} ...${foo}>${ foo.childNodes }</>`
 #### Example
 
 ```js
-import { v, h } from 'spect'
+import { $, v, h } from 'spect'
 
 $('#clock', el => {
   let date = v(new Date())
@@ -324,8 +324,8 @@ $('#clock', el => {
 })
 ```
 
-_**h**_ is direct remake on [hyperscript](https://ghub.io/hyperscript) and [htm](https://ghub.io/htm).<br/>
-
+_**h**_ is direct remake on [hyperscript](https://ghub.io/hyperscript), [htm](https://ghub.io/htm) and [htl](https://ghub.io/htl).<br/>
+Its design is based on R&D of [incremental-dom](https://ghub.io/incremental-dom), [lit-html](https://ghub.io/lit-html), [nanomorph](https://ghub.io/nanomorph) and others.
 
 <br/>
 
@@ -335,7 +335,7 @@ _**h**_ is direct remake on [hyperscript](https://ghub.io/hyperscript) and [htm]
 <details><summary><strong>v − value observable</strong></summary>
 
 > value = v( source? , map? , inmap? )<br/>
-> value = v`...content`<br/>
+> value = v\`...content\`<br/>
 
 Universal observable − creates a getter/setter function with [observable](https://ghub.io/observable) interface from any `source`:
 

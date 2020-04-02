@@ -3,7 +3,6 @@ import './html.js'
 
 import t from 'tst'
 import { h, v } from '../index.js'
-// import { $, state, fx, prop, store, calc, list, ref, attr, on, html } from '../dist/spect.min.js'
 import { tick, frame, idle, time } from 'wait-please'
 import observable from './observable.js'
 import { Reactor, v as iv } from 'ironjs'
@@ -517,4 +516,9 @@ t('h: iron support', t => {
 
   noun.v = 'Iron'
   t.is(el.outerHTML, `<x>Hello Iron</x>`)
+})
+
+t('h: caching attr cases', async t => {
+  let a = h('a', { x: 1 }, 'a', 6, 'b', 7, 'c')
+  t.is(a.outerHTML, `<a x="1">a6b7c</a>`)
 })
