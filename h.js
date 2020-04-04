@@ -38,7 +38,7 @@ function createTpl(statics) {
   const tpl = document.createElement('template')
   tpl.innerHTML = statics.join(PLACEHOLDER).replace(/h:::/g, m => m + c++)
 
-  const walker = document.createTreeWalker(tpl.content, SHOW_TEXT | SHOW_ELEMENT, null), split = []
+  const walker = document.createTreeWalker(tpl.content, SHOW_TEXT | SHOW_ELEMENT, null), split = [], replace = []
   while (walker.nextNode()) {
     const node = walker.currentNode
     if (node.nodeType === TEXT) {
@@ -57,12 +57,30 @@ function createTpl(statics) {
           node.setAttribute(name.slice(3), value)
         }
       }
+
+      if (/#|\./.test(node.tagName)) {
+        let tag = node.localName // preserves case sensitivity
+        let [beforeId, afterId = ''] = tag.split('#')
+        let beforeClx = beforeId.split('.')
+        tag = beforeClx.shift()
+        let afterClx = afterId.split('.')
+        let id = afterClx.shift()
+        let clx = [...beforeClx, ...afterClx]
+        if (!node.id && id) node.id = id
+        if (clx.length) clx.map(cls => node.classList.add(cls))
+        tag = document.createElement(tag)
+        for (let {name, value} of node.attributes) tag.setAttribute(name, value)
+        replace.push(node, node = tag)
+      }
     }
   }
+
   for (let i = 0; i < split.length; i+= 2) {
     let node = split[i], idx = split[i + 1], prev = 0
     idx.map(id => (node = node.splitText(id - prev), prev = id))
   }
+
+  while (replace.length) replace.shift().replaceWith(replace.shift())
 
   return tpl
 }
@@ -128,9 +146,7 @@ function evaluate (frag, fields) {
       if (/^h:::/.test(node.data)) replace.push(node, nodify(fields[+node.data.slice(4)]))
     }
   }
-  while (replace.length) {
-    replace.shift().replaceWith(replace.shift())
-  }
+  while (replace.length) replace.shift().replaceWith(replace.shift())
 
   return frag.childNodes.length > 1 ? frag.childNodes : frag.firstChild
 }
