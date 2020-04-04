@@ -1,5 +1,4 @@
 import v, { observable, primitive, object, input } from './v.js'
-import htm from 'xhtm/index.js'
 import * as symbol from './symbols.js'
 
 const _group = Symbol.for('@spect.group'),
@@ -69,6 +68,8 @@ function createTpl(statics) {
 
 // evaluate template element with fields
 function evaluate (frag, fields) {
+  const field = str => fields[+str.slice(4)]
+
   const walker = document.createTreeWalker(frag, SHOW_ELEMENT | SHOW_TEXT, null)
 
   const replace = []
@@ -76,24 +77,29 @@ function evaluate (frag, fields) {
     const node = walker.currentNode
     const attributes = node.attributes;
     if (node.nodeType === ELEMENT) {
+      console.log(node.outerHTML)
+
       for (let i = 0, n = attributes.length; i < n; ++i) {
         let {name, value} = attributes[i];
+        // <a a=${b}
         if (/^h:::/.test(value)) {
-          value = fields[+value.slice(4)];
-          node.setAttribute(name, value)
+          value = field(value)
         }
+        // <a ${a}=b
         if (/^h:::/.test(name)) {
-          node.removeAttribute(name), --i, --n;
-          const field = fields[+name.slice(4)];
-          if (object(field)) {
-            for (let prop in field) {
-              node.setAttribute(prop, field[prop])
-            }
-          }
-          else {
-            node.setAttribute(field, value)
-          }
+          --i, --n
+          node.removeAttribute(name)
+          name = field(name)
         }
+        // <a ${{a:b}}, <a ...${{a:b}}
+        if (object(name) || observable(name) || observable(value)) {
+          v([name, value])(([name, value]) => {
+            const keys = object(name) ? Object.keys(name) : [name], props = object(name) ? name : {[name]: value}
+            keys.map(prop => setAttribute(node, prop, node[prop] = props[prop]))
+            return () => keys.map(prop => (delete node[prop], node.removeAttribute(prop)))
+          })
+        }
+        else setAttribute(node, name, node[name] = value)
       }
     }
     else if (node.nodeType === TEXT) {
@@ -106,8 +112,6 @@ function evaluate (frag, fields) {
 
   return frag.childNodes.length > 1 ? frag.childNodes : frag.firstChild
 }
-
-
 
 
 
