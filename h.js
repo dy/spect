@@ -16,7 +16,8 @@ export default function h (statics, ...fields) {
   // hyperscript - turn to tpl literal call
   if (!statics.raw) {
     // h(tag, ...children)
-    if (!object(fields[0]) && fields[0] != null) fields.push(null)
+    if (!object(fields[0]) && fields[0] != null) fields.unshift(null)
+    if (!primitive(statics)) fields.unshift(statics)
 
     statics = [
       ...(primitive(statics) ? [`<${statics} ...`] : ['<', ' ...']),
@@ -74,11 +75,11 @@ function evaluate (frag, fields) {
 
   const replace = []
   while (walker.nextNode()) {
-    const node = walker.currentNode
+    let node = walker.currentNode
     const attributes = node.attributes;
     if (node.nodeType === ELEMENT) {
-      console.log(node.outerHTML)
-
+      // FIXME: o or some proxy here would be really nice
+      const vprops = v(() => ({})), props = vprops()
       for (let i = 0, n = attributes.length; i < n; ++i) {
         let {name, value} = attributes[i];
         // <a a=${b}
@@ -92,15 +93,36 @@ function evaluate (frag, fields) {
           name = field(name)
         }
         // <a ${{a:b}}, <a ...${{a:b}}
-        if (object(name) || observable(name) || observable(value)) {
-          v([name, value])(([name, value]) => {
-            const keys = object(name) ? Object.keys(name) : [name], props = object(name) ? name : {[name]: value}
-            keys.map(prop => setAttribute(node, prop, node[prop] = props[prop]))
-            return () => keys.map(prop => (delete node[prop], node.removeAttribute(prop)))
+        if (object(name)) {
+          v(name, values => {
+            const keys = Object.keys(values)
+            keys.map(name => props[name] = values[name])
+            vprops(props)
+            return () => keys.map(name => delete props[name])
           })
         }
-        else setAttribute(node, name, node[name] = value)
+        else if (observable(name) || observable(value)) {
+          v([name, value])(([name, value]) => {
+            props[name] = value
+            vprops(props)
+            return () => delete props[name]
+          })
+        }
+        else props[name] = value
       }
+
+      // <${tag}
+      if (/^H:::/.test(node.tagName)) {
+        const tag = field(node.tagName)
+        node.replaceWith(node = typeof tag === 'function' ? nodify(tag(props)) : nodify(tag))
+      }
+
+      // props → node
+      vprops(props => {
+        const keys = Object.keys(props)
+        keys.map(prop => node[prop] !== props[prop] && setAttribute(node, prop, node[prop] = props[prop]))
+        return () => keys.map(prop => (delete node[prop], node.removeAttribute(prop)))
+      })
     }
     else if (node.nodeType === TEXT) {
       if (/^h:::/.test(node.data)) replace.push(node, nodify(fields[+node.data.slice(4)]))
