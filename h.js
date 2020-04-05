@@ -11,40 +11,55 @@ const TEXT = 3, ELEMENT = 1, COMMENT = 8, SHOW_ELEMENT = 1, SHOW_TEXT = 4
 const tplCache = {}
 
 const PLACEHOLDER = 'h:::'
+const id = str => +str.slice(4)
 
 export default function h (statics, ...fields) {
   // hyperscript - turn to tpl literal call
   if (!statics.raw) {
     // h(tag, ...children)
-    if (!object(fields[0]) && fields[0] != null) fields.unshift(null)
+    if (!fields.length || !object(fields[0]) && fields[0] != null) fields.unshift(null)
+    const count = fields.length
     if (!primitive(statics)) fields.unshift(statics)
 
     statics = [
       ...(primitive(statics) ? [`<${statics} ...`] : ['<', ' ...']),
-      ...(!fields.length ? ['/>'] : ['>', ...Array(fields.length - 1).fill(''), '</>'])
+      ...(count < 2 ? [`/>`] : ['>', ...Array(count - 2).fill(''), `</>`])
     ]
   }
 
-  const key = statics.join(PLACEHOLDER)
-  const tpl = tplCache[key] || (tplCache[key] = createTpl(statics))
+  const key = statics.join(PLACEHOLDER + '_')
+  const tpl = tplCache[key] || (tplCache[key] = createTpl(key))
 
-  let node = tpl.content.cloneNode(true)
-
-  return evaluate(node, fields)
+  let frag = tpl.content.cloneNode(true)
+  frag.childNodes.forEach(node => evaluate(node, fields))
+  return frag.childNodes.length > 1 ? frag.childNodes : frag.firstChild
 }
 
-function createTpl(statics) {
+function createTpl(str) {
   let c = 0
   const tpl = document.createElement('template')
-  tpl.innerHTML = statics.join(PLACEHOLDER).replace(/h:::/g, m => m + c++)
+
+  // ref: https://github.com/developit/htm/blob/26bdff2306dd77dcf82a2d788a8d3e689968b0da/src/index.mjs#L36-L40
+  tpl.innerHTML = str
+    // <a h:::_ → <a h:::1
+    .replace(/h:::_/g, m => PLACEHOLDER + c++)
+    // <abc .../> → <abc ...></abc>
+    .replace(/<([\w:-]+)([^<>]*)\/>/g, '<$1$2></$1>')
+    // <h:::_ → <h::: _=3
+    .replace(/<h:::(\d+)/g, '<h::: _=$1')
+    // <//>, </> → </h:::>
+    .replace(/<\/+>/, '</h:::>')
+    // .../> → ... />
+    // .replace(/([^<\s])\/>/g, '$1 />')
 
   const walker = document.createTreeWalker(tpl.content, SHOW_TEXT | SHOW_ELEMENT, null), split = [], replace = []
   while (walker.nextNode()) {
     const node = walker.currentNode
     if (node.nodeType === TEXT) {
-      let curr = []
-      node.data.replace(/h:::\d+/g, (m, idx) => {
-        curr.push(idx, idx + m.length)
+      let curr = [], last = 0
+      node.data.replace(/h:::\d+/g, (m, idx, str) => {
+        if (idx && idx !== last) curr.push(idx)
+        if (idx + m.length < str.length) curr.push(last = idx + m.length)
       })
       if (curr.length) split.push(node, curr)
     }
@@ -69,209 +84,115 @@ function createTpl(statics) {
         if (!node.id && id) node.id = id
         if (clx.length) clx.map(cls => node.classList.add(cls))
         tag = document.createElement(tag)
-        for (let {name, value} of node.attributes) tag.setAttribute(name, value)
-        replace.push(node, node = tag)
+        replace.push(node, tag)
       }
     }
   }
 
-  for (let i = 0; i < split.length; i+= 2) {
-    let node = split[i], idx = split[i + 1], prev = 0
-    idx.map(id => (node = node.splitText(id - prev), prev = id))
+  while (replace.length) {
+    let from = replace.shift(), to = replace.shift()
+    replaceWith(from, to)
+    for (let {name, value} of from.attributes) to.setAttribute(name, value)
+    to.append(...from.childNodes)
   }
 
-  while (replace.length) replace.shift().replaceWith(replace.shift())
+  for (let i = 0; i < split.length; i+= 2) {
+    let node = split[i], idx = split[i + 1], prev = 0, l = node.wholeText.length
+    idx.map(id => (node = node.splitText(id - prev), prev = id))
+  }
 
   return tpl
 }
 
 // evaluate template element with fields
-function evaluate (frag, fields) {
-  const field = str => fields[+str.slice(4)]
+function evaluate (node, fields) {
+  if (node.nodeType === TEXT) {
+    if (/^h:::/.test(node.data)) node.replaceWith(node = nodify(node = fields[id(node.data)]))
+    return node
+  }
 
-  const walker = document.createTreeWalker(frag, SHOW_ELEMENT | SHOW_TEXT, null)
+  const attributes = node.attributes
+  if (!attributes) return node
 
-  const replace = []
-  while (walker.nextNode()) {
-    let node = walker.currentNode
-    const attributes = node.attributes;
-    if (node.nodeType === ELEMENT) {
-      // FIXME: o or some proxy here would be really nice
-      const vprops = v(() => ({})), props = vprops()
-      for (let i = 0, n = attributes.length; i < n; ++i) {
-        let {name, value} = attributes[i];
-        // <a a=${b}
-        if (/^h:::/.test(value)) {
-          value = field(value)
-        }
-        // <a ${a}=b
-        if (/^h:::/.test(name)) {
-          --i, --n
-          node.removeAttribute(name)
-          name = field(name)
-        }
-        // <a ${{a:b}}, <a ...${{a:b}}
-        if (object(name)) {
-          v(name, values => {
-            const keys = Object.keys(values)
-            keys.map(name => props[name] = values[name])
-            vprops(props)
-            return () => keys.map(name => delete props[name])
-          })
-        }
-        else if (observable(name) || observable(value)) {
-          v([name, value])(([name, value]) => {
-            props[name] = value
-            vprops(props)
-            return () => delete props[name]
-          })
-        }
-        else props[name] = value
-      }
+  // dispose previous observers
+  if (node[_props]) node[_props][symbol.dispose]()
 
-      // <${tag}
-      if (/^H:::/.test(node.tagName)) {
-        const tag = field(node.tagName)
-        node.replaceWith(node = typeof tag === 'function' ? nodify(tag(props)) : nodify(tag))
-      }
+  // evaluate props
+  const vprops = node[_props] = v(() => ({})), props = vprops()
 
-      // props → node
-      vprops(props => {
-        const keys = Object.keys(props)
-        keys.map(prop => node[prop] !== props[prop] && setAttribute(node, prop, node[prop] = props[prop]))
-        return () => keys.map(prop => (delete node[prop], node.removeAttribute(prop)))
+  // recurse loop does not iterate over newly inserted nodes, unlike treeWalker/nodeIterator
+  for (let i = 0, n = attributes.length; i < n; ++i) {
+    let {name, value} = attributes[i];
+    if (/^_/.test(name)) continue
+
+    // <a a=${b}
+    if (/^h:::/.test(value)) {
+      value = fields[id(value)]
+    }
+    // <a ${a}=b
+    if (/^h:::/.test(name)) {
+      --i, --n
+      node.removeAttribute(name)
+      name = fields[id(name)]
+    }
+    // <a ${{a:b}}, <a ...${{a:b}}
+    if (object(name)) {
+      v(name, values => {
+        const keys = Object.keys(values)
+        keys.map(name => props[name] = values[name])
+        vprops(props)
+        return () => keys.map(name => delete props[name])
       })
     }
-    else if (node.nodeType === TEXT) {
-      if (/^h:::/.test(node.data)) replace.push(node, nodify(fields[+node.data.slice(4)]))
+    else if (observable(name) || observable(value)) {
+      v([name, value])(([name, value]) => {
+        props[name] = value
+        vprops(props)
+        return () => delete props[name]
+      })
     }
+    else if (name != null) props[name] = value
   }
-  while (replace.length) replace.shift().replaceWith(replace.shift())
 
-  return frag.childNodes.length > 1 ? frag.childNodes : frag.firstChild
+  const children = [].map.call(node.childNodes, node => evaluate(node, fields))
+
+  // <${tag}
+  if (node.tagName.toLowerCase() === PLACEHOLDER) {
+    const tag = fields[+node.getAttribute('_')]
+    node = replaceWith(node, nodify(typeof tag === 'function' ? tag({ children, ...props }) : tag))
+  }
+
+  // merge blueprint scheme children to real ones, make them live
+  render(children, node)
+
+  vprops(props => {
+    const keys = Object.keys(props)
+    keys.map(prop => node[prop] !== props[prop] && setAttribute(node, prop, node[prop] = props[prop]))
+    return () => keys.map(prop => (delete node[prop], node.removeAttribute(prop)))
+  })
+
+  return node
 }
 
-
-
-
-
-
-
-
-
-
-
-
-/*
-
-export function html (statics, ...fields) {
-  let result = htm.apply(h, arguments)
-  if (!result) return document.createTextNode('')
-
-  let container = []
-  container.childNodes = container
-  container.appendChild = el => container.push(el)
-
-  render(Array.isArray(result) ? result : [result], container)
-
-  return container.length > 1 ? container : container[0]
-}
-
-
-export function h(tag, ...children) {
-  // h`...content`
-  if (tag.raw) return html(...arguments)
-
-  // h(tag, child1, child2)
-  const props = object(children[0]) || children[0] == null ? children.shift() || {} : {}
-
-
-  let el
-
-  // element
-  if (typeof tag === 'string') {
-    if (!tag) el = document.createDocumentFragment()
-    else {
-      let [beforeId, afterId = ''] = tag.split('#')
-      let beforeClx = beforeId.split('.')
-      tag = beforeClx.shift()
-      let afterClx = afterId.split('.')
-      let id = afterClx.shift()
-      let clx = [...beforeClx, ...afterClx]
-      if (!props.id && id) props.id = id
-      if (!props.class && clx.length) props.class = clx
-      el = document.createElement(tag)
-    }
-  }
-  else if (typeof tag === 'function') {
-    el = nodify(tag(props))
-  }
-  else el = nodify(tag)
-
-  // element
-  if (el.nodeType === ELEMENT) {
-    // props (dynamic)
-    el[_props] = v(() => props)
-    el[_props]((props) => {
-      let vprop
-      for (let name in props) {
-        let value = props[name]
-        if (observable(value)) {
-          vprop = v(value, value => (
-            el[name] = value,
-            setAttribute(el, name, value)
-          ))
-        }
-        else if (Array.isArray(value) || object(value)) {
-          el[name] = value
-          vprop = v(value, value => setAttribute(el, name, value))
-        }
-        else {
-          el[name] = value
-          setAttribute(el, name, value)
-        }
-      }
-      return () => vprop && vprop[symbol.dispose]()
-    })
-
-    // children
-    if (children.length) render(children, el)
-  }
-  // text
-  else if (el.nodeType === TEXT) {}
-  // fragment
-  else {
-    if (children.length) render(children, el)
-  }
-
-  return el
-}
-
+// patch existing element children with the new blueprint children
 export function render(children, el) {
   // clean up prev observers
   if (el[_children]) el[_children][symbol.dispose]()
-  el[_children] = v(children.map((child) => {
-    // ignore input el
-    if (input(child)) {
-      let el = v()
-      el(child)
-      return el
-    }
-    return child
-  }))
-
+  el[_children] = v(children)
   el[_ptr] = 0
 
   const cur = []
   el[_children](children => {
     children.map((child, i) => {
       if (cur[i] === child) return
-      cur[i] = !cur[i] ? alloc(el, nodify(child)) : replaceWith(cur[i], nodify(child))
+      // observables may receive non-node values, so need to nodify
+      child = nodify(child)
+      cur[i] = !cur[i] ? alloc(el, child) : replaceWith(cur[i], child)
       // if sync init did not hit - create placeholder, no hydration possible
-      if (!cur[i]) cur[i] = alloc(el, nodify(''))
+      // if (!cur[i]) cur[i] = alloc(el, nodify(''))
 
       // clear placeholder content
-      if (cur[i][_group]) cur[i].textContent = ''
+      // if (cur[i][_group]) cur[i].textContent = ''
     })
   })
 
@@ -282,7 +203,6 @@ export function render(children, el) {
     child.remove()
   }
 }
-*/
 
 function nodify(arg) {
   if (arg == null) return document.createTextNode('')
@@ -291,16 +211,14 @@ function nodify(arg) {
   if (primitive(arg) || arg instanceof Date || arg instanceof RegExp) return document.createTextNode(arg)
 
   // can be node/fragment
-  // reset pointer - the element is considered re-allocatable
   if (arg.nodeType) return arg
 
   // can be an array / array-like
   if (arg[Symbol.iterator]) {
-    // FIXME: replace with comment
     let marker = document.createTextNode('')
     marker[_group] = [...arg].flat().map(arg => nodify(arg))
     // create placeholder content (will be ignored by ops)
-    marker.textContent = marker[_group].map(n => n.textContent).join('')
+    // marker.textContent = marker[_group].map(n => n.textContent).join('')
     return marker
   }
 
@@ -413,9 +331,10 @@ function replaceWith(from, to) {
 function getAttribute (el, name, value) { return (value = el.getAttribute(name)) === '' ? true : value }
 
 function setAttribute (el, name, value) {
-  if (value === false || value == null) {
-    el.removeAttribute(name)
-  }
+  // test nodes etc
+  if (!el || !el.setAttribute) return
+
+  if (value === false || value == null) el.removeAttribute(name)
   // class=[a, b, ...c] - possib observables
   else if (Array.isArray(value)) {
     el.setAttribute(name, value.filter(Boolean).join(' '))
