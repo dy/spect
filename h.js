@@ -1,11 +1,7 @@
 import v, { observable, primitive, object, input } from './v.js'
 import * as symbol from './symbols.js'
 
-const _group = Symbol.for('@spect.group'),
-      _ptr = Symbol.for('@spect.ptr'),
-      _props = Symbol.for('@spect.props'),
-      _node = Symbol.for('@spect.node'),
-      _children = Symbol.for('@spect.children')
+const _group = Symbol.for('@spect.group')
 
 const TEXT = 3, ELEMENT = 1, COMMENT = 8, SHOW_ELEMENT = 1, SHOW_TEXT = 4
 
@@ -109,11 +105,8 @@ function createTpl(str) {
 function evaluate (node, fields) {
   const vx = []
 
-  // current element ref - it can be changed either by observable or by morphing
-  node[_node] = node
-
   // create element state observables
-  let props, children
+  let props, children, tag
 
   if (node.attributes) {
     const attributes = node.attributes
@@ -177,44 +170,43 @@ function evaluate (node, fields) {
 
   // <${tag}
   if (node.tagName && node.tagName.toLowerCase() === PLACEHOLDER) {
-    const tag = fields[+node.getAttribute('_')]
+    tag = fields[+node.getAttribute('_')]
     if (observable(tag)) {
       (vx[vx.length] = v(tag))
       (newNode => {
         newNode = nodify(newNode)
-        if (same(newNode, node[_node])) return
-        node[_node].replaceWith(node[_node] = node = newNode)
+        if (newNode === node) return
+        node.replaceWith(node = newNode)
         newNode.append(...node.childNodes)
         Object.keys(node).map(name => setAttribute(newNode, name, newNode[name] = node[name]))
       })
     }
     else if (typeof tag === 'function') {
-      node.replaceWith(node[_node] = node = nodify(tag({ children: children ? children() : [], ...props() })))
+      node.replaceWith(node = nodify(tag({ children: children ? children() : [], ...props() })))
     }
     else {
-      node.replaceWith(node[_node] = node = nodify(tag))
+      node.replaceWith(node = nodify(tag))
     }
   }
 
   // deploy observables
   if (props) props((all, changed) => {
-    let keys = Object.keys(changed), cur = node[_node]
-    keys.map(name => setAttribute(cur, name, cur[name] = changed[name]))
-    return () => keys.map(name => (delete cur[name], cur.removeAttribute(name)))
+    let keys = Object.keys(changed)
+    keys.map(name => setAttribute(node, name, node[name] = changed[name]))
+    return () => keys.map(name => (delete node[name], node.removeAttribute(name)))
   })
   if (children) {
-    const cur = []
-    children((all, changed) => {
-      const idx = Object.keys(changed)
-      idx.map(id => cur[id] = !cur[id] ? alloc(node[_node], changed[id]) : replaceWith(cur[id], changed[id]))
-    })
-
-    // trim unused nodes
-    while(node.childNodes[node[_ptr]]) {
-      let child = node.childNodes[node[_ptr]]
+    // remove initial children - going to re-insert anyways
+    while(node.childNodes.length) {
+      let child = node.firstChild
       if (child[symbol.dispose]) (child[symbol.dispose], delete child[symbol.dispose])
       child.remove()
     }
+    const cur = []
+    children((all, changed) => {
+      const idx = Object.keys(changed)
+      idx.map(id => cur[id] = !cur[id] ? appendChild(node, changed[id]) : replaceWith(cur[id], changed[id]))
+    })
   }
 
   if (node[symbol.dispose]) throw 'Disposable node - what?'
@@ -248,88 +240,14 @@ function nodify(arg) {
   return arg
 }
 
-// locate/allocate node[s] in element
-function alloc(parent, el) {
-  if (!parent) return el
-
-  if (!parent[_ptr]) parent[_ptr] = 0
-
-  // look up for good candidate
-  let nextNode = parent.childNodes[parent[_ptr]], match
-
-  // if no available nodes to locate - append new nodes
-  if (!nextNode) {
-    appendChild(parent, el)
-    return el
-  }
-
-  // FIXME: locate groups
-  if (el[_group]) {
-    // let nodes = []
-    // for (let i = 0; i < el[_group].length; i++ ) nodes.push(alloc(parent, el[_group][i]))
-    // return nodes
-    insertBefore(parent, el, nextNode)
-    return el
-  }
-
-  // find matching node somewhere in the tree
-  for (let i = parent[_ptr]; i < parent.childNodes.length; i++) {
-    const node = parent.childNodes[i]
-    if (same(node, el)) {
-      match = node
-      break
-    }
-    else if (node[_group]) {
-      i += node[_group].length
-    }
-  }
-
-  // if there is match in the tree - insert it at the curr pointer
-  if (match) {
-    if (match !== nextNode) insertBefore(parent, match, nextNode)
-    else parent[_ptr]++
-
-    // disable match observers, rewire element observers to matched element
-    // we dispose old (matched) observers, but wire up new element observers to old (matched) node
-    morph(match, el)
-
-    return match
-  }
-
-  insertBefore(parent, el, nextNode)
-  return el
-}
-
-function same(a, b) {
-  return a === b
-  || (a.isSameNode && a.isSameNode(b))
-  // same-content text node
-  || (a.nodeType === TEXT && a.data === b.data && !a[_group] && !b[_group])
-  || (a.tagName === b.tagName && (
-    // same-key node
-    (a.id && (a.id === b.id))
-    // just blank-ish tag matching by signature and no need morphing
-    || (a.nodeType === ELEMENT && !a.id && !b.id && !a.name && !a.childNodes.length)
-  ))
-}
-
-// group-aware manipulations
 function appendChild(parent, el) {
   parent.appendChild(el)
   if (el[_group]) {
     el[_group].map(el => parent.appendChild(el))
   }
-  parent[_ptr] += 1 + (el[_group] ? el[_group].length : 0)
+  return el
 }
-function insertBefore(parent, el, before) {
-  parent.insertBefore(el, before)
-  if (el[_group]) {
-    el[_group].map(item => parent.insertBefore(item, el))
-    // swap group pointer to the beginning
-    parent.insertBefore(el, el[_group][el[_group].length - 1])
-  }
-  parent[_ptr] += 1 + (el[_group] ? el[_group].length : 0)
-}
+
 function replaceWith(from, to) {
   if (from[_group]) from[_group].map(el => el.remove())
 
