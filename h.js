@@ -4,6 +4,7 @@ import * as symbol from './symbols.js'
 const _group = Symbol.for('@spect.group'),
       _ptr = Symbol.for('@spect.ptr'),
       _props = Symbol.for('@spect.props'),
+      _node = Symbol.for('@spect.node'),
       _children = Symbol.for('@spect.children')
 
 const TEXT = 3, ELEMENT = 1, COMMENT = 8, SHOW_ELEMENT = 1, SHOW_TEXT = 4
@@ -106,7 +107,10 @@ function createTpl(str) {
 
 // evaluate template element with fields
 function evaluate (node, fields) {
-  const ox = []
+  const vx = []
+
+  // current element ref - it can be changed either by observable or by morphing
+  node[_node] = node
 
   // create element state observables
   let props, children
@@ -133,11 +137,11 @@ function evaluate (node, fields) {
       }
       // <a ${{a:b}}, <a ...${{a:b}}
       if (object(name)) {
-        (ox[ox.length] = v(name))
+        (vx[vx.length] = v(name))
         ((values, diff) => props({...props(), ...values}, diff))
       }
       else if (observable(name) || observable(value)) {
-        (ox[ox.length] = v([name, value]))(([name, value]) => {
+        (vx[vx.length] = v([name, value]))(([name, value]) => {
           props()[name] = value
           props(props(), {[name]: value})
           return () => props({...props(), [name]:null}, {[name]: null})
@@ -156,7 +160,7 @@ function evaluate (node, fields) {
           child = fields[id(child.data)]
 
           if (observable(child) || (child && (child.forEach || child.item))) {
-            (ox[ox.length] = v(child))
+            (vx[vx.length] = v(child))
             (child => children({[i]: nodify(child)}))
           }
           else {
@@ -175,41 +179,50 @@ function evaluate (node, fields) {
   if (node.tagName && node.tagName.toLowerCase() === PLACEHOLDER) {
     const tag = fields[+node.getAttribute('_')]
     if (observable(tag)) {
-      (ox[ox.length] = v(tag))
+      (vx[vx.length] = v(tag))
       (newNode => {
         newNode = nodify(newNode)
-        if (same(newNode, node)) return
+        if (same(newNode, node[_node])) return
+        node[_node].replaceWith(node[_node] = node = newNode)
         newNode.append(...node.childNodes)
-        node.replaceWith(node = newNode)
-        const values = props()
-        for (let name in values) setAttribute(node, name, newNode[name] = values[name])
+        Object.keys(node).map(name => setAttribute(newNode, name, newNode[name] = node[name]))
       })
     }
     else if (typeof tag === 'function') {
-      node.replaceWith(node = nodify(tag({ children: children(), ...props() })))
+      node.replaceWith(node[_node] = node = nodify(tag({ children: children ? children() : [], ...props() })))
+    }
+    else {
+      node.replaceWith(node[_node] = node = nodify(tag))
     }
   }
 
   // deploy observables
   if (props) props((all, changed) => {
-    let keys = Object.keys(changed)
-    keys.map(name => setAttribute(node, name, node[name] = changed[name]))
-    return () => keys.map(name => (delete node[name], node.removeAttribute(name)))
+    let keys = Object.keys(changed), cur = node[_node]
+    keys.map(name => setAttribute(cur, name, cur[name] = changed[name]))
+    return () => keys.map(name => (delete cur[name], cur.removeAttribute(name)))
   })
   if (children) {
     const cur = []
     children((all, changed) => {
       const idx = Object.keys(changed)
-      idx.map(id => cur[id] = !cur[id] ? alloc(node, changed[id]) : replaceWith(cur[id], changed[id]))
+      idx.map(id => cur[id] = !cur[id] ? alloc(node[_node], changed[id]) : replaceWith(cur[id], changed[id]))
     })
 
     // trim unused nodes
     while(node.childNodes[node[_ptr]]) {
       let child = node.childNodes[node[_ptr]]
-      if (child[_props]) (child[_props][symbol.dispose](), delete child[_props])
+      if (child[symbol.dispose]) (child[symbol.dispose], delete child[symbol.dispose])
       child.remove()
     }
   }
+
+  if (node[symbol.dispose]) throw 'Disposable node - what?'
+  node[symbol.dispose] = () => (
+    vx.map(v => v[symbol.dispose]()),
+    children && children[symbol.dispose](),
+    props && props[symbol.dispose]()
+  )
 
   return node
 }
@@ -264,17 +277,6 @@ function alloc(parent, el) {
     const node = parent.childNodes[i]
     if (same(node, el)) {
       match = node
-      // bring over props/children from blueprint el to found real node
-      for (let {name, value} of el.attributes) match.setAttribute(name, value)
-      match.append(...el.childNodes)
-
-      if (el[_props]) el[_props][symbol.dispose]()
-      if (el[_children]) el[_children][symbol.dispose]()
-      // migrate props (triggers fx that mutates them)
-      // if (el !== match && el[_props] && match[_props]) {
-      //   match[_props](el[_props]())
-      //   delete el[_props]
-      // }
       break
     }
     else if (node[_group]) {
@@ -286,6 +288,11 @@ function alloc(parent, el) {
   if (match) {
     if (match !== nextNode) insertBefore(parent, match, nextNode)
     else parent[_ptr]++
+
+    // disable match observers, rewire element observers to matched element
+    // we dispose old (matched) observers, but wire up new element observers to old (matched) node
+    morph(match, el)
+
     return match
   }
 
