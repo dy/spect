@@ -296,7 +296,7 @@ t('v: push multiple values', async t => {
   t.is(log, [1,2,3])
   t.is(x(), 3)
 })
-t('v: diff as second argument', async t => {
+t('v: diff object', async t => {
   let x = v({x: 1, y: 2})
   let log = []
   x((vals, diff) => log.push(diff))
@@ -304,6 +304,15 @@ t('v: diff as second argument', async t => {
   x({x: 2})
   t.is(x(), {x:2, y:2})
   t.is(log.slice(-1), [{x: 2}])
+})
+t('v: diff array', async t => {
+  let x = v([1, 2])
+  let log = []
+  x((vals, diff) => log.push(diff))
+  t.is(log, [[1,2]])
+  x({1:1})
+  t.is(x(), [1,1])
+  t.is(log.slice(-1), [{1:1}])
 })
 
 // from

@@ -31,7 +31,7 @@ export default function h (statics, ...fields) {
   const tpl = tplCache[key] || (tplCache[key] = createTpl(key))
 
   let frag = tpl.content.cloneNode(true)
-  frag.childNodes.forEach(node => evaluate(node, fields))
+  evaluate(frag, fields)
   return frag.childNodes.length > 1 ? frag.childNodes : frag.firstChild
 }
 
@@ -106,102 +106,112 @@ function createTpl(str) {
 
 // evaluate template element with fields
 function evaluate (node, fields) {
-  if (node.nodeType === TEXT) {
-    if (/^h:::/.test(node.data)) node.replaceWith(node = nodify(node = fields[id(node.data)]))
-    return node
+  const ox = []
+
+  // create element state observables
+  let props, children
+
+  if (node.attributes) {
+    const attributes = node.attributes
+
+    props = v(() => ({}))
+
+    // recurse loop does not iterate over newly inserted nodes, unlike treeWalker/nodeIterator
+    for (let i = 0, n = attributes.length; i < n; ++i) {
+      let {name, value} = attributes[i];
+      if (/^_/.test(name)) continue
+
+      // <a a=${b}
+      if (/^h:::/.test(value)) {
+        value = fields[id(value)]
+      }
+      // <a ${a}=b
+      if (/^h:::/.test(name)) {
+        --i, --n
+        node.removeAttribute(name)
+        name = fields[id(name)]
+      }
+      // <a ${{a:b}}, <a ...${{a:b}}
+      if (object(name)) {
+        (ox[ox.length] = v(name))
+        ((values, diff) => props({...props(), ...values}, diff))
+      }
+      else if (observable(name) || observable(value)) {
+        (ox[ox.length] = v([name, value]))(([name, value]) => {
+          props()[name] = value
+          props(props(), {[name]: value})
+          return () => props({...props(), [name]:null}, {[name]: null})
+        })
+      }
+      else if (name != null) props({...props(), [name]: value}, {[name]: value})
+    }
   }
 
-  const attributes = node.attributes
-  if (!attributes) return node
+  if (node.childNodes && node.childNodes.length) {
+    children = v(Array(node.childNodes.length))
 
-  // dispose previous observers
-  if (node[_props]) node[_props][symbol.dispose]()
+    node.childNodes.forEach((child, i) => {
+      if (child.nodeType === TEXT) {
+        if (/^h:::/.test(child.data)) {
+          child = fields[id(child.data)]
 
-  // evaluate props
-  const vprops = node[_props] = v(() => ({})), props = vprops()
-
-  // recurse loop does not iterate over newly inserted nodes, unlike treeWalker/nodeIterator
-  for (let i = 0, n = attributes.length; i < n; ++i) {
-    let {name, value} = attributes[i];
-    if (/^_/.test(name)) continue
-
-    // <a a=${b}
-    if (/^h:::/.test(value)) {
-      value = fields[id(value)]
-    }
-    // <a ${a}=b
-    if (/^h:::/.test(name)) {
-      --i, --n
-      node.removeAttribute(name)
-      name = fields[id(name)]
-    }
-    // <a ${{a:b}}, <a ...${{a:b}}
-    if (object(name)) {
-      v(name, values => {
-        const keys = Object.keys(values)
-        keys.map(name => props[name] = values[name])
-        vprops(props)
-        return () => keys.map(name => delete props[name])
-      })
-    }
-    else if (observable(name) || observable(value)) {
-      v([name, value])(([name, value]) => {
-        props[name] = value
-        vprops(props)
-        return () => delete props[name]
-      })
-    }
-    else if (name != null) props[name] = value
+          if (observable(child) || (child && (child.forEach || child.item))) {
+            (ox[ox.length] = v(child))
+            (child => children({[i]: nodify(child)}))
+          }
+          else {
+            children({[i]: nodify(child)})
+          }
+        }
+        else children({[i]: child})
+      }
+      else {
+        children({[i]: evaluate(child, fields)})
+      }
+    })
   }
-
-  const children = [].map.call(node.childNodes, node => evaluate(node, fields))
 
   // <${tag}
-  if (node.tagName.toLowerCase() === PLACEHOLDER) {
+  if (node.tagName && node.tagName.toLowerCase() === PLACEHOLDER) {
     const tag = fields[+node.getAttribute('_')]
-    node = replaceWith(node, nodify(typeof tag === 'function' ? tag({ children, ...props }) : tag))
+    if (observable(tag)) {
+      (ox[ox.length] = v(tag))
+      (newNode => {
+        newNode = nodify(newNode)
+        if (same(newNode, node)) return
+        newNode.append(...node.childNodes)
+        node.replaceWith(node = newNode)
+        const values = props()
+        for (let name in values) setAttribute(node, name, newNode[name] = values[name])
+      })
+    }
+    else if (typeof tag === 'function') {
+      node.replaceWith(node = nodify(tag({ children: children(), ...props() })))
+    }
   }
 
-  // merge blueprint scheme children to real ones, make them live
-  render(children, node)
-
-  vprops(props => {
-    const keys = Object.keys(props)
-    keys.map(prop => node[prop] !== props[prop] && setAttribute(node, prop, node[prop] = props[prop]))
-    return () => keys.map(prop => (delete node[prop], node.removeAttribute(prop)))
+  // deploy observables
+  if (props) props((all, changed) => {
+    let keys = Object.keys(changed)
+    keys.map(name => setAttribute(node, name, node[name] = changed[name]))
+    return () => keys.map(name => (delete node[name], node.removeAttribute(name)))
   })
+  if (children) {
+    const cur = []
+    children((all, changed) => {
+      const idx = Object.keys(changed)
+      idx.map(id => cur[id] = !cur[id] ? alloc(node, changed[id]) : replaceWith(cur[id], changed[id]))
+    })
+
+    // trim unused nodes
+    while(node.childNodes[node[_ptr]]) {
+      let child = node.childNodes[node[_ptr]]
+      if (child[_props]) (child[_props][symbol.dispose](), delete child[_props])
+      child.remove()
+    }
+  }
 
   return node
-}
-
-// patch existing element children with the new blueprint children
-export function render(children, el) {
-  // clean up prev observers
-  if (el[_children]) el[_children][symbol.dispose]()
-  el[_children] = v(children)
-  el[_ptr] = 0
-
-  const cur = []
-  el[_children](children => {
-    children.map((child, i) => {
-      if (cur[i] === child) return
-      // observables may receive non-node values, so need to nodify
-      child = nodify(child)
-      cur[i] = !cur[i] ? alloc(el, child) : replaceWith(cur[i], child)
-      // if sync init did not hit - create placeholder, no hydration possible
-      // if (!cur[i]) cur[i] = alloc(el, nodify(''))
-
-      // clear placeholder content
-      // if (cur[i][_group]) cur[i].textContent = ''
-    })
-  })
-
-  // trim unused nodes
-  while(el.childNodes[el[_ptr]]) {
-    let child = el.childNodes[el[_ptr]]
-    if (child[_props]) (child[_props][symbol.dispose](), delete child[_props])
-    child.remove()
-  }
 }
 
 function nodify(arg) {
@@ -229,7 +239,6 @@ function nodify(arg) {
 function alloc(parent, el) {
   if (!parent) return el
 
-  // track passed children
   if (!parent[_ptr]) parent[_ptr] = 0
 
   // look up for good candidate
@@ -253,30 +262,19 @@ function alloc(parent, el) {
   // find matching node somewhere in the tree
   for (let i = parent[_ptr]; i < parent.childNodes.length; i++) {
     const node = parent.childNodes[i]
-    // same node
-    if (
-      node === el
-      || (node.isSameNode && node.isSameNode(el))
-
-      || (node.tagName === el.tagName && (
-        // same-key node
-        (node.id && (node.id === el.id))
-
-        // same-content text node
-        || (node.nodeType === TEXT && node.nodeValue === el.nodeValue && !node[_group])
-
-        // just blank-ish tag matching by signature and no need morphing
-        || (node.nodeType === ELEMENT && !node.id && !el.id && !node.name && !node.childNodes.length)
-      ))
-    ) {
+    if (same(node, el)) {
       match = node
+      // bring over props/children from blueprint el to found real node
+      for (let {name, value} of el.attributes) match.setAttribute(name, value)
+      match.append(...el.childNodes)
+
+      if (el[_props]) el[_props][symbol.dispose]()
+      if (el[_children]) el[_children][symbol.dispose]()
       // migrate props (triggers fx that mutates them)
-      if (el !== match && el[_props] && match[_props]) {
-        match[_props](el[_props]())
-        el[_props][symbol.dispose]()
-        delete el[_props]
-      }
-      render([...el.childNodes], match)
+      // if (el !== match && el[_props] && match[_props]) {
+      //   match[_props](el[_props]())
+      //   delete el[_props]
+      // }
       break
     }
     else if (node[_group]) {
@@ -293,6 +291,19 @@ function alloc(parent, el) {
 
   insertBefore(parent, el, nextNode)
   return el
+}
+
+function same(a, b) {
+  return a === b
+  || (a.isSameNode && a.isSameNode(b))
+  // same-content text node
+  || (a.nodeType === TEXT && a.data === b.data && !a[_group] && !b[_group])
+  || (a.tagName === b.tagName && (
+    // same-key node
+    (a.id && (a.id === b.id))
+    // just blank-ish tag matching by signature and no need morphing
+    || (a.nodeType === ELEMENT && !a.id && !b.id && !a.name && !a.childNodes.length)
+  ))
 }
 
 // group-aware manipulations
