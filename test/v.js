@@ -185,7 +185,7 @@ t('v: mapper should be called once on group deps', async t => {
   t.is(log, [[0, 1]])
 })
 t('v: stores arrays with observables', async t => {
-  let a = v([])
+  let a = v(() => [])
   t.is(a(), [])
   a([1])
   t.is(a(), [1])
@@ -295,6 +295,15 @@ t('v: push multiple values', async t => {
   x(1,2,3)
   t.is(log, [1,2,3])
   t.is(x(), 3)
+})
+t('v: diff as second argument', async t => {
+  let x = v({x: 1, y: 2})
+  let log = []
+  x((vals, diff) => log.push(diff))
+  t.is(log, [{x:1, y:2}])
+  x({x: 2})
+  t.is(x(), {x:2, y:2})
+  t.is(log.slice(-1), [{x: 2}])
 })
 
 // from

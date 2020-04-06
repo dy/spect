@@ -11,7 +11,7 @@ export default function v(source, map=v=>v, unmap=v=>v) {
     if (observer(...args)) {
       let unsubscribe = subscribe(...args)
       // callback is registered as the last channel subscription, so send it immediately as value
-      if ('current' in channel) push.call(observers.slice(-1), get())
+      if ('current' in channel) push.call(observers.slice(-1), get(), get())
       return unsubscribe
     }
     return set(...args)
@@ -80,7 +80,7 @@ export default function v(source, map=v=>v, unmap=v=>v) {
         dep(val => {
           vals[name] = val
           // avoid self-recursion
-          if (fn !== dep) dchannel(vals)
+          if (fn !== dep) dchannel(vals, {[name]: val})
         })
         Object.defineProperty(fn, name, { writable: false, enumerable: true, configurable: false, value: dep})
       }
@@ -88,11 +88,12 @@ export default function v(source, map=v=>v, unmap=v=>v) {
       Object.seal(source)
 
       // any deps change triggers update
-      dchannel(v => push(channel.current = map(v)))
+      dchannel((values, diff) => push(channel.current = map(values), diff))
 
-      if (Object.keys(vals).length || !Object.keys(source).length) dchannel(vals)
+      // if initial value is derivable from initial deps - set it
+      if (Object.keys(vals).length || !Object.keys(source).length) dchannel(vals, vals)
 
-      set = v => dchannel(unmap(v))
+      set = v => dchannel(Object.assign(vals, unmap(v)), unmap(v))
       subscribe(null, null, () => {
         depsCache.delete(source)
         dchannel.close()
