@@ -287,6 +287,15 @@ t('v: deep propagate internal props updates', async t => {
   a(1)
   t.is(log, [[1]])
 })
+t('v: push multiple values', async t => {
+  let x = v()
+  let log = []
+  x((a,b,c) => log.push(a, b, c))
+  t.is(log, [])
+  x(1,2,3)
+  t.is(log, [1,2,3])
+  t.is(x(), 3)
+})
 
 // from
 t('v: from promise', async t => {
@@ -395,7 +404,6 @@ t('v: expose deps observables', async t => {
   t.is(c.b(), 1)
   t.is(c(), {a:0, b:1})
 })
-
 
 // fx
 t('v: fx core', async t => {

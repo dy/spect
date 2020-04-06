@@ -1,12 +1,11 @@
 export default () => {
     const observers = []
 
-    const push = (val, observers=channel.observers) => {
-        // promise awaits value
-        if (val && val.then) return val.then(val => push(val))
+    function push (...vals) {
+        const observers = this ? this.observers || this : channel.observers
         observers.map(sub => {
             if (sub.out && sub.out.call) sub.out()
-            if (sub.next) sub.out = sub.next(val)
+            if (sub.next) sub.out = sub.next(...vals)
         })
     }
 
@@ -39,7 +38,7 @@ export default () => {
         return unsubscribe
     }
 
-    const channel = val => observer(val) ? subscribe(val) : push(val)
+    const channel = (...vals) => observer(...vals) ? subscribe(...vals) : push(...vals)
 
     return Object.assign(channel, {
         observers,

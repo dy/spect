@@ -11,7 +11,7 @@ export default function v(source, map=v=>v, unmap=v=>v) {
     if (observer(...args)) {
       let unsubscribe = subscribe(...args)
       // callback is registered as the last channel subscription, so send it immediately as value
-      if ('current' in channel) push(get(), observers.slice(-1))
+      if ('current' in channel) push.call(observers.slice(-1), get())
       return unsubscribe
     }
     return set(...args)
@@ -19,7 +19,7 @@ export default function v(source, map=v=>v, unmap=v=>v) {
 
   // current is mapped value (map can be heavy to call each get)
   let get = () => channel.current
-  let set = v => push(channel.current = map(unmap(v)))
+  let set = (...vals) => push(...vals.map(v => channel.current = map(unmap(v))))
 
   // we define props on fn - must hide own props
   delete fn.length
