@@ -364,7 +364,7 @@ v1(1)
 v1(value => {
   // value === 1
   return () => {
-    // ...teardown
+    // teardown
   }
 })
 
@@ -382,7 +382,7 @@ v([v1, v2, v3])(([v1, v2, v3]) => {
   console.log(v1, v2, v3)
   return () => console.log('teardown', v1, v2, v3)
 })
-// 1, 2, 3
+// ... 1, 2, 3
 
 // live string
 let vsum = v`${v1} + ${v2} = ${v3}`()
@@ -393,13 +393,15 @@ let v4 = v(h`<input#id value=1/>`)
 v4(input => console.log(input.value))
 
 // from object
-let item = { done: false }
+let item = { done: false, text: '' }
 let v5 = v(item)
 v5.done() // false
 
-// set property, notify
+// log diff
+v5((item, diff) => console.log(item, diff))
 item.done = true
 v5().done // false
+// ... { done: true, text: '' }, { done: true }
 
 // initialize value
 let v6 = v(() => v5)
