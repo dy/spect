@@ -19,7 +19,7 @@ export default function v(source, map=v=>v, unmap=v=>v) {
 
   // current is mapped value (map can be heavy to call each get)
   let get = () => channel.current
-  let set = (...vals) => push(...vals.map(v => channel.current = map(unmap(v))))
+  let set = (val, dif) => push(channel.current = map(unmap(val)), dif)
 
   // we define props on fn - must hide own props
   delete fn.length

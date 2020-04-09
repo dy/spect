@@ -2,8 +2,9 @@ import v, { observable, primitive, object, input } from './v.js'
 import * as symbol from './symbols.js'
 
 const _group = Symbol.for('@spect.group')
+const _ref = Symbol.for('@spect.ref')
 
-const TEXT = 3, ELEMENT = 1, COMMENT = 8, SHOW_ELEMENT = 1, SHOW_TEXT = 4
+const TEXT = 3, ELEMENT = 1, COMMENT = 8, FRAGMENT = 11, SHOW_ELEMENT = 1, SHOW_TEXT = 4
 
 const tplCache = {}
 
@@ -27,9 +28,10 @@ export default function h (statics, ...fields) {
   const key = statics.join(PLACEHOLDER + '_')
   const tpl = tplCache[key] || (tplCache[key] = createTpl(key))
 
+  // return document fragment because 1-st level observables may update themselves
   let frag = tpl.content.cloneNode(true)
   evaluate(frag, fields)
-  return frag.childNodes.length > 1 ? frag.childNodes : frag.firstChild
+  return frag.childNodes.length === 1 ? frag.firstChild[_ref] || frag.firstChild : frag
 }
 
 function createTpl(str) {
@@ -37,17 +39,18 @@ function createTpl(str) {
   const tpl = document.createElement('template')
 
   // ref: https://github.com/developit/htm/blob/26bdff2306dd77dcf82a2d788a8d3e689968b0da/src/index.mjs#L36-L40
-  tpl.innerHTML = str
+  str = str
     // <a h:::_ → <a h:::1
     .replace(/h:::_/g, m => PLACEHOLDER + c++)
-    // <abc .../> → <abc ...></abc>
-    .replace(/<([\w:-]+)([^<>]*)\/>/g, '<$1$2></$1>')
     // <h:::_ → <h::: _=3
     .replace(/<h:::(\d+)/g, '<h::: _=$1')
+    // <abc .../> → <abc ...></abc>
+    .replace(/<([\w:-]+)([^<>]*)\/>/g, '<$1$2></$1>')
     // <//>, </> → </h:::>
     .replace(/<\/+>/, '</h:::>')
     // .../> → ... />
     // .replace(/([^<\s])\/>/g, '$1 />')
+  tpl.innerHTML = str
 
   const walker = document.createTreeWalker(tpl.content, SHOW_TEXT | SHOW_ELEMENT, null), split = [], replace = []
   while (walker.nextNode()) {
@@ -101,13 +104,18 @@ function createTpl(str) {
   return tpl
 }
 
+function field(id, fields) {
+  let vals = id.split('h:::').slice(1).map(id => fields[id])
+  return vals.length > 1 ? vals : vals[0]
+}
+
 // evaluate template element with fields
 function evaluate (node, fields) {
   const vx = []
 
-  // create element state observables
-  let props, children, tag
+  let props, children
 
+  // parse attrs from blueprint node
   if (node.attributes) {
     const attributes = node.attributes
 
@@ -120,13 +128,13 @@ function evaluate (node, fields) {
 
       // <a a=${b}
       if (/^h:::/.test(value)) {
-        value = fields[id(value)]
+        value = field(value, fields)
       }
       // <a ${a}=b
       if (/^h:::/.test(name)) {
         --i, --n
         node.removeAttribute(name)
-        name = fields[id(name)]
+        name = field(name, fields)
       }
       // <a ${{a:b}}, <a ...${{a:b}}
       if (object(name)) {
@@ -140,17 +148,20 @@ function evaluate (node, fields) {
           return () => props({...props(), [name]:null}, {[name]: null})
         })
       }
-      else if (name != null) props({...props(), [name]: value}, {[name]: value})
+      else if (name != null) {
+        props({...props(), [name]: value}, {[name]: value})
+      }
     }
   }
 
   if (node.childNodes && node.childNodes.length) {
     children = v(Array(node.childNodes.length))
 
-    node.childNodes.forEach((child, i) => {
+    ;[...node.childNodes].forEach((child, i) => {
+      child.remove()
       if (child.nodeType === TEXT) {
         if (/^h:::/.test(child.data)) {
-          child = fields[id(child.data)]
+          child = field(child.data, fields)
 
           if (observable(child) || (child && (child.forEach || child.item))) {
             (vx[vx.length] = v(child))
@@ -163,29 +174,37 @@ function evaluate (node, fields) {
         else children({[i]: child})
       }
       else {
-        children({[i]: evaluate(child, fields)})
+        child = evaluate(child, fields)
+        // h`<a><${b}/></a>` removes b from its own parent and inserts to a
+        // h`<${b}/>` keeps b in its own parent
+        children({[i]: node.nodeType === FRAGMENT ? child : child[_ref] || child})
       }
     })
   }
 
-  // <${tag}
+  // <${tag} - mount to target (off-current tree) or insert string
   if (node.tagName && node.tagName.toLowerCase() === PLACEHOLDER) {
-    tag = fields[+node.getAttribute('_')]
-    if (observable(tag)) {
-      (vx[vx.length] = v(tag))
-      (newNode => {
-        newNode = nodify(newNode)
-        if (newNode === node) return
-        node.replaceWith(node = newNode)
-        newNode.append(...node.childNodes)
-        Object.keys(node).map(name => setAttribute(newNode, name, newNode[name] = node[name]))
-      })
+    const tag = fields[+node.getAttribute('_')]
+
+    // clear up rendered tag props/children
+    if (tag.nodeType) {
+      if (tag[symbol.dispose]) ( tag[symbol.dispose](), delete tag[symbol.dispose] )
+      while (tag.childNodes.length) {
+        if (tag.firstChild[symbol.dispose]) (tag.firstChild[symbol.dispose](), delete tag.firstChild[symbol.dispose])
+        tag.firstChild.remove()
+      }
+      node = tag
+      // make parent insert placeholder - internal portals are transfered, external portals are kept unchanged
+      // h`<a><${b}/></a>` - b is placed to a
+      // h`<${b}/>` - b is kept in its own parent
+      ;(node[_ref] = document.createTextNode(''))[_ref] = node
     }
     else if (typeof tag === 'function') {
-      node.replaceWith(node = nodify(tag({ children: children ? children() : [], ...props() })))
+      v([props, children], ([props, children]) => node = replaceWith(node, tag({...props, children})))
+      return node
     }
     else {
-      node.replaceWith(node = nodify(tag))
+      node = nodify(tag)
     }
   }
 
@@ -196,12 +215,6 @@ function evaluate (node, fields) {
     return () => keys.map(name => (delete node[name], node.removeAttribute(name)))
   })
   if (children) {
-    // remove initial children - going to re-insert anyways
-    while(node.childNodes.length) {
-      let child = node.firstChild
-      if (child[symbol.dispose]) (child[symbol.dispose], delete child[symbol.dispose])
-      child.remove()
-    }
     const cur = []
     children((all, changed) => {
       const idx = Object.keys(changed)
@@ -209,14 +222,14 @@ function evaluate (node, fields) {
     })
   }
 
-  if (node[symbol.dispose]) throw 'Disposable node - what?'
+  if (node[symbol.dispose]) throw Error('Redefining defined node')
   node[symbol.dispose] = () => (
     vx.map(v => v[symbol.dispose]()),
     children && children[symbol.dispose](),
     props && props[symbol.dispose]()
   )
 
-  return node
+  return node[_ref] || node
 }
 
 function nodify(arg) {
@@ -242,19 +255,19 @@ function nodify(arg) {
 
 function appendChild(parent, el) {
   parent.appendChild(el)
-  if (el[_group]) {
-    el[_group].map(el => parent.appendChild(el))
-  }
+  if (el[_group]) el[_group].map(el => appendChild(parent, el))
   return el
 }
 
 function replaceWith(from, to) {
+  if (from === to) return to
+
   if (from[_group]) from[_group].map(el => el.remove())
+  if (from[symbol.dispose]) from[symbol.dispose]()
 
   if (to[_group]) {
     let frag = document.createDocumentFragment()
-    frag.appendChild(to)
-    to[_group].map(el => frag.appendChild(el))
+    appendChild(frag, to)
     from.replaceWith(frag)
   }
   else {
