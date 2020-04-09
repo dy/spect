@@ -110,34 +110,34 @@ export default function v(source, map=v=>v, unmap=v=>v) {
       })
     }
     // input
-    else if (input(source)) {
-      const el = source
+    // else if (input(source)) {
+    //   const el = source
 
-      const iget = el.type === 'checkbox' ? () => el.checked : () => el.value
+    //   const iget = el.type === 'checkbox' ? () => el.checked : () => el.value
 
-      const iset = {
-        text: value => el.value = (value == null ? '' : value),
-        checkbox: value => (el.checked = value, el.value = (value ? 'on' : ''), value ? el.setAttribute('checked', '') : el.removeAttribute('checked')),
-        'select-one': value => {
-          [...el.options].map(el => el.removeAttribute('selected'))
-          el.value = value
-          if (el.selectedOptions[0]) el.selectedOptions[0].setAttribute('selected', '')
-        }
-      }[el.type]
+    //   const iset = {
+    //     text: value => el.value = (value == null ? '' : value),
+    //     checkbox: value => (el.checked = value, el.value = (value ? 'on' : ''), value ? el.setAttribute('checked', '') : el.removeAttribute('checked')),
+    //     'select-one': value => {
+    //       [...el.options].map(el => el.removeAttribute('selected'))
+    //       el.value = value
+    //       if (el.selectedOptions[0]) el.selectedOptions[0].setAttribute('selected', '')
+    //     }
+    //   }[el.type]
 
-      set = v => (iset(unmap(v)), push(channel.current = iget()))
-      const update = e => set(iget())
+    //   set = v => (iset(unmap(v)), push(channel.current = iget()))
+    //   const update = e => set(iget())
 
-      // normalize initial value
-      update()
+    //   // normalize initial value
+    //   update()
 
-      el.addEventListener('change', update)
-      el.addEventListener('input', update)
-      subscribe(null, null, () => {
-        el.removeEventListener('change', update)
-        el.removeEventListener('input', update)
-      })
-    }
+    //   el.addEventListener('change', update)
+    //   el.addEventListener('input', update)
+    //   subscribe(null, null, () => {
+    //     el.removeEventListener('change', update)
+    //     el.removeEventListener('input', update)
+    //   })
+    // }
     // async iterator (stateful, initial undefined)
     else if (source && (source.next || source[Symbol.asyncIterator])) {
       set = () => {}

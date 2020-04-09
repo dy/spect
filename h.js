@@ -44,6 +44,8 @@ function createTpl(str) {
     .replace(/h:::_/g, m => PLACEHOLDER + c++)
     // <h:::_ → <h::: _=3
     .replace(/<h:::(\d+)/g, '<h::: _=$1')
+    // <> → <h:::>
+    .replace(/<(>|\s)/,'<h:::$1')
     // <abc .../> → <abc ...></abc>
     .replace(/<([\w:-]+)([^<>]*)\/>/g, '<$1$2></$1>')
     // <//>, </> → </h:::>
@@ -184,7 +186,7 @@ function evaluate (node, fields) {
 
   // <${tag} - mount to target (off-current tree) or insert string
   if (node.tagName && node.tagName.toLowerCase() === PLACEHOLDER) {
-    const tag = fields[+node.getAttribute('_')]
+    const tag = node.hasAttribute('_') ? fields[+node.getAttribute('_')] : document.createDocumentFragment()
 
     // clear up rendered tag props/children
     if (tag.nodeType) {
@@ -200,7 +202,7 @@ function evaluate (node, fields) {
       ;(node[_ref] = document.createTextNode(''))[_ref] = node
     }
     else if (typeof tag === 'function') {
-      v([props, children], ([props, children]) => node = replaceWith(node, tag({...props, children})))
+      v([props, children], ([props, children]) => node = replaceWith(node, nodify(tag({...props, children}))))
       return node
     }
     else {
