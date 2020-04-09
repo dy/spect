@@ -56,7 +56,7 @@ export default function v(source, map=v=>v, unmap=v=>v) {
     // deps
     // NOTE: array/object may have symbol.observable, which redefines default deps behavior
     else if (Array.isArray(source) || object(source)) {
-      let vals = new source.constructor, deps = {}, dchannel = c()
+      let vals = new source.constructor, deps = {}, dchannel = c(), teardown = []
 
       // prevent recursion
       if (!depsCache.has(source)) depsCache.set(source, fn)
@@ -69,15 +69,19 @@ export default function v(source, map=v=>v, unmap=v=>v) {
         }
         // redefine source property to observe it
         else {
-          dep = deps[name] = v(() => vals[name] = source[name])
-          let orig = Object.getOwnPropertyDescriptor(source, name)
-          Object.defineProperty(source, name, {
-            enumerable: true,
-            get: dep,
-            set: orig && orig.set ? v => (orig.set.call(source, v), dep(orig.get())) : v => dep(v)
-          })
+          if (depsCache.has(source)) dep = deps[name] = depsCache.get(source)[name]
+          if (!dep) {
+            dep = deps[name] = v(() => vals[name] = source[name])
+            let orig = Object.getOwnPropertyDescriptor(source, name)
+            Object.defineProperty(source, name, {
+              get: dep,
+              set: orig && orig.set ? v => (orig.set.call(source, v), dep(orig.get())) : v => dep(v),
+              configurable: true,
+              enumerable: true,
+            })
+          }
         }
-        dep(val => {
+        teardown[teardown.length] = dep(val => {
           vals[name] = val
           // avoid self-recursion
           if (fn !== dep) dchannel(vals, {[name]: val})
@@ -95,9 +99,14 @@ export default function v(source, map=v=>v, unmap=v=>v) {
 
       set = v => dchannel(Object.assign(vals, unmap(v)), unmap(v))
       subscribe(null, null, () => {
-        depsCache.delete(source)
         dchannel.close()
-        for (let name in deps) deps[name][symbol.dispose]()
+        teardown.map(teardown => teardown())
+        teardown.length = 0
+        for (let name in deps) if (!deps[name][symbol.observable]().observers.length) {
+          console.log(name)
+          depsCache.delete(deps[name])
+          deps[name][symbol.dispose]()
+        }
       })
     }
     // input
