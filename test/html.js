@@ -165,13 +165,13 @@ t('html: simple hydrate', async t => {
   t.is(el.outerHTML, `<a>foo <bar><baz class="qux"></baz></bar></a>`)
 })
 
-t.skip('html: function renders external component', async t => {
+t('html: function renders external component', async t => {
   let el = h`<a>foo <${bar}/></a><b/>`
   function bar () {
     return h`<bar/><baz/>`
   }
-  t.is(el[0].outerHTML, `<a>foo <bar></bar><baz></baz></a>`)
-  t.is(el[1].outerHTML, `<b></b>`)
+  t.is(el.outerHTML, `<><a>foo <bar></bar><baz></baz></a><b></b></>`)
+  // t.is(el[1].outerHTML, `<b></b>`)
 })
 t.skip('html: element should be observable', async t => {
   // NOTE: Observable support is dropped - no much use
@@ -389,7 +389,7 @@ t('html: does not duplicate classes for container', t => {
   t.is(el.outerHTML, '<div class="x"></div>')
 })
 
-t.skip('html: component static props', async t => {
+t('html: component static props', async t => {
   let log = []
   let el = h`<div><${C} id="x" class="y z"/></>`
 
@@ -422,7 +422,7 @@ t('html: falsey prev attrs', t => {
   t.is(el.hidden, false)
 })
 
-t.skip('html: initial content should be morphed/hydrated', t => {
+t('html: initial content should be morphed/hydrated', t => {
   let el = document.createElement('div')
   el.innerHTML = '<foo></foo><bar></bar>'
   let foo = el.firstChild
@@ -440,7 +440,7 @@ t.skip('html: initial content should be morphed/hydrated', t => {
 
   // t.notEqual(el.firstChild, foo)
   // t.equal(el.firstChild, foo1)
-  t.equal(el.firstChild, foo)
+  t.equal(el.firstChild, foo1)
   // t.equal(el.lastChild, bar)
 })
 
@@ -691,3 +691,7 @@ t('html: caching attr cases', async t => {
   t.is(a.outerHTML, `<a x="1" z="3" y="2" w="4" _="5">a6b7c</a>`)
 })
 
+t('html: a#b.c', async t => {
+  let el = h`<a#b><c.d/></a><a/>`
+  t.is(el.outerHTML, `<><a id="b"><c class="d"></c></a><a></a></>`)
+})

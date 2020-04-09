@@ -305,11 +305,11 @@ const foo = h`<baz>${ text }</baz>`
 // create multiple elements
 const [foo1, foo2] = h`<foo>1</foo><foo>2</foo>`
 
-// create document fragment
-const fooFrag = h`<><foo/></>`
+// document fragment
+const fooBarFrag = h`<foo/><bar/>`
 
 // hydrate / render
-const foo = h`<${foo} ...${foo}>${ foo.childNodes }</>`
+h`<${foo} ...${foo}>${ foo.childNodes }</>`
 ```
 
 #### Example

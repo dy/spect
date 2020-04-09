@@ -52,6 +52,8 @@ function createTpl(str) {
     .replace(/<\/+>/, '</h:::>')
     // .../> → ... />
     // .replace(/([^<\s])\/>/g, '$1 />')
+    // <a#b.c → <a #b.c
+    .replace(/(<[\w:-]+)([#\.][^<>]*>)/g, '$1 $2')
   tpl.innerHTML = str
 
   const walker = document.createTreeWalker(tpl.content, SHOW_TEXT | SHOW_ELEMENT, null), split = [], replace = []
@@ -73,21 +75,20 @@ function createTpl(str) {
           node.removeAttribute(name), --i, --n;
           node.setAttribute(name.slice(3), value)
         }
+        // <a #b.c
+        else if (/#|\./.test(name)) {
+          node.removeAttribute(name), --i, --n;
+          let [beforeId, afterId = ''] = name.split('#')
+          let beforeClx = beforeId.split('.')
+          name = beforeClx.shift()
+          let afterClx = afterId.split('.')
+          let id = afterClx.shift()
+          let clx = [...beforeClx, ...afterClx]
+          if (!node.id && id) node.id = id
+          if (clx.length) clx.map(cls => node.classList.add(cls))
+        }
       }
 
-      if (/#|\./.test(node.tagName)) {
-        let tag = node.localName // preserves case sensitivity
-        let [beforeId, afterId = ''] = tag.split('#')
-        let beforeClx = beforeId.split('.')
-        tag = beforeClx.shift()
-        let afterClx = afterId.split('.')
-        let id = afterClx.shift()
-        let clx = [...beforeClx, ...afterClx]
-        if (!node.id && id) node.id = id
-        if (clx.length) clx.map(cls => node.classList.add(cls))
-        tag = document.createElement(tag)
-        replace.push(node, tag)
-      }
     }
   }
 

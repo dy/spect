@@ -517,8 +517,8 @@ t.todo('$: comma-separated simple selectors are still simple')
 t('$: simple selector cases', async t => {
   let root = document.body.appendChild(h`<div.root/>`)
 
-  let a = $(root, 'a#b c.d')
-  root.append(...h`<a#b><c/><c.d/></a><a><c.d/></a>`)
+  let a = $(root, 'a#b c.d'), ab
+  root.append(ab = h`<a#b><c/><c.d/></a><a><c.d/></a>`)
   await tick()
   t.is([...a], [root.childNodes[0].childNodes[1]])
 
