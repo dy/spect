@@ -185,7 +185,7 @@ t('v: mapper should be called once on group deps', async t => {
   t.is(log, [[0, 1]])
 })
 t('v: stores arrays with observables', async t => {
-  let a = v([])
+  let a = v(() => [])
   t.is(a(), [])
   a([1])
   t.is(a(), [1])
@@ -286,6 +286,52 @@ t('v: deep propagate internal props updates', async t => {
 
   a(1)
   t.is(log, [[1]])
+})
+t('v: push multiple values', async t => {
+  let x = v()
+  let log = []
+  x((a,b) => log.push(a, b))
+  t.is(log, [])
+  x(1,2,3)
+  t.is(log, [1,2])
+  t.is(x(), 1)
+})
+t('v: diff object', async t => {
+  let x = v({x: 1, y: 2})
+  let log = []
+  x((vals, diff) => log.push(diff))
+  t.is(log, [{x:1, y:2}])
+  x({x: 2})
+  t.is(x(), {x:2, y:2})
+  t.is(log.slice(-1), [{x: 2}])
+})
+t('v: diff array', async t => {
+  let x = v([1, 2])
+  let log = []
+  x((vals, diff) => log.push(diff))
+  t.is(log, [[1,2]])
+  x({1:1})
+  t.is(x(), [1,1])
+  t.is(log.slice(-1), [{1:1}])
+})
+t('v: repeated init', async t => {
+  let o = {x:1}, log = []
+  let o1 = v(o, vals => log.push(vals))
+  let o2 = v(o, vals => log.push(vals))
+  t.is(log, [{x:1}, {x:1}])
+  log = []
+  o.x = 2
+  t.is(log, [{x:2}, {x:2}])
+
+  log = []
+  o2[Symbol.dispose]()
+  o.x = 3
+  t.is(log, [{x: 3}])
+
+  log = []
+  o1[Symbol.dispose]()
+  o.x = 4
+  t.is(log, [])
 })
 
 // from
@@ -395,7 +441,6 @@ t('v: expose deps observables', async t => {
   t.is(c.b(), 1)
   t.is(c(), {a:0, b:1})
 })
-
 
 // fx
 t('v: fx core', async t => {

@@ -7,7 +7,7 @@ const SPECT_CLASS = '👁'
 const CLASS_OFFSET = 0x1F700
 let count = 0
 
-const _spect = Symbol.for('@spect')
+const _spect = Symbol.for('@spect.set')
 
 const ids = {}, classes = {}, tags = {}, names = {}, animations = {}
 
@@ -73,13 +73,13 @@ class $ extends Array {
     ;(scope || document).querySelectorAll(selector).forEach(el => this.add(el))
 
     // if last selector part is simple (id|name|class|tag), followed by classes - index that
-    const rtokens = /(?:#([\w-]+)|\[\s*name=['"]?([\w-]+)['"]?\s*\]|\.([\w-]+)|(\w+))(\[[^\]]+\]|\.[\w-]+)*$/
+    const rtokens = /(?:#([\w:-]+)|\[\s*name=['"]?([\w:-]+)['"]?\s*\]|\.([\w:-]+)|([\*\w:-]+))(\[[^\]]+\]|\.[\w:-]+)*$/
 
     this._selector = selector.split(/\s*,\s*/).map(selector => {
       selector = new String(selector)
 
       const match = selector.match(rtokens)
-      selector.filter = selector != '*' && selector
+      selector.filter = selector
       if (!match) return selector
 
       let [str, id, name, cls, tag, filter] = match
@@ -238,7 +238,7 @@ class $ extends Array {
     return {
       subscribe(){
         const unsubscribe = subscribe(...arguments)
-        push(set, observers.slice(-1))
+        push.call(observers.slice(-1), set)
         return unsubscribe
       }
     }

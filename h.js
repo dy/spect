@@ -1,129 +1,238 @@
 import v, { observable, primitive, object, input } from './v.js'
-import htm from 'xhtm/index.js'
 import * as symbol from './symbols.js'
 
-const _group = Symbol.for('@spect.group'),
-      _ptr = Symbol.for('@spect.ptr'),
-      _props = Symbol.for('@spect.props'),
-      _children = Symbol.for('@spect.children')
+const _group = Symbol.for('@spect.group')
+const _ref = Symbol.for('@spect.ref')
 
-const TEXT = 3, ELEMENT = 1
+const TEXT = 3, ELEMENT = 1, COMMENT = 8, FRAGMENT = 11, SHOW_ELEMENT = 1, SHOW_TEXT = 4
 
+const tplCache = {}
 
-export function html (...args) {
-  let result = htm.apply(h, args)
-  if (!result) return document.createTextNode('')
-  let container = []
-  container.childNodes = container
-  container.appendChild = el => container.push(el)
+const PLACEHOLDER = 'h:::'
+const id = str => +str.slice(4)
 
-  render(Array.isArray(result) ? result : [result], container)
+export default function h (statics, ...fields) {
+  // hyperscript - turn to tpl literal call
+  if (!statics.raw) {
+    // h(tag, ...children)
+    if (!fields.length || !object(fields[0]) && fields[0] != null) fields.unshift(null)
+    const count = fields.length
+    if (!primitive(statics)) fields.unshift(statics)
 
-  return container.length > 1 ? container : container[0]
+    statics = [
+      ...(primitive(statics) ? [`<${statics} ...`] : ['<', ' ...']),
+      ...(count < 2 ? [`/>`] : ['>', ...Array(count - 2).fill(''), `</>`])
+    ]
+  }
+
+  const key = statics.join(PLACEHOLDER + '_')
+  const tpl = tplCache[key] || (tplCache[key] = createTpl(key))
+
+  // return document fragment because 1-st level observables may update themselves
+  let frag = tpl.content.cloneNode(true)
+  evaluate(frag, fields)
+  return frag.childNodes.length === 1 ? frag.firstChild[_ref] || frag.firstChild : frag
 }
 
-export default function h(tag, ...children) {
-  // h`...content`
-  if (tag.raw) return html(...arguments)
+function createTpl(str) {
+  let c = 0
+  const tpl = document.createElement('template')
 
-  // h(tag, child1, child2)
-  const props = object(children[0]) || children[0] == null ? children.shift() || {} : {}
+  // ref: https://github.com/developit/htm/blob/26bdff2306dd77dcf82a2d788a8d3e689968b0da/src/index.mjs#L36-L40
+  str = str
+    // <a h:::_ → <a h:::1
+    .replace(/h:::_/g, m => PLACEHOLDER + c++)
+    // <h:::_ → <h::: _=3
+    .replace(/<h:::(\d+)/g, '<h::: _=$1')
+    // <> → <h:::>
+    .replace(/<(>|\s)/,'<h:::$1')
+    // <abc .../> → <abc ...></abc>
+    .replace(/<([\w:-]+)([^<>]*)\/>/g, '<$1$2></$1>')
+    // <//>, </> → </h:::>
+    .replace(/<\/+>/, '</h:::>')
+    // .../> → ... />
+    // .replace(/([^<\s])\/>/g, '$1 />')
+    // <a#b.c → <a #b.c
+    .replace(/(<[\w:-]+)([#\.][^<>]*>)/g, '$1 $2')
+  tpl.innerHTML = str
 
-  let el
-
-  // element
-  if (typeof tag === 'string') {
-    if (!tag) el = document.createDocumentFragment()
-    else {
-      let [beforeId, afterId = ''] = tag.split('#')
-      let beforeClx = beforeId.split('.')
-      tag = beforeClx.shift()
-      let afterClx = afterId.split('.')
-      let id = afterClx.shift()
-      let clx = [...beforeClx, ...afterClx]
-      if (!props.id && id) props.id = id
-      if (!props.class && clx.length) props.class = clx
-      el = document.createElement(tag)
+  const walker = document.createTreeWalker(tpl.content, SHOW_TEXT | SHOW_ELEMENT, null), split = [], replace = []
+  while (walker.nextNode()) {
+    const node = walker.currentNode
+    if (node.nodeType === TEXT) {
+      let curr = [], last = 0
+      node.data.replace(/h:::\d+/g, (m, idx, str) => {
+        if (idx && idx !== last) curr.push(idx)
+        if (idx + m.length < str.length) curr.push(last = idx + m.length)
+      })
+      if (curr.length) split.push(node, curr)
     }
-  }
-  else if (typeof tag === 'function') {
-    el = nodify(tag(props))
-  }
-  else el = nodify(tag)
-
-  // element
-  if (el.nodeType === ELEMENT) {
-    // props (dynamic)
-    el[_props] = v(() => props)
-    el[_props]((props) => {
-      let vprop
-      for (let name in props) {
-        let value = props[name]
-        if (observable(value)) {
-          vprop = v(value, value => (
-            el[name] = value,
-            setAttribute(el, name, value)
-          ))
+    else {
+      for (let i = 0, n = node.attributes.length; i < n; i++) {
+        let {name, value} = node.attributes[i]
+        // <a ...${x} → <a ${x}
+        if (/^\.\.\./.test(name)) {
+          node.removeAttribute(name), --i, --n;
+          node.setAttribute(name.slice(3), value)
         }
-        else if (Array.isArray(value) || object(value)) {
-          el[name] = value
-          vprop = v(value, value => setAttribute(el, name, value))
-        }
-        else {
-          el[name] = value
-          setAttribute(el, name, value)
+        // <a #b.c
+        else if (/#|\./.test(name)) {
+          node.removeAttribute(name), --i, --n;
+          let [beforeId, afterId = ''] = name.split('#')
+          let beforeClx = beforeId.split('.')
+          name = beforeClx.shift()
+          let afterClx = afterId.split('.')
+          let id = afterClx.shift()
+          let clx = [...beforeClx, ...afterClx]
+          if (!node.id && id) node.id = id
+          if (clx.length) clx.map(cls => node.classList.add(cls))
         }
       }
-      return () => vprop && vprop[symbol.dispose]()
-    })
 
-    // children
-    if (children.length) render(children, el)
-  }
-  // text
-  else if (el.nodeType === TEXT) {}
-  // fragment
-  else {
-    if (children.length) render(children, el)
+    }
   }
 
-  return el
+  while (replace.length) {
+    let from = replace.shift(), to = replace.shift()
+    replaceWith(from, to)
+    for (let {name, value} of from.attributes) to.setAttribute(name, value)
+    to.append(...from.childNodes)
+  }
+
+  for (let i = 0; i < split.length; i+= 2) {
+    let node = split[i], idx = split[i + 1], prev = 0, l = node.wholeText.length
+    idx.map(id => (node = node.splitText(id - prev), prev = id))
+  }
+
+  return tpl
 }
 
-export function render(children, el) {
-  // clean up prev observers
-  if (el[_children]) el[_children][symbol.dispose]()
-  el[_children] = v(children.map((child) => {
-    // ignore input el
-    if (input(child)) {
-      let el = v()
-      el(child)
-      return el
+function field(id, fields) {
+  let vals = id.split('h:::').slice(1).map(id => fields[id])
+  return vals.length > 1 ? vals : vals[0]
+}
+
+// evaluate template element with fields
+function evaluate (node, fields) {
+  const vx = []
+
+  let props, children
+
+  // parse attrs from blueprint node
+  if (node.attributes) {
+    const attributes = node.attributes
+
+    props = v(() => ({}))
+
+    // recurse loop does not iterate over newly inserted nodes, unlike treeWalker/nodeIterator
+    for (let i = 0, n = attributes.length; i < n; ++i) {
+      let {name, value} = attributes[i];
+      if (/^_/.test(name)) continue
+
+      // <a a=${b}
+      if (/^h:::/.test(value)) {
+        value = field(value, fields)
+      }
+      // <a ${a}=b
+      if (/^h:::/.test(name)) {
+        --i, --n
+        node.removeAttribute(name)
+        name = field(name, fields)
+      }
+      // <a ${{a:b}}, <a ...${{a:b}}
+      if (object(name)) {
+        (vx[vx.length] = v(name))
+        ((values, diff) => props({...props(), ...values}, diff))
+      }
+      else if (observable(name) || observable(value)) {
+        (vx[vx.length] = v([name, value]))(([name, value]) => {
+          props()[name] = value
+          props(props(), {[name]: value})
+          return () => props({...props(), [name]:null}, {[name]: null})
+        })
+      }
+      else if (name != null) {
+        props({...props(), [name]: value}, {[name]: value})
+      }
     }
-    return child
-  }))
-
-  el[_ptr] = 0
-
-  const cur = []
-  el[_children](children => {
-    children.map((child, i) => {
-      if (cur[i] === child) return
-      cur[i] = !cur[i] ? alloc(el, nodify(child)) : replaceWith(cur[i], nodify(child))
-      // if sync init did not hit - create placeholder, no hydration possible
-      if (!cur[i]) cur[i] = alloc(el, nodify(''))
-
-      // clear placeholder content
-      if (cur[i][_group]) cur[i].textContent = ''
-    })
-  })
-
-  // trim unused nodes
-  while(el.childNodes[el[_ptr]]) {
-    let child = el.childNodes[el[_ptr]]
-    if (child[_props]) (child[_props][symbol.dispose](), delete child[_props])
-    child.remove()
   }
+
+  if (node.childNodes && node.childNodes.length) {
+    children = v(Array(node.childNodes.length))
+
+    ;[...node.childNodes].forEach((child, i) => {
+      child.remove()
+      if (child.nodeType === TEXT) {
+        if (/^h:::/.test(child.data)) {
+          child = field(child.data, fields)
+
+          if (observable(child) || (child && (child.forEach || child.item))) {
+            (vx[vx.length] = v(child))
+            (child => children({[i]: nodify(child)}))
+          }
+          else {
+            children({[i]: nodify(child)})
+          }
+        }
+        else children({[i]: child})
+      }
+      else {
+        child = evaluate(child, fields)
+        // h`<a><${b}/></a>` removes b from its own parent and inserts to a
+        // h`<${b}/>` keeps b in its own parent
+        children({[i]: node.nodeType === FRAGMENT ? child : child[_ref] || child})
+      }
+    })
+  }
+
+  // <${tag} - mount to target (off-current tree) or insert string
+  if (node.tagName && node.tagName.toLowerCase() === PLACEHOLDER) {
+    const tag = node.hasAttribute('_') ? fields[+node.getAttribute('_')] : document.createDocumentFragment()
+
+    // clear up rendered tag props/children
+    if (tag.nodeType) {
+      if (tag[symbol.dispose]) ( tag[symbol.dispose](), delete tag[symbol.dispose] )
+      while (tag.childNodes.length) {
+        if (tag.firstChild[symbol.dispose]) (tag.firstChild[symbol.dispose](), delete tag.firstChild[symbol.dispose])
+        tag.firstChild.remove()
+      }
+      node = tag
+      // make parent insert placeholder - internal portals are transfered, external portals are kept unchanged
+      // h`<a><${b}/></a>` - b is placed to a
+      // h`<${b}/>` - b is kept in its own parent
+      ;(node[_ref] = document.createTextNode(''))[_ref] = node
+    }
+    else if (typeof tag === 'function') {
+      v([props, children], ([props, children]) => node = replaceWith(node, nodify(tag({...props, children}))))
+      return node
+    }
+    else {
+      node = nodify(tag)
+    }
+  }
+
+  // deploy observables
+  if (props) props((all, changed) => {
+    let keys = Object.keys(changed)
+    keys.map(name => setAttribute(node, name, node[name] = changed[name]))
+    return () => keys.map(name => (delete node[name], node.removeAttribute(name)))
+  })
+  if (children) {
+    const cur = []
+    children((all, changed) => {
+      const idx = Object.keys(changed)
+      idx.map(id => cur[id] = !cur[id] ? appendChild(node, changed[id]) : replaceWith(cur[id], changed[id]))
+    })
+  }
+
+  if (node[symbol.dispose]) throw Error('Redefining defined node')
+  node[symbol.dispose] = () => (
+    vx.map(v => v[symbol.dispose]()),
+    children && children[symbol.dispose](),
+    props && props[symbol.dispose]()
+  )
+
+  return node[_ref] || node
 }
 
 function nodify(arg) {
@@ -133,7 +242,6 @@ function nodify(arg) {
   if (primitive(arg) || arg instanceof Date || arg instanceof RegExp) return document.createTextNode(arg)
 
   // can be node/fragment
-  // reset pointer - the element is considered re-allocatable
   if (arg.nodeType) return arg
 
   // can be an array / array-like
@@ -141,107 +249,28 @@ function nodify(arg) {
     let marker = document.createTextNode('')
     marker[_group] = [...arg].flat().map(arg => nodify(arg))
     // create placeholder content (will be ignored by ops)
-    marker.textContent = marker[_group].map(n => n.textContent).join('')
+    // marker.textContent = marker[_group].map(n => n.textContent).join('')
     return marker
   }
 
   return arg
 }
 
-// locate/allocate node[s] in element
-function alloc(parent, el) {
-  if (!parent) return el
-
-  // track passed children
-  if (!parent[_ptr]) parent[_ptr] = 0
-
-  // look up for good candidate
-  let nextNode = parent.childNodes[parent[_ptr]], match
-
-  // if no available nodes to locate - append new nodes
-  if (!nextNode) {
-    appendChild(parent, el)
-    return el
-  }
-
-  // FIXME: locate groups
-  if (el[_group]) {
-    // let nodes = []
-    // for (let i = 0; i < el[_group].length; i++ ) nodes.push(alloc(parent, el[_group][i]))
-    // return nodes
-    insertBefore(parent, el, nextNode)
-    return el
-  }
-
-  // find matching node somewhere in the tree
-  for (let i = parent[_ptr]; i < parent.childNodes.length; i++) {
-    const node = parent.childNodes[i]
-    // same node
-    if (
-      node === el
-      || (node.isSameNode && node.isSameNode(el))
-
-      || (node.tagName === el.tagName && (
-        // same-key node
-        (node.id && (node.id === el.id))
-
-        // same-content text node
-        || (node.nodeType === TEXT && node.nodeValue === el.nodeValue && !node[_group])
-
-        // just blank-ish tag matching by signature and no need morphing
-        || (node.nodeType === ELEMENT && !node.id && !el.id && !node.name && !node.childNodes.length)
-      ))
-    ) {
-      match = node
-      // migrate props (triggers fx that mutates them)
-      if (el !== match && el[_props] && match[_props]) {
-        match[_props](el[_props]())
-        el[_props][symbol.dispose]()
-        delete el[_props]
-      }
-      render([...el.childNodes], match)
-      break
-    }
-    else if (node[_group]) {
-      i += node[_group].length
-    }
-  }
-
-  // if there is match in the tree - insert it at the curr pointer
-  if (match) {
-    if (match !== nextNode) insertBefore(parent, match, nextNode)
-    else parent[_ptr]++
-    return match
-  }
-
-  insertBefore(parent, el, nextNode)
+function appendChild(parent, el) {
+  parent.appendChild(el)
+  if (el[_group]) el[_group].map(el => appendChild(parent, el))
   return el
 }
 
-// group-aware manipulations
-function appendChild(parent, el) {
-  parent.appendChild(el)
-  if (el[_group]) {
-    el[_group].map(el => parent.appendChild(el))
-  }
-  parent[_ptr] += 1 + (el[_group] ? el[_group].length : 0)
-}
-function insertBefore(parent, el, before) {
-  parent.insertBefore(el, before)
-  if (el[_group]) {
-    el[_group].map(item => parent.insertBefore(item, el))
-    // swap group pointer to the beginning
-    parent.insertBefore(el, el[_group][el[_group].length - 1])
-  }
-  parent[_ptr] += 1 + (el[_group] ? el[_group].length : 0)
-}
 function replaceWith(from, to) {
+  if (from === to) return to
+
   if (from[_group]) from[_group].map(el => el.remove())
+  if (from[symbol.dispose]) from[symbol.dispose]()
 
   if (to[_group]) {
     let frag = document.createDocumentFragment()
-    frag.appendChild(to)
-    to[_group].map(el => frag.appendChild(el))
+    appendChild(frag, to)
     from.replaceWith(frag)
   }
   else {
@@ -254,9 +283,10 @@ function replaceWith(from, to) {
 function getAttribute (el, name, value) { return (value = el.getAttribute(name)) === '' ? true : value }
 
 function setAttribute (el, name, value) {
-  if (value === false || value == null) {
-    el.removeAttribute(name)
-  }
+  // test nodes etc
+  if (!el || !el.setAttribute) return
+
+  if (value === false || value == null) el.removeAttribute(name)
   // class=[a, b, ...c] - possib observables
   else if (Array.isArray(value)) {
     el.setAttribute(name, value.filter(Boolean).join(' '))

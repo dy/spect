@@ -9,7 +9,7 @@
   <a href="https://travis-ci.org/spectjs/spect"><img src="https://travis-ci.org/spectjs/spect.svg?branch=master"/></a>
   <a href="https://bundlephobia.com/result?p=spect"><img alt="npm bundle size" src="https://img.shields.io/bundlephobia/minzip/spect?label=size"></a>
   <a href="https://npmjs.org/package/spect"><img alt="npm" src="https://img.shields.io/npm/v/spect"></a>
-  <img src="https://img.shields.io/badge/stability-unstable-yellowgreen"/>
+  <img src="https://img.shields.io/badge/stability-stable-green"/>
 </p>
 
 <p align="center"><img src="/preview.png" width="566"/></p>
@@ -211,7 +211,7 @@ Pending...
 <details><summary><strong>$ − selector aspect</strong></summary>
 
 > elements = $( scope? , selector? , callback? )<br/>
-> elements = $`.selector`<br/>
+> elements = $\`.selector\`<br/>
 
 Creates live collection of elements matching the `selector` in `scope`, firing `callback` for each element in the set.
 
@@ -305,17 +305,17 @@ const foo = h`<baz>${ text }</baz>`
 // create multiple elements
 const [foo1, foo2] = h`<foo>1</foo><foo>2</foo>`
 
-// create document fragment
-const fooFrag = h`<><foo/></>`
+// document fragment
+const fooBarFrag = h`<foo/><bar/>`
 
 // hydrate / render
-const foo = h`<${foo} ...${foo}>${ foo.childNodes }</>`
+h`<${foo} ...${foo}>${ foo.childNodes }</>`
 ```
 
 #### Example
 
 ```js
-import { v, h } from 'spect'
+import { $, v, h } from 'spect'
 
 $('#clock', el => {
   let date = v(new Date())
@@ -324,8 +324,8 @@ $('#clock', el => {
 })
 ```
 
-_**h**_ is direct remake on [hyperscript](https://ghub.io/hyperscript) and [htm](https://ghub.io/htm).<br/>
-
+_**h**_ is direct remake on [hyperscript](https://ghub.io/hyperscript), [htm](https://ghub.io/htm) and [htl](https://ghub.io/htl).<br/>
+Its design is based on R&D of [incremental-dom](https://ghub.io/incremental-dom), [lit-html](https://ghub.io/lit-html), [nanomorph](https://ghub.io/nanomorph) and others.
 
 <br/>
 
@@ -335,7 +335,7 @@ _**h**_ is direct remake on [hyperscript](https://ghub.io/hyperscript) and [htm]
 <details><summary><strong>v − value observable</strong></summary>
 
 > value = v( source? , map? , inmap? )<br/>
-> value = v`...content`<br/>
+> value = v\`...content\`<br/>
 
 Universal observable − creates a getter/setter function with [observable](https://ghub.io/observable) interface from any `source`:
 
@@ -364,7 +364,7 @@ v1(1)
 v1(value => {
   // value === 1
   return () => {
-    // ...teardown
+    // teardown
   }
 })
 
@@ -382,7 +382,7 @@ v([v1, v2, v3])(([v1, v2, v3]) => {
   console.log(v1, v2, v3)
   return () => console.log('teardown', v1, v2, v3)
 })
-// 1, 2, 3
+// ... 1, 2, 3
 
 // live string
 let vsum = v`${v1} + ${v2} = ${v3}`()
@@ -393,13 +393,15 @@ let v4 = v(h`<input#id value=1/>`)
 v4(input => console.log(input.value))
 
 // from object
-let item = { done: false }
+let item = { done: false, text: '' }
 let v5 = v(item)
 v5.done() // false
 
-// set property, notify
+// log diff
+v5((item, diff) => console.log(item, diff))
 item.done = true
 v5().done // false
+// ... { done: true, text: '' }, { done: true }
 
 // initialize value
 let v6 = v(() => v5)
