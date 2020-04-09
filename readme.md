@@ -9,7 +9,7 @@
   <a href="https://travis-ci.org/spectjs/spect"><img src="https://travis-ci.org/spectjs/spect.svg?branch=master"/></a>
   <a href="https://bundlephobia.com/result?p=spect"><img alt="npm bundle size" src="https://img.shields.io/bundlephobia/minzip/spect?label=size"></a>
   <a href="https://npmjs.org/package/spect"><img alt="npm" src="https://img.shields.io/npm/v/spect"></a>
-  <img src="https://img.shields.io/badge/stability-unstable-yellowgreen"/>
+  <img src="https://img.shields.io/badge/stability-stable-green"/>
 </p>
 
 <p align="center"><img src="/preview.png" width="566"/></p>
