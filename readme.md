@@ -35,8 +35,7 @@
 </script>
 -->
 
-
-_Spect_ is radical minimalistic [_aspect-oriented_](https://en.wikipedia.org/wiki/Aspect-oriented_programming) FRP library enabling super-compact UI code. _Spect_ is a successor of [_observable_](https://www.npmjs.com/package/observable), inspired by [_react hooks_](https://reactjs.org/docs/hooks-intro.html) and [_jquery_](https://ghub.io/jquery). It is compatible with [_standard observable_](https://github.com/tc39/proposal-observable) and [_observ_](https://ghub.io/observ)-[_*_](https://ghub.io/mutant).
+_Spect_ is radical minimalistic [_aspect-oriented_](https://en.wikipedia.org/wiki/Aspect-oriented_programming) FRP library − successor of [_observable_](https://www.npmjs.com/package/observable), [_hyperscript_](https://ghub.io/hyperscript) and [_jquery_](https://ghub.io/jquery), enabling super-compact UI code and highly efficient DOM manipulations with conventional API.
 
 ## Principles
 
@@ -208,7 +207,7 @@ Pending...
 
 ## API
 
-<details><summary><strong>$ − selector aspect</strong></summary>
+<details><summary><strong>$ − selector / aspect</strong></summary>
 
 > elements = $( scope? , selector? , callback? )<br/>
 > elements = $\`.selector\`<br/>
@@ -276,7 +275,7 @@ _**$**_ uses technique from [fast-on-load](https://ghub.io/fast-on-load), [selec
 </details>
 
 
-<details><summary><strong>h − hyperscript</strong></summary>
+<details><summary><strong>h − hyperscript / html</strong></summary>
 
 > el = h( tag , props? , ...children )<br/>
 > el = h\`...content\`<br/>
@@ -332,7 +331,7 @@ Its design is based on R&D of [incremental-dom](https://ghub.io/incremental-dom)
 </details>
 
 
-<details><summary><strong>v − value observable</strong></summary>
+<details><summary><strong>v − value / observable</strong></summary>
 
 > value = v( source? , map? , inmap? )<br/>
 > value = v\`...content\`<br/>
