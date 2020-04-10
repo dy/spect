@@ -207,16 +207,16 @@ Pending...
 
 ## API
 
-<details><summary><strong>$ − selector / aspect</strong></summary>
+<details><summary><strong>$ − selector</strong></summary>
 
-> elements = $( scope? , selector? , callback? )<br/>
+> elements = $( scope? , selector? , fn? )<br/>
 > elements = $\`.selector\`<br/>
 
-Creates live collection of elements matching the `selector` in `scope`, firing `callback` for each element in the set.
+Collection of elements matching the `selector` in `scope`, triggering `fn` for each new matched element.
 
 * `selector` is a valid CSS selector.
-* `scope` is optional _HTMLElement_ or a list of elements to narrow down observation.
-* `callback` is a function with `(element) => teardown?` signature.
+* `scope` is optional _HTMLElement_ or a list of elements to narrow down selector scope.
+* `fn` is a function with `(element) => teardown?` signature.
 * `elements` is live array with matched elements, implements [HTMLCollection](https://developer.mozilla.org/en-US/docs/Web/API/HTMLCollection), [WeakSet](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/WeakSet) and [Array](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array).
 
 ```js
@@ -227,7 +227,7 @@ let $foo = $('.foo', el => {
   return () => console.log('inactive')
 })
 
-document.body.append(...h`<div.foo/><div#bar/>`)
+document.body.append(h`<div.foo/><div#bar/>`)
 
 // ... "active"
 
@@ -268,14 +268,15 @@ const $timer = $('.timer', el => {
 })
 ```
 
-_**$**_ uses technique from [fast-on-load](https://ghub.io/fast-on-load), [selector-set](https://github.com/josh/selector-set) and [insertionQuery](https://github.com/naugtur/insertionQuery) for optimal performance. Inspired by _jQuery_, [_selector-observer_](https://github.com/josh/selector-observer), [reuse](https://ghub.io/reuse) and _aspect-oriended-programming_.
+**Technique**: class selectors from [fast-on-load](https://ghub.io/fast-on-load), feature-based selectors from [selector-set](https://github.com/josh/selector-set), animation-based selectors from [insertionQuery](https://github.com/naugtur/insertionQuery).<br/>
+**R&D**: _jQuery_, [_selector-observer_](https://github.com/josh/selector-observer), [reuse](https://ghub.io/reuse) and _aspect-oriended-programming_.
 
 <br/>
 
 </details>
 
 
-<details><summary><strong>h − hyperscript / html</strong></summary>
+<details><summary><strong>h − hyperscript</strong></summary>
 
 > el = h( tag , props? , ...children )<br/>
 > el = h\`...content\`<br/>
@@ -323,15 +324,15 @@ $('#clock', el => {
 })
 ```
 
-_**h**_ is direct remake on [hyperscript](https://ghub.io/hyperscript), [htm](https://ghub.io/htm) and [htl](https://ghub.io/htl).<br/>
-Its design is based on R&D of [incremental-dom](https://ghub.io/incremental-dom), [lit-html](https://ghub.io/lit-html), [nanomorph](https://ghub.io/nanomorph) and others.
+**Technique**: cached `<template>`s from [lit-html](https://ghub.io/lit-html), parsing from [htm@1](https://ghub.io/htm), evaluating from [htl](https://ghub.io/htl).<br/>
+**R&D**: [hyperscript](https://ghub.io/hyperscript), [incremental-dom](https://ghub.io/incremental-dom), [nanomorph](https://ghub.io/nanomorph) and others.
 
 <br/>
 
 </details>
 
 
-<details><summary><strong>v − value / observable</strong></summary>
+<details><summary><strong>v − value</strong></summary>
 
 > value = v( source? , map? , inmap? )<br/>
 > value = v\`...content\`<br/>
@@ -446,7 +447,8 @@ $('.likes-count', el => h`<${el}>${
 likes.load()
 ```
 
-_**v**_ design is based on R&D of [react hooks](https://ghub.io/unihooks), [observable proposal](https://github.com/tc39/proposal-observable), [_observable_](https://ghub.io/observable), [_mutant_](https://ghub.io/mutant), [_rxjs_](https://ghub.io/rxjs), [_iron_](https://github.com/ironjs/iron) and others. It comprises functionality of stores ([redux](https://ghub.io/redux), [mobx](https://ghub.io/mobx)), hooks (_useState_, _useEffect_, _useMemo_), observables ([zen-observable](https://ghub.io/zen-observable), [observ](https://ghub.io/observ)) and selectors ([dlv](https://github.com/developit/dlv), [idx](https://github.com/facebookincubator/idx)).
+**Technique**: [observable](https://ghub.io/observable)-based stateful/stateless channels on steroids.
+**R&D**: [react hooks](https://ghub.io/unihooks), [observable proposal](https://github.com/tc39/proposal-observable), [observ](https://ghub.io/observ), [mutant](https://ghub.io/mutant), [rxjs](https://ghub.io/rxjs), [iron](https://github.com/ironjs/iron), [icaro](https://ghub.io/icaro), [introspected](https://ghub.io/introspected), [augmentor](https://ghub.io/augmentor) and others.
 
 <br/>
 
