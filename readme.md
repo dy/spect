@@ -324,7 +324,7 @@ $('#clock', el => {
 })
 ```
 
-_**h**_ uses cached `<template>`s technique like [lit-html](https://ghub.io/lit-html), with parsing similar to [htm@1](https://ghub.io/htm) and evaluating to [htl](https://ghub.io/htl).<br/>
+_**h**_ uses cached `<template>`s technique like [lit-html](https://ghub.io/lit-html), with parsing from [htm@1](https://ghub.io/htm) and evaluating from [htl](https://ghub.io/htl).<br/>
 _R&D_: [hyperscript](https://ghub.io/hyperscript), [incremental-dom](https://ghub.io/incremental-dom), [nanomorph](https://ghub.io/nanomorph) and others.
 
 <br/>
