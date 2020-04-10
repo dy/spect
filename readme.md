@@ -268,8 +268,8 @@ const $timer = $('.timer', el => {
 })
 ```
 
-**Technique**: class selectors from [fast-on-load](https://ghub.io/fast-on-load), feature-based selectors from [selector-set](https://github.com/josh/selector-set), animation-based selectors from [insertionQuery](https://github.com/naugtur/insertionQuery).<br/>
-**R&D**: _jQuery_, [_selector-observer_](https://github.com/josh/selector-observer), [reuse](https://ghub.io/reuse) and _aspect-oriended-programming_.
+_**$**_ uses class selectors technique from [fast-on-load](https://ghub.io/fast-on-load), feature-based selectors from [selector-set](https://github.com/josh/selector-set) and animation-based selectors from [insertionQuery](https://github.com/naugtur/insertionQuery) for optimal performance.<br/>
+_R&D_: [jQuery](https://ghub.io/jquery), [selector-observer](https://github.com/josh/selector-observer), [reuse](https://ghub.io/reuse), [aspect-oriended-programming](https://en.wikipedia.org/wiki/Aspect-oriented_programming) libraries and others.
 
 <br/>
 
@@ -324,8 +324,8 @@ $('#clock', el => {
 })
 ```
 
-**Technique**: cached `<template>`s from [lit-html](https://ghub.io/lit-html), parsing from [htm@1](https://ghub.io/htm), evaluating from [htl](https://ghub.io/htl).<br/>
-**R&D**: [hyperscript](https://ghub.io/hyperscript), [incremental-dom](https://ghub.io/incremental-dom), [nanomorph](https://ghub.io/nanomorph) and others.
+_**h**_ uses cached `<template>`s technique like [lit-html](https://ghub.io/lit-html), with parsing similar to [htm@1](https://ghub.io/htm) and evaluating to [htl](https://ghub.io/htl).<br/>
+_R&D_: [hyperscript](https://ghub.io/hyperscript), [incremental-dom](https://ghub.io/incremental-dom), [nanomorph](https://ghub.io/nanomorph) and others.
 
 <br/>
 
@@ -447,8 +447,8 @@ $('.likes-count', el => h`<${el}>${
 likes.load()
 ```
 
-**Technique**: [observable](https://ghub.io/observable)-based stateful/stateless channels on steroids.
-**R&D**: [react hooks](https://ghub.io/unihooks), [observable proposal](https://github.com/tc39/proposal-observable), [observ](https://ghub.io/observ), [mutant](https://ghub.io/mutant), [rxjs](https://ghub.io/rxjs), [iron](https://github.com/ironjs/iron), [icaro](https://ghub.io/icaro), [introspected](https://ghub.io/introspected), [augmentor](https://ghub.io/augmentor) and others.
+_**v**_ internally uses stateful/stateless channels, like [observable](https://ghub.io/observable) on steroids.<br/>
+_R&D_: [react hooks](https://ghub.io/unihooks), [observable proposal](https://github.com/tc39/proposal-observable), [observ](https://ghub.io/observ), [mutant](https://ghub.io/mutant), [rxjs](https://ghub.io/rxjs), [iron](https://github.com/ironjs/iron), [icaro](https://ghub.io/icaro), [introspected](https://ghub.io/introspected), [augmentor](https://ghub.io/augmentor) and others.
 
 <br/>
 
