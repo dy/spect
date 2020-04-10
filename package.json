@@ -1,7 +1,7 @@
 {
   "name": "spect",
   "version": "19.1.0",
-  "description": "Hyper observable aspects",
+  "description": "Hyper reactive aspects",
   "main": "index.js",
   "module": "index.js",
   "unpkg": "dist/spect.min.js",

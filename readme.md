@@ -1,7 +1,7 @@
 <div align="center"><img src="https://avatars3.githubusercontent.com/u/53097200?s=200&v=4" width=108 /></div>
 <p align="center"><h1 align="center">spect</h1></p>
 <p align="center">
-  Hyper Observable Aspects.<br/>
+  Hyper Reactive Aspects.<br/>
   <!-- Build reactive UIs with rules, similar to CSS.<br/> -->
   <!-- Each rule specifies an <em>aspect</em> function, carrying a piece of logic.<br/> -->
 </p>
@@ -35,8 +35,7 @@
 </script>
 -->
 
-
-_Spect_ is radical minimalistic [_aspect-oriented_](https://en.wikipedia.org/wiki/Aspect-oriented_programming) FRP library enabling super-compact UI code. _Spect_ is a successor of [_observable_](https://www.npmjs.com/package/observable), inspired by [_react hooks_](https://reactjs.org/docs/hooks-intro.html) and [_jquery_](https://ghub.io/jquery). It is compatible with [_standard observable_](https://github.com/tc39/proposal-observable) and [_observ_](https://ghub.io/observ)-[_*_](https://ghub.io/mutant).
+_Spect_ is radical minimalistic [_aspect-oriented_](https://en.wikipedia.org/wiki/Aspect-oriented_programming) FRP library − successor of [_observable_](https://www.npmjs.com/package/observable), [_hyperscript_](https://ghub.io/hyperscript) and [_jquery_](https://ghub.io/jquery), enabling super-compact UI code and highly efficient DOM manipulations with conventional API.
 
 ## Principles
 
@@ -208,16 +207,16 @@ Pending...
 
 ## API
 
-<details><summary><strong>$ − selector aspect</strong></summary>
+<details><summary><strong>$ − selector</strong></summary>
 
-> elements = $( scope? , selector? , callback? )<br/>
+> elements = $( scope? , selector? , fn? )<br/>
 > elements = $\`.selector\`<br/>
 
-Creates live collection of elements matching the `selector` in `scope`, firing `callback` for each element in the set.
+Collection of elements matching the `selector` in `scope`, triggering `fn` for each new matched element.
 
 * `selector` is a valid CSS selector.
-* `scope` is optional _HTMLElement_ or a list of elements to narrow down observation.
-* `callback` is a function with `(element) => teardown?` signature.
+* `scope` is optional _HTMLElement_ or a list of elements to narrow down selector scope.
+* `fn` is a function with `(element) => teardown?` signature.
 * `elements` is live array with matched elements, implements [HTMLCollection](https://developer.mozilla.org/en-US/docs/Web/API/HTMLCollection), [WeakSet](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/WeakSet) and [Array](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array).
 
 ```js
@@ -228,7 +227,7 @@ let $foo = $('.foo', el => {
   return () => console.log('inactive')
 })
 
-document.body.append(...h`<div.foo/><div#bar/>`)
+document.body.append(h`<div.foo/><div#bar/>`)
 
 // ... "active"
 
@@ -269,7 +268,8 @@ const $timer = $('.timer', el => {
 })
 ```
 
-_**$**_ uses technique from [fast-on-load](https://ghub.io/fast-on-load), [selector-set](https://github.com/josh/selector-set) and [insertionQuery](https://github.com/naugtur/insertionQuery) for optimal performance. Inspired by _jQuery_, [_selector-observer_](https://github.com/josh/selector-observer), [reuse](https://ghub.io/reuse) and _aspect-oriended-programming_.
+_**$**_ uses class selectors technique from [fast-on-load](https://ghub.io/fast-on-load), feature-based selectors from [selector-set](https://github.com/josh/selector-set) and animation-based selectors from [insertionQuery](https://github.com/naugtur/insertionQuery) for optimal performance.<br/>
+_R&D_: [jQuery](https://ghub.io/jquery), [selector-observer](https://github.com/josh/selector-observer), [reuse](https://ghub.io/reuse), [aspect-oriended-programming](https://en.wikipedia.org/wiki/Aspect-oriented_programming) libraries and others.
 
 <br/>
 
@@ -324,15 +324,15 @@ $('#clock', el => {
 })
 ```
 
-_**h**_ is direct remake on [hyperscript](https://ghub.io/hyperscript), [htm](https://ghub.io/htm) and [htl](https://ghub.io/htl).<br/>
-Its design is based on R&D of [incremental-dom](https://ghub.io/incremental-dom), [lit-html](https://ghub.io/lit-html), [nanomorph](https://ghub.io/nanomorph) and others.
+_**h**_ uses cached `<template>`s technique like [lit-html](https://ghub.io/lit-html), with parsing from [htm@1](https://ghub.io/htm) and evaluating from [htl](https://ghub.io/htl).<br/>
+_R&D_: [hyperscript](https://ghub.io/hyperscript), [incremental-dom](https://ghub.io/incremental-dom), [nanomorph](https://ghub.io/nanomorph) and others.
 
 <br/>
 
 </details>
 
 
-<details><summary><strong>v − value observable</strong></summary>
+<details><summary><strong>v − value</strong></summary>
 
 > value = v( source? , map? , inmap? )<br/>
 > value = v\`...content\`<br/>
@@ -447,7 +447,8 @@ $('.likes-count', el => h`<${el}>${
 likes.load()
 ```
 
-_**v**_ design is based on R&D of [react hooks](https://ghub.io/unihooks), [observable proposal](https://github.com/tc39/proposal-observable), [_observable_](https://ghub.io/observable), [_mutant_](https://ghub.io/mutant), [_rxjs_](https://ghub.io/rxjs), [_iron_](https://github.com/ironjs/iron) and others. It comprises functionality of stores ([redux](https://ghub.io/redux), [mobx](https://ghub.io/mobx)), hooks (_useState_, _useEffect_, _useMemo_), observables ([zen-observable](https://ghub.io/zen-observable), [observ](https://ghub.io/observ)) and selectors ([dlv](https://github.com/developit/dlv), [idx](https://github.com/facebookincubator/idx)).
+_**v**_ internally uses stateful/stateless channels, like [observable](https://ghub.io/observable) on steroids.<br/>
+_R&D_: [react hooks](https://ghub.io/unihooks), [observable proposal](https://github.com/tc39/proposal-observable), [observ](https://ghub.io/observ), [mutant](https://ghub.io/mutant), [rxjs](https://ghub.io/rxjs), [iron](https://github.com/ironjs/iron), [icaro](https://ghub.io/icaro), [introspected](https://ghub.io/introspected), [augmentor](https://ghub.io/augmentor) and others.
 
 <br/>
 
