@@ -57,7 +57,6 @@ t('v: readme', async t => {
   t.is(log, [1, 2, 3])
   // > 1, 2, 3
 
-
   // from object
   let item = { done: false }
   let v5 = v(item)
@@ -421,19 +420,15 @@ t('v: subscribed observable setter', async t => {
 })
 t('v: init non-input elements', async t => {
   let el = document.createElement('div')
+  el.x = 1
   let vel = v(el)
-  t.is(vel(), el)
+  t.is(vel(), {x: 1})
   vel[Symbol.dispose]()
 
   let vel2 = v()
   vel2(el)
   t.is(vel2(), el)
   vel2[Symbol.dispose]()
-
-  // let vel3 = v()
-  // vel3.set(el)
-  // t.is(vel3(), el)
-  // vel3[Symbol.dispose]()
 })
 t('v: expose deps observables', async t => {
   let a = v(0), b = v(1), c = v({a, b})
@@ -696,7 +691,7 @@ t('v: calc promises must be resolved fine', async t => {
 })
 
 // input
-t('v: input text', async t => {
+t.todo('v: input text', async t => {
   let el = document.createElement('input')
   document.body.appendChild(el)
   let text = v(el)
@@ -714,7 +709,7 @@ t('v: input text', async t => {
   let enm = v(sel)
   enm(v => console.log(v))
 })
-t('v: input updates by changing value directly', async t => {
+t.todo('v: input updates by changing value directly', async t => {
   let el = document.createElement('input')
   el.value = 0
   let value = v(el)
@@ -757,7 +752,7 @@ t('v: input updates by changing value directly', async t => {
   await tick(10)
   t.is(log.slice(-1), ['6'], 'end destructs inputerty')
 })
-t('v: input get/set', async t => {
+t.todo('v: input get/set', async t => {
   let el = document.createElement('input')
   let value = v(el)
   value(0)
@@ -799,7 +794,7 @@ t.skip('v: input direct value set off-focus emits event', async t => {
   t.is(log, ['', '1'])
   t.is(i(), '1')
 })
-t('v: input checkbox', async t => {
+t.todo('v: input checkbox', async t => {
   let el = document.createElement('input')
   el.type = 'checkbox'
   document.body.appendChild(el)
@@ -826,7 +821,7 @@ t('v: input checkbox', async t => {
   t.is(el.checked, false)
   t.is(el.value, '')
 })
-t('v: input select', async t => {
+t.todo('v: input select', async t => {
   let el = document.createElement('select')
   el.innerHTML = '<option value=1 selected>A</option><option value=2>B</option>'
   // document.body.appendChild(el)
