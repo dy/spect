@@ -332,6 +332,12 @@ t('v: repeated init', async t => {
   o.x = 4
   t.is(log, [])
 })
+t('v: template literals', async t => {
+  let b = v(0), s = v`a${b}c`
+  t.is(s(), `a0c`)
+  b(1)
+  t.is(s(), `a1c`)
+})
 
 // from
 t('v: from promise', async t => {

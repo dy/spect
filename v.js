@@ -3,7 +3,11 @@ import c, { observer } from './channel.js'
 
 const depsCache = new WeakMap
 
-export default function v(source, map=v=>v, unmap=v=>v) {
+export default function v(source, ...fields) {
+  if (source && source.raw) {
+    return v(fields, fields => String.raw({raw: source.raw}, ...fields))
+  }
+  const [map=v=>v, unmap=v=>v] = fields
   const channel = c(), { subscribe, observers, push } = channel
 
   let fn = (...args) => {
