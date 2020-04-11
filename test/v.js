@@ -436,6 +436,13 @@ t('v: expose deps observables', async t => {
   t.is(c.b(), 1)
   t.is(c(), {a:0, b:1})
 })
+t('v: deps set', async t => {
+  let x, a = v(x = {x: 1, y: v(2)})
+  t.is(a(), {x: 1, y: 2})
+  a({x: 2, y: 3})
+  t.is(x.x, 2)
+  t.is(x.y(), 3)
+})
 
 // fx
 t('v: fx core', async t => {
@@ -691,33 +698,33 @@ t('v: calc promises must be resolved fine', async t => {
 })
 
 // input
-t.todo('v: input text', async t => {
+t('v: input text', async t => {
   let el = document.createElement('input')
   document.body.appendChild(el)
   let text = v(el)
-  text(v => console.log(v))
+  text(v => console.log(v.value))
 
   let cb = document.createElement('input')
   cb.setAttribute('type', 'checkbox')
   document.body.appendChild(cb)
   let bool = v(cb)
-  bool(v => console.log(v))
+  bool(v => console.log(v.value))
 
   let sel = document.createElement('select')
   sel.innerHTML = `<option value=1>A</option><option value=2>B</option>`
   document.body.appendChild(sel)
   let enm = v(sel)
-  enm(v => console.log(v))
+  enm(v => console.log(v.value))
 })
-t.todo('v: input updates by changing value directly', async t => {
+t('v: input updates by changing value directly', async t => {
   let el = document.createElement('input')
   el.value = 0
   let value = v(el)
-  t.is(value(), '0')
+  t.is(value(), {value:'0'})
 
   // observer 1
   let log = []
-  value(v => log.push(v))
+  value(v => log.push(v.value))
 
   await tick(2)
   t.is(log, ['0'], 'initial value notification')
@@ -752,91 +759,59 @@ t.todo('v: input updates by changing value directly', async t => {
   await tick(10)
   t.is(log.slice(-1), ['6'], 'end destructs inputerty')
 })
-t.todo('v: input get/set', async t => {
+t('v: input get/set', async t => {
   let el = document.createElement('input')
   let value = v(el)
-  value(0)
+  value({value:0})
   t.is(el.value, '0', 'set is ok')
-  t.is(value(), '0', 'get is ok')
+  t.is(value(), {value:'0'}, 'get is ok')
   await tick(8)
   t.is(el.value, '0', 'set is ok')
-  t.is(value(), '0', 'get is ok')
+  t.is(value(), {value:'0'}, 'get is ok')
 })
-t.skip('v: input should register on simple selectors', async t => {
-  let el = document.createElement('input')
-  document.body.appendChild(el)
-  let value = input('input')
-  await frame(2)
-  value(0)
-  t.is(el.value, '0', 'set is ok')
-  t.is(value(), '0', 'get is ok')
-})
-t.skip('v: input multiple instances same? ref', async t => {
-  const el = document.createElement('input')
-  let xs1 = input(el)
-  let xs2 = input(el)
-
-  t.is(xs1, xs2, 'same ref')
-})
-t.skip('v: input direct value set off-focus emits event', async t => {
-  // NS: not sure we have to track direct `el.value = 1` when not focused. Looks like deciding for the user. Dispatching an event is not a big deal.
-  let el = document.createElement('input')
-  let i = input(el)
-  let log = []
-  fx(v => {
-    log.push(v)
-  }, [i])
-  await tick(8)
-  t.is(log, [''])
-
-  el.value = 1
-  await tick(8)
-  t.is(log, ['', '1'])
-  t.is(i(), '1')
-})
-t.todo('v: input checkbox', async t => {
+t('v: input checkbox', async t => {
   let el = document.createElement('input')
   el.type = 'checkbox'
   document.body.appendChild(el)
   let bool = v(el)
-  t.is(bool(), false)
+  t.is(bool(), {value:false})
   t.is(el.checked, false)
   t.is(el.value, '')
 
   el.checked = true
   el.dispatchEvent(new Event('change'))
-  t.is(bool(), true)
+  t.is(bool(), {value:true})
   t.is(el.checked, true)
   t.is(el.value, 'on')
 
-  bool(false)
-  t.is(bool(), false)
+  bool({value:false})
+  t.is(bool(), {value:false})
   t.is(el.checked, false)
   t.is(el.value, '')
 
   bool[Symbol.dispose]()
   // t.throws(() => bool(true))
-  bool(true)
-  t.any(bool(), [null, undefined, false])
+  bool({value:true})
+  t.is(bool(), undefined)
   t.is(el.checked, false)
   t.is(el.value, '')
 })
-t.todo('v: input select', async t => {
+t('v: input select', async t => {
   let el = document.createElement('select')
   el.innerHTML = '<option value=1 selected>A</option><option value=2>B</option>'
   // document.body.appendChild(el)
   let value = v(el)
-  t.is(value(), '1')
+  t.is(value().value, '1')
   t.is(el.value, '1')
 
   el.value = '2'
   el.dispatchEvent(new Event('change'))
-  t.is(value(), '2')
+  t.is(value().value, '2')
   t.is(el.value, '2')
   t.is(el.innerHTML, '<option value="1">A</option><option value="2" selected="">B</option>')
 
-  value('1')
-  t.is(value(), '1')
+  value({value:'1'})
+  t.is(value().value, '1')
   t.is(el.innerHTML, '<option value="1" selected="">A</option><option value="2">B</option>')
   t.is(el.value, '1')
 
@@ -851,6 +826,7 @@ t.todo('v: input radio')
 t.todo('v: input range')
 t.todo('v: input date')
 t.todo('v: input multiselect')
+t.todo('v: input form')
 
 // error
 t('v: error in mapper')
