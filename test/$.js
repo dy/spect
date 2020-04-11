@@ -1,6 +1,5 @@
 import t from 'tst'
 import { $, h } from '../index.js'
-// import $ from '../$.js'
 import { tick, frame, idle, time } from 'wait-please'
 import { augmentor, useState, useEffect, useMemo } from 'augmentor'
 import v from '../v.js'

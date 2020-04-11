@@ -1,5 +1,5 @@
-import v, { observable, primitive, object, input } from './v.js'
-import * as symbol from './symbols.js'
+import v from './v.js'
+import { symbol, observable, primitive, object, attr, channel } from './util.js'
 
 const _group = Symbol.for('@spect.group')
 const _ref = Symbol.for('@spect.ref')
@@ -158,7 +158,7 @@ function evaluate (node, fields) {
   }
 
   if (node.childNodes && node.childNodes.length) {
-    children = v(Array(node.childNodes.length))
+    children = v(Array(node.childNodes.length).fill(null))
 
     ;[...node.childNodes].forEach((child, i) => {
       child.remove()
@@ -166,7 +166,7 @@ function evaluate (node, fields) {
         if (/^h:::/.test(child.data)) {
           child = field(child.data, fields)
 
-          if (observable(child) || (child && (child.forEach || child.item))) {
+          if (observable(child)) {
             (vx[vx.length] = v(child))
             (child => children({[i]: nodify(child)}))
           }
@@ -214,14 +214,14 @@ function evaluate (node, fields) {
   // deploy observables
   if (props) props((all, changed) => {
     let keys = Object.keys(changed)
-    keys.map(name => setAttribute(node, name, node[name] = changed[name]))
+    keys.map(name => attr(node, name, node[name] = changed[name]))
     return () => keys.map(name => (delete node[name], node.removeAttribute(name)))
   })
   if (children) {
     const cur = []
     children((all, changed) => {
       const idx = Object.keys(changed)
-      idx.map(id => cur[id] = !cur[id] ? appendChild(node, changed[id]) : replaceWith(cur[id], changed[id]))
+      idx.map(id => (cur[id] = !cur[id] ? appendChild(node, changed[id]) : replaceWith(cur[id], changed[id])))
     })
   }
 
@@ -278,27 +278,4 @@ function replaceWith(from, to) {
   }
 
   return to
-}
-
-function getAttribute (el, name, value) { return (value = el.getAttribute(name)) === '' ? true : value }
-
-function setAttribute (el, name, value) {
-  // test nodes etc
-  if (!el || !el.setAttribute) return
-
-  if (value === false || value == null) el.removeAttribute(name)
-  // class=[a, b, ...c] - possib observables
-  else if (Array.isArray(value)) {
-    el.setAttribute(name, value.filter(Boolean).join(' '))
-  }
-  // style={}
-  else if (object(value)) {
-    let values = Object.values(value)
-    el.setAttribute(name, Object.keys(value).map((key, i) => `${key}: ${values[i]};`).join(' '))
-  }
-  // onclick={} - just ignore
-  else if (typeof value === 'function') {}
-  else {
-    el.setAttribute(name, value === true ? '' : value)
-  }
 }

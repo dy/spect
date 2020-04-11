@@ -1,13 +1,10 @@
-import * as symbol from './symbols.js'
-import channel from './channel.js'
+import { channel, symbol, desc } from './util.js'
 
 const ELEMENT = 1
-
 const SPECT_CLASS = '👁'
 const CLASS_OFFSET = 0x1F700
-let count = 0
-
 const _spect = Symbol.for('@spect.set')
+let count = 0
 
 const ids = {}, classes = {}, tags = {}, names = {}, animations = {}
 
@@ -33,8 +30,6 @@ export default function (scope, selector, fn) {
 
   return new $(scope, selector, fn)
 }
-
-const desc = value => ({configurable: false, enumerable: false, writable: value === undefined, value})
 
 class $ extends Array {
   constructor(scope, selector, fn){

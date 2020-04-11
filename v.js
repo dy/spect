@@ -1,5 +1,4 @@
-import * as symbol from './symbols.js'
-import c, { observer } from './channel.js'
+import { desc, channel as c, observer, immutable, observable, input, symbol } from './util.js'
 
 const depsCache = new WeakMap
 
@@ -10,7 +9,7 @@ export default function v(source, ...fields) {
   const [map=v=>v, unmap=v=>v] = fields
   const channel = c(), { subscribe, observers, push } = channel
 
-  let fn = (...args) => {
+  function fn (...args) {
     if (!args.length) return get()
     if (observer(...args)) {
       let unsubscribe = subscribe(...args)
@@ -27,15 +26,12 @@ export default function v(source, ...fields) {
 
   // we define props on fn - must hide own props
   delete fn.length
-  delete fn.name
-  delete fn.arguments
-  delete fn.caller
   Object.defineProperties(fn, {
-    valueOf: {value: get, writable: false, enumerable: false},
-    toString: {value: get, writable: false, enumerable: false},
-    [Symbol.toPrimitive]: {value: get, writable: false, enumerable: false},
-    [symbol.observable]: {value: () => channel, writable: false, enumerable: false},
-    [symbol.dispose]: {value: channel.close, writable: false, enumerable: false}
+    valueOf: desc(get),
+    toString: desc(get),
+    [Symbol.toPrimitive]: desc(get),
+    [symbol.observable]: desc(() => channel),
+    [symbol.dispose]: desc(channel.close)
   })
 
   if (arguments.length) {
@@ -92,10 +88,15 @@ export default function v(source, ...fields) {
 
       // init observables
       keys.forEach(key => {
+        // reserved fn props
+        if (key in fn) {
+          delete fn[key]
+          Object.defineProperty(fn, key, {configurable: true, enumerable: true, writable: true})
+        }
         let dep
         if (depsCache.has(source[key])) (dep = depsCache.get(source[key]))
         else if (!immutable(source[key])) (dep = v(source[key]))
-        else if (key in depsCache.get(source)) (dep = depsCache.get(source)[key])
+        else if (depsCache.get(source)[key]) (dep = depsCache.get(source)[key])
         // redefine source property to observe it
         else {
           dep = v(() => vals[key] = source[key])
@@ -130,7 +131,6 @@ export default function v(source, ...fields) {
           iset(iget())
 
           dep = v(iget(), v => v, v => (iset(v = unmap(v)), iget()))
-          // set = v => (iset(unmap(v)), push(channel.current = iget()))
           fn.value = dep
 
           const update = e => dep(iget())
@@ -143,6 +143,7 @@ export default function v(source, ...fields) {
         }
       }
       // we can handle only static deps
+      if (!source[symbol.dispose]) source[symbol.dispose] = null
       try { Object.seal(source) } catch {}
 
       const teardown = []
@@ -187,35 +188,4 @@ export default function v(source, ...fields) {
   Object.seal(fn)
 
   return fn
-}
-
-export function primitive(val) {
-  if (typeof val === 'object') return val === null
-  return typeof val !== 'function'
-}
-
-export function immutable(val) {
-  return primitive(val) || val instanceof RegExp || val instanceof Date
-}
-
-export function observable(arg) {
-  if (!arg) return false
-  return !!(
-    arg[symbol.observable]
-    || (typeof arg === 'function' && arg.set)
-    || arg[Symbol.asyncIterator]
-    || arg.next
-    || arg.then
-    || arg && arg.mutation && '_state' in arg
-  )
-}
-
-export function object (value) {
-	if (Object.prototype.toString.call(value) !== '[object Object]') return false;
-	const prototype = Object.getPrototypeOf(value);
-	return prototype === null || prototype === Object.prototype;
-}
-
-export function input (arg) {
-  return arg && (arg.tagName === 'INPUT' || arg.tagName === 'SELECT')
 }

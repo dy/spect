@@ -338,6 +338,10 @@ t('v: template literals', async t => {
   b(1)
   t.is(s(), `a1c`)
 })
+t('v: reserved words', async t => {
+  let s = v({name: 1, arguments: 2})
+  t.is(s(), {name:1, arguments: 2})
+})
 
 // from
 t('v: from promise', async t => {
