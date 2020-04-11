@@ -165,8 +165,8 @@ function evaluate (node, fields) {
       if (child.nodeType === TEXT) {
         if (/^h:::/.test(child.data)) {
           child = field(child.data, fields)
-
           if (observable(child)) {
+            children({[i]: nodify('')});
             (vx[vx.length] = v(child))
             (child => children({[i]: nodify(child)}))
           }
@@ -174,7 +174,7 @@ function evaluate (node, fields) {
             children({[i]: nodify(child)})
           }
         }
-        else children({[i]: child})
+        else children({[i]: nodify(child)})
       }
       else {
         child = evaluate(child, fields)
@@ -221,7 +221,7 @@ function evaluate (node, fields) {
     const cur = []
     children((all, changed) => {
       const idx = Object.keys(changed)
-      idx.map(id => (cur[id] = !cur[id] ? appendChild(node, changed[id]) : replaceWith(cur[id], changed[id])))
+      idx.map(id => (cur[id] = !cur[id] ? appendChild( node, changed[id]) : replaceWith(cur[id], changed[id])))
     })
   }
 

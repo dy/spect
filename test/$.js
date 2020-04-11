@@ -166,21 +166,23 @@ t('$: destructor is called on unmount', async t => {
   let log = []
   let all = $(el, '*', el => {
     log.push(1)
-    return () => log.push(2)
+    return () => {
+      log.push(2)
+    }
   })
-  t.deepEqual(log, [])
+  t.is(log, [])
   el.innerHTML = 'x<a></a><a></a>x'
-  await frame(4)
-  t.deepEqual(log, [1, 1])
+  await frame(2)
+  t.is(log, [1, 1])
 
   el.innerHTML = ''
   await frame(4)
-  t.deepEqual(log, [1, 1, 2, 2], 'clear up')
+  t.is(log, [1, 1, 2, 2], 'clear up')
   all[Symbol.dispose]()
 
   el.innerHTML = 'x<a></a><a></a>x'
   await frame(2)
-  t.deepEqual(log, [1, 1, 2, 2])
+  t.is(log, [1, 1, 2, 2])
   el.innerHTML = ''
   t.end()
 })
@@ -549,16 +551,26 @@ t.demo('$: debugger cases', async t => {
   let set
   console.log('*', set = $('*'))
   t.is(set._match, false)
+  set[Symbol.dispose]()
+
   console.log('a', set = $('a'))
   t.is(set._match, false)
+  set[Symbol.dispose]()
+
   console.log('#a', set = $('#a'))
   t.is(set._match, false)
+  set[Symbol.dispose]()
+
   console.log('.a', set = $('.a'))
   t.is(set._match, false)
+  set[Symbol.dispose]()
+
   console.log('a#b', set = $('a#b'))
   t.is(set._match, true)
+  set[Symbol.dispose]()
   console.log('a b', set = $('a b'))
   t.is(set._match, true)
+  set[Symbol.dispose]()
   console.log('empty', $())
   console.log('list', $([h`<a#a/>`, h`<b#b/>`, h`<c name=c/>`]))
 })

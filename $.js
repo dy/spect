@@ -3,10 +3,9 @@ import { channel, symbol, desc } from './util.js'
 const ELEMENT = 1
 const SPECT_CLASS = '👁'
 const CLASS_OFFSET = 0x1F700
-const _spect = Symbol.for('@spect.set')
 let count = 0
 
-const ids = {}, classes = {}, tags = {}, names = {}, animations = {}
+const ids = {}, classes = {}, tags = {}, names = {}, animations = {}, setCache = new WeakMap
 
 const hasAnimevent = typeof AnimationEvent !== 'undefined'
 const style = document.head.appendChild(document.createElement('style'))
@@ -95,12 +94,22 @@ class $ extends Array {
     // - dynamically added attributes so that existing nodes match (we don't observe attribs in mutation obserever)
     // - complex selectors, inc * - we avoid > O(c) sync mutations check
     // NOTE: only connected scope supports anim observer
-    if (!this._selector.every(sel => sel.tag && !sel.filter)) {
+    if (!hasAnimevent) {
       let anim = animations[this._selector]
       if (!anim) {
         const { sheet } = style, { cssRules } = sheet
         anim = animations[this._selector] = []
         this._animation = anim.id = String.fromCodePoint(CLASS_OFFSET + count++)
+      }
+      this._animation = anim.id
+      anim.push(this)
+    }
+    else if (!this._selector.every(sel => sel.tag && !sel.filter)) {
+      let anim = animations[this._selector]
+      if (!anim) {
+        const { sheet } = style, { cssRules } = sheet
+        anim = animations[this._selector] = []
+        anim.id = String.fromCodePoint(CLASS_OFFSET + count++)
         sheet.insertRule(`@keyframes ${ anim.id }{}`, cssRules.length)
         sheet.insertRule(`${ this._selector.map(sel => sel + `:not(.${ anim.id })`) }{animation:${ anim.id }}`, cssRules.length)
         sheet.insertRule(`.${ anim.id }{animation:${ anim.id }}`, cssRules.length)
@@ -156,7 +165,7 @@ class $ extends Array {
     if (this._delete.has(el)) this._delete.delete(el)
 
     // ignore existing items
-    if (el[_spect] && el[_spect].has(this)) return
+    if (setCache.has(el) && setCache.get(el).has(this)) return
 
     // FIXME: name/id ref obsever - seems like overkill, waiting for real-case demand
     // NOTE: this does not hook props added after
@@ -175,10 +184,10 @@ class $ extends Array {
     // }
 
     // enable item
-    if (!el[_spect]) el[_spect] = new Set
+    if (!setCache.has(el)) setCache.set(el, new Set)
 
     // mark element
-    el[_spect].add(this)
+    setCache.get(el).add(this)
     el.classList.add(SPECT_CLASS)
 
     // notify
@@ -202,8 +211,7 @@ class $ extends Array {
       if (!this._delete.has(el)) return
       this._delete.delete(el)
 
-      if (!el[_spect]) return
-
+      if (!setCache.has(el)) return
       const teardown = this._teardown.get(el)
       if (teardown) {
         if (teardown.call) teardown(el)
@@ -212,9 +220,9 @@ class $ extends Array {
       this._teardown.delete(el)
       this._channel.push(this)
 
-      el[_spect].delete(this)
-      if (!el[_spect].size) {
-        delete el[_spect]
+      setCache.get(el).delete(this)
+      if (!setCache.get(el).size) {
+        setCache.delete(el)
         el.classList.remove(SPECT_CLASS)
         // if (el[_observer]) {
         //   el[_observer].disconnect()
@@ -263,7 +271,7 @@ class $ extends Array {
       if (!anim.length) {
         document.removeEventListener('animationstart', anim.onanim)
         delete animations[self._selector]
-        anim.rules.forEach(rule => {
+        if (anim.rules) anim.rules.forEach(rule => {
           let idx = [].indexOf.call(style.sheet.cssRules, rule)
           if (~idx) style.sheet.deleteRule(idx)
         })
@@ -283,7 +291,7 @@ class $ extends Array {
     ;[].forEach.call(targets.nodeType ? [targets] : targets, target => sets.forEach(set => set.add(target, check)))
   }
   const queryDelete = target => [target.classList.contains(SPECT_CLASS) ? target : null, ...target.getElementsByClassName(SPECT_CLASS)]
-  .forEach(node => node && node[_spect].forEach(set => set.delete(node)))
+    .forEach(node => setCache.has(node) && setCache.get(node).forEach(set => set.delete(node)))
 
   for (let mutation of list) {
     let { addedNodes, removedNodes, target } = mutation
@@ -292,7 +300,9 @@ class $ extends Array {
     // WARN: O(n*m) or worse performance (insignificant for small docs)
     if (!hasAnimevent) {
       queryDelete(target)
-      for (let sel in animations) queryAdd([target, ...target.querySelectorAll(sel)], animations[sel], true)
+      for (let sel in animations) {
+        queryAdd([target, ...target.querySelectorAll(sel)], animations[sel], true)
+      }
     }
 
     if (mutation.type === 'childList') {

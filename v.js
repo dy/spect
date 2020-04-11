@@ -157,14 +157,12 @@ export default function v(source, ...fields) {
       }
 
       // any deps change triggers update
-      dchannel((values, diff) => push(channel.current = map(values), diff))
+      dchannel((values, diff) => (push(channel.current = map(values), diff)))
 
       // if initial value is derivable from initial deps - set it
       if (Object.keys(vals).length || !keys.length) dchannel(vals, vals)
 
-      set = v => {
-        Object.keys(v = unmap(v)).map(key => fn[key](v[key]))
-      }
+      set = v => (Object.keys(v = unmap(v)).map(key => fn[key](v[key])))
       subscribe(null, null, () => {
         dchannel.close()
         teardown.map(teardown => teardown())
