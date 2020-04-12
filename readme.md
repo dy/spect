@@ -207,7 +207,7 @@ Pending...
 
 ## API
 
-<details><summary><strong>$ − selector</strong></summary>
+<details><summary><strong>$ − selector observer</strong></summary>
 
 > elements = $( scope? , selector? , fn? )<br/>
 > elements = $\`.selector\`<br/>
@@ -276,7 +276,7 @@ _R&D_: [jQuery](https://ghub.io/jquery), [selector-observer](https://github.com/
 </details>
 
 
-<details><summary><strong>h − hyperscript</strong></summary>
+<details><summary><strong>h − hyperscript / html</strong></summary>
 
 > el = h( tag , props? , ...children )<br/>
 > el = h\`...content\`<br/>
@@ -332,7 +332,7 @@ _R&D_: [hyperscript](https://ghub.io/hyperscript), [incremental-dom](https://ghu
 </details>
 
 
-<details><summary><strong>v − value</strong></summary>
+<details><summary><strong>v − value observer</strong></summary>
 
 > value = v( source? , map? , inmap? )<br/>
 > value = v\`...content\`<br/>
