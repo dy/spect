@@ -447,8 +447,8 @@ $('.likes-count', el => h`<${el}>${
 likes.load()
 ```
 
-_**v**_ internally uses stateful/stateless channels, like [observable](https://ghub.io/observable) on steroids.<br/>
-_R&D_: [react hooks](https://ghub.io/unihooks), [observable proposal](https://github.com/tc39/proposal-observable), [observ](https://ghub.io/observ), [mutant](https://ghub.io/mutant), [rxjs](https://ghub.io/rxjs), [iron](https://github.com/ironjs/iron), [icaro](https://ghub.io/icaro), [introspected](https://ghub.io/introspected), [augmentor](https://ghub.io/augmentor) and others.
+_**v**_ internally uses stateful/stateless channels.<br/>
+_R&D_: [observable](https://ghub.io/observable), [react hooks](https://ghub.io/unihooks), [observable proposal](https://github.com/tc39/proposal-observable), [observ](https://ghub.io/observ), [mutant](https://ghub.io/mutant), [rxjs](https://ghub.io/rxjs), [iron](https://github.com/ironjs/iron), [icaro](https://ghub.io/icaro), [introspected](https://ghub.io/introspected), [augmentor](https://ghub.io/augmentor) and others.
 
 <br/>
 
