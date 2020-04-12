@@ -1,6 +1,5 @@
 import t from 'tst'
 import { $, h } from '../index.js'
-// import $ from '../$.js'
 import { tick, frame, idle, time } from 'wait-please'
 import { augmentor, useState, useEffect, useMemo } from 'augmentor'
 import v from '../v.js'
@@ -66,12 +65,12 @@ t('$: dynamically assigned selector', async t => {
   let el = document.createElement('div')
   document.body.appendChild(el)
 
-  await idle()
+  await frame(2)
   t.is(log, [])
 
   console.log('add class')
   el.classList.add('x')
-  await frame(2)
+  await frame(3)
 
   t.is(log, [el])
 
@@ -167,21 +166,23 @@ t('$: destructor is called on unmount', async t => {
   let log = []
   let all = $(el, '*', el => {
     log.push(1)
-    return () => log.push(2)
+    return () => {
+      log.push(2)
+    }
   })
-  t.deepEqual(log, [])
+  t.is(log, [])
   el.innerHTML = 'x<a></a><a></a>x'
-  await frame(4)
-  t.deepEqual(log, [1, 1])
+  await frame(2)
+  t.is(log, [1, 1])
 
   el.innerHTML = ''
   await frame(4)
-  t.deepEqual(log, [1, 1, 2, 2], 'clear up')
+  t.is(log, [1, 1, 2, 2], 'clear up')
   all[Symbol.dispose]()
 
   el.innerHTML = 'x<a></a><a></a>x'
   await frame(2)
-  t.deepEqual(log, [1, 1, 2, 2])
+  t.is(log, [1, 1, 2, 2])
   el.innerHTML = ''
   t.end()
 })
@@ -546,20 +547,54 @@ t.skip('$: complex selectors', async t => {
 
   $('a b > c')
 })
-t.demo('$: debugger cases', async t => {
+t('$: conflicting names', t => {
+  let el = document.createElement('div')
+  el.innerHTML = '<a id="add"></a>'
+  document.body.appendChild(el)
+  let a = $`#add`
+  console.log(a)
+
+  a[Symbol.dispose]()
+})
+t('$: item, namedItem', async t => {
+  let el = document.createElement('div')
+  el.innerHTML = '<a id=add /><a id=b />'
+  let a = $(el, 'a')
+
+  await tick(4)
+
+  t.is(a.add, el.firstChild)
+  t.is(a.item(0), a.add)
+  t.is(a.namedItem('add'), a.add)
+
+  a[Symbol.dispose]()
+})
+t('$: debugger cases', async t => {
   let set
   console.log('*', set = $('*'))
+  set.delete(document.body)
+  console.log(set)
   t.is(set._match, false)
+  set[Symbol.dispose]()
+
   console.log('a', set = $('a'))
   t.is(set._match, false)
+  set[Symbol.dispose]()
+
   console.log('#a', set = $('#a'))
   t.is(set._match, false)
+  set[Symbol.dispose]()
+
   console.log('.a', set = $('.a'))
   t.is(set._match, false)
+  set[Symbol.dispose]()
+
   console.log('a#b', set = $('a#b'))
   t.is(set._match, true)
+  set[Symbol.dispose]()
   console.log('a b', set = $('a b'))
   t.is(set._match, true)
+  set[Symbol.dispose]()
   console.log('empty', $())
   console.log('list', $([h`<a#a/>`, h`<b#b/>`, h`<c name=c/>`]))
 })

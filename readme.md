@@ -407,6 +407,9 @@ v5().done // false
 let v6 = v(() => v5)
 v6() // v5
 
+// observe via async iterator
+for await (const value of v(v6)) console.log(value)
+
 // dispose
 ;[v6, v5, v4, v3, v2, v1].map(v => v[Symbol.dispose]())
 ```

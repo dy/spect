@@ -1,17 +1,25 @@
-import * as symbol from './symbols.js'
-import c, { observer } from './channel.js'
+import { desc, channel as c, observer, immutable, observable, input, symbol } from './util.js'
 
 const depsCache = new WeakMap
 
-export default function v(source, map=v=>v, unmap=v=>v) {
-  const channel = c(), { subscribe, observers, push } = channel
+export default function v(source, ...fields) {
+  if (source && source.raw) {
+    return v(fields, fields => String.raw({raw: source.raw}, ...fields))
+  }
+  const [map=v=>v, unmap=v=>v] = fields
+  const channel = c(), { subscribe, observers, error } = channel
 
-  let fn = (...args) => {
+  const push = (v, dif) => {
+    if (v && v.then) v.then(push)
+    else channel.push(channel.current = v, dif)
+  }
+
+  function fn (...args) {
     if (!args.length) return get()
     if (observer(...args)) {
       let unsubscribe = subscribe(...args)
       // callback is registered as the last channel subscription, so send it immediately as value
-      if ('current' in channel) push.call(observers.slice(-1), get(), get())
+      if ('current' in channel) channel.push.call(observers.slice(-1), get(), get())
       return unsubscribe
     }
     return set(...args)
@@ -19,29 +27,43 @@ export default function v(source, map=v=>v, unmap=v=>v) {
 
   // current is mapped value (map can be heavy to call each get)
   let get = () => channel.current
-  let set = (val, dif) => push(channel.current = map(unmap(val)), dif)
+  let set = (val, dif) => push(map(unmap(val)), dif)
 
   // we define props on fn - must hide own props
   delete fn.length
-  delete fn.name
-  delete fn.arguments
-  delete fn.caller
   Object.defineProperties(fn, {
-    valueOf: {value: get, writable: false, enumerable: false},
-    toString: {value: get, writable: false, enumerable: false},
-    [Symbol.toPrimitive]: {value: get, writable: false, enumerable: false},
-    [symbol.observable]: {value: () => channel, writable: false, enumerable: false},
-    [symbol.dispose]: {value: channel.close, writable: false, enumerable: false}
+    valueOf: desc(get),
+    toString: desc(get),
+    [Symbol.toPrimitive]: desc(get),
+    [symbol.observable]: desc(() => channel),
+    [symbol.dispose]: desc(channel.close),
+    [Symbol.asyncIterator]: desc(async function*() {
+      let resolve = () => {}, buf = [], p,
+      unsubscribe = fn(v => (
+        buf.push(v),
+        resolve(),
+        p = new Promise(r => resolve = r)
+      ))
+      try {
+        while (1) {
+          while (buf.length) yield buf.shift()
+          await p
+        }
+      } catch {
+      } finally {
+        unsubscribe()
+      }
+    })
   })
 
   if (arguments.length) {
-    // v / observ
     if (typeof source === 'function') {
-      // NOTE: we can't simply check args.length, because v(fn)(fx) is valid case for observable input
+      // v / observ
       if (observable(source)) {
         set = v => source(unmap(v))
-        subscribe(null, null, source(v => push(channel.current = map(v))))
+        subscribe(null, null, source(v => push(map(v)), error))
       }
+      // initializer
       else {
         set(source())
       }
@@ -49,110 +71,32 @@ export default function v(source, map=v=>v, unmap=v=>v) {
     // Observable (stateless)
     else if (source && source[symbol.observable]) {
       set = () => {}
-      let unsubscribe = source[symbol.observable]().subscribe({next: v => push(channel.current = map(v))})
+      let unsubscribe = source[symbol.observable]().subscribe({
+        next: v => push(map(v)),
+        error
+      })
       unsubscribe = unsubscribe.unsubscribe || unsubscribe
       subscribe(null, null, unsubscribe)
     }
-    // deps
-    // NOTE: array/object may have symbol.observable, which redefines default deps behavior
-    else if (Array.isArray(source) || object(source)) {
-      let vals = new source.constructor, deps = {}, dchannel = c(), teardown = []
-
-      // prevent recursion
-      if (!depsCache.has(source)) depsCache.set(source, fn)
-
-      // init observables
-      for (let name in source) {
-        let dep
-        if (observable(source[name]) || object(source[name]) || Array.isArray(source[name])) {
-          dep = deps[name] = depsCache.get(source[name]) || v(source[name])
-        }
-        // redefine source property to observe it
-        else {
-          if (depsCache.has(source)) dep = deps[name] = depsCache.get(source)[name]
-          if (!dep) {
-            dep = deps[name] = v(() => vals[name] = source[name])
-            let orig = Object.getOwnPropertyDescriptor(source, name)
-            Object.defineProperty(source, name, {
-              get: dep,
-              set: orig && orig.set ? v => (orig.set.call(source, v), dep(orig.get())) : v => dep(v),
-              configurable: true,
-              enumerable: true,
-            })
-          }
-        }
-        teardown[teardown.length] = dep(val => {
-          vals[name] = val
-          // avoid self-recursion
-          if (fn !== dep) dchannel(vals, {[name]: val})
-        })
-        Object.defineProperty(fn, name, { writable: false, enumerable: true, configurable: false, value: dep})
-      }
-      // we can handle only static deps
-      Object.seal(source)
-
-      // any deps change triggers update
-      dchannel((values, diff) => push(channel.current = map(values), diff))
-
-      // if initial value is derivable from initial deps - set it
-      if (Object.keys(vals).length || !Object.keys(source).length) dchannel(vals, vals)
-
-      set = v => dchannel(Object.assign(vals, unmap(v)), unmap(v))
-      subscribe(null, null, () => {
-        dchannel.close()
-        teardown.map(teardown => teardown())
-        teardown.length = 0
-        for (let name in deps) if (!deps[name][symbol.observable]().observers.length) {
-          console.log(name)
-          depsCache.delete(deps[name])
-          deps[name][symbol.dispose]()
-        }
-      })
-    }
-    // input
-    // else if (input(source)) {
-    //   const el = source
-
-    //   const iget = el.type === 'checkbox' ? () => el.checked : () => el.value
-
-    //   const iset = {
-    //     text: value => el.value = (value == null ? '' : value),
-    //     checkbox: value => (el.checked = value, el.value = (value ? 'on' : ''), value ? el.setAttribute('checked', '') : el.removeAttribute('checked')),
-    //     'select-one': value => {
-    //       [...el.options].map(el => el.removeAttribute('selected'))
-    //       el.value = value
-    //       if (el.selectedOptions[0]) el.selectedOptions[0].setAttribute('selected', '')
-    //     }
-    //   }[el.type]
-
-    //   set = v => (iset(unmap(v)), push(channel.current = iget()))
-    //   const update = e => set(iget())
-
-    //   // normalize initial value
-    //   update()
-
-    //   el.addEventListener('change', update)
-    //   el.addEventListener('input', update)
-    //   subscribe(null, null, () => {
-    //     el.removeEventListener('change', update)
-    //     el.removeEventListener('input', update)
-    //   })
-    // }
     // async iterator (stateful, initial undefined)
     else if (source && (source.next || source[Symbol.asyncIterator])) {
       set = () => {}
       let stop
       ;(async () => {
-        for await (let v of source) {
-          if (stop) break
-          push(channel.current = map(v))
+        try {
+          for await (let v of source) {
+            if (stop) break
+            push(map(v))
+          }
+        } catch(e) {
+          error(e)
         }
       })()
       subscribe(null, null, () => stop = true)
     }
     // promise (stateful, initial undefined)
     else if (source && source.then) {
-      set = p => (delete channel.current, p.then(v => push(channel.current = map(v))))
+      set = p => (delete channel.current, p.then(v => push(map(v)), error))
       set(source)
     }
     // ironjs
@@ -161,9 +105,103 @@ export default function v(source, map=v=>v, unmap=v=>v) {
       const reaction = new Reactor(() => set(source.state))
       set(source.state)
     }
-    // plain value
-    else {
+    else if (immutable(source)) {
       set(source)
+    }
+    // deps
+    // NOTE: array/object may have symbol.observable, which redefines default deps behavior
+    else {
+      let vals = Array.isArray(source) ? [] : {}, keys = Object.keys(source), dchannel = c()
+
+      // prevent recursion
+      if (!depsCache.has(source)) depsCache.set(source, fn)
+
+      // init observables
+      keys.forEach(key => {
+        // reserved fn props
+        if (key in fn) {
+          delete fn[key]
+          Object.defineProperty(fn, key, {configurable: true, enumerable: true, writable: true})
+        }
+        let dep
+        if (depsCache.has(source[key])) (dep = depsCache.get(source[key]))
+        else if (!immutable(source[key])) (dep = v(source[key]))
+        else if (depsCache.get(source)[key]) (dep = depsCache.get(source)[key])
+        // redefine source property to observe it
+        else {
+          dep = v(() => vals[key] = source[key])
+          let orig = Object.getOwnPropertyDescriptor(source, key)
+          if (!orig || orig.configurable) Object.defineProperty(source, key, {
+            configurable: true,
+            enumerable: true,
+            get: dep,
+            set: orig && orig.set ? v => (orig.set.call(source, v), dep(orig.get())) : v => dep(v),
+          })
+        }
+        fn[key] = dep
+      })
+
+      if (input(source)) {
+        let dep
+        if (depsCache.get(source).value) dep = depsCache.get(source).value
+        else {
+          const el = source
+          const iget = el.type === 'checkbox' ? () => el.checked : () => el.value
+          const iset = ({
+            text: value => el.value = (value == null ? '' : value),
+            checkbox: value => (el.checked = value, el.value = (value ? 'on' : ''), value ? el.setAttribute('checked', '') : el.removeAttribute('checked')),
+            'select-one': value => {
+              [...el.options].map(el => el.removeAttribute('selected'))
+              el.value = value
+              if (el.selectedOptions[0]) el.selectedOptions[0].setAttribute('selected', '')
+            }
+          })[el.type]
+
+          // normalize initial value
+          iset(iget())
+
+          dep = v(iget(), v => v, v => (iset(v = unmap(v)), iget()))
+          fn.value = dep
+
+          const update = e => dep(iget())
+          el.addEventListener('change', update)
+          el.addEventListener('input', update)
+          subscribe(null, null, () => {
+            el.removeEventListener('change', update)
+            el.removeEventListener('input', update)
+          })
+        }
+      }
+      // we can handle only static deps
+      if (!source[symbol.dispose]) source[symbol.dispose] = null
+      try { Object.seal(source) } catch {}
+
+      const teardown = []
+      for (const key in fn) {
+        const dep = fn[key]
+        teardown.push(dep(val => {
+          vals[key] = val
+          // avoid self-recursion
+          if (fn !== dep) dchannel(vals, {[key]: val})
+        }, error))
+      }
+
+      // any deps change triggers update
+      dchannel((values, diff) => (push(map(values), diff)))
+
+      // if initial value is derivable from initial deps - set it
+      if (Object.keys(vals).length || !keys.length) dchannel(vals, vals)
+
+      set = v => (Object.keys(v = unmap(v)).map(key => fn[key](v[key])))
+      subscribe(null, null, () => {
+        dchannel.close()
+        teardown.map(teardown => teardown())
+        teardown.length = 0
+        for (let key in fn) if (!fn[key][symbol.observable]().observers.length) {
+          depsCache.delete(fn[key])
+          fn[key][symbol.dispose]()
+        }
+      })
     }
   }
 
@@ -174,32 +212,8 @@ export default function v(source, map=v=>v, unmap=v=>v) {
     delete channel.current
   })
 
+  // prevent any modifications
+  Object.seal(fn)
+
   return fn
-}
-
-export function primitive(val) {
-  if (typeof val === 'object') return val === null
-  return typeof val !== 'function'
-}
-
-export function observable(arg) {
-  if (!arg) return false
-  return !!(
-    arg[symbol.observable]
-    || (typeof arg === 'function' && arg.set)
-    || arg[Symbol.asyncIterator]
-    || arg.next
-    || arg.then
-    || arg && arg.mutation && '_state' in arg
-  )
-}
-
-export function object (value) {
-	if (Object.prototype.toString.call(value) !== '[object Object]') return false;
-	const prototype = Object.getPrototypeOf(value);
-	return prototype === null || prototype === Object.prototype;
-}
-
-export function input (arg) {
-  return arg && (arg.tagName === 'INPUT' || arg.tagName === 'SELECT')
 }

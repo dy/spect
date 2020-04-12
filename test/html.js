@@ -695,3 +695,10 @@ t('html: a#b.c', async t => {
   let el = h`<a#b><c.d/></a><a/>`
   t.is(el.outerHTML, `<><a id="b"><c class="d"></c></a><a></a></>`)
 })
+
+t.todo('html: non-tr > td elements must persist', async t => {
+  //
+  h`<${el} class=${false ? "danger" : ""}>
+      <td class="col-md-1">${el.item.id}</td>
+  </>`
+})
