@@ -65,12 +65,12 @@ t('$: dynamically assigned selector', async t => {
   let el = document.createElement('div')
   document.body.appendChild(el)
 
-  await idle()
+  await frame(2)
   t.is(log, [])
 
   console.log('add class')
   el.classList.add('x')
-  await frame(2)
+  await frame(3)
 
   t.is(log, [el])
 
@@ -547,9 +547,33 @@ t.skip('$: complex selectors', async t => {
 
   $('a b > c')
 })
-t.demo('$: debugger cases', async t => {
+t('$: conflicting names', t => {
+  let el = document.createElement('div')
+  el.innerHTML = '<a id="add"></a>'
+  document.body.appendChild(el)
+  let a = $`#add`
+  console.log(a)
+
+  a[Symbol.dispose]()
+})
+t('$: item, namedItem', async t => {
+  let el = document.createElement('div')
+  el.innerHTML = '<a id=add /><a id=b />'
+  let a = $(el, 'a')
+
+  await tick(4)
+
+  t.is(a.add, el.firstChild)
+  t.is(a.item(0), a.add)
+  t.is(a.namedItem('add'), a.add)
+
+  a[Symbol.dispose]()
+})
+t('$: debugger cases', async t => {
   let set
   console.log('*', set = $('*'))
+  set.delete(document.body)
+  console.log(set)
   t.is(set._match, false)
   set[Symbol.dispose]()
 
