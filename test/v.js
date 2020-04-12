@@ -655,7 +655,7 @@ t('v: calc must be sync', async t => {
   await tick(8)
   t.is(x2(), 2)
 })
-t.todo('v: calc async calculator', async t => {
+t('v: async calculator', async t => {
   // NOTE: for async effects use subscriptions, mapper can only be sync - but why? wb uses async calculator... it can even be generator.
   const x = v(1, async () => {
     await time(10)
@@ -664,6 +664,17 @@ t.todo('v: calc async calculator', async t => {
   t.is(x(), undefined)
   await time(10)
   t.is(x(), 10)
+})
+t.todo('v: async generator calculator', async t => {
+  const x = v(1, async function* () {
+    yield 1
+    await time(10)
+    yield 2
+  })
+  await tick()
+  t.is(x(), 1)
+  await time(10)
+  t.is(x(), 2)
 })
 t('v: calc promises/changeables must return undefined', async t => {
   const p = Promise.resolve(1)
