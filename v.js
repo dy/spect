@@ -38,11 +38,16 @@ export default function v(source, ...fields) {
     [symbol.observable]: desc(() => channel),
     [symbol.dispose]: desc(channel.close),
     [Symbol.asyncIterator]: desc(async function*() {
-      let resolve = () => {}, p, unsubscribe = fn(v => (resolve(v), p = new Promise(r => resolve = r)))
-      yield fn()
+      let resolve = () => {}, buf = [], p,
+      unsubscribe = fn(v => (
+        buf.push(v),
+        resolve(),
+        p = new Promise(r => resolve = r)
+      ))
       try {
         while (1) {
-          yield await p
+          while (buf.length) yield buf.shift()
+          await p
         }
       } catch {
       } finally {

@@ -586,6 +586,27 @@ t.skip('v: fx thenable', async t => {
   await tick(8)
   t.any(log, [[0, 'aw', 1, 1], [0, 1, 'aw', 1]])
 })
+t('v: async iterator', async t => {
+  const s = v(0), log = []
+
+  ;(async () => {
+    for await (let value of s) {
+      log.push(value)
+    }
+  })();
+
+  await tick(4)
+  t.is(log, [0])
+
+  s(1)
+  await tick(4)
+  t.is(log, [0, 1])
+
+  s(2)
+  s(3)
+  await tick(4)
+  t.is(log, [0, 1, 2, 3])
+})
 t('v: fx simple values', async t => {
   const o = {x:1}, log = []
   let unsub = v([o, o.x])(([o, x]) => {
@@ -981,7 +1002,7 @@ t.todo('v: readme', t => {
   props(({loading}) => log.push(loading))
   t.is(log, [true])
 })
-t.todo('o: hidden proptypes unhide props', t => {
+t.todo('v: hidden proptypes unhide props', t => {
   let x = {[Symbol.for('x')]: 1}
   let ox = o(x, {[Symbol.for('x')]: null})
   t.is(ox, {[Symbol.for('x')]: 1})
@@ -990,7 +1011,7 @@ t.todo('o: hidden proptypes unhide props', t => {
   x[Symbol.for('x')] = 2
   t.is(log, [1, 2])
 })
-t.todo('o: store core', async t => {
+t.todo('v: store core', async t => {
   let s = o({x: 1})
   let log = []
   v(s, s => {
@@ -1020,7 +1041,7 @@ t.todo('o: store core', async t => {
   await tick(8)
   t.is(log, [{y: 'foo'}], 'delete props')
 })
-t.todo('o: store must not expose internal props', async t => {
+t.todo('v: store must not expose internal props', async t => {
   let s = o({x: 1})
   let log  =[]
   for (let p in s) {
@@ -1028,7 +1049,7 @@ t.todo('o: store must not expose internal props', async t => {
   }
   t.is(log, ['x'])
 })
-t.todo('o: list core', async t => {
+t.todo('v: list core', async t => {
   let s = o([1])
   let l
   v(s)(s => (l = s))
@@ -1081,7 +1102,7 @@ t.todo('o: list core', async t => {
   await tick(8)
   t.is(l, [1,2,3], 'shift')
 })
-t.todo('o: list must not expose internal props', async t => {
+t.todo('v: list must not expose internal props', async t => {
   let s = o([])
   let log = []
   for (let p in []) {
@@ -1089,7 +1110,7 @@ t.todo('o: list must not expose internal props', async t => {
   }
   t.is(log, [])
 })
-t.todo('o: list fx sync init', async t => {
+t.todo('v: list fx sync init', async t => {
   let l = o([])
   let log = []
   v(l, item => log.push(item.slice()))
@@ -1102,7 +1123,7 @@ t.todo('o: list fx sync init', async t => {
   await tick(8)
   t.any(log, [[[], [1]], [[], [1], [1]]])
 })
-t.todo('o: prop subscription', async t => {
+t.todo('v: prop subscription', async t => {
   let obj = { x: 0 }
   let oobj = o(obj)
   t.is(oobj.x, 0)
@@ -1146,14 +1167,14 @@ t.todo('o: prop subscription', async t => {
   await tick(10)
   t.is(log.slice(-1), [6], 'end destructs property')
 })
-t.todo('o: prop get/set', async t => {
+t.todo('v: prop get/set', async t => {
   let ob = { x: () => { t.fail('Should not be called') } }
   let ox = o(ob)
   ox.x = 0
   t.is(ob, {x:0}, 'set is ok')
   t.is(ox, {x:0}, 'get is ok')
 })
-t.todo('o: prop multiple instances', async t => {
+t.todo('v: prop multiple instances', async t => {
   let x = { x: 1 }
   let xs1 = o(x)
   let xs2 = o(x)
@@ -1163,7 +1184,7 @@ t.todo('o: prop multiple instances', async t => {
   t.is(xs1.x, xs2.x, 'same value')
   t.is(x.x, xs1.x, 'same value')
 })
-t.todo('o: prop minimize get/set invocations', async t => {
+t.todo('v: prop minimize get/set invocations', async t => {
   let log = []
   let obj = {
     _x: 0,
@@ -1209,8 +1230,8 @@ t.todo('o: prop minimize get/set invocations', async t => {
   await tick(8)
   t.is(log, ['get', 1, 'set', 0])
 })
-t.todo('o: prop observe store property')
-t.skip('o: attr core', async t => {
+t.todo('v: prop observe store property')
+t.skip('v: attr core', async t => {
   let el = document.createElement('div')
   let attrs = o(el, {x: Number})
   let log = []
@@ -1244,7 +1265,7 @@ t.skip('o: attr core', async t => {
   t.is(el.getAttribute('x'), '7', 'end destroys property')
   t.is(log, [undefined, null, 2, '2', 5, '5', 6, '6'], 'end destroys property')
 })
-t.skip('o: attr get/set', async t => {
+t.skip('v: attr get/set', async t => {
   let el = document.createElement('x')
 
   let ox = o(el)
@@ -1269,7 +1290,7 @@ t.skip('o: attr get/set', async t => {
   await tick(8)
   t.is(el.x, null)
 })
-t.skip('o: attr correct cleanup', async t => {
+t.skip('v: attr correct cleanup', async t => {
   // nope: user may clean up himself if needed. Not always resetting to orig value is required, mb temporary setter.
   let el = document.createElement('div')
   el.setAttribute('x', 1)
@@ -1280,7 +1301,7 @@ t.skip('o: attr correct cleanup', async t => {
   xs(null)
   t.is(el.getAttribute('x'), '1')
 })
-t.skip('o: attr stream to attribute', async t => {
+t.skip('v: attr stream to attribute', async t => {
   let x = store([]), el = document.createElement('div')
   const a = attr(el, 'hidden')
   from(x, x => !x.length)(a)
@@ -1290,7 +1311,7 @@ t.skip('o: attr stream to attribute', async t => {
   x.length = 0
   t.is(el.getAttribute('hidden'), '')
 })
-t.skip('o: attr must set for new props', async t => {
+t.skip('v: attr must set for new props', async t => {
   let el = document.createElement('div')
   let props = o(el)
   props.x = 1
