@@ -37,44 +37,39 @@ class $ extends Array {
 
     super()
 
-    // Object.defineProperties(this, {
-    //   _channel: desc(channel()),
-    //   _items: desc(new WeakMap),
-    //   _delete: desc(new WeakSet),
-    //   _teardown: desc(new WeakMap),
-    //   _scope: desc(scope),
-    //   _fn: desc(fn),
-    //   _selector: desc(),
-    //   _match: desc(),
-    //   _animation: desc()
-    // })
+    Object.defineProperties(this, {
+      _channel: desc(channel()),
+      _items: desc(new WeakMap),
+      _delete: desc(new WeakSet),
+      _teardown: desc(new WeakMap),
+      _scope: desc(scope),
+      _fn: desc(fn),
+      _selector: desc(),
+      _match: desc(),
+      _animation: desc()
+    })
     // an alternative way to hide props is creating 1-level prototype
     // FIXME: wait for real private props to come
-    this._channel = channel()
-    this._items = new WeakMap
-    this._delete = new WeakSet
-    this._teardown = new WeakMap
-    this._scope = scope
-    this._fn = fn
-    this._selector = null
-    this._match = null
-    this._animation = null
-
-    // hiding privates to prototype: 1. better look debugger, 2. no `add`/`set` methods conflict
-    const set = this.$ = Object.create(this)
-    const self = this
+    // this._channel = (channel())
+    // this._items = (new WeakSet)
+    // this._delete = (new WeakSet)
+    // this._teardown = (new WeakMap)
+    // this._scope = scope
+    // this._fn = fn
+    // this._selector = null
+    // this._animation = null
 
     // ignore non-selector collections
-    if (!selector) return set
-    // if (!selector) return
+    // if (!selector) return this.$ = Object.create(this)
+    if (!selector) return
 
     // init existing elements
-    ;(scope || document).querySelectorAll(selector).forEach(el => self.add(el))
+    ;(scope || document).querySelectorAll(selector).forEach(el => this.add(el))
 
     // if last selector part is simple (id|name|class|tag), followed by classes - index that
     const rtokens = /(?:#([\w:-]+)|\[\s*name=['"]?([\w:-]+)['"]?\s*\]|\.([\w:-]+)|([\*\w:-]+))(\[[^\]]+\]|\.[\w:-]+)*$/
 
-    self._selector = selector.split(/\s*,\s*/).map(selector => {
+    this._selector = selector.split(/\s*,\s*/).map(selector => {
       selector = new String(selector)
 
       const match = selector.match(rtokens)
@@ -82,10 +77,10 @@ class $ extends Array {
       if (!match) return selector
 
       let [str, id, name, cls, tag, filter] = match
-      if (id) (ids[selector.id = id] = ids[id] || []).push(self)
-      else if (name) (names[selector.name = name] = names[name] || []).push(self)
-      else if (cls) (classes[selector.class = cls] = classes[cls] || []).push(self)
-      else if (tag) (selector.tag = tag = tag.toUpperCase(), tags[tag] = tags[tag] || []).push(self)
+      if (id) (ids[selector.id = id] = ids[id] || []).push(this)
+      else if (name) (names[selector.name = name] = names[name] || []).push(this)
+      else if (cls) (classes[selector.class = cls] = classes[cls] || []).push(this)
+      else if (tag) (selector.tag = tag = tag.toUpperCase(), tags[tag] = tags[tag] || []).push(this)
 
       if (filter) selector.filter = selector.slice(0, match.index) + selector.slice(-filter.length)
       // `match.index` === 0 means selector is simple and need no match check
@@ -93,32 +88,32 @@ class $ extends Array {
 
       return selector
     })
-    self._match = self._selector.some(sel => sel.filter)
+    this._match = this._selector.some(sel => sel.filter)
 
     // complex selectors are handled via anim events (technique from insertionQuery). Cases:
     // - dynamically added attributes so that existing nodes match (we don't observe attribs in mutation obserever)
     // - complex selectors, inc * - we avoid > O(c) sync mutations check
     // NOTE: only connected scope supports anim observer
     if (!hasAnimevent) {
-      let anim = animations[self._selector]
+      let anim = animations[this._selector]
       if (!anim) {
         const { sheet } = style, { cssRules } = sheet
-        anim = animations[self._selector] = []
-        self._animation = anim.id = String.fromCodePoint(CLASS_OFFSET + count++)
+        anim = animations[this._selector] = []
+        this._animation = anim.id = String.fromCodePoint(CLASS_OFFSET + count++)
       }
-      self._animation = anim.id
-      anim.push(self)
+      this._animation = anim.id
+      anim.push(this)
     }
-    else if (!self._selector.every(sel => sel.tag && !sel.filter)) {
-      let anim = animations[self._selector]
+    else if (!this._selector.every(sel => sel.tag && !sel.filter)) {
+      let anim = animations[this._selector]
       if (!anim) {
         const { sheet } = style, { cssRules } = sheet
-        anim = animations[self._selector] = []
+        anim = animations[this._selector] = []
         anim.id = String.fromCodePoint(CLASS_OFFSET + count++)
         sheet.insertRule(`@keyframes ${ anim.id }{}`, cssRules.length)
-        sheet.insertRule(`${ self._selector.map(sel => sel + `:not(.${ anim.id })`) }{animation:${ anim.id }}`, cssRules.length)
+        sheet.insertRule(`${ this._selector.map(sel => sel + `:not(.${ anim.id })`) }{animation:${ anim.id }}`, cssRules.length)
         sheet.insertRule(`.${ anim.id }{animation:${ anim.id }}`, cssRules.length)
-        sheet.insertRule(`${ self._selector.map(sel => sel + `.${ anim.id }`) }{animation:unset;animation:revert}`, cssRules.length)
+        sheet.insertRule(`${ this._selector.map(sel => sel + `.${ anim.id }`) }{animation:unset;animation:revert}`, cssRules.length)
         anim.rules = [].slice.call(cssRules, -4)
 
         anim.onanim = e => {
@@ -130,52 +125,47 @@ class $ extends Array {
 
           if (!target.classList.contains(anim.id)) {
             target.classList.add(anim.id)
-            anim.forEach(self => self.add(target, false))
+            anim.forEach(set => set.add(target, false))
           }
           else {
             target.classList.remove(anim.id)
-            anim.forEach(self => self.delete(target))
+            anim.forEach(set => set.delete(target))
           }
         }
         document.addEventListener('animationstart', anim.onanim, true)
       }
-      self._animation = anim.id
-      anim.push(self)
+      this._animation = anim.id
+      anim.push(this)
     }
-
-    return set
   }
 
   add(el, check=this._match) {
     if (!el) return
 
-    const set = this.$ || this
-    const self = Object.getPrototypeOf(set)
-
     // ignore existing
-    if (self._items.has(el)) return
+    if (this._items.has(el)) return
 
     // ignore not-matching
-    if (check) if (!el.matches(self._selector)) return
+    if (check) if (!el.matches(this._selector)) return
 
     // ignore out-of-scope
-    if (self._scope) {
-      if (self._scope === el) return
-      if (self._scope.nodeType) { if (!self._scope.contains(el)) return }
-      else if ([].every.call(self._scope, scope => !scope.contains(el))) return
+    if (this._scope) {
+      if (this._scope === el) return
+      if (this._scope.nodeType) { if (!this._scope.contains(el)) return }
+      else if ([].every.call(this._scope, scope => !scope.contains(el))) return
     }
 
     // track collection
-    set.push(el)
-    self._items.set(el, [el.id, el.name])
-    if (el.name) set[el.name] = el
-    if (el.id) set[el.id] = el
+    this.push(el)
+    this._items.set(el, [el.id, el.name])
+    if (el.name) this[el.name] = el
+    if (el.id) this[el.id] = el
 
     // cancel planned delete
-    if (self._delete.has(el)) self._delete.delete(el)
+    if (this._delete.has(el)) this._delete.delete(el)
 
     // ignore existing items
-    if (setCache.has(el) && setCache.get(el).has(self)) return
+    if (setCache.has(el) && setCache.get(el).has(this)) return
 
     // FIXME: name/id ref obsever - seems like overkill, waiting for real-case demand
     // NOTE: this does not hook props added after
@@ -197,43 +187,40 @@ class $ extends Array {
     if (!setCache.has(el)) setCache.set(el, new Set)
 
     // mark element
-    setCache.get(el).add(self)
+    setCache.get(el).add(this)
     el.classList.add(SPECT_CLASS)
 
     // notify
-    self._teardown.set(el, self._fn && self._fn(el))
-    self._channel.push(set)
+    this._teardown.set(el, this._fn && this._fn(el))
+    this._channel.push(this)
   }
 
   delete(el, immediate = false) {
-    const set = this.$ || this
-    const self = Object.getPrototypeOf(set)
-
-    if (!self._items.has(el)) return
+    if (!this._items.has(el)) return
 
     // remove element from list sync
-    if (set.length) set.splice(set.indexOf(el >>> 0, 1), 1)
-    const [id, name] = self._items.get(el)
-    if (name) delete set[name]
-    if (id) delete set[id]
-    self._items.delete(el)
+    if (this.length) this.splice(this.indexOf(el >>> 0, 1), 1)
+    const [id, name] = this._items.get(el)
+    if (name) delete this[name]
+    if (id) delete this[id]
+    this._items.delete(el)
     // plan destroy async (can be re-added)
-    self._delete.add(el)
+    this._delete.add(el)
 
     const del = () => {
-      if (!self._delete.has(el)) return
-      self._delete.delete(el)
+      if (!this._delete.has(el)) return
+      this._delete.delete(el)
 
       if (!setCache.has(el)) return
-      const teardown = self._teardown.get(el)
+      const teardown = this._teardown.get(el)
       if (teardown) {
         if (teardown.call) teardown(el)
         else if (teardown.then) teardown.then(fn => fn && fn.call && fn())
       }
-      self._teardown.delete(el)
-      self._channel.push(set)
+      this._teardown.delete(el)
+      this._channel.push(this)
 
-      setCache.get(el).delete(self)
+      setCache.get(el).delete(this)
       if (!setCache.get(el).size) {
         setCache.delete(el)
         el.classList.remove(SPECT_CLASS)
@@ -260,23 +247,18 @@ class $ extends Array {
     }
   }
 
-  item(n) {
-    const set = this.$ || this
-    const self = Object.getPrototypeOf(set);
-    return n < 0 ? set[self.length + n] : set[n]
-  }
+  item(n) { return n < 0 ? this[this.length + n] : this[n] }
 
   namedItem(name) { return this[name] }
 
   has(item) { return this._items.has(item) }
 
   [symbol.dispose]() {
-    const set = this.$ || this
-    const self = Object.getPrototypeOf(set)
-    // const set = this
+    // const self = Object.getPrototypeOf(this)
+    const self = this
 
-    if (set._selector) {
-      set._selector.forEach(({id, class:cls, name, tag}) => {
+    if (self._selector) {
+      self._selector.forEach(({id, class:cls, name, tag}) => {
         id && ids[id].splice(ids[id].indexOf(self) >>> 0, 1)
         name && names[name].splice(names[name].indexOf(self) >>> 0, 1)
         cls && classes[cls].splice(classes[cls].indexOf(self) >>> 0, 1)
@@ -297,7 +279,7 @@ class $ extends Array {
     }
 
     self._channel.close()
-    let els = [...set]
+    let els = [...self]
     self.length = 0
     els.forEach(el => self.delete(el, true))
   }
