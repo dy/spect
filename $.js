@@ -84,17 +84,7 @@ class $ extends Array {
     // - dynamically added attributes so that existing nodes match (we don't observe attribs in mutation obserever)
     // - complex selectors, inc * - we avoid > O(c) sync mutations check
     // NOTE: only connected scope supports anim observer
-    if (!hasAnimevent) {
-      let anim = animations[this._selector]
-      if (!anim) {
-        const { sheet } = style, { cssRules } = sheet
-        anim = animations[this._selector] = []
-        this._animation = anim.id = String.fromCodePoint(CLASS_OFFSET + count++)
-      }
-      this._animation = anim.id
-      anim.push(this)
-    }
-    else if (!this._selector.every(sel => sel.tag && !sel.filter)) {
+    if (!hasAnimevent || !this._selector.every(sel => sel.tag && !sel.filter)) {
       let anim = animations[this._selector]
       if (!anim) {
         const { sheet } = style, { cssRules } = sheet
