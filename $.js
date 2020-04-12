@@ -48,23 +48,13 @@ class $ extends Array {
       _match: desc(),
       _animation: desc()
     })
-    // an alternative way to hide props is creating 1-level prototype
-    // FIXME: wait for real private props to come
-    // this._channel = (channel())
-    // this._items = (new WeakSet)
-    // this._delete = (new WeakSet)
-    // this._teardown = (new WeakMap)
-    // this._scope = scope
-    // this._fn = fn
-    // this._selector = null
-    // this._animation = null
 
     // ignore non-selector collections
-    // if (!selector) return this.$ = Object.create(this)
     if (!selector) return
 
     // init existing elements
-    ;(scope || document).querySelectorAll(selector).forEach(el => this.add(el))
+    const proto = Object.getPrototypeOf(this)
+    ;(scope || document).querySelectorAll(selector).forEach(el => {proto.add.call(this, el)})
 
     // if last selector part is simple (id|name|class|tag), followed by classes - index that
     const rtokens = /(?:#([\w:-]+)|\[\s*name=['"]?([\w:-]+)['"]?\s*\]|\.([\w:-]+)|([\*\w:-]+))(\[[^\]]+\]|\.[\w:-]+)*$/
@@ -254,7 +244,6 @@ class $ extends Array {
   has(item) { return this._items.has(item) }
 
   [symbol.dispose]() {
-    // const self = Object.getPrototypeOf(this)
     const self = this
 
     if (self._selector) {
