@@ -839,9 +839,70 @@ t.todo('v: input multiselect')
 t.todo('v: input form')
 
 // error
-t('v: error in mapper')
-t('v: error in subscription')
-t('v: error in source')
+t.skip('v: error in mapper', async t => {
+  let x = v(1, x => {throw Error('123')})
+})
+t.skip('v: error in subscription', async t => {
+  let x = v(1)
+  x(() => {throw new Error('x')})
+})
+t('v: error in object source', async t => {
+  let log = []
+  let ex = new Error('x')
+  let o = new Observable(obs => setTimeout(() => obs.error(ex)))
+  let v1 = v({o})
+  v1(null, e => log.push(e))
+  await time()
+  t.is(log, [ex])
+})
+t('v: error in input v', async t => {
+  let log = []
+  let ex = new Error('x')
+  let o = new Observable(obs => setTimeout(() => obs.error(ex)))
+  let v1 = v(o)
+  let v2 = v(v1)
+  v1(null, e => log.push(e))
+  v2(null, e => log.push(e))
+  await time()
+  t.is(log, [ex, ex])
+})
+t('v: error in proxy', async t => {
+  let log = []
+  let e = new Error('x')
+  let p = new Promise((y, n) => setTimeout(() => n(e)))
+  let vp = v(p)
+  vp(null, e => log.push(e))
+  await time()
+  t.is(log, [e])
+  t.is(vp(), undefined)
+})
+t('v: error in async iterator', async t => {
+  let log = []
+  let ex = new Error('x')
+  async function* x() {
+    yield 1
+    await time()
+    throw ex
+  }
+  let vp = v(x())
+  vp(null, e => log.push(e))
+  await tick()
+  t.is(vp(), 1)
+  await time(10)
+  t.is(log, [ex])
+  t.is(vp(), 1)
+})
+t('v: error in observable', async t => {
+  let log = []
+  let ex = new Error('x')
+  let o = new Observable(obs => setTimeout(() => obs.error(ex)))
+  let vp = v(o)
+  vp(null, e => log.push(e))
+  await tick()
+  t.is(vp(), undefined)
+  await time()
+  t.is(log, [ex])
+})
 
 
 // object

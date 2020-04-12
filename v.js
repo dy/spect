@@ -7,7 +7,7 @@ export default function v(source, ...fields) {
     return v(fields, fields => String.raw({raw: source.raw}, ...fields))
   }
   const [map=v=>v, unmap=v=>v] = fields
-  const channel = c(), { subscribe, observers, push } = channel
+  const channel = c(), { subscribe, observers, push, error } = channel
 
   function fn (...args) {
     if (!args.length) return get()
@@ -31,16 +31,29 @@ export default function v(source, ...fields) {
     toString: desc(get),
     [Symbol.toPrimitive]: desc(get),
     [symbol.observable]: desc(() => channel),
-    [symbol.dispose]: desc(channel.close)
+    [symbol.dispose]: desc(channel.close),
+    [Symbol.asyncIterator]: desc(async function*() {
+      let resolve = () => {}, p, unsubscribe = fn(v => (resolve(v), p = new Promise(r => resolve = r)))
+      yield fn()
+      try {
+        while (1) {
+          yield await p
+        }
+      } catch {
+      } finally {
+        unsubscribe()
+      }
+    })
   })
 
   if (arguments.length) {
-    // v / observ or initializer
     if (typeof source === 'function') {
+      // v / observ
       if (observable(source)) {
         set = v => source(unmap(v))
-        subscribe(null, null, source(v => push(channel.current = map(v))))
+        subscribe(null, null, source(v => push(channel.current = map(v)), error))
       }
+      // initializer
       else {
         set(source())
       }
@@ -48,7 +61,10 @@ export default function v(source, ...fields) {
     // Observable (stateless)
     else if (source && source[symbol.observable]) {
       set = () => {}
-      let unsubscribe = source[symbol.observable]().subscribe({next: v => push(channel.current = map(v))})
+      let unsubscribe = source[symbol.observable]().subscribe({
+        next: v => push(channel.current = map(v)),
+        error
+      })
       unsubscribe = unsubscribe.unsubscribe || unsubscribe
       subscribe(null, null, unsubscribe)
     }
@@ -57,16 +73,20 @@ export default function v(source, ...fields) {
       set = () => {}
       let stop
       ;(async () => {
-        for await (let v of source) {
-          if (stop) break
-          push(channel.current = map(v))
+        try {
+          for await (let v of source) {
+            if (stop) break
+            push(channel.current = map(v))
+          }
+        } catch(e) {
+          error(e)
         }
       })()
       subscribe(null, null, () => stop = true)
     }
     // promise (stateful, initial undefined)
     else if (source && source.then) {
-      set = p => (delete channel.current, p.then(v => push(channel.current = map(v))))
+      set = p => (delete channel.current, p.then(v => push(channel.current = map(v)), error))
       set(source)
     }
     // ironjs
@@ -153,7 +173,7 @@ export default function v(source, ...fields) {
           vals[key] = val
           // avoid self-recursion
           if (fn !== dep) dchannel(vals, {[key]: val})
-        }))
+        }, error))
       }
 
       // any deps change triggers update

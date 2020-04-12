@@ -16,6 +16,8 @@ export const channel = () => {
       })
   }
 
+  const error = (e) => observers.map(sub => sub.error && sub.error(e))
+
   const close = () => {
       let unsubs = observers.map(sub => {
           if (sub.out && sub.out.call) sub.out()
@@ -52,7 +54,8 @@ export const channel = () => {
       closed: false,
       push,
       subscribe,
-      close
+      close,
+      error
   })
 }
 
