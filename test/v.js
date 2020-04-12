@@ -57,7 +57,6 @@ t('v: readme', async t => {
   t.is(log, [1, 2, 3])
   // > 1, 2, 3
 
-
   // from object
   let item = { done: false }
   let v5 = v(item)
@@ -333,6 +332,16 @@ t('v: repeated init', async t => {
   o.x = 4
   t.is(log, [])
 })
+t('v: template literals', async t => {
+  let b = v(0), s = v`a${b}c`
+  t.is(s(), `a0c`)
+  b(1)
+  t.is(s(), `a1c`)
+})
+t('v: reserved words', async t => {
+  let s = v({name: 1, arguments: 2})
+  t.is(s(), {name:1, arguments: 2})
+})
 
 // from
 t('v: from promise', async t => {
@@ -421,25 +430,28 @@ t('v: subscribed observable setter', async t => {
 })
 t('v: init non-input elements', async t => {
   let el = document.createElement('div')
+  el.x = 1
   let vel = v(el)
-  t.is(vel(), el)
+  t.is(vel(), {x: 1})
   vel[Symbol.dispose]()
 
   let vel2 = v()
   vel2(el)
   t.is(vel2(), el)
   vel2[Symbol.dispose]()
-
-  // let vel3 = v()
-  // vel3.set(el)
-  // t.is(vel3(), el)
-  // vel3[Symbol.dispose]()
 })
 t('v: expose deps observables', async t => {
   let a = v(0), b = v(1), c = v({a, b})
   t.is(c.a(), 0)
   t.is(c.b(), 1)
   t.is(c(), {a:0, b:1})
+})
+t('v: deps set', async t => {
+  let x, a = v(x = {x: 1, y: v(2)})
+  t.is(a(), {x: 1, y: 2})
+  a({x: 2, y: 3})
+  t.is(x.x, 2)
+  t.is(x.y(), 3)
 })
 
 // fx
@@ -574,6 +586,27 @@ t.skip('v: fx thenable', async t => {
   await tick(8)
   t.any(log, [[0, 'aw', 1, 1], [0, 1, 'aw', 1]])
 })
+t('v: async iterator', async t => {
+  const s = v(0), log = []
+
+  ;(async () => {
+    for await (let value of s) {
+      log.push(value)
+    }
+  })();
+
+  await tick(4)
+  t.is(log, [0])
+
+  s(1)
+  await tick(4)
+  t.is(log, [0, 1])
+
+  s(2)
+  s(3)
+  await tick(4)
+  t.is(log, [0, 1, 2, 3])
+})
 t('v: fx simple values', async t => {
   const o = {x:1}, log = []
   let unsub = v([o, o.x])(([o, x]) => {
@@ -643,7 +676,7 @@ t('v: calc must be sync', async t => {
   await tick(8)
   t.is(x2(), 2)
 })
-t.todo('v: calc async calculator', async t => {
+t('v: async calculator', async t => {
   // NOTE: for async effects use subscriptions, mapper can only be sync - but why? wb uses async calculator... it can even be generator.
   const x = v(1, async () => {
     await time(10)
@@ -652,6 +685,17 @@ t.todo('v: calc async calculator', async t => {
   t.is(x(), undefined)
   await time(10)
   t.is(x(), 10)
+})
+t.todo('v: async generator calculator', async t => {
+  const x = v(1, async function* () {
+    yield 1
+    await time(10)
+    yield 2
+  })
+  await tick()
+  t.is(x(), 1)
+  await time(10)
+  t.is(x(), 2)
 })
 t('v: calc promises/changeables must return undefined', async t => {
   const p = Promise.resolve(1)
@@ -700,29 +744,29 @@ t('v: input text', async t => {
   let el = document.createElement('input')
   document.body.appendChild(el)
   let text = v(el)
-  text(v => console.log(v))
+  text(v => console.log(v.value))
 
   let cb = document.createElement('input')
   cb.setAttribute('type', 'checkbox')
   document.body.appendChild(cb)
   let bool = v(cb)
-  bool(v => console.log(v))
+  bool(v => console.log(v.value))
 
   let sel = document.createElement('select')
   sel.innerHTML = `<option value=1>A</option><option value=2>B</option>`
   document.body.appendChild(sel)
   let enm = v(sel)
-  enm(v => console.log(v))
+  enm(v => console.log(v.value))
 })
 t('v: input updates by changing value directly', async t => {
   let el = document.createElement('input')
   el.value = 0
   let value = v(el)
-  t.is(value(), '0')
+  t.is(value(), {value:'0'})
 
   // observer 1
   let log = []
-  value(v => log.push(v))
+  value(v => log.push(v.value))
 
   await tick(2)
   t.is(log, ['0'], 'initial value notification')
@@ -760,69 +804,37 @@ t('v: input updates by changing value directly', async t => {
 t('v: input get/set', async t => {
   let el = document.createElement('input')
   let value = v(el)
-  value(0)
+  value({value:0})
   t.is(el.value, '0', 'set is ok')
-  t.is(value(), '0', 'get is ok')
+  t.is(value(), {value:'0'}, 'get is ok')
   await tick(8)
   t.is(el.value, '0', 'set is ok')
-  t.is(value(), '0', 'get is ok')
-})
-t.skip('v: input should register on simple selectors', async t => {
-  let el = document.createElement('input')
-  document.body.appendChild(el)
-  let value = input('input')
-  await frame(2)
-  value(0)
-  t.is(el.value, '0', 'set is ok')
-  t.is(value(), '0', 'get is ok')
-})
-t.skip('v: input multiple instances same? ref', async t => {
-  const el = document.createElement('input')
-  let xs1 = input(el)
-  let xs2 = input(el)
-
-  t.is(xs1, xs2, 'same ref')
-})
-t.skip('v: input direct value set off-focus emits event', async t => {
-  // NS: not sure we have to track direct `el.value = 1` when not focused. Looks like deciding for the user. Dispatching an event is not a big deal.
-  let el = document.createElement('input')
-  let i = input(el)
-  let log = []
-  fx(v => {
-    log.push(v)
-  }, [i])
-  await tick(8)
-  t.is(log, [''])
-
-  el.value = 1
-  await tick(8)
-  t.is(log, ['', '1'])
-  t.is(i(), '1')
+  t.is(value(), {value:'0'}, 'get is ok')
 })
 t('v: input checkbox', async t => {
   let el = document.createElement('input')
   el.type = 'checkbox'
   document.body.appendChild(el)
   let bool = v(el)
-  t.is(bool(), false)
+  t.is(bool(), {value:false})
   t.is(el.checked, false)
   t.is(el.value, '')
 
   el.checked = true
   el.dispatchEvent(new Event('change'))
-  t.is(bool(), true)
+  t.is(bool(), {value:true})
   t.is(el.checked, true)
   t.is(el.value, 'on')
 
-  bool(false)
-  t.is(bool(), false)
+  bool({value:false})
+  t.is(bool(), {value:false})
   t.is(el.checked, false)
   t.is(el.value, '')
 
   bool[Symbol.dispose]()
   // t.throws(() => bool(true))
-  bool(true)
-  t.any(bool(), [null, undefined, false])
+  bool({value:true})
+  t.is(bool(), undefined)
   t.is(el.checked, false)
   t.is(el.value, '')
 })
@@ -831,17 +843,17 @@ t('v: input select', async t => {
   el.innerHTML = '<option value=1 selected>A</option><option value=2>B</option>'
   // document.body.appendChild(el)
   let value = v(el)
-  t.is(value(), '1')
+  t.is(value().value, '1')
   t.is(el.value, '1')
 
   el.value = '2'
   el.dispatchEvent(new Event('change'))
-  t.is(value(), '2')
+  t.is(value().value, '2')
   t.is(el.value, '2')
   t.is(el.innerHTML, '<option value="1">A</option><option value="2" selected="">B</option>')
 
-  value('1')
-  t.is(value(), '1')
+  value({value:'1'})
+  t.is(value().value, '1')
   t.is(el.innerHTML, '<option value="1" selected="">A</option><option value="2">B</option>')
   t.is(el.value, '1')
 
@@ -856,11 +868,73 @@ t.todo('v: input radio')
 t.todo('v: input range')
 t.todo('v: input date')
 t.todo('v: input multiselect')
+t.todo('v: input form')
 
 // error
-t('v: error in mapper')
-t('v: error in subscription')
-t('v: error in source')
+t.skip('v: error in mapper', async t => {
+  let x = v(1, x => {throw Error('123')})
+})
+t.skip('v: error in subscription', async t => {
+  let x = v(1)
+  x(() => {throw new Error('x')})
+})
+t('v: error in object source', async t => {
+  let log = []
+  let ex = new Error('x')
+  let o = new Observable(obs => setTimeout(() => obs.error(ex)))
+  let v1 = v({o})
+  v1(null, e => log.push(e))
+  await time()
+  t.is(log, [ex])
+})
+t('v: error in input v', async t => {
+  let log = []
+  let ex = new Error('x')
+  let o = new Observable(obs => setTimeout(() => obs.error(ex)))
+  let v1 = v(o)
+  let v2 = v(v1)
+  v1(null, e => log.push(e))
+  v2(null, e => log.push(e))
+  await time()
+  t.is(log, [ex, ex])
+})
+t('v: error in proxy', async t => {
+  let log = []
+  let e = new Error('x')
+  let p = new Promise((y, n) => setTimeout(() => n(e)))
+  let vp = v(p)
+  vp(null, e => log.push(e))
+  await time()
+  t.is(log, [e])
+  t.is(vp(), undefined)
+})
+t('v: error in async iterator', async t => {
+  let log = []
+  let ex = new Error('x')
+  async function* x() {
+    yield 1
+    await time()
+    throw ex
+  }
+  let vp = v(x())
+  vp(null, e => log.push(e))
+  await tick()
+  t.is(vp(), 1)
+  await time(10)
+  t.is(log, [ex])
+  t.is(vp(), 1)
+})
+t('v: error in observable', async t => {
+  let log = []
+  let ex = new Error('x')
+  let o = new Observable(obs => setTimeout(() => obs.error(ex)))
+  let vp = v(o)
+  vp(null, e => log.push(e))
+  await tick()
+  t.is(vp(), undefined)
+  await time()
+  t.is(log, [ex])
+})
 
 
 // object
@@ -928,7 +1002,7 @@ t.todo('v: readme', t => {
   props(({loading}) => log.push(loading))
   t.is(log, [true])
 })
-t.todo('o: hidden proptypes unhide props', t => {
+t.todo('v: hidden proptypes unhide props', t => {
   let x = {[Symbol.for('x')]: 1}
   let ox = o(x, {[Symbol.for('x')]: null})
   t.is(ox, {[Symbol.for('x')]: 1})
@@ -937,7 +1011,7 @@ t.todo('o: hidden proptypes unhide props', t => {
   x[Symbol.for('x')] = 2
   t.is(log, [1, 2])
 })
-t.todo('o: store core', async t => {
+t.todo('v: store core', async t => {
   let s = o({x: 1})
   let log = []
   v(s, s => {
@@ -967,7 +1041,7 @@ t.todo('o: store core', async t => {
   await tick(8)
   t.is(log, [{y: 'foo'}], 'delete props')
 })
-t.todo('o: store must not expose internal props', async t => {
+t.todo('v: store must not expose internal props', async t => {
   let s = o({x: 1})
   let log  =[]
   for (let p in s) {
@@ -975,7 +1049,7 @@ t.todo('o: store must not expose internal props', async t => {
   }
   t.is(log, ['x'])
 })
-t.todo('o: list core', async t => {
+t.todo('v: list core', async t => {
   let s = o([1])
   let l
   v(s)(s => (l = s))
@@ -1028,7 +1102,7 @@ t.todo('o: list core', async t => {
   await tick(8)
   t.is(l, [1,2,3], 'shift')
 })
-t.todo('o: list must not expose internal props', async t => {
+t.todo('v: list must not expose internal props', async t => {
   let s = o([])
   let log = []
   for (let p in []) {
@@ -1036,7 +1110,7 @@ t.todo('o: list must not expose internal props', async t => {
   }
   t.is(log, [])
 })
-t.todo('o: list fx sync init', async t => {
+t.todo('v: list fx sync init', async t => {
   let l = o([])
   let log = []
   v(l, item => log.push(item.slice()))
@@ -1049,7 +1123,7 @@ t.todo('o: list fx sync init', async t => {
   await tick(8)
   t.any(log, [[[], [1]], [[], [1], [1]]])
 })
-t.todo('o: prop subscription', async t => {
+t.todo('v: prop subscription', async t => {
   let obj = { x: 0 }
   let oobj = o(obj)
   t.is(oobj.x, 0)
@@ -1093,14 +1167,14 @@ t.todo('o: prop subscription', async t => {
   await tick(10)
   t.is(log.slice(-1), [6], 'end destructs property')
 })
-t.todo('o: prop get/set', async t => {
+t.todo('v: prop get/set', async t => {
   let ob = { x: () => { t.fail('Should not be called') } }
   let ox = o(ob)
   ox.x = 0
   t.is(ob, {x:0}, 'set is ok')
   t.is(ox, {x:0}, 'get is ok')
 })
-t.todo('o: prop multiple instances', async t => {
+t.todo('v: prop multiple instances', async t => {
   let x = { x: 1 }
   let xs1 = o(x)
   let xs2 = o(x)
@@ -1110,7 +1184,7 @@ t.todo('o: prop multiple instances', async t => {
   t.is(xs1.x, xs2.x, 'same value')
   t.is(x.x, xs1.x, 'same value')
 })
-t.todo('o: prop minimize get/set invocations', async t => {
+t.todo('v: prop minimize get/set invocations', async t => {
   let log = []
   let obj = {
     _x: 0,
@@ -1156,8 +1230,8 @@ t.todo('o: prop minimize get/set invocations', async t => {
   await tick(8)
   t.is(log, ['get', 1, 'set', 0])
 })
-t.todo('o: prop observe store property')
-t.skip('o: attr core', async t => {
+t.todo('v: prop observe store property')
+t.skip('v: attr core', async t => {
   let el = document.createElement('div')
   let attrs = o(el, {x: Number})
   let log = []
@@ -1191,7 +1265,7 @@ t.skip('o: attr core', async t => {
   t.is(el.getAttribute('x'), '7', 'end destroys property')
   t.is(log, [undefined, null, 2, '2', 5, '5', 6, '6'], 'end destroys property')
 })
-t.skip('o: attr get/set', async t => {
+t.skip('v: attr get/set', async t => {
   let el = document.createElement('x')
 
   let ox = o(el)
@@ -1216,7 +1290,7 @@ t.skip('o: attr get/set', async t => {
   await tick(8)
   t.is(el.x, null)
 })
-t.skip('o: attr correct cleanup', async t => {
+t.skip('v: attr correct cleanup', async t => {
   // nope: user may clean up himself if needed. Not always resetting to orig value is required, mb temporary setter.
   let el = document.createElement('div')
   el.setAttribute('x', 1)
@@ -1227,7 +1301,7 @@ t.skip('o: attr correct cleanup', async t => {
   xs(null)
   t.is(el.getAttribute('x'), '1')
 })
-t.skip('o: attr stream to attribute', async t => {
+t.skip('v: attr stream to attribute', async t => {
   let x = store([]), el = document.createElement('div')
   const a = attr(el, 'hidden')
   from(x, x => !x.length)(a)
@@ -1237,7 +1311,7 @@ t.skip('o: attr stream to attribute', async t => {
   x.length = 0
   t.is(el.getAttribute('hidden'), '')
 })
-t.skip('o: attr must set for new props', async t => {
+t.skip('v: attr must set for new props', async t => {
   let el = document.createElement('div')
   let props = o(el)
   props.x = 1
