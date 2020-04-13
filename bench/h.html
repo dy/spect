@@ -1,6 +1,175 @@
 <!DOCTYPE html>
 <meta charset=utf-8>
 <title>Bench</title>
-<script type="module" src="./h.js"></script>
-<body>
-</body>
+<body></body>
+
+<script type="module">
+import t from 'tst'
+import h20 from './h20.js'
+import h19 from './h19.js'
+import hs from '../web_modules/hyperscript/index.js'
+import { html as lh, render as lrender } from 'lit-html'
+import { html as uh, render as urender } from 'uhtml'
+import { html as htl } from 'htl'
+import * as idom from '../web_modules/incremental-dom.js'
+import h from '../h.js'
+
+// create simple
+const N = 5000
+
+t.demo('create simple', t => {
+  const container = document.body.appendChild(document.createElement('div'))
+
+  const assert = () => t.is(container.innerHTML, `<a>a<b><c>0</c></b></a>`)
+
+  // console.log(h`<a>a<b><c>${ 0 }</c></b></a>`.outerHTML)
+  console.time('h html')
+  for (let i = 0; i < N; i++) {
+    container.appendChild(h`<a>a<b><c>${i}</c></b></a>`)
+    if (!i) assert()
+  }
+  console.timeEnd('h html')
+  container.innerHTML = ''
+
+  console.time('dom')
+  for (let i = 0; i < N; i++) {
+    let frag = document.createDocumentFragment(), b
+    frag.appendChild(document.createElement('a')).append(document.createTextNode('a'), b = document.createElement('b'))
+    b.appendChild(document.createElement('c')).appendChild(document.createTextNode(i))
+    container.appendChild(frag)
+    if (!i) assert()
+  }
+  console.timeEnd('dom')
+  container.innerHTML = ''
+
+  console.time('innerHTML')
+  let str = ''
+  for (let i = 0; i < N; i++) {
+    str += `<a>a<b><c>${i}</c></b></a>`
+  }
+  container.innerHTML = str
+  console.timeEnd('innerHTML')
+  container.innerHTML = ''
+
+
+  console.time('cloneNode')
+  let a = document.createElement('a')
+  a.innerHTML = `a<b><c>0</c></b>`
+  let c = a.querySelector('c')
+  for (let i = 0; i < N; i++) {
+    c.textContent = i
+    container.appendChild(a.cloneNode(true))
+    if (!i) assert()
+  }
+  console.timeEnd('cloneNode')
+  container.innerHTML = ''
+
+
+  console.time('htl')
+  for (let i = 0; i < N; i++) {
+    container.appendChild(htl`<a>a<b><c>${i}</c></b></a>`)
+    if (!i) assert()
+  }
+  console.timeEnd('htl')
+  container.innerHTML = ''
+
+
+  console.time('hyperscript')
+  for (let i = 0; i < N; i++) {
+    container.appendChild(hs('a', 'a', hs('b', hs('c', i))))
+    if (!i) assert()
+  }
+  console.timeEnd('hyperscript')
+  container.innerHTML = ''
+
+
+  console.time('lit-html')
+  let la = document.createElement('a')
+  // FIXME: can be optimized
+  for (let i = 0; i < N; i++) {
+    lrender(lh`a<b><c>${i}</c></b>`, la = la.cloneNode(true))
+    container.appendChild(la)
+    if (!i) assert()
+  }
+  console.timeEnd('lit-html')
+  container.innerHTML = ''
+
+
+  console.time('uhtml')
+  let ua = document.createElement('a')
+  for (let i = 0; i < N; i++) {
+    urender(ua = ua.cloneNode(true), uh`a<b><c>${i}</c></b>`)
+    container.appendChild(ua)
+    if (!i) assert()
+  }
+  console.timeEnd('uhtml')
+  container.innerHTML = ''
+
+
+  console.time('incremental-dom')
+  function render(i) {
+    idom.elementOpen('a')
+    idom.text('a')
+    idom.elementOpen('b')
+      idom.elementOpen('c')
+        idom.text(i)
+      idom.elementClose('c')
+    idom.elementClose('b')
+    idom.elementClose('a')
+  }
+  for (let i = 0; i < N; i++) {
+    let a = document.createDocumentFragment()
+    idom.patch(a, () => render(i))
+    container.appendChild(a)
+    if (!i) assert()
+  }
+  console.timeEnd('incremental-dom')
+  container.innerHTML = ''
+
+
+  // console.time('spect/h19 hyperscript')
+  // for (let i = 0; i < N; i++) {
+  //   container.appendChild(h19('a', 'a', h19('b', h19('c', i))))
+  //   if (!i) assert()
+  // }
+  // console.timeEnd('spect/h19 hyperscript')
+  // container.innerHTML = ''
+
+
+  // console.time('spect/h19 html')
+  // for (let i = 0; i < N; i++) {
+  //   container.appendChild(h19`<a>a<b><c>${i}</c></b></a>`)
+  //   if (!i) assert()
+  // }
+  // console.timeEnd('spect/h19 html')
+  // container.innerHTML = ''
+
+
+  // console.time('spect/h20 hyperscript')
+  // for (let i = 0; i < N; i++) {
+  //   container.appendChild(h20('a', 'a', h20('b', h20('c', i))))
+  //   if (!i) assert()
+  // }
+  // console.timeEnd('spect/h20 hyperscript')
+  // container.innerHTML = ''
+
+  // console.time('spect/h20 html')
+  // for (let i = 0; i < N; i++) {
+  //   container.appendChild(h20`<a>a<b><c>${i}</c></b></a>`)
+  //   if (!i) assert()
+  // }
+  // console.timeEnd('spect/h20 html')
+  // container.innerHTML = ''
+})
+
+
+// // create with children
+// h`<a><b><c><d><e><f></f></e></d></c></b></a>`
+
+// // update props
+// h`<${el} a=${a} ${b} ...${props}></>`
+
+// // update children
+// h`<${el}>${el.childNodes}${a}${b}${c}${d}${e}</>`
+
+</script>

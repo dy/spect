@@ -4,6 +4,31 @@ import { tick, frame, idle, time } from 'wait-please'
 import observable from './observable.js'
 import { v as iv } from 'ironjs'
 
+t('html: creation perf (faster than direct DOM)', async t => {
+  const N = 5000
+
+  const container = document.createElement('div')
+  const domStart = performance.now()
+  for (let i = 0; i < N; i++) {
+    let frag = document.createDocumentFragment(), b
+    frag.appendChild(document.createElement('a')).append(document.createTextNode('a'), b = document.createElement('b'))
+    b.appendChild(document.createElement('c')).appendChild(document.createTextNode(i))
+    container.appendChild(frag)
+  }
+  const domTime = performance.now() - domStart
+
+  container.innerHTML = ''
+  const hStart = performance.now()
+  for (let i = 0; i < N; i++) {
+    container.appendChild(h`<a>a<b><c>${i}</c></b></a>`)
+  }
+  const hTime = performance.now() - hStart
+  container.innerHTML = ''
+
+  console.log('hTime', hTime, 'domTime', domTime)
+  t.ok(hTime < domTime, 'creation is fast')
+})
+
 t('html: single attribute', async t => {
   const a = v(0)
 
