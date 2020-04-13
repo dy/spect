@@ -1,5 +1,5 @@
 import v from '../v.js'
-import { symbol, observable, primitive, object, attr, channel } from '../util.js'
+import { symbol, observable, primitive, object, attr, channel, immutable } from './util.js'
 
 const _group = Symbol.for('@spect.group')
 const _ref = Symbol.for('@spect.ref')
@@ -141,7 +141,7 @@ function createBuilder(str) {
         }
 
         // can be node/fragment
-        else if (arg.nodeType) return node.replaceWith(node = arg)
+        else if (arg.nodeType) node.replaceWith(node = arg)
 
         // can be an array / array-like
         // if (arg[Symbol.iterator]) {
@@ -156,21 +156,29 @@ function createBuilder(str) {
   }
 
   function build() {
-    let node, nodes// = node.getElementsByTagName('*')
-    if (nodes) node = tpl.cloneNode(true)
+    let node, nodes
 
     // TODO: possible pre-optimization: merge string parts separated by number or string to avoid field evaluator
-    // NOTE: simple templates (no-children/no-spread) can be boosted by directly modifying the template and cloning it
     for (let i = 0; i < arguments.length; i++) {
-      // WARN: null-context matters
-      const evalField = evals[i]
-      if (nodes) evalField.call(nodes[fieldNodes[i]], arguments[i])
-      else evalField(arguments[i])
+      // WARN: null-context call matters
+      const evalField = evals[i], field = arguments[i]
+
+      // simple fields modify tpl directly, then clone the node
+      if (immutable(field)) evalField(field)
+
+      // observable/object templates work on cloned template
+      else {
+        if (!nodes) {
+          nodes = node.getElementsByTagName('*')
+          node = tpl.cloneNode(true)
+        }
+        evalField.call(nodes[fieldNodes[i]], field)
+      }
     }
 
-    if (!nodes) node = tpl.cloneNode(true)
+    if (!node) node = tpl.cloneNode(true)
 
-    return node.childNodes.length > 1 ? node : node.firstChild
+    return node.childNodes.length > 1 ? node.childNodes : node.firstChild
   }
 
   return build

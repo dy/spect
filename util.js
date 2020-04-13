@@ -69,18 +69,18 @@ export const primitive = (val) => {
 }
 
 export const immutable = (val) => {
-  return primitive(val) || val instanceof RegExp || val instanceof Date
+  return !val || primitive(val) || val instanceof RegExp || val instanceof Date
 }
 
 export const observable = (arg) => {
-  if (!arg) return false
+  if (immutable(arg)) return false
   return !!(
     arg[symbol.observable]
     || (typeof arg === 'function' && arg.set)
     || arg[Symbol.asyncIterator]
     || arg.next
     || arg.then
-    || arg && arg.mutation && '_state' in arg
+    || arg.mutation && arg._state != null
   )
 }
 

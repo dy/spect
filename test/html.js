@@ -4,7 +4,7 @@ import { tick, frame, idle, time } from 'wait-please'
 import observable from './observable.js'
 import { v as iv } from 'ironjs'
 
-t('html: creation perf (faster than direct DOM)', async t => {
+t.only('html: creation perf (faster than direct DOM)', async t => {
   const N = 5000
 
   const container = document.createElement('div')

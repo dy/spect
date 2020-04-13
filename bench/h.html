@@ -22,7 +22,7 @@ t.demo('create simple', t => {
 
   const assert = () => t.is(container.innerHTML, `<a>a<b><c>0</c></b></a>`)
 
-  // console.log(h`<a>a<b><c>${ 0 }</c></b></a>`.outerHTML)
+  console.log(123, h`<a>a<b><c>${ 0 }</c></b></a>`)
   console.time('h html')
   for (let i = 0; i < N; i++) {
     container.appendChild(h`<a>a<b><c>${i}</c></b></a>`)
