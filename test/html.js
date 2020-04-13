@@ -1,10 +1,7 @@
 import t from 'tst'
 import { v, h } from '../index.js'
 import { tick, frame, idle, time } from 'wait-please'
-import { augmentor, useState, useEffect, useMemo } from 'augmentor'
-import Observable from 'zen-observable/esm'
 import observable from './observable.js'
-import morph from './morph.js'
 import { v as iv } from 'ironjs'
 
 t('html: single attribute', async t => {
