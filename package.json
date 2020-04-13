@@ -61,9 +61,7 @@
     "url": "https://github.com/spectjs/spect/issues"
   },
   "homepage": "https://github.com/spectjs/spect#readme",
-  "dependencies": {
-    "xhtm": "^1.5.3"
-  },
+  "dependencies": {},
   "devDependencies": {
     "@rollup/plugin-commonjs": "^11.0.2",
     "@rollup/plugin-node-resolve": "^7.1.1",
