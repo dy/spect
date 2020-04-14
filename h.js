@@ -1,8 +1,9 @@
 import v from '../v.js'
-import { symbol, observable, primitive, object, attr, channel, immutable } from './util.js'
+import { symbol, observable, primitive, object, attr, channel, immutable, list } from './util.js'
 
 const _group = Symbol.for('@spect.group')
 const _ref = Symbol.for('@spect.ref')
+const _cur = Symbol.for('@spect.cur')
 
 const TEXT = 3, ELEMENT = 1, COMMENT = 8, FRAGMENT = 11, SHOW_ELEMENT = 1, SHOW_TEXT = 4
 
@@ -129,15 +130,19 @@ function createBuilder(str) {
     if (node.hasAttribute('_')) {
       const fieldId = node.getAttribute('_')
       fieldNodes[fieldId] = i
-      evals[fieldId] = function (args, i) {
-        node = this || node
-        let arg = args[i]
 
-        // observable
+      evals[fieldId] = function (args, i) {
+        let orig = this || node
+        let arg = args[i]
         if (observable(arg)) {
-          v(arg)(tag => node = updateNode(node, tag))
+          v(arg)(tag => (orig[_cur] = updateNode(orig[_cur] || orig, tag)))
         }
-        else node = updateNode(node, arg)
+        else {
+          orig[_cur] = updateNode(orig, arg)
+        }
+
+        if (!this) node = orig[_cur]
+        return orig[_cur]
       }
     }
 
@@ -151,7 +156,7 @@ function createBuilder(str) {
           node.removeAttribute(name)
           const nameFieldId = id(name), valueFieldId = id(value)
           evals[nameFieldId] = function (args, i) {
-            node = this || node
+            let cur = this || node
             let arg = args[i]
           }
         }
@@ -164,12 +169,12 @@ function createBuilder(str) {
           const fieldId = id(name)
           fieldNodes[fieldId] = i
           evals[fieldId] = function (args, i) {
-            node = this || node
+            let cur = this || node
             name = args[i]
             if (observable(name)) {
-              v(name)(name => attr(node, name, node[name] = value))
+              v(name)(name => attr(cur, name, cur[name] = value))
             }
-            else attr(node, name, node[name] = value)
+            else attr(cur, name, cur[name] = value)
           }
         }
 
@@ -178,15 +183,15 @@ function createBuilder(str) {
           const fieldId = id(value)
           fieldNodes[fieldId] = i
           evals[fieldId] = function (args, i) {
-            node = this || node
+            let cur = this || node
             let value = args[i]
             // FIXME: move observable logic into `attr`?
             if (!observable(value)) {
-              attr(node, name, node[name] = value)
+              attr(cur, name, cur[name] = value)
             }
             else {
               v(value)
-              (value => attr(node, name, node[name] = value))
+              (value => attr(cur, name, cur[name] = value))
             }
           }
         }
@@ -195,31 +200,31 @@ function createBuilder(str) {
   }
 
   function build() {
-    let node, nodes
+    let root, nodes
 
     // fields are co-directional with evaluation sequence
     // in other words, that's impossible to replace some tag after its props being set
     for (let i = 0, evalField; i < arguments.length && (evalField = evals[i]); i++) {
 
       // simple fields modify tpl directly, then clone the node
-      if (!node && immutable(arguments[i])) {
+      if (!root && immutable(arguments[i])) {
         evalField(arguments, i)
       }
 
       // observable/object templates work on cloned template
       else {
         if (!nodes) {
-          node = tpl.cloneNode(true)
-          nodes = [...node.getElementsByTagName('*')]
+          root = tpl.cloneNode(true)
+          nodes = [...root.getElementsByTagName('*')]
         }
         // context passes cloned node to modify instead of template
-        evalField.call(nodes[fieldNodes[i]], arguments, i)
+        nodes[fieldNodes[i]] =  evalField.call(nodes[fieldNodes[i]], arguments, i)
       }
     }
 
-    if (!node) node = tpl.cloneNode(true)
+    if (!root) root = tpl.cloneNode(true)
 
-    return node.childNodes.length > 1 ? node.childNodes : node.firstChild
+    return root.childNodes.length > 1 ? root.childNodes : root.firstChild
   }
 
   return build
@@ -227,40 +232,112 @@ function createBuilder(str) {
 
 
 function updateNode (from, to) {
-  if (from === to) return from
+  if (key(from) === key(to)) return from
 
-  // if (from[_group]) from[_group].map(el => el.remove())
-  // if (from[symbol.dispose]) from[symbol.dispose]()
+  // FIXME: special case when preserve parent childNodes
+  // if (to === from.parentNode.childNodes) throw Error('Special case')
 
-  // if (to[_group]) {
-  //   let frag = document.createDocumentFragment()
-  //   appendChild(frag, to)
-  //   from.replaceWith(frag)
-  // }
-  // else {
-  //   from.replaceWith(to)
-  // }
+  // FIXME: map with elements can be written directly to arrays to avoid merge sets creation
 
-  // can be text/primitive
-  if (immutable(to)) {
-    to = to == null ? '' : to
-    if (from.nodeType === TEXT) from.data = to
-    else {
-      from.replaceWith(from = document.createTextNode(to))
+  // FIXME: the code can be compacted to generic array-merge case
+
+  // array / array-like
+  if (list(to)) {
+    if (!list(from)) from = [from]
+
+    if (!to.length) to.push('')
+    to = to.map(item => immutable(item) ? document.createTextNode(item) : item)
+
+    from = merge(from[0].parentNode, from, to, from[from.length - 1].nextSibling)
+  }
+  else {
+    // reduce arr to single node
+    if (list(from)) {
+      let i = 0, l = from.length, match = l - 1, toKey = key(to)
+      for (; i < l; i++) {
+        if (i < match && key(from[i]) === toKey) match = i
+        else if (i !== match) from[i].remove()
+      }
+      from = from[match]
+    }
+
+    if (key(from) === key(to)) return from
+
+    // can be text/primitive
+    if (immutable(to)) {
+      to = to == null ? '' : to
+      if (from.nodeType === TEXT) from.data = to
+      else {
+        from.replaceWith(from = document.createTextNode(to))
+      }
+    }
+
+    // can be node/fragment
+    else if (to.nodeType) {
+      from.replaceWith(from = to)
     }
   }
 
-  // can be node/fragment
-  else if (to.nodeType) from.replaceWith(from = to)
-
-  // can be an array / array-like
-  // if (arg[Symbol.iterator]) {
-  //   let marker = document.createTextNode('')
-  //   marker[_group] = [...arg].flat().map(arg => nodify(arg))
-  //   // create placeholder content (will be ignored by ops)
-  //   // marker.textContent = marker[_group].map(n => n.textContent).join('')
-  //   return marker
-  // }
-
   return from
+}
+
+const key = node => node && node.nodeType === TEXT ? node.data : node
+
+
+// merge 2 arrays, ref: https://github.com/luwes/js-diff-benchmark/blob/master/libs/list-difference.js
+function merge (parent, a, b, before) {
+  const aIdx = new Map();
+  const bIdx = new Map();
+  let i;
+  let j;
+
+  // Create a mapping from keys to their position in the old list
+  for (i = 0; i < a.length; i++) {
+    aIdx.set(a[i], i);
+  }
+
+  // Create a mapping from keys to their position in the new list
+  for (i = 0; i < b.length; i++) {
+    bIdx.set(b[i], i);
+  }
+
+  for (i = j = 0; i < a.length || j < b.length;) {
+    let aElm = a[i], bElm = b[j];
+    if (aElm === null) {
+      // This is a element that has been moved to earlier in the list
+      i++;
+    } else if (b.length <= j) {
+      // No more elements in new, this is a delete
+      parent.removeChild(aElm);
+      i++;
+    } else if (a.length <= i) {
+      // No more elements in old, this is an addition
+      parent.insertBefore(bElm, aElm || before);
+      j++;
+    } else if (key(aElm) === key(bElm)) {
+      if (aElm !== bElm) b[j] = aElm
+      // No difference, we move on
+      i++; j++;
+    } else {
+      var aNewIdx = bIdx.get(key(aElm));
+      var bOldIdx = aIdx.get(key(bElm));
+      // FIXME: this part can be optimized
+      if (aNewIdx === undefined) {
+        // Current element is not in new list, it has been removed
+        parent.removeChild(aElm);
+        i++;
+      } else if (bOldIdx === undefined) {
+        // New element is not in old list, it has been added
+        parent.insertBefore(bElm, aElm || before);
+        j++;
+      } else {
+        // Element is in both lists, it has been moved
+        parent.insertBefore(a[bOldIdx], aElm || before);
+        a[bOldIdx] = null;
+        j++;
+      }
+    }
+  }
+
+  return b;
 }
