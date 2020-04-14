@@ -4,8 +4,8 @@ import { tick, frame, idle, time } from 'wait-please'
 import observable from './observable.js'
 import { v as iv } from 'ironjs'
 
-t.only('html: creation perf (faster than direct DOM)', async t => {
-  const N = 5000
+t('html: creation performance should be faster than direct DOM', async t => {
+  const N = 10000
 
   const container = document.createElement('div')
   const domStart = performance.now()
@@ -29,24 +29,57 @@ t.only('html: creation perf (faster than direct DOM)', async t => {
   t.ok(hTime < domTime, 'creation is fast')
 })
 
-t('html: single attribute', async t => {
-  const a = v(0)
+t('html: update performance should be faster than direct DOM', async t => {
+  const N = 10000
 
-  let el = h`<div a=${a}></div>`
+  const container = document.createElement('div')
+  const domStart = performance.now()
+  for (let i = 0; i < N; i++) {
+    let frag = document.createDocumentFragment(), b
+    frag.appendChild(document.createElement('a')).append(document.createTextNode('a'), b = document.createElement('b'))
+    b.appendChild(document.createElement('c')).appendChild(document.createTextNode(i))
+    container.appendChild(frag)
+  }
+  const domTime = performance.now() - domStart
 
-  t.is(el.outerHTML, `<div a="0"></div>`)
-  await tick(28)
-  t.is(el.outerHTML, `<div a="0"></div>`)
+  container.innerHTML = ''
+  const hStart = performance.now()
+  for (let i = 0; i < N; i++) {
+    container.appendChild(h`<${a} ${x} ${y}=${z} ...${w}>a<b><c>${i}</c></b></>`)
+  }
+  const hTime = performance.now() - hStart
+  container.innerHTML = ''
 
-  a(1)
-  // FIXME: why so big delay?
-  await tick(24)
-  t.is(el.outerHTML, `<div a="1"></div>`)
+  console.log('hTime', hTime, 'domTime', domTime)
+  t.ok(hTime < domTime, 'creation is fast')
+})
 
-  a(undefined)
-  a(null)
-  await tick(24)
-  t.is(el.outerHTML, `<div></div>`)
+t('html: single attribute cases', async t => {
+  // direct
+  let el = h`<div a=0/>`
+  t.is(el.outerHTML, `<div a="0"></div>`, 'simple attr')
+
+
+  // observable name
+  const a = v('a')
+  el = h`<div ${a}=0/>`
+  t.is(el.outerHTML, `<div a="0"></div>`, 'observable name')
+
+  // observable value
+  const val = v(0)
+
+  el = h`<div a=${val}></div>`
+
+  t.is(el.outerHTML, `<div a="0"></div>`, 'observable value')
+
+  val(1)
+  t.is(el.outerHTML, `<div a="1"></div>`, 'changed observable value')
+
+  val(null)
+  t.is(el.outerHTML, `<div></div>`, 'null value')
+
+  val[Symbol.dispose]()
+  t.is(el.outerHTML, `<div></div>`, 'disposed')
 })
 
 t('html: single attribute on mounted node', async t => {
@@ -103,15 +136,13 @@ t('html: child node', async t => {
   t.is(b.outerHTML, `<b><a>1</a></b>`)
 })
 
-t('html: mixed static content', async t => {
+t.only('html: mixed static content', async t => {
   const foo = h`<foo></foo>`
   const bar = `bar`
   const baz = h`<baz/>`
 
   const a = h`<a> ${foo} ${bar} ${baz} </a>`
 
-  t.is(a.outerHTML, `<a> <foo></foo> bar <baz></baz> </a>`)
-  await tick(28)
   t.is(a.outerHTML, `<a> <foo></foo> bar <baz></baz> </a>`)
 })
 

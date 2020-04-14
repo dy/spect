@@ -22,13 +22,13 @@ t.demo('create simple', t => {
 
   const assert = () => t.is(container.innerHTML, `<a>a<b><c>0</c></b></a>`)
 
-  console.log(123, h`<a>a<b><c>${ 0 }</c></b></a>`)
-  console.time('h html')
+  console.log(h`<a>a<b><c>${ 0 }</c></b></a>`)
+  console.time('spect/h')
   for (let i = 0; i < N; i++) {
     container.appendChild(h`<a>a<b><c>${i}</c></b></a>`)
-    if (!i) assert()
+    // if (!i) assert()
   }
-  console.timeEnd('h html')
+  console.timeEnd('spect/h')
   container.innerHTML = ''
 
   console.time('dom')
@@ -37,7 +37,7 @@ t.demo('create simple', t => {
     frag.appendChild(document.createElement('a')).append(document.createTextNode('a'), b = document.createElement('b'))
     b.appendChild(document.createElement('c')).appendChild(document.createTextNode(i))
     container.appendChild(frag)
-    if (!i) assert()
+    // if (!i) assert()
   }
   console.timeEnd('dom')
   container.innerHTML = ''
@@ -59,7 +59,7 @@ t.demo('create simple', t => {
   for (let i = 0; i < N; i++) {
     c.textContent = i
     container.appendChild(a.cloneNode(true))
-    if (!i) assert()
+    // if (!i) assert()
   }
   console.timeEnd('cloneNode')
   container.innerHTML = ''
@@ -68,7 +68,7 @@ t.demo('create simple', t => {
   console.time('htl')
   for (let i = 0; i < N; i++) {
     container.appendChild(htl`<a>a<b><c>${i}</c></b></a>`)
-    if (!i) assert()
+    // if (!i) assert()
   }
   console.timeEnd('htl')
   container.innerHTML = ''
@@ -77,7 +77,7 @@ t.demo('create simple', t => {
   console.time('hyperscript')
   for (let i = 0; i < N; i++) {
     container.appendChild(hs('a', 'a', hs('b', hs('c', i))))
-    if (!i) assert()
+    // if (!i) assert()
   }
   console.timeEnd('hyperscript')
   container.innerHTML = ''
@@ -89,7 +89,7 @@ t.demo('create simple', t => {
   for (let i = 0; i < N; i++) {
     lrender(lh`a<b><c>${i}</c></b>`, la = la.cloneNode(true))
     container.appendChild(la)
-    if (!i) assert()
+    // if (!i) assert()
   }
   console.timeEnd('lit-html')
   container.innerHTML = ''
@@ -100,7 +100,7 @@ t.demo('create simple', t => {
   for (let i = 0; i < N; i++) {
     urender(ua = ua.cloneNode(true), uh`a<b><c>${i}</c></b>`)
     container.appendChild(ua)
-    if (!i) assert()
+    // if (!i) assert()
   }
   console.timeEnd('uhtml')
   container.innerHTML = ''
@@ -121,7 +121,7 @@ t.demo('create simple', t => {
     let a = document.createDocumentFragment()
     idom.patch(a, () => render(i))
     container.appendChild(a)
-    if (!i) assert()
+    // if (!i) assert()
   }
   console.timeEnd('incremental-dom')
   container.innerHTML = ''
@@ -145,13 +145,13 @@ t.demo('create simple', t => {
   // container.innerHTML = ''
 
 
-  // console.time('spect/h20 hyperscript')
-  // for (let i = 0; i < N; i++) {
-  //   container.appendChild(h20('a', 'a', h20('b', h20('c', i))))
-  //   if (!i) assert()
-  // }
-  // console.timeEnd('spect/h20 hyperscript')
-  // container.innerHTML = ''
+  console.time('spect/h20 hyperscript')
+  for (let i = 0; i < N; i++) {
+    container.appendChild(h20('a', 'a', h20('b', h20('c', i))))
+    // if (!i) assert()
+  }
+  console.timeEnd('spect/h20 hyperscript')
+  container.innerHTML = ''
 
   // console.time('spect/h20 html')
   // for (let i = 0; i < N; i++) {
