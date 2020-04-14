@@ -124,17 +124,16 @@ function createBuilder(str) {
   for (let i = 0; i < nodes.length; i++) {
     let node = nodes[i]
 
+    // <h::: _=N - will be replaced
     if (node.hasAttribute('_')) {
       const fieldId = node.getAttribute('_')
-
-      // INSERT / PATCH
       fieldNodes[fieldId] = i
-
-      evals[fieldId] = function (arg) {
+      evals[fieldId] = function (args, i) {
         node = this || node
+        let arg = args[i]
 
         // can be text/primitive
-        if (primitive(arg) || arg instanceof Date || arg instanceof RegExp) {
+        if (immutable(arg)) {
           arg = arg == null ? '' : arg
           if (node.nodeType === TEXT) node.data = arg
           else node.replaceWith(node = document.createTextNode(arg))
@@ -153,26 +152,66 @@ function createBuilder(str) {
         // }
       }
     }
+
+    else if (node.hasAttributes()) {
+      for (let j = 0, n = node.attributes.length; j < n; ++j) {
+        let {name, value} = node.attributes[i]
+
+        // <a ${a}=${b}
+        if (name.includes(PLACEHOLDER) && value.includes(PLACEHOLDER)) {
+          --j, --n
+          node.removeAttribute(name)
+          const nameFieldId = id(name), valueFieldId = id(value)
+          evals[nameFieldId] = function (args, i) {
+            node = this || node
+            let arg = args[i]
+          }
+        }
+
+        // <a ${a}=b, <a ${a}
+        if (name.includes(PLACEHOLDER)) {
+          --j, --n
+          node.removeAttribute(name)
+          const fieldId = id(name)
+          fieldNodes[fieldId] = i
+          evals[fieldId] = function (args, i) {
+            node = this || node
+            let arg = args[i]
+          }
+        }
+
+        // <a a=${b}
+        if (value.includes(PLACEHOLDER)) {
+          fieldId = id(value)
+          fieldNodes[fieldId] = i
+          evals[fieldId] = function (args, i) {
+            node = this || node
+            let arg = args[i]
+            if (immutable(arg)) {
+              attr(node, )
+            }
+          }
+        }
+      }
+    }
   }
 
   function build() {
     let node, nodes
 
-    // TODO: possible pre-optimization: merge string parts separated by number or string to avoid field evaluator
-    for (let i = 0; i < arguments.length; i++) {
-      // WARN: null-context call matters
-      const evalField = evals[i], field = arguments[i]
+    for (let i = 0, evalField; i < arguments.length && (evalField = evals[i]); i++) {
 
       // simple fields modify tpl directly, then clone the node
-      if (immutable(field)) evalField(field)
+      if (immutable(arguments[i])) evalField(arguments, i)
 
       // observable/object templates work on cloned template
       else {
         if (!nodes) {
-          nodes = node.getElementsByTagName('*')
           node = tpl.cloneNode(true)
+          nodes = node.getElementsByTagName('*')
         }
-        evalField.call(nodes[fieldNodes[i]], field)
+        // context passes cloned node to modify instead of template
+        evalField.call(nodes[fieldNodes[i]], arguments, i)
       }
     }
 

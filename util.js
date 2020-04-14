@@ -94,12 +94,10 @@ export const input = (arg) => {
   return arg && (arg.tagName === 'INPUT' || arg.tagName === 'SELECT')
 }
 
-export const attr = (...args) => {
-  let [el, name, value] = args
+export function attr (el, name, value) {
+  if (arguments.length < 3) return (value = el.getAttribute(name)) === '' ? true : value
 
-  if (args.length < 3) return (value = el.getAttribute(name)) === '' ? true : value
-
-  // test nodes etc
+  // text nodes etc
   if (!el || !el.setAttribute) return
 
   if (value === false || value == null) el.removeAttribute(name)
