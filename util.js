@@ -100,7 +100,10 @@ export function attr (el, name, value) {
   // text nodes etc
   if (!el || !el.setAttribute) return
 
-  if (value === false || value == null) el.removeAttribute(name)
+  if (primitive(value)) {
+    if (value === false || value == null) el.removeAttribute(name)
+    else el.setAttribute(name, value === true ? '' : value)
+  }
   // class=[a, b, ...c] - possib observables
   else if (Array.isArray(value)) {
     el.setAttribute(name, value.filter(Boolean).join(' '))
@@ -112,7 +115,4 @@ export function attr (el, name, value) {
   }
   // onclick={} - just ignore
   else if (typeof value === 'function') {}
-  else {
-    el.setAttribute(name, value === true ? '' : value)
-  }
 }

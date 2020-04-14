@@ -132,30 +132,17 @@ function createBuilder(str) {
         node = this || node
         let arg = args[i]
 
-        // can be text/primitive
-        if (immutable(arg)) {
-          arg = arg == null ? '' : arg
-          if (node.nodeType === TEXT) node.data = arg
-          else node.replaceWith(node = document.createTextNode(arg))
+        // observable
+        if (observable(arg)) {
+          v(arg)(tag => node = updateNode(node, tag))
         }
-
-        // can be node/fragment
-        else if (arg.nodeType) node.replaceWith(node = arg)
-
-        // can be an array / array-like
-        // if (arg[Symbol.iterator]) {
-        //   let marker = document.createTextNode('')
-        //   marker[_group] = [...arg].flat().map(arg => nodify(arg))
-        //   // create placeholder content (will be ignored by ops)
-        //   // marker.textContent = marker[_group].map(n => n.textContent).join('')
-        //   return marker
-        // }
+        else node = updateNode(node, arg)
       }
     }
 
-    else if (node.hasAttributes()) {
+    if (node.hasAttributes()) {
       for (let j = 0, n = node.attributes.length; j < n; ++j) {
-        let {name, value} = node.attributes[i]
+        let { name, value } = node.attributes[j]
 
         // <a ${a}=${b}
         if (name.includes(PLACEHOLDER) && value.includes(PLACEHOLDER)) {
@@ -169,6 +156,7 @@ function createBuilder(str) {
         }
 
         // <a ${a}=b, <a ${a}
+        // FIXME: merge into single field handler?
         if (name.includes(PLACEHOLDER)) {
           --j, --n
           node.removeAttribute(name)
@@ -176,19 +164,28 @@ function createBuilder(str) {
           fieldNodes[fieldId] = i
           evals[fieldId] = function (args, i) {
             node = this || node
-            let arg = args[i]
+            name = args[i]
+            if (observable(name)) {
+              v(name)(name => attr(node, name, node[name] = value))
+            }
+            else attr(node, name, node[name] = value)
           }
         }
 
         // <a a=${b}
         if (value.includes(PLACEHOLDER)) {
-          fieldId = id(value)
+          const fieldId = id(value)
           fieldNodes[fieldId] = i
           evals[fieldId] = function (args, i) {
             node = this || node
-            let arg = args[i]
-            if (immutable(arg)) {
-              attr(node, )
+            let value = args[i]
+            // FIXME: move observable logic into `attr`?
+            if (!observable(value)) {
+              attr(node, name, node[name] = value)
+            }
+            else {
+              v(value)
+              (value => attr(node, name, node[name] = value))
             }
           }
         }
@@ -199,6 +196,8 @@ function createBuilder(str) {
   function build() {
     let node, nodes
 
+    // fields are co-directional with evaluation sequence
+    // in other words, that's impossible to replace some tag after its props being set
     for (let i = 0, evalField; i < arguments.length && (evalField = evals[i]); i++) {
 
       // simple fields modify tpl directly, then clone the node
@@ -223,3 +222,40 @@ function createBuilder(str) {
   return build
 }
 
+
+function updateNode (from, to) {
+  if (from === to) return from
+
+  // if (from[_group]) from[_group].map(el => el.remove())
+  // if (from[symbol.dispose]) from[symbol.dispose]()
+
+  // if (to[_group]) {
+  //   let frag = document.createDocumentFragment()
+  //   appendChild(frag, to)
+  //   from.replaceWith(frag)
+  // }
+  // else {
+  //   from.replaceWith(to)
+  // }
+
+  // can be text/primitive
+  if (immutable(to)) {
+    to = to == null ? '' : to
+    if (from.nodeType === TEXT) from.data = to
+    else from.replaceWith(from = document.createTextNode(to))
+  }
+
+  // can be node/fragment
+  else if (to.nodeType) from.replaceWith(from = to)
+
+  // can be an array / array-like
+  // if (arg[Symbol.iterator]) {
+  //   let marker = document.createTextNode('')
+  //   marker[_group] = [...arg].flat().map(arg => nodify(arg))
+  //   // create placeholder content (will be ignored by ops)
+  //   // marker.textContent = marker[_group].map(n => n.textContent).join('')
+  //   return marker
+  // }
+
+  return from
+}
