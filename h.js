@@ -105,15 +105,16 @@ function createBuilder(str) {
   }
 
   // a h:::1 b → a <h::: _=1/> b
-  const insertWalker = document.createTreeWalker(tpl, SHOW_TEXT, null)
+  const insertWalker = document.createTreeWalker(tpl, SHOW_TEXT, null), replace = []
   while (insertWalker.nextNode()) {
     const textNode = insertWalker.currentNode
     if (/^h:::/.test(textNode.data)) {
       const node = document.createElement('h:::')
       node.setAttribute('_', id(textNode.data))
-      textNode.replaceWith(node)
+      replace.push([textNode, node])
     }
   }
+  replace.forEach(([from, to]) => from.replaceWith(to))
 
   // create field evaluators - for each field they make corresponding transformation to template
   let evals = [], fieldNodes = []
@@ -201,13 +202,15 @@ function createBuilder(str) {
     for (let i = 0, evalField; i < arguments.length && (evalField = evals[i]); i++) {
 
       // simple fields modify tpl directly, then clone the node
-      if (immutable(arguments[i])) evalField(arguments, i)
+      if (!node && immutable(arguments[i])) {
+        evalField(arguments, i)
+      }
 
       // observable/object templates work on cloned template
       else {
         if (!nodes) {
           node = tpl.cloneNode(true)
-          nodes = node.getElementsByTagName('*')
+          nodes = [...node.getElementsByTagName('*')]
         }
         // context passes cloned node to modify instead of template
         evalField.call(nodes[fieldNodes[i]], arguments, i)
@@ -242,7 +245,9 @@ function updateNode (from, to) {
   if (immutable(to)) {
     to = to == null ? '' : to
     if (from.nodeType === TEXT) from.data = to
-    else from.replaceWith(from = document.createTextNode(to))
+    else {
+      from.replaceWith(from = document.createTextNode(to))
+    }
   }
 
   // can be node/fragment

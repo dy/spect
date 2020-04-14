@@ -136,7 +136,7 @@ t('html: child node', async t => {
   t.is(b.outerHTML, `<b><a>1</a></b>`)
 })
 
-t.only('html: mixed static content', async t => {
+t('html: mixed static content', async t => {
   const foo = h`<foo></foo>`
   const bar = `bar`
   const baz = h`<baz/>`
@@ -146,7 +146,7 @@ t.only('html: mixed static content', async t => {
   t.is(a.outerHTML, `<a> <foo></foo> bar <baz></baz> </a>`)
 })
 
-t('html: dynamic list', async t => {
+t.only('html: dynamic list', async t => {
   const foo = h`<foo></foo>`
   const bar = `bar`
   const baz = h`<baz/>`
