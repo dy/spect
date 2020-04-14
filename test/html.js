@@ -4,56 +4,6 @@ import { tick, frame, idle, time } from 'wait-please'
 import observable from './observable.js'
 import { v as iv } from 'ironjs'
 
-t('html: creation performance should be faster than direct DOM', async t => {
-  const N = 10000
-
-  const container = document.createElement('div')
-  const domStart = performance.now()
-  for (let i = 0; i < N; i++) {
-    let frag = document.createDocumentFragment(), b
-    frag.appendChild(document.createElement('a')).append(document.createTextNode('a'), b = document.createElement('b'))
-    b.appendChild(document.createElement('c')).appendChild(document.createTextNode(i))
-    container.appendChild(frag)
-  }
-  const domTime = performance.now() - domStart
-
-  container.innerHTML = ''
-  const hStart = performance.now()
-  for (let i = 0; i < N; i++) {
-    container.appendChild(h`<a>a<b><c>${i}</c></b></a>`)
-  }
-  const hTime = performance.now() - hStart
-  container.innerHTML = ''
-
-  console.log('hTime', hTime, 'domTime', domTime)
-  t.ok(hTime < domTime, 'creation is fast')
-})
-
-t('html: update performance should be faster than direct DOM', async t => {
-  const N = 10000
-
-  const container = document.createElement('div')
-  const domStart = performance.now()
-  for (let i = 0; i < N; i++) {
-    let frag = document.createDocumentFragment(), b
-    frag.appendChild(document.createElement('a')).append(document.createTextNode('a'), b = document.createElement('b'))
-    b.appendChild(document.createElement('c')).appendChild(document.createTextNode(i))
-    container.appendChild(frag)
-  }
-  const domTime = performance.now() - domStart
-
-  container.innerHTML = ''
-  const hStart = performance.now()
-  for (let i = 0; i < N; i++) {
-    container.appendChild(h`<${a} ${x} ${y}=${z} ...${w}>a<b><c>${i}</c></b></>`)
-  }
-  const hTime = performance.now() - hStart
-  container.innerHTML = ''
-
-  console.log('hTime', hTime, 'domTime', domTime)
-  t.ok(hTime < domTime, 'creation is fast')
-})
-
 t('html: single attribute cases', async t => {
   // direct
   let el = h`<div a=0/>`
@@ -97,11 +47,18 @@ t('html: single attribute on mounted node', async t => {
   // FIXME: why so big delay?
   await tick(24)
   t.is(div.outerHTML, `<div a="1"></div>`)
-
   a(undefined)
   a(null)
   await tick(24)
   t.is(div.outerHTML, `<div></div>`)
+})
+
+t('html: creation perf case', t => {
+  for (let i = 0; i < 2; i++) {
+    h`<a>a<b><c>${i}</c></b></a>`
+  }
+  // t.is(h`<a>a<b><c>${0}</c></b></a>`.outerHTML, `<a>a<b><c>0</c></b></a>`)
+  // t.is(h`<a>a<b><c>${1}</c></b></a>`.outerHTML, `<a>a<b><c>1</c></b></a>`)
 })
 
 t('html: text content', async t => {
@@ -118,7 +75,6 @@ t('html: text content', async t => {
   t.is(el.outerHTML, `<div>1</div>`)
 
   a(undefined)
-  a(null)
   await tick(8)
   t.is(el.outerHTML, `<div></div>`)
 })
@@ -146,7 +102,7 @@ t('html: mixed static content', async t => {
   t.is(a.outerHTML, `<a> <foo></foo> bar <baz></baz> </a>`)
 })
 
-t.only('html: dynamic list', async t => {
+t('html: dynamic list', async t => {
   const foo = h`<foo></foo>`
   const bar = `bar`
   const baz = h`<baz/>`
@@ -166,7 +122,7 @@ t.only('html: dynamic list', async t => {
   content().shift()
   content(content())
   await tick(8)
-  t.is(a.outerHTML, `<a>bar<baz></baz>qux</a>`)
+  t.is(a.outerHTML, `<a>bar<baz></baz>qux</a>`, 'shift')
 
   content().length = 0
   content(content())
