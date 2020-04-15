@@ -303,39 +303,38 @@ function merge (parent, a, b, before) {
 
   for (i = j = 0; i < a.length || j < b.length;) {
     let aElm = a[i], bElm = b[j];
+    // This is a element that has been moved to earlier in the list
     if (aElm === null) {
-      // This is a element that has been moved to earlier in the list
       i++;
-    } else if (b.length <= j) {
-      // No more elements in new, this is a delete
-      parent.removeChild(aElm);
-      i++;
-    } else if (a.length <= i) {
-      // No more elements in old, this is an addition
+    }
+    // No more elements in old, this is an addition
+    else if (i >= a.length) {
       parent.insertBefore(bElm, aElm || before);
       j++;
-    } else if (key(aElm) === key(bElm)) {
+    }
+    else if (j >= b.length) {
+      parent.removeChild(aElm)
+      i++;
+    }
+    // No difference, we move on
+    else if (key(aElm) === key(bElm)) {
       if (aElm !== bElm) b[j] = aElm
-      // No difference, we move on
       i++; j++;
-    } else {
-      var aNewIdx = bIdx.get(key(aElm));
-      var bOldIdx = aIdx.get(key(bElm));
-      // FIXME: this part can be optimized
-      if (aNewIdx === undefined) {
-        // Current element is not in new list, it has been removed
-        parent.removeChild(aElm);
-        i++;
-      } else if (bOldIdx === undefined) {
-        // New element is not in old list, it has been added
-        parent.insertBefore(bElm, aElm || before);
-        j++;
-      } else {
-        // Element is in both lists, it has been moved
-        parent.insertBefore(a[bOldIdx], aElm || before);
-        a[bOldIdx] = null;
-        j++;
+    }
+    // No more elements in new or elem is removed
+    else if (!bIdx.has(key(aElm))) {
+      parent.removeChild(aElm);
+      i++;
+    }
+    // insert/move new elem
+    else {
+      let bOldIdx = aIdx.get(key(bElm))
+      if (bOldIdx != null) {
+        bElm = a[bOldIdx]
+        a[bOldIdx] = null
       }
+      parent.insertBefore(bElm, aElm || before)
+      j++
     }
   }
 
