@@ -286,34 +286,35 @@ const key = node => node && node.nodeType === TEXT ? node.data : node
 
 // more complete version https://github.com/luwes/js-diff-benchmark/blob/master/libs/spect.js
 export function merge (parent, a, b, before) {
-  const bmap = new WeakMap, amap = new WeakMap
-  let i, j, ai, bj, ij, ji, cur
+  const bs = new Set(b), as = new Set(a)
+  let i, ai, bi, off
 
-  // create index
-  for(i = 0; i < a.length; i++) amap.set(a[i], i);
-  for(i = 0; i < b.length; i++) bmap.set(b[i], i);
+  // walk by b from tail
+  // a: 1 2 3 4 5, b: 1 2 3 → off: +2
+  for (i = b.length, off = a.length - b.length; i--;) {
+    ai = a[i + off], bi = b[i]
+    // console.log(ai, bi, [...parent.childNodes].map(child => child.data))
 
-  // align items
-  for (i = 0, j = 0; i < a.length || j < b.length; i++, j++) {
-    ai = a[i], bj = b[j], ij = bmap.get(ai), ji = amap.get(bj)
+    if (ai === bi) {}
 
-    if (ai != null && ij == null) {
-      // replaced
-      if (bj != null && ji == null) parent.replaceChild(bj, ai)
-      // removed
-      else (parent.removeChild(ai), j--)
+    // replace
+    else if (ai && !as.has(bi) && !bs.has(ai)) (parent.replaceChild(bi, ai))
+
+    // remove
+    else if (ai && !bs.has(ai)) (parent.removeChild(ai), off--, i++)
+
+    else if (bi.nextSibling != before || !bi.nextSibling) {
+      // swap
+      if (as.has(bi)) (parent.insertBefore(ai, bi), off--)
+
+      // insert
+      parent.insertBefore(bi, before), off++
     }
-    // added
-    else if (bj != null && ji == null) (parent.insertBefore(bj, ai || before), i--)
-  }
 
-  // reorder
-  for (cur = before, j = b.length; j--;) {
-    bj = b[j]
-    if (bj.nextSibling != cur) parent.insertBefore(bj, cur)
-    cur = bj
+    before = bi
   }
 
   return b
 }
+
 
