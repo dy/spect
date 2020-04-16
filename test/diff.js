@@ -141,7 +141,7 @@ t('create 1000', async t => {
   console.time('create 1000');
   const rows = create1000(parent, diff);
   console.timeEnd('create 1000');
-  console.assert([...parent.childNodes].every((row, i) => row === rows[i]));
+  t.is([...parent.childNodes].every((row, i) => row === rows[i]), true);
   const out = ['operations', parent.count];
   if (parent.count > 1000) {
     console.warn(`+${parent.count - 1000}`);
@@ -155,7 +155,7 @@ t('random', async t => {
   console.time('random');
   const rows = random(parent, diff);
   console.timeEnd('random');
-  console.assert([...parent.childNodes].every((row, i) => row === rows[i]));
+  t.ok([...parent.childNodes].every((row, i) => row === rows[i]));
   const out = ['operations', parent.count];
   if (parent.count > 1000) {
     console.warn(`+${parent.count - 1000}`);
@@ -169,7 +169,7 @@ t('reverse', async t => {
   console.time('reverse');
   const rows = reverse(parent, diff);
   console.timeEnd('reverse');
-  console.assert([...parent.childNodes].every((row, i) => row === rows[i]));
+  t.ok([...parent.childNodes].every((row, i) => row === rows[i]));
   const out = ['operations', parent.count];
   if (parent.count > 1000) {
     console.warn(`+${parent.count - 1000}`);
@@ -183,7 +183,7 @@ t('clear', async t => {
   console.time('clear');
   const rows = clear(parent, diff);
   console.timeEnd('clear');
-  console.assert([...parent.childNodes].every((row, i) => row === rows[i]) && rows.length === 0);
+  t.ok([...parent.childNodes].every((row, i) => row === rows[i]) && rows.length === 0);
   const out = ['operations', parent.count];
   if (parent.count > 1000) {
     console.warn(`+${parent.count - 1000}`);
@@ -200,7 +200,7 @@ t('replace 1000', async t => {
   console.time('replace 1000');
   const rows = create1000(parent, diff);
   console.timeEnd('replace 1000');
-  console.assert([...parent.childNodes].every((row, i) => row === rows[i]));
+  t.is([...parent.childNodes].every((row, i) => row === rows[i]), true);
   const out = ['operations', parent.count];
   if (parent.count > 2000) {
     console.warn(`+${parent.count - 2000}`);
@@ -218,7 +218,8 @@ t('append 1000', async t => {
   console.time('append 1000');
   const rows = append1000(parent, diff);
   console.timeEnd('append 1000');
-  console.assert([...parent.childNodes].every((row, i) => row === rows[i]) && rows.length === 2000);
+  t.ok([...parent.childNodes].every((row, i) => row === rows[i]))
+  t.is(rows.length, 2000);
   const out = ['operations', parent.count];
   if (parent.count > 1000) {
     console.warn(`+${parent.count - 1000}`);
@@ -229,10 +230,14 @@ t('append 1000', async t => {
 
 t('append more', async t => {
   const parent = frag()
+  create1000(parent, diff);
+  append1000(parent, diff);
+  parent.reset();
   console.time('append more');
   const rows = append1000(parent, diff);
   console.timeEnd('append more');
-  console.assert([...parent.childNodes].every((row, i) => row === rows[i]) && rows.length === 3000);
+  t.is([...parent.childNodes].every((row, i) => row === rows[i]), true)
+  t.is(rows.length, 3000);
   const out = ['operations', parent.count];
   if (parent.count > 1000) {
     console.warn(`+${parent.count - 1000}`);
