@@ -284,59 +284,170 @@ function updateNode (from, to) {
 const key = node => node && node.nodeType === TEXT ? node.data : node
 
 
-// merge 2 arrays, ref: https://github.com/luwes/js-diff-benchmark/blob/master/libs/list-difference.js
-function merge (parent, a, b, before) {
-  const aIdx = new Map();
-  const bIdx = new Map();
-  let i;
-  let j;
 
-  // Create a mapping from keys to their position in the old list
-  for (i = 0; i < a.length; i++) {
-    aIdx.set(a[i], i);
-  }
+export function diff (parent, a, b, before) {
+  const bmap = new Map, amap = new Map, nextSibling = Array(a.length)
+  let i, j, ai, bj, newAi, oldBj
 
-  // Create a mapping from keys to their position in the new list
-  for (i = 0; i < b.length; i++) {
-    bIdx.set(b[i], i);
-  }
+  // create index
+  for (i = 0; i < b.length; i++) bmap.set(b[i], i)
+  for (i = 0; i < a.length; i++) amap.set(a[i], i)
+  console.log(bmap, amap)
 
-  for (i = j = 0; i < a.length || j < b.length;) {
-    let aElm = a[i], bElm = b[j];
-    // This is a element that has been moved to earlier in the list
-    if (aElm === null) {
-      i++;
+  // align items
+  for (i = 0, j = 0; i < a.length || j < b.length; i++, j++) {
+    ai = a[i], bj = b[j], newAi = bmap.get(ai), oldBj = amap.get(bj)
+
+    // replaced
+    if (newAi == null && oldBj == null) {
+      parent.replaceChild(ai, bj)
+      nextSibling[j] = a[i + 1]
     }
-    // No more elements in old, this is an addition
-    else if (i >= a.length) {
-      parent.insertBefore(bElm, aElm || before);
-      j++;
-    }
-    else if (j >= b.length) {
-      parent.removeChild(aElm)
-      i++;
-    }
-    // No difference, we move on
-    else if (key(aElm) === key(bElm)) {
-      if (aElm !== bElm) b[j] = aElm
-      i++; j++;
-    }
-    // No more elements in new or elem is removed
-    else if (!bIdx.has(key(aElm))) {
-      parent.removeChild(aElm);
-      i++;
-    }
-    // insert/move new elem
-    else {
-      let bOldIdx = aIdx.get(key(bElm))
-      if (bOldIdx != null) {
-        bElm = a[bOldIdx]
-        a[bOldIdx] = null
+    // removed
+    else if (newAi == null) {
+      if (ai != null) {
+        parent.removeChild(ai)
+        nextSibling[bmap.get(a[i-1])] = a[i + 1]
       }
-      parent.insertBefore(bElm, aElm || before)
-      j++
+      j--
+    }
+    // added
+    else if (oldBj == null) {
+      if (bj != null) {
+        parent.insertBefore(bj, nextSibling[newAi] = ai || before)
+        nextSibling[bmap.get(a[i-1])] = bj
+      }
+      i--
+    }
+    // moved
+    else {
+      nextSibling[newAi] = a[i + 1]
     }
   }
 
-  return b;
+  // reorder
+  // for (cur = before, i = b.length; i--;) {
+  //   item = b[i]
+  //   if (nextSibling[i] != cur) {
+  //     parent.insertBefore(item, cur)
+  //   }
+  //   cur = item
+  // }
+
+  return b
 }
+
+
+
+// merge 2 arrays, ref: https://github.com/luwes/js-diff-benchmark/blob/master/libs/list-difference.js
+// function mergeOld (parent, a, b, before) {
+//   const aIdx = new Map();
+//   const bIdx = new Map();
+//   let i;
+//   let j;
+
+//   // Create a mapping from keys to their position in the old list
+//   for (i = 0; i < a.length; i++) {
+//     aIdx.set(a[i], i);
+//   }
+
+//   // Create a mapping from keys to their position in the new list
+//   for (i = 0; i < b.length; i++) {
+//     bIdx.set(b[i], i);
+//   }
+
+//   for (i = j = 0; i < a.length || j < b.length;) {
+//     let aElm = a[i], bElm = b[j];
+//     // This is a element that has been moved to earlier in the list
+//     if (aElm === null) {
+//       i++;
+//     }
+//     // No more elements in old, this is an addition
+//     else if (i >= a.length) {
+//       parent.insertBefore(bElm, aElm || before);
+//       j++;
+//     }
+//     else if (j >= b.length) {
+//       parent.removeChild(aElm)
+//       i++;
+//     }
+//     // No difference, we move on
+//     else if (key(aElm) === key(bElm)) {
+//       if (aElm !== bElm) b[j] = aElm
+//       i++; j++;
+//     }
+//     // No more elements in new or elem is removed
+//     else if (!bIdx.has(key(aElm))) {
+//       parent.removeChild(aElm);
+//       i++;
+//     }
+//     // insert/move new elem
+//     else {
+//       let bOldIdx = aIdx.get(key(bElm))
+//       if (bOldIdx != null) {
+//         bElm = a[bOldIdx]
+//         a[bOldIdx] = null
+//       }
+//       parent.insertBefore(bElm, aElm || before)
+//       j++
+//     }
+//   }
+
+//   return b;
+// }
+
+
+// merge 2 arrays, ref: https://github.com/luwes/js-diff-benchmark/blob/master/libs/list-difference.js
+// function merge (parent, a, b, before) {
+//   const remove = new Set()
+//   const insert = new Map()
+//   const move = new Map()
+//   let i, j, ai, bj
+
+//   // detect nodes to add/remove
+//   for (i = 0; i < b.length; i++) {
+//     insert.set(b[i], i);
+//   }
+//   for (i = 0; i < a.length; i++) {
+//     ai = a[i]
+//     if (insert.has(ai)) (move.set(ai, insert.get(ai)), insert.delete(ai))
+//     else remove.add(ai)
+//   }
+
+//   const stash = {}
+//   for (i = j = 0; i < a.length || j < b.length;) {
+//     ai = a[i], bj = b[j]
+
+//     if (stash[j]) {
+//       parent.insertBefore(stash[j], bj)
+//       stash[j] = null
+//     }
+
+//     if (ai === bj) { i++, j++ }
+//     else if (insert.has(bj)) {
+//       parent.insertBefore(b, ai || before),
+//       insert.delete(b)
+//       j++
+//     }
+//     else if (remove.has(ai)) {
+//       parent.removeChild(ai)
+//       remove.delete(ai)
+//       i++
+//     }
+//     else if (move.has(ai)) {
+//       stash[j] = ai
+//       move.delete(ai)
+//       i++
+//     }
+//     else { i++, j++ }
+//   }
+
+//   // do shuffles
+//   while (move.size) {
+
+//     let i = move.pop(), ai = move.pop()
+//     parent.insertBefore(ai, b[i])
+//   }
+
+//   return b
+// }
