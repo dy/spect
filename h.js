@@ -293,7 +293,6 @@ export function merge (parent, a, b, before) {
   // a: 1 2 3 4 5, b: 1 2 3 → off: +2
   for (i = b.length, off = a.length - b.length; i--;) {
     ai = a[i + off], bi = b[i]
-    // console.log(ai, bi, [...parent.childNodes].map(child => child.data))
 
     if (ai === bi) {}
 
