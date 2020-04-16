@@ -285,9 +285,9 @@ const key = node => node && node.nodeType === TEXT ? node.data : node
 
 
 
-export function diff (parent, a, b, before) {
+export  function diff (parent, a, b, before) {
   const bmap = new Map, amap = new Map, nextSibling = Array(a.length)
-  let i, j, ai, bj, ij, ji, cur
+  let i, j, ai, bj, ij, ji, previj, cur
 
   // create index
   for (i = 0; i < b.length; i++) bmap.set(b[i], i)
@@ -296,17 +296,17 @@ export function diff (parent, a, b, before) {
   // align items
   for (i = 0, j = 0; i < a.length || j < b.length; i++, j++) {
     ai = a[i], bj = b[j], ij = bmap.get(ai), ji = amap.get(bj)
-    // console.log(`a:`, i, ij, `b:`, ji, j, parent.childNodes)
 
     // replaced
     if (ai != null && bj != null && ij == null && ji == null) {
       parent.replaceChild(bj, ai)
       nextSibling[j] = a[i + 1]
+      nextSibling[j-1] = bj
     }
     // removed
     else if (ai != null && ij == null) {
       parent.removeChild(ai)
-      nextSibling[bmap.get(a[i-1])] = a[i + 1]
+      nextSibling[previj] = a[i + 1]
       j--
     }
     // added
@@ -334,6 +334,7 @@ export function diff (parent, a, b, before) {
 
   return b
 }
+
 
 
 

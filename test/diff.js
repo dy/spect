@@ -76,13 +76,22 @@ t('create ops', t => {
   let parent = new Dommy()
   const N = 100
 
-  const start = parent.childNodes.length;
-  const childNodes = [];
+  let start = 0;
+  let childNodes = [];
   for (let i = 0; i < N; i++) childNodes.push(start + i)
 
   parent.reset()
   diff(parent,parent.childNodes,childNodes,parent.lastElementChild)
-
   // console.log(parent.childNodes)
   t.is(parent.count(), N)
+
+  // replace
+  start = N
+  childNodes = []
+  for (let i = 0; i < N; i++) childNodes.push(start + i)
+
+  parent.reset()
+  console.log('replace')
+  diff(parent,parent.childNodes,childNodes,parent.lastElementChild)
+  t.is((parent.count() - N) < 100, true)
 })
