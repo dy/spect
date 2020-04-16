@@ -296,11 +296,13 @@ export function merge (parent, a, b, before) {
 
     if (ai === bi) {}
 
-    // replace
-    else if (ai && !as.has(bi) && !bs.has(ai)) (parent.replaceChild(bi, ai))
+    else if (ai && !bs.has(ai)) {
+      // replace
+      if (!as.has(bi)) parent.replaceChild(bi, ai)
 
-    // remove
-    else if (ai && !bs.has(ai)) (parent.removeChild(ai), off--, i++)
+      // remove
+      else (parent.removeChild(ai), off--, i++)
+    }
 
     else if (bi.nextSibling != before || !bi.nextSibling) {
       // swap
