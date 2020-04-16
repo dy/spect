@@ -287,52 +287,50 @@ const key = node => node && node.nodeType === TEXT ? node.data : node
 
 export function diff (parent, a, b, before) {
   const bmap = new Map, amap = new Map, nextSibling = Array(a.length)
-  let i, j, ai, bj, newAi, oldBj
+  let i, j, ai, bj, ij, ji, cur
 
   // create index
   for (i = 0; i < b.length; i++) bmap.set(b[i], i)
   for (i = 0; i < a.length; i++) amap.set(a[i], i)
-  console.log(bmap, amap)
 
   // align items
   for (i = 0, j = 0; i < a.length || j < b.length; i++, j++) {
-    ai = a[i], bj = b[j], newAi = bmap.get(ai), oldBj = amap.get(bj)
+    ai = a[i], bj = b[j], ij = bmap.get(ai), ji = amap.get(bj)
+    // console.log(`a:`, i, ij, `b:`, ji, j, parent.childNodes)
 
     // replaced
-    if (newAi == null && oldBj == null) {
-      parent.replaceChild(ai, bj)
+    if (ai != null && bj != null && ij == null && ji == null) {
+      parent.replaceChild(bj, ai)
       nextSibling[j] = a[i + 1]
     }
     // removed
-    else if (newAi == null) {
-      if (ai != null) {
-        parent.removeChild(ai)
-        nextSibling[bmap.get(a[i-1])] = a[i + 1]
-      }
+    else if (ai != null && ij == null) {
+      parent.removeChild(ai)
+      nextSibling[bmap.get(a[i-1])] = a[i + 1]
       j--
     }
     // added
-    else if (oldBj == null) {
-      if (bj != null) {
-        parent.insertBefore(bj, nextSibling[newAi] = ai || before)
-        nextSibling[bmap.get(a[i-1])] = bj
-      }
+    else if (bj != null && ji == null) {
+      parent.insertBefore(bj, nextSibling[j] = ai || before)
+      nextSibling[j-1] = bj
       i--
     }
     // moved
     else {
-      nextSibling[newAi] = a[i + 1]
+      nextSibling[ij] = a[i + 1]
     }
+
+    previj = ij
   }
 
   // reorder
-  // for (cur = before, i = b.length; i--;) {
-  //   item = b[i]
-  //   if (nextSibling[i] != cur) {
-  //     parent.insertBefore(item, cur)
-  //   }
-  //   cur = item
-  // }
+  for (cur = before, j = b.length; j--;) {
+    bj = b[j]
+    if (nextSibling[j] != cur) {
+      parent.insertBefore(bj, cur)
+    }
+    cur = bj
+  }
 
   return b
 }
