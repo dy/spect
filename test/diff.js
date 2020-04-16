@@ -1,5 +1,5 @@
 import t from 'tst'
-import { diff } from '../h'
+import { merge as diff } from '../h'
 import {Dommy, Nody} from './dommy.js'
 
 t('create', t => {
