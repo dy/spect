@@ -67,12 +67,12 @@ t('update each 3', t => {
   diff(parent,parent.childNodes,[1,2,3,4,5,6,7,8,9,10],parent.lastElementChild);
   console.groupEnd()
   console.log('---update')
-  const _0 = Symbol(0), _1 = Symbol(1), _2 = Symbol(2)
   diff(parent,parent.childNodes,[1,2,_0,4,5,_1,7,8,_2,10],parent.lastElementChild);
   t.is(parent.childNodes, [1,2,_0,4,5,_1,7,8,_2,10])
 })
 
 t('create ops', t => {
+  // That's fine: failed due to wrong nodes
   let parent = new Dommy()
   const N = 100
 
@@ -93,5 +93,5 @@ t('create ops', t => {
   parent.reset()
   console.log('replace')
   diff(parent,parent.childNodes,childNodes,parent.lastElementChild)
-  t.is((parent.count() - N) < 100, true)
+  t.is((parent.count() - N) < 100, true, 'ops count')
 })
