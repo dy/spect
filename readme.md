@@ -51,7 +51,7 @@ _Spect_ is radical minimalistic [_aspect-oriented_](https://en.wikipedia.org/wik
 
 :shipit: **Low-profile** − doesn’t force stack, can be used as utility.
 
-:golf: performance / size value (faster than DOM or many alternatives, if not the fastest).
+:golf: Minimized **performance / size** price − faster than many alternatives or even DOM.
 
 
 ## Installation
