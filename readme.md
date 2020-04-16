@@ -39,17 +39,19 @@ _Spect_ is radical minimalistic [_aspect-oriented_](https://en.wikipedia.org/wik
 
 ## Principles
 
-:gem: **Separation of cross-cutting concerns** via _aspects_.
+:gem: **Separation of cross-cutting concerns** with _aspects_.
 
-:deciduous_tree: **Native first** − semantic clean tree and native API, vanilla friendly.
+:deciduous_tree: **Native first** − semantic clean tree, vanilla flavor.
 
-:ocean: **Progressive enhancement** − multiple aspects add on functionality.
+:calling: **Progressive enhancement** − multiple aspects enrich functionality.
 
-:baby_chick: **Low entry barrier** − no complexity hostages and code bureaucracy.
+:baby_chick: **Low entry barrier** − no code bureaucracy or complexity hostages.
 
 :dizzy: **0** bundling, **0** server, **0** template.
 
-:shipit: **Low-profile** − doesn’t force stack and can be used as utility.
+:shipit: **Low-profile** − doesn’t force stack, can be used as utility.
+
+:golf: performance / size value (faster than DOM or many alternatives, if not the fastest).
 
 
 ## Installation
