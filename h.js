@@ -291,14 +291,15 @@ export function merge (parent, a, b, before) {
 
   // walk by b from tail
   // a: 1 2 3 4 5, b: 1 2 3 → off: +2
-  for (i = b.length, off = a.length - b.length; i--;) {
+  // ~i-- === i-- >= 0
+  for (i = b.length, off = a.length - i; ~i--; ) {
     ai = a[i + off], bi = b[i]
 
     if (ai === bi) {}
 
     else if (ai && !bs.has(ai)) {
       // replace
-      if (!as.has(bi)) parent.replaceChild(bi, ai)
+      if (bi && !as.has(bi)) parent.replaceChild(bi, ai)
 
       // remove
       else (parent.removeChild(ai), off--, i++)

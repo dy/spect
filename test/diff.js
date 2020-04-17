@@ -1,3 +1,5 @@
+// dom diff algo benchmark
+
 import t from 'tst'
 import { merge as diff } from '../h'
 // import diff from './libs/list-difference.js'
@@ -78,6 +80,14 @@ t('reverse', t => {
   t.is([...parent.childNodes], [t5,t4,t3,t2,t1])
 })
 
+t('clear', t => {
+  let parent = frag();
+  diff(parent,parent.childNodes,[t1,t2,t3,t4,t5]);
+  console.log('---clear')
+  diff(parent,parent.childNodes,[],);
+  t.is([...parent.childNodes], [])
+})
+
 t('reverse-add', t => {
   let parent = frag();
   diff(parent,parent.childNodes,[t5,t4,t3,t2,t1],);
@@ -152,8 +162,10 @@ t('create 1000', async t => {
 
 t('random', async t => {
   const parent = frag()
+  create1000(parent, diff);
+  parent.reset();
   console.time('random');
-  const rows = random(parent, diff);
+  const rows = [...random(parent, diff)];
   console.timeEnd('random');
   t.ok([...parent.childNodes].every((row, i) => row === rows[i]));
   const out = ['operations', parent.count];
@@ -164,8 +176,11 @@ t('random', async t => {
   parent.reset();
 })
 
-t('reverse', async t => {
+t('reverse 1000', async t => {
   const parent = frag()
+  create1000(parent, diff);
+  random(parent, diff);
+  parent.reset()
   console.time('reverse');
   const rows = reverse(parent, diff);
   console.timeEnd('reverse');
@@ -178,19 +193,21 @@ t('reverse', async t => {
   parent.reset();
 })
 
-t('clear', async t => {
+t('clear 1000', async t => {
   const parent = frag()
+  create1000(parent, diff);
+  parent.reset()
   console.time('clear');
   const rows = clear(parent, diff);
   console.timeEnd('clear');
-  t.ok([...parent.childNodes].every((row, i) => row === rows[i]) && rows.length === 0);
+  t.ok([...parent.childNodes].every((row, i) => row === rows[i]))
+  t.is(rows.length, 0);
   const out = ['operations', parent.count];
   if (parent.count > 1000) {
     console.warn(`+${parent.count - 1000}`);
   }
   console.log(...out, '\n');
   parent.reset();
-
 })
 
 t('replace 1000', async t => {
@@ -296,6 +313,8 @@ t('create 10000 rows', async t => {
 
 t('swap over 10000 rows', async t => {
   const parent = frag()
+  create10000(parent, diff);
+  parent.reset()
   console.time('swap over 10000 rows');
   swapRows(parent, diff);
   console.timeEnd('swap over 10000 rows');
@@ -309,6 +328,8 @@ t('swap over 10000 rows', async t => {
 
 t('clear 10000', async t => {
   const parent = frag()
+  create10000(parent, diff);
+  parent.reset()
   console.time('clear 10000');
   clear(parent, diff);
   console.timeEnd('clear 10000');
@@ -326,7 +347,6 @@ function random(parent, diff) {
     parent,
     parent.childNodes,
     Array.from(parent.childNodes).sort(() => Math.random() - Math.random()),
-
   );
 }
 
