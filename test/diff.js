@@ -71,6 +71,28 @@ t('swap', t => {
   t.is([...parent.childNodes], [t1,t5,t3,t4,t2])
 })
 
+t('chain-swap', t => {
+  let parent = frag();
+  diff(parent, parent.childNodes, [t1,t2,t3,t4,t5]);
+  parent.reset()
+
+  console.log('---chain-swap')
+  diff(parent,parent.childNodes,[t1,t3,t5,t4,t2],);
+  t.is([...parent.childNodes], [t1,t3,t5,t4,t2])
+  t.is(parent.count, 2, 'ops count')
+})
+
+t('chain-swap2', t => {
+  let parent = frag();
+  diff(parent, parent.childNodes, [t1,t2,t3,t4,t5]);
+  parent.reset()
+
+  console.log('---chain-swap')
+  diff(parent,parent.childNodes,[t5,t1,t4,t3,t2],);
+  t.is([...parent.childNodes], [t5,t1,t4,t3,t2])
+  t.ok(parent.count < 5, 'ops count')
+})
+
 t('reverse', t => {
   let parent = frag();
   diff(parent,parent.childNodes,[t1,t2,t3,t4,t5],);
@@ -167,6 +189,7 @@ t('random', async t => {
   console.time('random');
   const rows = [...random(parent, diff)];
   console.timeEnd('random');
+
   t.ok([...parent.childNodes].every((row, i) => row === rows[i]), 'data is correct');
   const out = ['operations', parent.count];
   if (parent.count > 1000) {

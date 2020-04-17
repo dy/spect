@@ -285,9 +285,18 @@ const key = node => node && node.nodeType === TEXT ? node.data : node
 
 
 // more complete version https://github.com/luwes/js-diff-benchmark/blob/master/libs/spect.js
+const FASTER_BUT_BIGGER = false
 export function merge (parent, a, b, before) {
-  const bs = new Set(b), as = new Set(a)
-  let i, ai, bi, off
+  let i, ai, bi, off, aidx, bidx
+
+  if (FASTER_BUT_BIGGER) {
+    bidx = new Map(), aidx = new Map()
+    for (i = 0; i < b.length; i++) bidx.set(b[i], i)
+    for (i = 0; i < a.length; i++) aidx.set(a[i], i)
+  }
+  else {
+    bidx = new Set(b), aidx = new Set(a)
+  }
 
   // walk by b from tail
   // a: 1 2 3 4 5, b: 1 2 3 → off: +2
@@ -297,17 +306,22 @@ export function merge (parent, a, b, before) {
 
     if (ai === bi) {}
 
-    else if (ai && !bs.has(ai)) {
+    else if (ai && !bidx.has(ai)) {
       // replace
-      if (bi && !as.has(bi)) parent.replaceChild(bi, ai)
+      if (bi && !aidx.has(bi)) parent.replaceChild(bi, ai)
 
       // remove
       else (parent.removeChild(ai), off--, i++)
     }
 
-    else if (bi.nextSibling != before || !bi.nextSibling) {
+    else if ((bi.nextSibling != before || !bi.nextSibling)) {
       // swap
-      if (as.has(bi)) (parent.insertBefore(ai, bi), off--)
+      if (FASTER_BUT_BIGGER) {
+        if (aidx.has(bi)) (parent.insertBefore(ai, b[bidx.get(ai)+1]), off--, aidx.delete(bi))
+      }
+      else {
+        if (aidx.has(bi)) (parent.insertBefore(ai, bi), off--)
+      }
 
       // insert
       parent.insertBefore(bi, before), off++
