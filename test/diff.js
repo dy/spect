@@ -167,7 +167,7 @@ t('random', async t => {
   console.time('random');
   const rows = [...random(parent, diff)];
   console.timeEnd('random');
-  t.ok([...parent.childNodes].every((row, i) => row === rows[i]));
+  t.ok([...parent.childNodes].every((row, i) => row === rows[i]), 'data is correct');
   const out = ['operations', parent.count];
   if (parent.count > 1000) {
     console.warn(`+${parent.count - 1000}`);
