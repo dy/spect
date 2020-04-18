@@ -11,10 +11,6 @@ const buildCache = new WeakMap
 
 const PLACEHOLDER = 'h:::'
 const id = str => +str.slice(PLACEHOLDER.length)
-function field(id, fields) {
-  let vals = id.split(PLACEHOLDER).slice(1).map(id => fields[id])
-  return vals.length > 1 ? vals : vals[0]
-}
 
 export default function h (statics, ...fields) {
   // hyperscript - turn to tpl literal call
@@ -122,9 +118,9 @@ function createBuilder(str) {
 
   // getElementsByTagName('*') is faster than tree iterator
   // ref: https://jsperf.com/createnodeiterator-vs-createtreewalker-vs-getelementsby
-  const nodes = tpl.getElementsByTagName('*')
-  for (let i = 0; i < nodes.length; i++) {
-    let node = nodes[i]
+  const tplNodes = tpl.getElementsByTagName('*')
+  for (let i = 0; i < tplNodes.length; i++) {
+    let node = tplNodes[i]
 
     // <h::: _=N - will be replaced
     if (node.hasAttribute('_')) {
@@ -150,8 +146,23 @@ function createBuilder(str) {
       for (let j = 0, n = node.attributes.length; j < n; ++j) {
         let { name, value } = node.attributes[j]
 
+        let nameParts = name.split(PLACEHOLDER), valueParts = value.split(PLACEHOLDER)
+
+        evals[fieldId] = function (args, i) {
+          let cur = this || node
+          let value = args[i]
+          // FIXME: move observable logic into `attr`?
+          if (!observable(value)) {
+            attr(cur, name, cur[name] = value)
+          }
+          else {
+            v(value)
+            (value => attr(cur, name, cur[name] = value))
+          }
+        }
+
         // <a ${a}=${b}
-        if (name.includes(PLACEHOLDER) && value.includes(PLACEHOLDER)) {
+        if (nameParts.length && valueParts.length) {
           --j, --n
           node.removeAttribute(name)
           const nameFieldId = id(name), valueFieldId = id(value)
@@ -200,36 +211,29 @@ function createBuilder(str) {
   }
 
   function build() {
-    let root, nodes
+    let ctx = { root: tpl, nodes: tplNodes, index: 0, clone: false }
 
     // fields are co-directional with evaluation sequence
     // in other words, that's impossible to replace some tag after its props being set
-    for (let i = 0, evalField; i < arguments.length && (evalField = evals[i]); i++) {
+    for (; ctx.index < arguments.length; ctx.index++) {
 
-      // simple fields modify tpl directly, then clone the node
-      if (!root && immutable(arguments[i])) {
-        evalField(arguments, i)
+      // primitive fields modify tpl directly, then clone the node (fast!)
+      if (!ctx.clone && !immutable(arguments[ctx.index])) {
+        ctx.root = tpl.cloneNode()
+        ctx.nodes = [...root.getElementsByTagName('*')]
+        ctx.clone = true
       }
 
-      // observable/object templates work on cloned template
-      else {
-        if (!nodes) {
-          root = tpl.cloneNode(true)
-          nodes = [...root.getElementsByTagName('*')]
-        }
-        // context passes cloned node to modify instead of template
-        nodes[fieldNodes[i]] =  evalField.call(nodes[fieldNodes[i]], arguments, i)
-      }
+      evals[ctx.index].apply(ctx, arguments)
     }
 
-    if (!root) root = tpl.cloneNode(true)
+    if (!ctx.clone) ctx.root = tpl.cloneNode(true)
 
-    return root.childNodes.length > 1 ? root.childNodes : root.firstChild
+    return ctx.root.childNodes.length > 1 ? ctx.root.childNodes : ctx.root.firstChild
   }
 
   return build
 }
-
 
 function updateNode (from, to) {
   if (key(from) === key(to)) return from
@@ -237,87 +241,64 @@ function updateNode (from, to) {
   // FIXME: special case when preserve parent childNodes
   // if (to === from.parentNode.childNodes) throw Error('Special case')
 
-  // FIXME: map with elements can be written directly to arrays to avoid merge sets creation
-
-  // FIXME: the code can be compacted to generic array-merge case
-
   // array / array-like
-  if (list(to)) {
+  if (list(to) || list(from)) {
     if (!list(from)) from = [from]
-
+    if (!list(to)) to = [to]
     if (!to.length) to.push('')
     to = to.map(item => immutable(item) ? document.createTextNode(item) : item)
-
-    from = merge(from[0].parentNode, from, to, from[from.length - 1].nextSibling)
+    from = merge(from[0].parentNode, from, to)
   }
+  // can be text/primitive
   else {
-    // reduce arr to single node
-    if (list(from)) {
-      let i = 0, l = from.length, match = l - 1, toKey = key(to)
-      for (; i < l; i++) {
-        if (i < match && key(from[i]) === toKey) match = i
-        else if (i !== match) from[i].remove()
-      }
-      from = from[match]
-    }
-
-    if (key(from) === key(to)) return from
-
-    // can be text/primitive
-    if (immutable(to)) {
-      to = to == null ? '' : to
-      if (from.nodeType === TEXT) from.data = to
-      else {
-        from.replaceWith(from = document.createTextNode(to))
-      }
-    }
-
-    // can be node/fragment
-    else if (to.nodeType) {
-      from.replaceWith(from = to)
-    }
+    from = morph(from, to)
   }
 
   return from
 }
 
-const key = node => node && node.nodeType === TEXT ? node.data : node
+function morph() {
+
+    if (immutable(to)) {
+    to = to == null ? '' : to
+    if (from.nodeType === TEXT) from.data = to
+    else from.replaceWith(from = document.createTextNode(to))
+  }
+  // can be node/fragment
+  else if (to.nodeType) from.replaceWith(from = to)
+
+}
 
 
-// more complete version https://github.com/luwes/js-diff-benchmark/blob/master/libs/spect.js
-export function merge (parent, a, b, before) {
-  let i, ai, bi, off
+// mergeable elements: text, named leaf input
+const key = node => node ? (node.nodeType === TEXT ? node.data : node.name && !node.firstChild ? node.name : node) : node
 
-  const  bidx = new Set(b), aidx = new Set(a)
+// versions log: https://github.com/luwes/js-diff-benchmark/blob/master/libs/spect.js
+export function merge (parent, a, b) {
+  let i, j, ai, bj, bprevNext = a[0], bidx = new Set(b), aidx = new Set(a)
 
-  // walk by b from tail
-  // a: 1 2 3 4 5, b: 1 2 3 → off: +2
-  // ~i-- === i-- >= 0
-  for (i = b.length, off = a.length - i; ~i--; ) {
-    ai = a[i + off], bi = b[i]
+  for (i = 0, j = 0; j <= b.length; i++, j++) {
+    ai = a[i], bj = b[j]
 
-    if (ai === bi) {}
+    if (ai === bj) {}
 
     else if (ai && !bidx.has(ai)) {
       // replace
-      if (bi && !aidx.has(bi)) parent.replaceChild(bi, ai)
+      if (bj && !aidx.has(bj)) parent.replaceChild(bj, ai)
 
       // remove
-      else (parent.removeChild(ai), off--, i++)
+      else (parent.removeChild(ai), j--)
+    }
+    else if (bj) {
+      // move - skips bj for the following swap
+      if (!aidx.has(bj)) i--
+
+      // insert after bj-1, bj
+      parent.insertBefore(bj, bprevNext)
     }
 
-    else if ((bi.nextSibling != before || !bi.nextSibling)) {
-      // swap
-      if (aidx.has(bi)) (parent.insertBefore(ai, bi), off--)
-
-      // insert
-      parent.insertBefore(bi, before), off++
-    }
-
-    before = bi
+    bprevNext = bj && bj.nextSibling
   }
 
   return b
 }
-
-
