@@ -178,6 +178,19 @@ t('tiny-random-2', t => {
   t.ok(parent.count < 10, 'ops count')
 })
 
+t('live-nodes', t => {
+  let parent = frag();
+  const initial = [t1,t2,t3,t4,t5]
+  diff(parent, [...parent.childNodes], initial);
+  parent.reset()
+
+  console.log('---chain-swap')
+  let ordered = initial.slice().sort(() => Math.random() - Math.random())
+  diff(parent, parent.childNodes, ordered,);
+  t.is([...parent.childNodes], ordered)
+  t.ok(parent.count < 10, 'ops count')
+})
+
 t('reverse', t => {
   let parent = frag();
   diff(parent,[...parent.childNodes],[t1,t2,t3,t4,t5],);

@@ -1,4 +1,3 @@
-import v from '../v.js'
 import { symbol, observable, primitive, object, attr, channel, immutable, list } from './util.js'
 
 const _group = Symbol.for('@spect.group')
@@ -131,7 +130,7 @@ function createBuilder(str) {
         let orig = this || node
         let arg = args[i]
         if (observable(arg)) {
-          v(arg)(tag => (orig[_cur] = updateNode(orig[_cur] || orig, tag)))
+          arg(tag => (orig[_cur] = updateNode(orig[_cur] || orig, tag)))
         }
         else {
           orig[_cur] = updateNode(orig, arg)
@@ -156,8 +155,7 @@ function createBuilder(str) {
             attr(cur, name, cur[name] = value)
           }
           else {
-            v(value)
-            (value => attr(cur, name, cur[name] = value))
+            value(value => attr(cur, name, cur[name] = value))
           }
         }
 
@@ -183,7 +181,7 @@ function createBuilder(str) {
             let cur = this || node
             name = args[i]
             if (observable(name)) {
-              v(name)(name => attr(cur, name, cur[name] = value))
+              name(name => attr(cur, name, cur[name] = value))
             }
             else attr(cur, name, cur[name] = value)
           }
@@ -201,8 +199,7 @@ function createBuilder(str) {
               attr(cur, name, cur[name] = value)
             }
             else {
-              v(value)
-              (value => attr(cur, name, cur[name] = value))
+              value(value => attr(cur, name, cur[name] = value))
             }
           }
         }
@@ -275,7 +272,7 @@ const key = node => node ? (node.nodeType === TEXT ? node.data : node.name && !n
 
 
 // versions log: https://github.com/luwes/js-diff-benchmark/blob/master/libs/spect.js
-// Features: 209b (185b without swap); works with live childNodes;
+// Features: 226b / 209b / 185b (by removing redundant parts); [should] work with live childNodes;
 export function merge (parent, a, b) {
   const bidx = new Set(b), aidx = new Set(a)
   let i, cur = a[0], next, bi
@@ -284,10 +281,18 @@ export function merge (parent, a, b) {
     bi = b[i], next = cur && cur.nextSibling
 
     // skip
-    if (cur === bi) cur = next
+    if (key(cur) === key(bi)) cur = next
 
-    // remove
-    else if (cur && !bidx.has(cur)) (parent.removeChild(cur), i--, cur = next)
+
+    else if (cur && !bidx.has(cur)) {
+      // replace (technially redundant but merges insert/remove into a single op)
+      if (bi && !aidx.has(bi)) parent.replaceChild(bi, cur)
+
+      // remove
+      else (parent.removeChild(cur), i--)
+
+      cur = next
+    }
 
     else if (bi) {
       // swap (only 1:1 pairs) (technically redundant but avoids long rearrangements)
