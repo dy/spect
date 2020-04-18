@@ -43,6 +43,7 @@ t('create', t => {
 
   diff(parent,[...parent.childNodes], [t1,t2,t3,t4,t5], );
   t.is([...parent.childNodes], [t1,t2,t3,t4,t5], 'create')
+  t.is(parent.count, 5)
 })
 
 t('remove', t => {
@@ -66,14 +67,17 @@ t('insert', t => {
 
 t('swap', t => {
   let parent = frag();
-  diff(parent,[...parent.childNodes], [t1,t2,t3,t4,t5], );
+  diff(parent,[...parent.childNodes], [t1,t2,t3,t4,t5,t6,t7,t8,t9], );
+  parent.reset()
 
   console.log('---swap')
-  diff(parent,[...parent.childNodes],[t1,t5,t3,t4,t2],);
-  t.is([...parent.childNodes], [t1,t5,t3,t4,t2])
+  diff(parent,[...parent.childNodes],[t1,t8,t3,t4,t5,t6,t7,t2,t9],);
+  t.is([...parent.childNodes], [t1,t8,t3,t4,t5,t6,t7,t2,t9])
+
+  t.is(parent.count, 2, 'ops')
 })
 
-t('swap1', t => {
+t('shuffle1', t => {
   let parent = frag();
   diff(parent,[...parent.childNodes], [t1,t2,t3,t4,t5]);
   parent.reset()
@@ -81,10 +85,10 @@ t('swap1', t => {
   console.log('---swap')
   diff(parent,[...parent.childNodes],[t1,t3,t5,t4,t2],);
   t.is([...parent.childNodes], [t1,t3,t5,t4,t2])
-  t.ok(parent.count < 6, 'ops count')
+  t.ok(parent.count <= 6, 'ops count')
 })
 
-t('swap2', t => {
+t('shuffle2', t => {
   let parent = frag();
   diff(parent, [...parent.childNodes], [t1,t2,t3,t4,t5]);
   parent.reset()
@@ -95,7 +99,7 @@ t('swap2', t => {
   t.ok(parent.count < 7, 'ops count')
 })
 
-t('swap3', t => {
+t('shuffle3', t => {
   let parent = frag();
   diff(parent, [...parent.childNodes], [t1,t2,t3,t4,t5]);
   parent.reset()
@@ -106,7 +110,7 @@ t('swap3', t => {
   t.ok(parent.count < 7, 'ops count')
 })
 
-t('swap4', t => {
+t('shuffle4', t => {
   let parent = frag();
   diff(parent, [...parent.childNodes], [t1,t2,t3,t4,t5]);
   parent.reset()
@@ -117,7 +121,7 @@ t('swap4', t => {
   t.ok(parent.count < 10, 'ops count')
 })
 
-t('swap5', t => {
+t('shuffle5', t => {
   let parent = frag();
   diff(parent, [...parent.childNodes], [t1,t2,t3,t4,t5]);
   parent.reset()
@@ -128,7 +132,7 @@ t('swap5', t => {
   t.ok(parent.count < 10, 'ops count')
 })
 
-t('swap6', t => {
+t('shuffle6', t => {
   let parent = frag();
   diff(parent, [...parent.childNodes], [t1,t2,t3,t4,t5]);
   parent.reset()
@@ -139,7 +143,7 @@ t('swap6', t => {
   t.ok(parent.count < 10, 'ops count')
 })
 
-t('swap7', t => {
+t('shuffle7', t => {
   let parent = frag();
   diff(parent, [...parent.childNodes], [t1,t2,t3,t4,t5]);
   parent.reset()
@@ -150,7 +154,7 @@ t('swap7', t => {
   t.ok(parent.count < 10, 'ops count')
 })
 
-t('swap8', t => {
+t('shuffle8', t => {
   let parent = frag();
   diff(parent, [...parent.childNodes], [t1,t2,t3,t4,t5]);
   parent.reset()
@@ -230,7 +234,7 @@ t.todo('morph text', t => {
   t.is([...parent.childNodes], [z,t2,x])
 })
 
-t('create ops', t => {
+t('create/replace ops', t => {
   // That's fine: failed due to wrong nodes
   let parent = frag()
   const N = 100
@@ -252,7 +256,8 @@ t('create ops', t => {
   parent.reset()
   console.log('replace')
   diff(parent,[...parent.childNodes],childNodes,)
-  t.is((parent.count - N) < 100, true, 'ops count')
+  console.log(parent.count)
+  t.is((parent.count - N) <= 100, true, 'ops count')
 })
 
 t('js-diff-benchmark random', t => {
