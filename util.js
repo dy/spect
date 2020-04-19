@@ -101,9 +101,6 @@ export const input = (arg) => {
 export function attr (el, name, value) {
   if (arguments.length < 3) return (value = el.getAttribute(name)) === '' ? true : value
 
-  // text nodes etc
-  if (!el || !el.setAttribute) return
-
   if (primitive(value)) {
     if (value === false || value == null) el.removeAttribute(name)
     else el.setAttribute(name, value === true ? '' : value)

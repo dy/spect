@@ -45,7 +45,7 @@ function createBuilder(str) {
   str = str
     // <a h:::_ → <a h:::1
     .replace(/h:::_/g, m => PLACEHOLDER + c++)
-    // <h:::_ → <h::: _=3
+    // <h:::3 → <h::: _=3
     .replace(/<h:::(\d+)/g, '<h::: _=$1')
     // <> → <h:::>
     .replace(/<(>|\s)/,'<h:::$1')
@@ -60,9 +60,8 @@ function createBuilder(str) {
   tpl.innerHTML = str
 
   // normalize template tree
-  const normWalker = document.createTreeWalker(tpl, SHOW_TEXT | SHOW_ELEMENT, null), split = []
-  while (normWalker.nextNode()) {
-    const node = normWalker.currentNode
+  let normWalker = document.createTreeWalker(tpl, SHOW_TEXT | SHOW_ELEMENT, null), split = [], node
+  while (node = normWalker.nextNode()) {
     // child fields into separate text nodes
     if (node.nodeType === TEXT) {
       let curr = [], last = 0
@@ -101,9 +100,8 @@ function createBuilder(str) {
   }
 
   // a h:::1 b → a <h::: _=1/> b
-  const insertWalker = document.createTreeWalker(tpl, SHOW_TEXT, null), replace = []
-  while (insertWalker.nextNode()) {
-    const textNode = insertWalker.currentNode
+  let insertWalker = document.createTreeWalker(tpl, SHOW_TEXT, null), replace = [], textNode
+  while (textNode = insertWalker.nextNode()) {
     if (/^h:::/.test(textNode.data)) {
       const node = document.createElement('h:::')
       node.setAttribute('_', id(textNode.data))
@@ -112,10 +110,10 @@ function createBuilder(str) {
   }
   replace.forEach(([from, to]) => from.replaceWith(to))
 
-  // create field evaluators - for each field they make corresponding transformation to template
+  // create field evaluators - for each field they make corresponding transformation to [cloned] template
   let evals = [], fieldNodes = []
 
-  // getElementsByTagName('*') is faster than tree iterator
+  // getElementsByTagName('*') is faster than tree iterator/querySelector('*), but live
   // ref: https://jsperf.com/createnodeiterator-vs-createtreewalker-vs-getelementsby
   const tplNodes = tpl.getElementsByTagName('*')
   for (let i = 0; i < tplNodes.length; i++) {
@@ -126,15 +124,14 @@ function createBuilder(str) {
       const fieldId = node.getAttribute('_')
       fieldNodes[fieldId] = i
 
-      evals[fieldId] = function (args, i) {
+      evals[fieldId] = function () {
+        this.i++
+
         let orig = this || node
         let arg = args[i]
-        if (observable(arg)) {
-          arg(tag => (orig[_cur] = updateNode(orig[_cur] || orig, tag)))
-        }
-        else {
-          orig[_cur] = updateNode(orig, arg)
-        }
+
+        if (observable(arg)) arg(tag => (orig[_cur] = updateNode(orig[_cur] || orig, tag)))
+        else orig[_cur] = updateNode(orig, arg)
 
         if (!this) node = orig[_cur]
         return orig[_cur]
@@ -145,86 +142,50 @@ function createBuilder(str) {
       for (let j = 0, n = node.attributes.length; j < n; ++j) {
         let { name, value } = node.attributes[j]
 
-        let nameParts = name.split(PLACEHOLDER), valueParts = value.split(PLACEHOLDER)
+        if (name.includes(PLACEHOLDER)) (--j, --n, node.removeAttribute(name))
 
-        evals[fieldId] = function (args, i) {
-          let cur = this || node
-          let value = args[i]
+        let nameFields = fields(name)
+        let valueParts = value.split(PLACEHOLDER)
+
+        // <a ${a}=b, <a ${a}, <a a=${b} <a ${a}=${b}
+        evals[fieldId] = function () {
+          let fields = [], i, primitive = true
+          for (i = this.i; i < nameFields.length + valueFields.length; i++) {
+            if (!immutable(arguments[i])) primitive = false
+          }
+          this.i = i
+
           // FIXME: move observable logic into `attr`?
-          if (!observable(value)) {
-            attr(cur, name, cur[name] = value)
-          }
-          else {
-            value(value => attr(cur, name, cur[name] = value))
-          }
-        }
+          if (!observable(value)) return attr(cur, name, cur[name] = value)
 
-        // <a ${a}=${b}
-        if (nameParts.length && valueParts.length) {
-          --j, --n
-          node.removeAttribute(name)
-          const nameFieldId = id(name), valueFieldId = id(value)
-          evals[nameFieldId] = function (args, i) {
-            let cur = this || node
-            let arg = args[i]
-          }
-        }
-
-        // <a ${a}=b, <a ${a}
-        // FIXME: merge into single field handler?
-        if (name.includes(PLACEHOLDER)) {
-          --j, --n
-          node.removeAttribute(name)
-          const fieldId = id(name)
-          fieldNodes[fieldId] = i
-          evals[fieldId] = function (args, i) {
-            let cur = this || node
-            name = args[i]
-            if (observable(name)) {
-              name(name => attr(cur, name, cur[name] = value))
-            }
-            else attr(cur, name, cur[name] = value)
-          }
-        }
-
-        // <a a=${b}
-        if (value.includes(PLACEHOLDER)) {
-          const fieldId = id(value)
-          fieldNodes[fieldId] = i
-          evals[fieldId] = function (args, i) {
-            let cur = this || node
-            let value = args[i]
-            // FIXME: move observable logic into `attr`?
-            if (!observable(value)) {
-              attr(cur, name, cur[name] = value)
-            }
-            else {
-              value(value => attr(cur, name, cur[name] = value))
-            }
-          }
+          v([nameFields, valueFields])((value, name) => attr(cur, name, cur[name] = value))
         }
       }
     }
   }
 
   function build() {
-    let ctx = { root: tpl, nodes: tplNodes, index: 0, clone: false }
+    let ctx = {
+      root: tpl,
+      nodes: tplNodes,
+      i: 0, // current field
+
+      // primitive fields modify tpl directly, then clone the node (fast!)
+      clone() {
+        if (this.cloned) return
+        this.root = tpl.cloneNode()
+        // https://jsperf.com/getelementsbyclassname-vs-queryselectorall/234
+        this.nodes = this.root.getElementsByTagName('*')
+        this.cloned = true
+      },
+      cloned: false
+    }
 
     // fields are co-directional with evaluation sequence
     // in other words, that's impossible to replace some tag after its props being set
-    for (; ctx.index < arguments.length; ctx.index++) {
+    while (ctx.i < arguments.length) evals[ctx.i].apply(ctx, arguments)
 
-      // primitive fields modify tpl directly, then clone the node (fast!)
-      if (!ctx.clone && !immutable(arguments[ctx.index])) {
-        ctx.root = tpl.cloneNode()
-        ctx.nodes = [...root.getElementsByTagName('*')]
-        ctx.clone = true
-      }
-
-      evals[ctx.index].apply(ctx, arguments)
-    }
-
-    if (!ctx.clone) ctx.root = tpl.cloneNode(true)
+    if (!ctx.cloned) ctx.root = tpl.cloneNode(true)
 
     return ctx.root.childNodes.length > 1 ? ctx.root.childNodes : ctx.root.firstChild
   }
@@ -233,7 +194,7 @@ function createBuilder(str) {
 }
 
 function updateNode (from, to) {
-  if (key(from) === key(to)) return from
+  if (same(from, to)) return from
 
   // FIXME: special case when preserve parent childNodes
   // if (to === from.parentNode.childNodes) throw Error('Special case')
@@ -254,9 +215,9 @@ function updateNode (from, to) {
   return from
 }
 
-function morph() {
-
-    if (immutable(to)) {
+// FIXME: possible to shave off completely
+function morph(from, to) {
+  if (immutable(to)) {
     to = to == null ? '' : to
     if (from.nodeType === TEXT) from.data = to
     else from.replaceWith(from = document.createTextNode(to))
@@ -264,44 +225,45 @@ function morph() {
   // can be node/fragment
   else if (to.nodeType) from.replaceWith(from = to)
 
+  return from
 }
 
 
 // mergeable elements: text, named leaf input
-const key = node => node ? (node.nodeType === TEXT ? node.data : node.name && !node.firstChild ? node.name : node) : node
+// FIXME: possible to shave off
+const key = node => node.nodeType === TEXT ? node.data : node.name && !node.firstChild ? node.name : node
+const same = (a, b) => a === b || (b && a && a.nodeType === b.nodeType && key(a) === key(b))
 
+// ref: https://github.com/luwes/js-diff-benchmark/blob/master/libs/spect.js
+export function merge (parent, a, b, end = null) {
+  let bidx = new Set(b), aidx = new Set(a), i = 0, cur = a[0], next, bi
 
-// versions log: https://github.com/luwes/js-diff-benchmark/blob/master/libs/spect.js
-// Features: 226b / 209b / 185b (by removing redundant parts); [should] work with live childNodes;
-export function merge (parent, a, b) {
-  const bidx = new Set(b), aidx = new Set(a)
-  let i, cur = a[0], next, bi
-
-  for (i = 0; i <= b.length; i++) {
-    bi = b[i], next = cur && cur.nextSibling
+  while ((bi = b[i++]) || cur != end) {
+    next = cur ? cur.nextSibling : end
 
     // skip
-    if (key(cur) === key(bi)) cur = next
+    if (same(cur, bi)) cur = next
 
+    // insert has higher priority, inc. tail-append shortcut
+    else if (bi && (!cur || bidx.has(cur))) {
+      // swap
+      if (b[i] === next && aidx.has(bi)) cur = next
 
-    else if (cur && !bidx.has(cur)) {
-      // replace (technially redundant but merges insert/remove into a single op)
-      if (bi && !aidx.has(bi)) parent.replaceChild(bi, cur)
+      // insert
+      parent.insertBefore(bi, cur)
+    }
 
-      // remove
-      else (parent.removeChild(cur), i--)
-
+    // redundant - but allows morphing
+    else if (bi && !aidx.has(bi)) {
+      morph(cur, bi)
+      // parent.replaceChild(bi, cur)
       cur = next
     }
 
-    else if (bi) {
-      // swap (only 1:1 pairs) (technically redundant but avoids long rearrangements)
-      if (aidx.has(bi) && b[i+1] === next) (parent.insertBefore(cur, bi), cur = next)
-
-      // insert after bi-1, bi
-      parent.insertBefore(bi, cur)
-    }
+    // remove
+    else (parent.removeChild(cur), cur = next, i--)
   }
 
   return b
 }
+

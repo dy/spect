@@ -50,7 +50,7 @@ t('remove', t => {
   let parent = frag();
   diff(parent,[...parent.childNodes], [t1,t2,t3,t4,t5], );
 
-  console.log('remove')
+  console.log('---remove')
   diff(parent,[...parent.childNodes],[t1,t3,t5],);
   t.is([...parent.childNodes], [t1,t3,t5], 'remove')
 })
@@ -267,7 +267,7 @@ t('create/replace ops', t => {
   for (let i = 0; i < N; i++) childNodes.push(document.createTextNode(start + i))
 
   parent.reset()
-  console.log('replace')
+  console.log('---replace')
   diff(parent,[...parent.childNodes],childNodes,)
   console.log(parent.count)
   t.is((parent.count - N) <= 100, true, 'ops count')
