@@ -9,7 +9,6 @@ const TEXT = 3, ELEMENT = 1, COMMENT = 8, FRAGMENT = 11, SHOW_ELEMENT = 1, SHOW_
 const buildCache = new WeakMap
 
 const FIELD = 'h:::'
-const id = str => +str.slice(FIELD.length)
 
 export default function h (statics, ...fields) {
   // hyperscript - turn to tpl literal call
@@ -31,7 +30,7 @@ export default function h (statics, ...fields) {
   let build = buildCache.get(statics)
 
   if (!build) {
-    const key = statics.join(FIELD + '_')
+    const key = statics.join(FIELD)
     build = createBuilder(key)
     buildCache.set(statics, build)
   }
@@ -39,27 +38,19 @@ export default function h (statics, ...fields) {
   return build(...fields)
 }
 
-// FIXME: fields numeration is not required - it is co-directional with walking template elements, so field number can simply be incremented
-// that by shaving off bunch of these regexps
-
 function createBuilder(str) {
-  let c = 0
   const tpl = document.createElement('template')
 
-  // ref: https://github.com/developit/htm/blob/26bdff2306dd77dcf82a2d788a8d3e689968b0da/src/index.mjs#L36-L40
+  // fields order is co-directional with tree walker order, so field number can simply be incremented, avoiding regexps
   str = str
-    // <a h:::_ → <a h:::1
-    .replace(/h:::_/g, m => FIELD + c++)
-    // <h:::3 → <h::: _=3
-    .replace(/<h:::(\d+)/g, '<h::: _=$1')
     // <> → <h:::>
-    .replace(/<(>|\s)/,'<h:::$1')
+    .replace(/<(>|\s)/, '<' + FIELD + '$1')
     // <abc .../> → <abc ...></abc>
     .replace(/<([\w:-]+)([^<>]*)\/>/g, '<$1$2></$1>')
     // <//>, </> → </h:::>
-    .replace(/<\/+>/, '</h:::>')
+    .replace(/<\/+>/, '</' + FIELD + '>')
     // .../> → ... />
-    // .replace(/([^<\s])\/>/g, '$1 />')
+    .replace(/([^<\s])\/>/g, '$1 />')
     // <a#b.c → <a #b.c
     .replace(/(<[\w:-]+)([#\.][^<>]*>)/g, '$1 $2')
   tpl.innerHTML = str
@@ -69,12 +60,13 @@ function createBuilder(str) {
   while (node = normWalker.nextNode()) {
     // child fields into separate text nodes
     if (node.nodeType === TEXT) {
-      let curr = [], last = 0
-      node.data.replace(/h:::\d+/g, (m, idx, str) => {
-        if (idx && idx !== last) curr.push(idx)
-        if (idx + m.length < str.length) curr.push(last = idx + m.length)
-      })
-      if (curr.length) split.push(node, curr)
+      let cur = [], idx = 0
+      // FIXME: replace with while loop
+      node.data.split(FIELD).map(part => (
+        cur.push(idx), part.length && cur.push(idx += part.length), idx += FIELD.length
+      ))
+      cur = cur.slice(1, -1)
+      if (cur.length) split.push(node, cur)
     }
     else {
       for (let i = 0, n = node.attributes.length; i < n; i++) {
@@ -104,12 +96,11 @@ function createBuilder(str) {
     idx.map(id => (node = node.splitText(id - prev), prev = id))
   }
 
-  // a h:::1 b → a <h::: _=1/> b
+  // a h:::1 b → a <h::: /> b
   let insertWalker = document.createTreeWalker(tpl.content, SHOW_TEXT, null), replace = [], textNode
   while (textNode = insertWalker.nextNode()) {
-    if (/^h:::/.test(textNode.data)) {
-      const node = document.createElement('h:::')
-      node.setAttribute('_', id(textNode.data))
+    if (textNode.data === FIELD) {
+      const node = document.createElement(FIELD)
       replace.push([textNode, node])
     }
   }
@@ -135,9 +126,8 @@ function createBuilder(str) {
 
       // fields are co-directional with attributes and nodes order, so we just increment fieldId (also healthy insertions!)
       // fields accept generic observables, not bound to spect/v
-      // FIXME: can simply compare name === FIELD
       // <a ${{}}, <a ${'hidden'}
-      if (name.includes(FIELD)) {
+      if (name === FIELD) {
         tplNode.removeAttribute(name), n--, m--
         evals[fieldId++] = function (arg) {
           const node = this[j][_node] || this[j]
@@ -154,9 +144,7 @@ function createBuilder(str) {
       }
       else if (value.includes(FIELD)) {
         // <a a=${b}
-        // FIXME: just compare
-        // if (value === FIELD) {
-        if (/^h:::\d+$/.test(value)) {
+        if (value === FIELD) {
           evals[fieldId++] = function (arg) {
             const node = this[j][_node] || this[j]
             return observable(arg) ? sube(arg, v => prop(node, name, v)) : prop(node, name, arg)
@@ -164,7 +152,7 @@ function createBuilder(str) {
         }
         // <a a="b${c}d${e}f"
         else {
-          const statics = value.split(/h:::\d+/)
+          const statics = value.split(FIELD)
           const evalFields = function (...fields) {
             const node = this[j][_node] || this[j]
             const subs = fields.map((field, i) => observable(field) ? (fields[i] = '', field) : null)

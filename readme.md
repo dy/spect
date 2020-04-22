@@ -328,8 +328,8 @@ $('#clock', el => {
 ```
 
 _Method_: cached `<template>`s with fast cloning.<br/>
+<!-- _Performance_: faster than manual DOM, see [benchmark](). -->
 _R&D_: [lit-html](https://ghub.io/lit-html), [htm@1](https://ghub.io/htm) [htl](https://ghub.io/htl), [hyperscript](https://ghub.io/hyperscript), [incremental-dom](https://ghub.io/incremental-dom), [snabbdom](https://ghub.io/snabbdom), [nanomorph](https://ghub.io/nanomorph), [uhtml](https://ghub.io/uhtml) and others.
-<!-- _Benchmark_. -->
 
 <br/>
 
