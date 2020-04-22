@@ -93,27 +93,3 @@ export const object = (value) => {
 	const prototype = Object.getPrototypeOf(value);
 	return prototype === null || prototype === Object.prototype;
 }
-
-export const input = (arg) => {
-  return arg && (arg.tagName === 'INPUT' || arg.tagName === 'SELECT')
-}
-
-export function attr (el, name, value) {
-  if (arguments.length < 3) return (value = el.getAttribute(name)) === '' ? true : value
-
-  if (primitive(value)) {
-    if (value === false || value == null) el.removeAttribute(name)
-    else el.setAttribute(name, value === true ? '' : value)
-  }
-  // class=[a, b, ...c] - possib observables
-  else if (Array.isArray(value)) {
-    el.setAttribute(name, value.filter(Boolean).join(' '))
-  }
-  // style={}
-  else if (object(value)) {
-    let values = Object.values(value)
-    el.setAttribute(name, Object.keys(value).map((key, i) => `${key}: ${values[i]};`).join(' '))
-  }
-  // onclick={} - just ignore
-  else if (typeof value === 'function') {}
-}

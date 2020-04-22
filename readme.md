@@ -211,10 +211,10 @@ Pending...
 
 <details><summary><strong>$ − selector observer</strong></summary>
 
-> elements = $( scope? , selector? , fn? )<br/>
+> elements = $( scope? , selector? , aspect? )<br/>
 > elements = $\`.selector\`<br/>
 
-Collection of elements matching the `selector` in `scope`, triggering `fn` for each new matched element.
+Get live collection of elements matching the `selector`. `aspect` function is triggered for each matched element.
 
 * `selector` is a valid CSS selector.
 * `scope` is optional _HTMLElement_ or a list of elements to narrow down selector scope.
@@ -270,7 +270,7 @@ const $timer = $('.timer', el => {
 })
 ```
 
-_**$**_ uses class selectors technique from [fast-on-load](https://ghub.io/fast-on-load), feature-based selectors from [selector-set](https://github.com/josh/selector-set) and animation-based selectors from [insertionQuery](https://github.com/naugtur/insertionQuery) for optimal performance.<br/>
+_Method_: class selectors technique from [fast-on-load](https://ghub.io/fast-on-load), feature-based selectors from [selector-set](https://github.com/josh/selector-set) and animation-based selectors from [insertionQuery](https://github.com/naugtur/insertionQuery).<br/>
 _R&D_: [jQuery](https://ghub.io/jquery), [selector-observer](https://github.com/josh/selector-observer), [reuse](https://ghub.io/reuse), [aspect-oriended-programming](https://en.wikipedia.org/wiki/Aspect-oriented_programming) libraries and others.
 
 <br/>
@@ -280,7 +280,7 @@ _R&D_: [jQuery](https://ghub.io/jquery), [selector-observer](https://github.com/
 
 <details><summary><strong>h − hyperscript / html</strong></summary>
 
-> el = h( tag , props? , ...children )<br/>
+> el = h( tag | target , props? , ...children )<br/>
 > el = h\`...content\`<br/>
 
 [Hyperscript](https://ghub.io/hyperscript) with observables. Can be used via JSX or template literal with [HTML syntax](https://ghub.io/xhtm).
@@ -312,6 +312,7 @@ const fooBarFrag = h`<foo/><bar/>`
 
 // hydrate / render
 h`<${foo} ...${foo}>${ foo.childNodes }</>`
+h(foo, {...foo}, ...foo.childNodes)
 ```
 
 #### Example
@@ -326,8 +327,9 @@ $('#clock', el => {
 })
 ```
 
-_**h**_ uses cached `<template>`s technique like [lit-html](https://ghub.io/lit-html), with parsing from [htm@1](https://ghub.io/htm) and evaluating from [htl](https://ghub.io/htl).<br/>
-_R&D_: [hyperscript](https://ghub.io/hyperscript), [incremental-dom](https://ghub.io/incremental-dom), [nanomorph](https://ghub.io/nanomorph) and others.
+_Method_: cached `<template>`s with fast cloning.<br/>
+_R&D_: [lit-html](https://ghub.io/lit-html), [htm@1](https://ghub.io/htm) [htl](https://ghub.io/htl), [hyperscript](https://ghub.io/hyperscript), [incremental-dom](https://ghub.io/incremental-dom), [snabbdom](https://ghub.io/snabbdom), [nanomorph](https://ghub.io/nanomorph), [uhtml](https://ghub.io/uhtml) and others.
+<!-- _Benchmark_. -->
 
 <br/>
 
@@ -452,7 +454,7 @@ $('.likes-count', el => h`<${el}>${
 likes.load()
 ```
 
-_**v**_ internally uses stateful/stateless channels.<br/>
+_Method_: stateful/stateless channels.<br/>
 _R&D_: [observable](https://ghub.io/observable), [react hooks](https://ghub.io/unihooks), [observable proposal](https://github.com/tc39/proposal-observable), [observ](https://ghub.io/observ), [mutant](https://ghub.io/mutant), [rxjs](https://ghub.io/rxjs), [iron](https://github.com/ironjs/iron), [icaro](https://ghub.io/icaro), [introspected](https://ghub.io/introspected), [augmentor](https://ghub.io/augmentor) and others.
 
 <br/>

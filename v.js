@@ -1,4 +1,4 @@
-import { desc, channel as c, observer, immutable, observable, input, symbol } from './util.js'
+import { desc, channel as c, observer, immutable, observable, symbol } from './util.js'
 
 const depsCache = new WeakMap
 
@@ -216,4 +216,8 @@ export default function v(source, ...fields) {
   Object.seal(fn)
 
   return fn
+}
+
+const input = (arg) => {
+  return arg && (arg.tagName === 'INPUT' || arg.tagName === 'SELECT')
 }
