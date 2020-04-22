@@ -120,15 +120,13 @@ function createBuilder(str) {
   // ref: https://jsperf.com/createnodeiterator-vs-createtreewalker-vs-getelementsby
   const evals = [], tplNodes = tpl.content.querySelectorAll('*')
   for (let tplNode, fieldId = 0, nodeId = 0; tplNode = tplNodes[nodeId]; nodeId++) {
+    const j = nodeId
     if (tplNode.localName === FIELD) {
       // <${node} _=N, <>${n}</> - will be replaced as new node
-      const i = fieldId, j = nodeId
       evals[fieldId++] = function tag(arg) {
-        const node = this.nodes[j]
-        if (observable(arg)) this.cleanup.push(sube(arg, tag => {
-          node[_node] = updateNode(node[_node] || node, tag)
-        }))
-        else node[_node] = updateNode(node, arg)
+        const node = this[j]
+        if (observable(arg)) return sube(arg, tag => node[_node] = updateNode(node[_node] || node, tag))
+        node[_node] = updateNode(node, arg)
       }
     }
 
@@ -141,39 +139,37 @@ function createBuilder(str) {
       // <a ${{}}, <a ${'hidden'}
       if (name.includes(FIELD)) {
         tplNode.removeAttribute(name), n--, m--
-        const j = nodeId
         evals[fieldId++] = function (arg) {
-          const node = this.nodes[j][_node] || this.nodes[j]
+          const node = this[j][_node] || this[j]
           if (primitive(arg)) prop(node, arg, value)
           // can only be object observable
           else if (observable(arg)) {
-            this.cleanup.push(sube(arg, v => {
+            return sube(arg, v => {
               if (primitive(v)) (prop(node, v, value))
               else for (let key in v) prop(node, key, v[key])
-            }))
+            })
           }
           else for (let key in name) prop(node, key, name[key])
         }
       }
       else if (value.includes(FIELD)) {
-        const j = nodeId
         // <a a=${b}
         // FIXME: just compare
         // if (value === FIELD) {
         if (/^h:::\d+$/.test(value)) {
           evals[fieldId++] = function (arg) {
-            const node = this.nodes[j][_node] || this.nodes[j]
-            observable(arg) ? this.cleanup.push(sube(arg, v => prop(node, name, v))) : prop(node, name, arg)
+            const node = this[j][_node] || this[j]
+            return observable(arg) ? sube(arg, v => prop(node, name, v)) : prop(node, name, arg)
           }
         }
         // <a a="b${c}d${e}f"
         else {
           const statics = value.split(/h:::\d+/)
           const evalFields = function (...fields) {
-            const node = this.nodes[j][_node] || this.nodes[j]
-            let subs = fields.map((field, i) => observable(field) ? (fields[i] = '', field) : null)
+            const node = this[j][_node] || this[j]
+            const subs = fields.map((field, i) => observable(field) ? (fields[i] = '', field) : null)
             prop(node, name, h.tpl(statics, ...fields))
-            subs.forEach((sub, i) => sub && this.cleanup.push(sube(sub, v => (fields[i] = v, prop(node, name, h.tpl(statics, ...fields))))))
+            return subs.map((sub, i) => sub && sube(sub, v => (fields[i] = v, prop(node, name, h.tpl(statics, ...fields)))))
           }
           evalFields.count = statics.length - 1
           evals[fieldId++] = evalFields
@@ -183,32 +179,28 @@ function createBuilder(str) {
   }
 
   function build() {
-    let ctx = { root: tpl.content, nodes: tplNodes, cleanup: [], clone: false }
-
-    // primitive fields modify tpl directly, then clone it (fast!)
-    const clone = () => {
-      ctx.root = tpl.content.cloneNode(true)
-      // https://jsperf.com/getelementsbyclassname-vs-queryselectorall/236 - the fastest for static selectors
-      ctx.nodes = ctx.root.querySelectorAll('*')
-      ctx.clone = true
-    }
+    let cloned, nodes = tplNodes, cleanup = [], frag = tpl.content
 
     for (let i = 0; i < arguments.length;) {
       const evalField = evals[i]
       if (evalField.count) {
-        const fields = [].slice.call(arguments, i, i += evalField.count)
-        fields.forEach(field => (!ctx.clone && observable(field)) && clone())
-        evalField.apply(ctx, fields)
+        let fields = []
+        for (let j = i, k = i += evalField.count; j < k; j++) {
+          if (!cloned && observable(arguments[j])) nodes = (cloned = frag.cloneNode(true)).querySelectorAll('*')
+          fields.push(arguments[j])
+        }
+        cleanup.push(...evalField.apply(nodes, fields).filter(Boolean))
       }
       else {
         const field = arguments[i++]
-        if (!ctx.clone && (!primitive(field) || evalField.name === 'tag')) clone()
-        evalField.call(ctx, field)
+        // https://jsperf.com/getelementsbyclassname-vs-queryselectorall/236 - the fastest for static selectors
+        if (!cloned && (!primitive(field) || evalField.tag)) nodes = (cloned = frag.cloneNode(true)).querySelectorAll('*')
+        cleanup.push(evalField.call(nodes, field))
       }
     }
 
-    if (!ctx.clone) ctx.root = tpl.content.cloneNode(true)
-    return ctx.root.childNodes.length > 1 ? ctx.root : ctx.root.firstChild
+    const root = cloned || frag.cloneNode(true)
+    return root.childNodes.length > 1 ? root : root.firstChild
   }
 
   return build
