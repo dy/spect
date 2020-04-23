@@ -1,8 +1,7 @@
 import { symbol, observable, primitive, object, immutable, list } from './util.js'
 
-const _group = Symbol.for('@spect.group')
 const _node = Symbol.for('@spect.node')
-const _cleanup = Symbol.for('@spect.cleanup')
+const _child = Symbol.for('@spect.child')
 
 const TEXT = 3, ELEMENT = 1, COMMENT = 8, FRAGMENT = 11, SHOW_ELEMENT = 1, SHOW_TEXT = 4
 
@@ -11,29 +10,32 @@ const buildCache = new WeakMap
 const FIELD = 'h:::'
 
 export default function h (statics, ...fields) {
+  let build
+
   // hyperscript - turn to tpl literal call
   // FIXME: there must be standard builder - creating that key is SLOW
   // FIXME: should be Array.isTemplateObject(statics)
+  // h(tag, props, ...children)
   if (!statics.raw) {
-  //   // h(tag, ...children)
-  //   if (!fields.length || !object(fields[0]) && fields[0] != null) fields.unshift(null)
-  //   const count = fields.length
-  //   if (!primitive(statics)) fields.unshift(statics)
+    // h(tag, ...children)
+    let props = fields.length && (fields[0] == null || object(fields[0])) ? fields.shift() : null
 
-  //   statics = [
-  //     ...(primitive(statics) ? [`<${statics} ...`] : ['<', ' ...']),
-  //     ...(count < 2 ? [`/>`] : ['>', ...Array(count - 2).fill(''), `</>`])
-  //   ]
-  // }
+    // h('div', props?, ...children?)
+    if (primitive(statics)){
+      build = buildCache[statics]
+      if (!build) buildCache[statics] = build = createBuilder(`<${statics} ...${FIELD}>${FIELD}</${statics}>`)
+      return build(props, fields)
+    }
+    // h(target, props?, ...children)
+    else {
+      build = buildCache.get(statics)
+      if (!build) buildCache.set(statics, build = createBuilder(`<${FIELD} ...${FIELD}>${FIELD}</>`))
+      return build(statics, props, fields)
+    }
   }
 
-  let build = buildCache.get(statics)
-
-  if (!build) {
-    const key = statics.join(FIELD)
-    build = createBuilder(key)
-    buildCache.set(statics, build)
-  }
+  build = buildCache.get(statics)
+  if (!build) buildCache.set(statics, build = createBuilder(statics.join(FIELD)))
 
   return build(...fields)
 }
@@ -96,11 +98,12 @@ function createBuilder(str) {
     idx.map(id => (node = node.splitText(id - prev), prev = id))
   }
 
-  // a h:::1 b → a <h::: /> b
+  // a h::: b → a <h::: /> b
   let insertWalker = document.createTreeWalker(tpl.content, SHOW_TEXT, null), replace = [], textNode
   while (textNode = insertWalker.nextNode()) {
     if (textNode.data === FIELD) {
       const node = document.createElement(FIELD)
+      node[_child] = true
       replace.push([textNode, node])
     }
   }
@@ -113,11 +116,25 @@ function createBuilder(str) {
   for (let tplNode, fieldId = 0, nodeId = 0; tplNode = tplNodes[nodeId]; nodeId++) {
     const j = nodeId
     if (tplNode.localName === FIELD) {
-      // <${node} _=N, <>${n}</> - will be replaced as new node
-      evals[fieldId++] = function tag(arg) {
-        const node = this[j]
-        if (observable(arg)) return sube(arg, tag => node[_node] = updateNode(node[_node] || node, tag))
-        node[_node] = updateNode(node, arg)
+      // <>${n}</> - will be replaced as new node
+      if (tplNode[_child]) {
+        evals[fieldId++] = function (arg) {
+          const node = this[j]
+          node[_node] = updateNode(node, arg)
+          if (observable(arg)) return sube(arg, tag => (node[_node] = updateNode(node[_node], tag)))
+        }
+      }
+      // <${node}
+      else {
+        evals[fieldId++] = function (arg) {
+          const node = this[j]
+          node[_node] = updateNode(node, typeof arg === 'function' ? arg() : arg)
+          // render tpl node children/attrs to the replacement
+          if (node.hasAttributes()) for (let n = 0, attrs = node.attributes; n < attrs.length; n++) prop(node[_node], attrs[n].name, attrs[n].value)
+          merge(arg, arg.childNodes, [...node.childNodes])
+          if (observable(arg)) return sube(arg, tag => (node[_node] = updateNode(node[_node], tag)))
+        }
+        replace.tag = true
       }
     }
 
@@ -130,6 +147,7 @@ function createBuilder(str) {
       if (name === FIELD) {
         tplNode.removeAttribute(name), n--, m--
         evals[fieldId++] = function (arg) {
+          if (!arg) return
           const node = this[j][_node] || this[j]
           if (primitive(arg)) prop(node, arg, value)
           // can only be object observable
@@ -195,15 +213,15 @@ function createBuilder(str) {
 }
 
 // interpolator
-h.tpl = (statics, ...fields) => String.raw({raw: statics}, ...fields.map(value => value == null ? '' : value))
+h.tpl = (statics, ...fields) => String.raw({raw: statics}, ...fields.map(value => !value ? '' : value)).trim()
 
 // lil subscriby (v-less)
-function sube(target, fn, unsub) {
+function sube(target, fn, unsub, stop) {
   if (typeof target === 'function') unsub = target(fn)
   else if (target[symbol.observable]) target[symbol.observable](({subscribe}) => unsub = subscribe({ next: fn }))
   else if (target[Symbol.asyncIterator]) {
-    let stop, unsub = () => stop = true
-    ;(async () => { for await (let v of source) { if (stop) break; fn(v) } })()
+    unsub = () => stop = true
+    ;(async () => { for await (let v of target) { if (stop) break; fn(v) } })()
   }
   return unsub
 }
@@ -255,13 +273,15 @@ function updateNode (from, to) {
 
 // FIXME: possible to shave off completely
 function morph(from, to) {
-  if (immutable(to)) {
+  // can be node/fragment
+  if (to && to.nodeType) {
+    from.replaceWith(from = to)
+  }
+  else {
     to = to == null ? '' : to
     if (from.nodeType === TEXT) from.data = to
     else from.replaceWith(from = document.createTextNode(to))
   }
-  // can be node/fragment
-  else if (to.nodeType) from.replaceWith(from = to)
 
   return from
 }

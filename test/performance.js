@@ -3,7 +3,7 @@ import { $, v, h } from '../index.js'
 import { tick, frame, idle, time } from 'wait-please'
 
 
-t.only('creation performance should be faster than direct DOM', async t => {
+t('creation performance should be faster than direct DOM', async t => {
   const N = 10000
 
   const container = document.createElement('div')
