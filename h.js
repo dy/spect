@@ -118,23 +118,22 @@ function createBuilder(str) {
     if (tplNode.localName === FIELD) {
       // <>${n}</> - will be replaced as new node
       if (tplNode[_child]) {
-        evals[fieldId++] = function (arg) {
+        (evals[fieldId++] = function (arg) {
           const node = this[j]
           node[_node] = updateNode(node, arg)
           if (observable(arg)) return sube(arg, tag => (node[_node] = updateNode(node[_node], tag)))
-        }
+        }).child = true
       }
       // <${node}
       else {
-        evals[fieldId++] = function (arg) {
+        (evals[fieldId++] = function (arg) {
           const node = this[j]
           node[_node] = updateNode(node, typeof arg === 'function' ? arg() : arg)
           // render tpl node children/attrs to the replacement
           if (node.hasAttributes()) for (let n = 0, attrs = node.attributes; n < attrs.length; n++) prop(node[_node], attrs[n].name, attrs[n].value)
           merge(arg, arg.childNodes, [...node.childNodes])
           if (observable(arg)) return sube(arg, tag => (node[_node] = updateNode(node[_node], tag)))
-        }
-        replace.tag = true
+        }).tag = true
       }
     }
 
@@ -200,6 +199,7 @@ function createBuilder(str) {
       else {
         const field = arguments[i++]
         // https://jsperf.com/getelementsbyclassname-vs-queryselectorall/236 - the fastest for static selectors
+        // primitive child fields are ok to modify src template directly, but tag fields need props/own children
         if (!cloned && (!primitive(field) || evalField.tag)) nodes = (cloned = frag.cloneNode(true)).querySelectorAll('*')
         cleanup.push(evalField.call(nodes, field))
       }

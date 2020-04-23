@@ -25,7 +25,7 @@ t('creation performance should be faster than direct DOM', async t => {
   container.innerHTML = ''
 
   console.log('hTime', hTime, 'domTime', domTime)
-  t.ok(hTime < domTime * .9, 'creation is fast')
+  t.ok(hTime < domTime * .8, 'creation is fast')
 })
 
 t.todo('update performance should be faster than direct DOM', async t => {
