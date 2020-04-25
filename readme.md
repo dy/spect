@@ -311,8 +311,8 @@ const [foo1, foo2] = h`<foo>1</foo><foo>2</foo>`
 const fooBarFrag = h`<foo/><bar/>`
 
 // hydrate / render
-h`<${foo} ...${foo}>${ foo.childNodes }</>`
-h(foo, {...foo}, ...foo.childNodes)
+h`<${foo} ...${props}>${ children }</>`
+h(foo, {...props}, ...children)
 ```
 
 #### Example
