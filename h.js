@@ -4,7 +4,7 @@ const _ref = Symbol.for('@spect.ref')
 
 const TEXT = 3, ELEMENT = 1, COMMENT = 8, FRAGMENT = 11, SHOW_ELEMENT = 1, SHOW_TEXT = 4
 
-const FIELD = 'h:::', FIELD_CHILD = 'h-child', FIELD_CLASS = 'h-attrs'
+const FIELD = 'h--field', FIELD_CHILD = 'h--child', FIELD_CLASS = 'h--attrs'
 
 const EMPTY = 'area base br col command embed hr img input keygen link meta param source track wbr ! !doctype ? ?xml'.split(' ')
 
@@ -128,12 +128,16 @@ function createBuilder(str) {
         const arg = args[i]
         // <${el}
         if (arg.nodeType) {
-          node[_ref] = updateNode(node, arg)
+          // make parent insert placeholder - internal portals are transfered, external portals are kept unchanged
+          // h`<a><${b}/></a>` - b is placed to a
+          // h`<${b}/>` - b is kept in its own parent
+          node[_ref] = (updateNode(node, document.createTextNode('')))[_ref] = arg
+
           // render tpl node children/attrs to the replacement
           if (node.hasAttributes())
             for (let n = 0, attrs = node.attributes; n < attrs.length; n++)
-              prop(node[_ref], attrs[n].name, attrs[n].value)
-          merge(node[_ref], node[_ref].childNodes, [...node.childNodes])
+              prop(arg, attrs[n].name, attrs[n].value)
+          merge(arg, arg.childNodes, [...node.childNodes])
         }
         // <${Component}
         else if (typeof arg === 'function') node[_ref] = updateNode(node, arg(node))
@@ -167,7 +171,10 @@ function createBuilder(str) {
           const arg = args[i]
           if (!arg) return
           // no need for placeholder props
-          if (!fast && observable(arg)) return sube(arg, v => {for (let key in v) prop(node[_ref] || node, key, v[key])})
+          if (!fast && observable(arg)) return sube(arg, v => {
+            if (primitive(v)) prop(node[_ref] || node, v, value)
+            else for (let key in v) prop(node[_ref] || node, key, v[key])
+          })
           if (primitive(arg)) return prop(node[_ref] || node, arg, value)
           for (let key in arg) if (fast || !observable(arg[key])) prop(node[_ref] || node, key, arg[key])
             else subs.push(sube(arg[key], v => prop(node[_ref] || node, key, v)))
@@ -214,10 +221,10 @@ function createBuilder(str) {
   if (staticAttributes.length) staticAttributes.forEach(child => (child.classList.remove(FIELD_CLASS), !child.classList.length && child.removeAttribute('class')))
 
   function build() {
-    // if all primitives - take short path - modify tpl directly & clone
-    let cleanup = [], fast = true, frag, children, child, i
+    let cleanup = [], fast = !hasComponents, frag, children, child, i
 
-    // only immutables - fn cannot be cloned, object one-way sets attribs and may have observable prop
+    // if all primitives - take short path - modify tpl directly & clone
+    // why immutables - fn cannot be cloned, object one-way sets attribs and may have observable prop
     if (!hasComponents) for (i = 0; i < arguments.length; i++) if (!immutable(arguments[i])) { fast = false; break }
 
     frag = fast ? staticTpl : tpl.content.cloneNode(true)
@@ -244,7 +251,7 @@ function createBuilder(str) {
 
     if (fast) frag = frag.cloneNode(true).content
 
-    return frag.childNodes.length > 1 ? frag : frag.firstChild
+    return frag.childNodes.length > 1 ? frag : frag.firstChild[_ref] || frag.firstChild
   }
 
   return build
