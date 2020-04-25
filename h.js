@@ -1,13 +1,14 @@
 import { symbol, observable, primitive, object, immutable, list } from './util.js'
 
-const _node = Symbol.for('@spect.node')
-const _child = Symbol.for('@spect.child')
+const _ref = Symbol.for('@spect.ref')
 
 const TEXT = 3, ELEMENT = 1, COMMENT = 8, FRAGMENT = 11, SHOW_ELEMENT = 1, SHOW_TEXT = 4
 
-const buildCache = new WeakMap
+const FIELD = 'h:::', FIELD_CHILD = 'h-child', FIELD_CLASS = 'h-attr'
 
-const FIELD = 'h:::'
+const EMPTY = 'area base br col command embed hr img input keygen link meta param source track wbr ! !doctype ? ?xml'.split(' ')
+
+const buildCache = new WeakMap
 
 export default function h (statics, ...fields) {
   let build
@@ -22,9 +23,13 @@ export default function h (statics, ...fields) {
 
     // h('div', props?, ...children?)
     if (primitive(statics)){
-      build = buildCache[statics]
-      if (!build) buildCache[statics] = build = createBuilder(`<${statics} ...${FIELD}>${FIELD}</${statics}>`)
-      return build(props, fields)
+      const key = statics + '>' + fields.length
+      build = buildCache[key]
+      if (!build) {
+        if (EMPTY.includes(statics)) (buildCache[key] = build = createBuilder(`<${statics} ...${FIELD} />`)).empty = true
+        else (buildCache[key] = build = createBuilder(`<${statics} ...${FIELD}>${Array(fields.length + 1).fill('').join(FIELD)}</${statics}>`))
+      }
+      return build.empty ? build(props) : build(props, ...fields)
     }
     // h(target, props?, ...children)
     else {
@@ -102,8 +107,7 @@ function createBuilder(str) {
   let insertWalker = document.createTreeWalker(tpl.content, SHOW_TEXT, null), replace = [], textNode
   while (textNode = insertWalker.nextNode()) {
     if (textNode.data === FIELD) {
-      const node = document.createElement(FIELD)
-      node[_child] = true
+      const node = document.createElement(FIELD_CHILD)
       replace.push([textNode, node])
     }
   }
@@ -112,101 +116,120 @@ function createBuilder(str) {
   // create field evaluators - for each field they make corresponding transformation to [cloned] template
   // getElementsByTagName('*') is faster than tree iterator/querySelector('*), but live and fragment doesn't have it
   // ref: https://jsperf.com/createnodeiterator-vs-createtreewalker-vs-getelementsby
-  const evals = [], tplNodes = tpl.content.querySelectorAll('*')
+  const evalChild = [], evalAttrs = [], evalComp = [], tplNodes = tpl.content.querySelectorAll('*')
+  let hasAttributes = false, hasChildren = false, hasComponents = false
+
   for (let tplNode, fieldId = 0, nodeId = 0; tplNode = tplNodes[nodeId]; nodeId++) {
-    const j = nodeId
+    // <${node}
     if (tplNode.localName === FIELD) {
-      // <>${n}</> - will be replaced as new node
-      if (tplNode[_child]) {
-        (evals[fieldId++] = function (arg) {
-          const node = this[j]
-          node[_node] = updateNode(node, arg)
-          if (observable(arg)) return sube(arg, tag => (node[_node] = updateNode(node[_node], tag)))
-        }).child = true
-      }
-      // <${node}
-      else {
-        (evals[fieldId++] = function (arg) {
-          const node = this[j]
-          node[_node] = updateNode(node, typeof arg === 'function' ? arg() : arg)
+      hasComponents = true
+      const i = fieldId++
+      evalComp.push((node, args) => {
+        const arg = args[i]
+        // <${el}
+        if (arg.nodeType) {
+          node[_ref] = updateNode(node, arg)
           // render tpl node children/attrs to the replacement
-          if (node.hasAttributes()) for (let n = 0, attrs = node.attributes; n < attrs.length; n++) prop(node[_node], attrs[n].name, attrs[n].value)
-          merge(arg, arg.childNodes, [...node.childNodes])
-          if (observable(arg)) return sube(arg, tag => (node[_node] = updateNode(node[_node], tag)))
-        }).tag = true
-      }
+          if (node.hasAttributes())
+            for (let n = 0, attrs = node.attributes; n < attrs.length; n++)
+              prop(node[_ref], attrs[n].name, attrs[n].value)
+          merge(node[_ref], node[_ref].childNodes, [...node.childNodes])
+        }
+        // <${Component}
+        else if (typeof arg === 'function') {
+          node[_ref] = updateNode(node, arg(node))
+        }
+      })
+    }
+    // <>${n}</> - will be replaced as new node
+    else if (tplNode.localName === FIELD_CHILD) {
+      hasChildren = true
+      const i = fieldId++
+      evalChild.push((node, args) => {
+        const arg = args[i]
+        node[_ref] = updateNode(node, arg)
+        if (observable(arg)) return sube(arg, tag => (node[_ref] = updateNode(node[_ref], tag)))
+      })
     }
 
+    const evals = []
     for (let n = 0, m = tplNode.attributes.length; n < m; n++) {
       let { name, value } = tplNode.attributes[n]
 
-      // fields are co-directional with attributes and nodes order, so we just increment fieldId (also healthy insertions!)
-      // fields accept generic observables, not bound to spect/v
+      // fields are co-directional with attributes and nodes order, so we just increment fieldId
       // <a ${{}}, <a ${'hidden'}
       if (name === FIELD) {
+        const i = fieldId++
         tplNode.removeAttribute(name), n--, m--
-        evals[fieldId++] = function (arg) {
+        evals.push((node, args) => {
+          const arg = args[i]
           if (!arg) return
-          const node = this[j][_node] || this[j]
-          if (primitive(arg)) prop(node, arg, value)
-          // can only be object observable
+          let cur = node[_ref] || node
+          if (primitive(arg)) prop(cur, arg, value)
+          // fields accept generic observables, not bound to spect/v
           else if (observable(arg)) {
             return sube(arg, v => {
-              if (primitive(v)) (prop(node, v, value))
-              else for (let key in v) prop(node, key, v[key])
+              cur = node[_ref] || cur
+              if (primitive(v)) prop(cur, v, value)
+              else for (let key in v) prop(cur, key, v[key])
             })
           }
-          else for (let key in name) prop(node, key, name[key])
-        }
+          else for (let key in arg) prop(cur, key, arg[key])
+        })
       }
       else if (value.includes(FIELD)) {
         // <a a=${b}
         if (value === FIELD) {
-          evals[fieldId++] = function (arg) {
-            const node = this[j][_node] || this[j]
-            return observable(arg) ? sube(arg, v => prop(node, name, v)) : prop(node, name, arg)
-          }
+          const i = fieldId++
+          evals.push((node, args) => {
+            const arg = args[i]
+            return observable(arg) ? sube(arg, v => prop(node[_ref] || node, name, v)) : prop(node[_ref] || node, name, arg)
+          })
         }
         // <a a="b${c}d${e}f"
         else {
           const statics = value.split(FIELD)
-          const evalFields = function (...fields) {
-            const node = this[j][_node] || this[j]
+          const i = fieldId
+          fieldId += statics.length - 1
+          evals.push((node, args) => {
+            const fields = [].slice.call(args, i, i + statics.length - 1)
             const subs = fields.map((field, i) => observable(field) ? (fields[i] = '', field) : null)
-            prop(node, name, h.tpl(statics, ...fields))
-            return subs.map((sub, i) => sub && sube(sub, v => (fields[i] = v, prop(node, name, h.tpl(statics, ...fields)))))
-          }
-          evalFields.count = statics.length - 1
-          evals[fieldId++] = evalFields
+            prop(node[_ref] || node, name, h.tpl(statics, ...fields))
+            return subs.map((sub, i) => sub && sube(sub, v => (fields[i] = v, prop(node[_ref] || node, name, h.tpl(statics, ...fields)))))
+          })
         }
       }
     }
+
+    if (evals.length) (hasAttributes = true, tplNode.classList.add(FIELD_CLASS), evalAttrs.push(evals))
   }
 
   function build() {
-    let cloned, nodes = tplNodes, cleanup = [], frag = tpl.content
+    let cleanup = [], frag = tpl.content.cloneNode(true), children, child, i
 
-    for (let i = 0; i < arguments.length;) {
-      const evalField = evals[i]
-      if (evalField.count) {
-        let fields = []
-        for (let j = i, k = i += evalField.count; j < k; j++) {
-          if (!cloned && observable(arguments[j])) nodes = (cloned = frag.cloneNode(true)).querySelectorAll('*')
-          fields.push(arguments[j])
+    // query/apply different types of evaluators in turn
+    // https://jsperf.com/getelementsbytagname-vs-queryselectorall-vs-treewalk/1
+    // FIXME: try to replace with getElementsByClassName, getElementsByTagName
+    if (hasChildren) {
+      children = frag.querySelectorAll(FIELD_CHILD), i = 0
+      while (child = children[i]) cleanup.push(evalChild[i++](child, arguments))
+    }
+    if (hasAttributes) {
+      children = frag.querySelectorAll('.' + FIELD_CLASS), i = 0
+      while (child = children[i]) {
+        child.classList.remove(FIELD_CLASS)
+        const evals = evalAttrs[i++]
+        for (let j = 0, evalAttr = evals[0]; j < evals.length; evalAttr = evals[++j]) {
+          cleanup.push(evalAttr(child, arguments))
         }
-        cleanup.push(...evalField.apply(nodes, fields).filter(Boolean))
-      }
-      else {
-        const field = arguments[i++]
-        // https://jsperf.com/getelementsbyclassname-vs-queryselectorall/236 - the fastest for static selectors
-        // primitive child fields are ok to modify src template directly, but tag fields need props/own children
-        if (!cloned && (!primitive(field) || evalField.tag)) nodes = (cloned = frag.cloneNode(true)).querySelectorAll('*')
-        cleanup.push(evalField.call(nodes, field))
       }
     }
+    if (hasComponents) {
+      children = frag.querySelectorAll(FIELD), i = 0
+      while (child = children[i]) cleanup.push(evalComp[i++](child, arguments))
+    }
 
-    const root = cloned || frag.cloneNode(true)
-    return root.childNodes.length > 1 ? root : root.firstChild
+    return frag.childNodes.length > 1 ? frag : frag.firstChild
   }
 
   return build
@@ -274,9 +297,9 @@ function updateNode (from, to) {
 // FIXME: possible to shave off completely
 function morph(from, to) {
   // can be node/fragment
-  if (to && to.nodeType) {
-    from.replaceWith(from = to)
-  }
+  if (to && to.nodeType) from.replaceWith(from = to)
+  // eg. <h:::/> → [a, b, c] (array children don't support observables)
+  else if (to && Array.isArray(to)) from = merge(from.parentNode, [from], to)
   else {
     to = to == null ? '' : to
     if (from.nodeType === TEXT) from.data = to
