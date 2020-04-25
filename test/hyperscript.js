@@ -1,5 +1,5 @@
 import test from 'tst'
-import { h } from '../index.js'
+import { h, v } from '../index.js'
 import o from './observable.js'
 
 test('hyperscript: simple', function (t) {
@@ -53,7 +53,7 @@ test('hyperscript: can set properties', function(t){
 })
 
 test('hyperscript: registers event handlers', function(t){
-  h('p', null, 'Paragraph')
+  h('p', null, 'Paragraph') // pre-cache
   let log = []
   var onClick = () => {log.push('click')}
   var p = h('p', {onclick: onClick}, 'something')
@@ -109,7 +109,7 @@ test('hyperscript: observable property', function(t){
 test('hyperscript: observable style', function(t){
   var color = o()
   color('red')
-  var div = h('div', {style: {'color': color}})
+  var div = h('div', v({style: {'color': color}}))
   t.is(div.style.color, 'red')
   color('blue')
   t.is(div.style.color, 'blue')

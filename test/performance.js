@@ -4,7 +4,7 @@ import { tick, frame, idle, time } from 'wait-please'
 
 
 t('creation performance should be faster than direct DOM', async t => {
-  const N = 10000
+  const N = 5000
 
   const container = document.createElement('div')
   const domStart = performance.now()
