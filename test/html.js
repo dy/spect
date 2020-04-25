@@ -60,11 +60,17 @@ t('html: creation perf case', t => {
   for (let i = 0; i < 2; i++) {
     h`<a>a<b><c>${i}</c></b></a>`
   }
-  // t.is(h`<a>a<b><c>${0}</c></b></a>`.outerHTML, `<a>a<b><c>0</c></b></a>`)
-  // t.is(h`<a>a<b><c>${1}</c></b></a>`.outerHTML, `<a>a<b><c>1</c></b></a>`)
+  t.is(h`<a>a<b><c>${0}</c></b></a>`.outerHTML, `<a>a<b><c>0</c></b></a>`)
+  t.is(h`<a>a<b><c>${1}</c></b></a>`.outerHTML, `<a>a<b><c>1</c></b></a>`)
 })
 
 t('html: text content', async t => {
+  let el = h`<div>${ 0 }</div>`
+
+  t.is(el.outerHTML, `<div>0</div>`)
+})
+
+t('html: observable text content', async t => {
   const a = v(0)
 
   let el = h`<div>${ a }</div>`

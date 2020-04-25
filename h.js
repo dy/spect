@@ -4,7 +4,7 @@ const _ref = Symbol.for('@spect.ref')
 
 const TEXT = 3, ELEMENT = 1, COMMENT = 8, FRAGMENT = 11, SHOW_ELEMENT = 1, SHOW_TEXT = 4
 
-const FIELD = 'h:::', FIELD_CHILD = 'h-child', FIELD_CLASS = 'h-attr'
+const FIELD = 'h::field', FIELD_CHILD = 'h-child', FIELD_CLASS = 'h-attrs'
 
 const EMPTY = 'area base br col command embed hr img input keygen link meta param source track wbr ! !doctype ? ?xml'.split(' ')
 
@@ -113,10 +113,11 @@ function createBuilder(str) {
   }
   replace.forEach(([from, to]) => from.replaceWith(to))
 
-  // create field evaluators - for each field they make corresponding transformation to [cloned] template
+  // create field evaluators - for each field they make corresponding transformation to cloned template
   // getElementsByTagName('*') is faster than tree iterator/querySelector('*), but live and fragment doesn't have it
   // ref: https://jsperf.com/createnodeiterator-vs-createtreewalker-vs-getelementsby
-  const evalChild = [], evalAttrs = [], evalComp = [], tplNodes = tpl.content.querySelectorAll('*')
+  const evalChild = [], evalAttrs = [], evalComp = [],
+        tplNodes = tpl.content.querySelectorAll('*')
   let hasAttributes = false, hasChildren = false, hasComponents = false
 
   for (let tplNode, fieldId = 0, nodeId = 0; tplNode = tplNodes[nodeId]; nodeId++) {
@@ -136,9 +137,7 @@ function createBuilder(str) {
           merge(node[_ref], node[_ref].childNodes, [...node.childNodes])
         }
         // <${Component}
-        else if (typeof arg === 'function') {
-          node[_ref] = updateNode(node, arg(node))
-        }
+        else if (typeof arg === 'function') node[_ref] = updateNode(node, arg(node))
       })
     }
     // <>${n}</> - will be replaced as new node
@@ -147,7 +146,7 @@ function createBuilder(str) {
       const i = fieldId++
       evalChild.push((node, args) => {
         const arg = args[i]
-        node[_ref] = updateNode(node, arg)
+        node[_ref] = updateNode(node[_ref] || node, arg)
         if (observable(arg)) return sube(arg, tag => (node[_ref] = updateNode(node[_ref], tag)))
       })
     }
@@ -204,18 +203,28 @@ function createBuilder(str) {
     if (evals.length) (hasAttributes = true, tplNode.classList.add(FIELD_CLASS), evalAttrs.push(evals))
   }
 
+  // static template is used for short-path rendering by changing tpl directly & cloning
+  const staticTpl = !hasComponents && tpl.cloneNode(true),
+        staticChildren = !hasComponents && hasChildren && staticTpl.content.querySelectorAll(FIELD_CHILD),
+        staticAttributes = !hasComponents && hasAttributes && staticTpl.content.querySelectorAll('.' + FIELD_CLASS)
+
   function build() {
-    let cleanup = [], frag = tpl.content.cloneNode(true), children, child, i
+    // if all primitives - take short path - modify tpl directly & clone
+    let cleanup = [], fast = true, frag, children, child, i
+
+    if (!hasComponents) for (i = 0; i < arguments.length; i++) if (observable(arguments[i])) { fast = false; break }
+
+    frag = fast ? staticTpl : tpl.content.cloneNode(true)
 
     // query/apply different types of evaluators in turn
     // https://jsperf.com/getelementsbytagname-vs-queryselectorall-vs-treewalk/1
     // FIXME: try to replace with getElementsByClassName, getElementsByTagName
     if (hasChildren) {
-      children = frag.querySelectorAll(FIELD_CHILD), i = 0
+      children = fast ? staticChildren : frag.querySelectorAll(FIELD_CHILD), i = 0
       while (child = children[i]) cleanup.push(evalChild[i++](child, arguments))
     }
     if (hasAttributes) {
-      children = frag.querySelectorAll('.' + FIELD_CLASS), i = 0
+      children = fast ? staticAttributes : frag.querySelectorAll('.' + FIELD_CLASS), i = 0
       while (child = children[i]) {
         child.classList.remove(FIELD_CLASS)
         const evals = evalAttrs[i++]
@@ -228,6 +237,8 @@ function createBuilder(str) {
       children = frag.querySelectorAll(FIELD), i = 0
       while (child = children[i]) cleanup.push(evalComp[i++](child, arguments))
     }
+
+    if (fast) frag = frag.cloneNode(true).content
 
     return frag.childNodes.length > 1 ? frag : frag.firstChild
   }
