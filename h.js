@@ -51,11 +51,11 @@ function createBuilder(str) {
   str = str
     // <> → <h:::>
     .replace(/<(>|\s)/, '<' + FIELD + '$1')
-    // <abc .../> → <abc ...></abc>
+    // <abc x/> → <abc x></abc>
     .replace(/<([\w:-]+)([^<>]*)\/>/g, '<$1$2></$1>')
     // <//>, </> → </h:::>
     .replace(/<\/+>/, '</' + FIELD + '>')
-    // .../> → ... />
+    // x/> → x />
     .replace(/([^<\s])\/>/g, '$1 />')
     // <a#b.c → <a #b.c
     .replace(/(<[\w:-]+)([#\.][^<>]*>)/g, '$1 $2')
@@ -77,13 +77,8 @@ function createBuilder(str) {
     else {
       for (let i = 0, n = node.attributes.length; i < n; i++) {
         let {name, value} = node.attributes[i]
-        // <a ...${x} → <a ${x}
-        if (/^\.\.\./.test(name)) {
-          node.removeAttribute(name), --i, --n;
-          node.setAttribute(name.slice(3), value)
-        }
         // <a #b.c
-        else if (/#|\./.test(name)) {
+        if (/^#|^\.\b/.test(name)) {
           node.removeAttribute(name), --i, --n;
           let [beforeId, afterId = ''] = name.split('#')
           let beforeClx = beforeId.split('.')
@@ -126,6 +121,11 @@ function createBuilder(str) {
       const i = fieldId++
       evalComp.push((node, args) => {
         const arg = args[i], props = node[_ref]
+
+        // collect simple props
+        for (let n = 0, name, value; n < node.attributes.length && ({ name, value } = node.attributes[n]); n++)
+          if (!(name in props)) props[name] = value
+
         // <${el}
         if (arg.nodeType) {
           // h`<${b}/>` - b is kept in its own parent
@@ -133,12 +133,13 @@ function createBuilder(str) {
           node[_ref] = (updateNode(node, node.parentNode.nodeType === FRAGMENT ? document.createTextNode('') : arg))[_ref] = arg
 
           // render tpl node children/attrs/props to the replacement
-          for (let n = 0, attrs = node.attributes; n < attrs.length; n++) prop(arg, attrs[n].name, attrs[n].value)
           for (let key in props) prop(arg, key, props[key])
-          merge(arg, arg.childNodes, [...node.childNodes])
+            merge(arg, arg.childNodes, [...node.childNodes])
         }
         // <${Component} - collect props to render components later
-        else if (typeof arg === 'function') node[_ref] = updateNode(node, arg(props))
+        else if (typeof arg === 'function') {
+          node[_ref] = updateNode(node, arg(props))
+        }
       })
     }
     // <>${n}</> - will be replaced as new node
@@ -152,6 +153,7 @@ function createBuilder(str) {
           node[_ref] = updateNode(node, document.createTextNode(''))
           return sube(arg, tag => (node[_ref] = updateNode(node[_ref], tag)))
         }
+        const parent = node.parentNode
         node[_ref] = updateNode(node[_ref] || node, arg)
       })
     }
@@ -161,19 +163,21 @@ function createBuilder(str) {
       let { name, value } = tplNode.attributes[n]
 
       // fields are co-directional with attributes and nodes order, so we just increment fieldId
-      // <a ${{}}, <a ${'hidden'}
+      // <a ${'hidden'}
       if (name === FIELD) {
+        const i = fieldId++
+        tplNode.removeAttribute(name), n--, m--
+        evals.push((node, args) => args[i] && prop(node[_ref] || node, args[i], value))
+      }
+      // <a ...${{}}
+      else if (name.includes(FIELD)) {
         const i = fieldId++
         tplNode.removeAttribute(name), n--, m--
         evals.push((node, args, fast, subs = !fast && []) => {
           const arg = args[i]
           if (!arg) return
           // no need for placeholder props
-          if (!fast && observable(arg)) return sube(arg, v => {
-            if (primitive(v)) prop(node[_ref] || node, v, value)
-            else for (let key in v) prop(node[_ref] || node, key, v[key])
-          })
-          if (primitive(arg)) return prop(node[_ref] || node, arg, value)
+          if (!fast && observable(arg)) return sube(arg, v => { for (let key in v) prop(node[_ref] || node, key, v[key]) })
           for (let key in arg) if (fast || !observable(arg[key])) prop(node[_ref] || node, key, arg[key])
             else subs.push(sube(arg[key], v => prop(node[_ref] || node, key, v)))
           return subs
@@ -208,7 +212,6 @@ function createBuilder(str) {
         }
       }
     }
-
     if (evals.length) (hasAttributes = true, tplNode.classList.add(FIELD_ATTR), evalAttrs.push(evals))
   }
 
@@ -254,8 +257,7 @@ function createBuilder(str) {
     }
 
     if (fast) frag = frag.cloneNode(true).content
-
-    return frag.childNodes.length > 1 ? frag : frag.firstChild[_ref] || frag.firstChild
+    return frag.childNodes.length === 1 ? frag.firstChild[_ref] || frag.firstChild : frag
   }
 
   return build
@@ -311,9 +313,10 @@ function updateNode (from, to) {
     if (!list(from)) from = [from]
     if (!list(to)) to = [to]
     if (!to.length) to.push('')
-    // FIXME: redundant-ish, since for text nodes merge follows
-    to = to.map(item => immutable(item) ? document.createTextNode(item) : item)
-    from = merge(from[0].parentNode, from, to)
+    // non-arrays have unique elements
+    if (to.map) to = to.map(item => immutable(item) ? document.createTextNode(item) : item)
+    else to = [...to]
+    from = merge(from[0].parentNode, from, to, from[from.length - 1].nextSibling)
   }
   // can be text/primitive
   else {
