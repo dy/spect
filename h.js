@@ -132,7 +132,8 @@ function createBuilder(str) {
           // h`<a><${b}/></a>` - b is placed to a
           node[_ref] = (updateNode(node, node.parentNode.nodeType === FRAGMENT ? document.createTextNode('') : arg))[_ref] = arg
 
-          // render tpl node children/attrs to the replacement
+          // render tpl node children/attrs/props to the replacement
+          for (let n = 0, attrs = node.attributes; n < attrs.length; n++) prop(arg, attrs[n].name, attrs[n].value)
           for (let key in props) prop(arg, key, props[key])
           merge(arg, arg.childNodes, [...node.childNodes])
         }
