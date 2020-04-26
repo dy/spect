@@ -35,7 +35,7 @@
 </script>
 -->
 
-_Spect_ is radical minimalistic [_aspect-oriented_](https://en.wikipedia.org/wiki/Aspect-oriented_programming) FRP library, enabling super-compact UI code and highly efficient DOM manipulations with conventional API. It provides 3 essential frontend functions − `$`, `h` and `v`, already familiar from [_jquery_](https://ghub.io/jquery), [_hyperscript_/_JSX_](https://ghub.io/hyperscript) and [_observable_](https://www.npmjs.com/package/observable) backgrounds.
+_Spect_ is radical minimalistic [_aspect-oriented_](https://en.wikipedia.org/wiki/Aspect-oriented_programming) framework, enabling compact UI code and efficient DOM manipulations with 3 essential frontend functions − `$`, `h` and `v`, already familiar from [_jquery_](https://ghub.io/jquery), [_hyperscript_/_JSX_](https://ghub.io/hyperscript) and [_observable_](https://www.npmjs.com/package/observable) backgrounds.
 
 ## Principles
 
