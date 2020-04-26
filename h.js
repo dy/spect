@@ -148,7 +148,7 @@ function createBuilder(str) {
         const arg = args[i]
         if (!fast && observable(arg)) {
           // init placeholder node
-          node[_ref] = updateNode(node[_ref] || node, document.createTextNode(''))
+          node[_ref] = updateNode(node, document.createTextNode(''))
           return sube(arg, tag => (node[_ref] = updateNode(node[_ref], tag)))
         }
         node[_ref] = updateNode(node[_ref] || node, arg)
