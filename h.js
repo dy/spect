@@ -4,7 +4,7 @@ const _ref = Symbol.for('@spect.ref')
 
 const TEXT = 3, ELEMENT = 1, COMMENT = 8, FRAGMENT = 11, SHOW_ELEMENT = 1, SHOW_TEXT = 4
 
-const FIELD = 'h--field', FIELD_CHILD = 'h--child', FIELD_CLASS = 'h--attrs'
+const FIELD = 'h--field', FIELD_CHILD = 'h--child', FIELD_ATTR = 'h--attrs'
 
 const EMPTY = 'area base br col command embed hr img input keygen link meta param source track wbr ! !doctype ? ?xml'.split(' ')
 
@@ -125,22 +125,19 @@ function createBuilder(str) {
       hasComponents = true
       const i = fieldId++
       evalComp.push((node, args) => {
-        const arg = args[i]
+        const arg = args[i], props = node[_ref]
         // <${el}
         if (arg.nodeType) {
-          // make parent insert placeholder - internal portals are transfered, external portals are kept unchanged
-          // h`<a><${b}/></a>` - b is placed to a
           // h`<${b}/>` - b is kept in its own parent
-          node[_ref] = (updateNode(node, document.createTextNode('')))[_ref] = arg
+          // h`<a><${b}/></a>` - b is placed to a
+          node[_ref] = (updateNode(node, node.parentNode.nodeType === FRAGMENT ? document.createTextNode('') : arg))[_ref] = arg
 
           // render tpl node children/attrs to the replacement
-          if (node.hasAttributes())
-            for (let n = 0, attrs = node.attributes; n < attrs.length; n++)
-              prop(arg, attrs[n].name, attrs[n].value)
+          for (let key in props) prop(arg, key, props[key])
           merge(arg, arg.childNodes, [...node.childNodes])
         }
-        // <${Component}
-        else if (typeof arg === 'function') node[_ref] = updateNode(node, arg(node))
+        // <${Component} - collect props to render components later
+        else if (typeof arg === 'function') node[_ref] = updateNode(node, arg(props))
       })
     }
     // <>${n}</> - will be replaced as new node
@@ -211,17 +208,17 @@ function createBuilder(str) {
       }
     }
 
-    if (evals.length) (hasAttributes = true, tplNode.classList.add(FIELD_CLASS), evalAttrs.push(evals))
+    if (evals.length) (hasAttributes = true, tplNode.classList.add(FIELD_ATTR), evalAttrs.push(evals))
   }
 
   // static template is used for short-path rendering by changing tpl directly & cloning
   const staticTpl = !hasComponents && tpl.cloneNode(true),
         staticChildren = !hasComponents && hasChildren && staticTpl.content.querySelectorAll(FIELD_CHILD),
-        staticAttributes = !hasComponents && hasAttributes && staticTpl.content.querySelectorAll('.' + FIELD_CLASS)
-  if (staticAttributes.length) staticAttributes.forEach(child => (child.classList.remove(FIELD_CLASS), !child.classList.length && child.removeAttribute('class')))
+        staticAttributes = !hasComponents && hasAttributes && staticTpl.content.querySelectorAll('.' + FIELD_ATTR)
+  if (staticAttributes.length) staticAttributes.forEach(child => (child.classList.remove(FIELD_ATTR), !child.classList.length && child.removeAttribute('class')))
 
   function build() {
-    let cleanup = [], fast = !hasComponents, frag, children, child, i
+    let cleanup = [], fast = !hasComponents, frag, children, child, i, components
 
     // if all primitives - take short path - modify tpl directly & clone
     // why immutables - fn cannot be cloned, object one-way sets attribs and may have observable prop
@@ -236,17 +233,23 @@ function createBuilder(str) {
       children = fast ? staticChildren : frag.querySelectorAll(FIELD_CHILD), i = 0
       while (child = children[i]) cleanup.push(evalChild[i++](child, arguments, fast))
     }
+    // assign props stash for components to collect attribs
+    if (hasComponents) {
+      components = frag.querySelectorAll(FIELD), i = 0
+      while (child = components[i++]) child[_ref] = {}
+    }
     if (hasAttributes) {
-      children = fast ? staticAttributes : frag.querySelectorAll('.' + FIELD_CLASS), i = 0
+      children = fast ? staticAttributes : frag.querySelectorAll('.' + FIELD_ATTR), i = 0
       while (child = children[i]) {
-        if (!fast) (child.classList.remove(FIELD_CLASS), !child.classList.length && child.removeAttribute('class'))
+        if (!fast) (child.classList.remove(FIELD_ATTR), !child.classList.length && child.removeAttribute('class'))
         for (let j = 0, evals = evalAttrs[i++], evalAttr = evals[0]; j < evals.length; evalAttr = evals[++j])
           cleanup.push(evalAttr(child, arguments, fast))
       }
     }
+    // evaluate components with collected props
     if (hasComponents) {
-      children = frag.querySelectorAll(FIELD), i = 0
-      while (child = children[i]) cleanup.push(evalComp[i++](child, arguments))
+      i = 0
+      while (child = components[i]) cleanup.push(evalComp[i++](child, arguments))
     }
 
     if (fast) frag = frag.cloneNode(true).content
@@ -276,6 +279,8 @@ function prop (el, name, value=true) {
   // if (arguments.length < 3) return (value = el.getAttribute(name)) === '' ? true : value
 
   el[name] = value
+
+  if (!el.setAttribute) return
 
   if (primitive(value)) {
     if (value === false || value == null) el.removeAttribute(name)
