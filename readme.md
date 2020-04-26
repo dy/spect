@@ -35,7 +35,7 @@
 </script>
 -->
 
-_Spect_ is radical minimalistic [_aspect-oriented_](https://en.wikipedia.org/wiki/Aspect-oriented_programming) framework, enabling compact UI code and efficient DOM manipulations with 3 essential frontend functions − `$`, `h` and `v`, already familiar from [_jquery_](https://ghub.io/jquery), [_hyperscript_/_JSX_](https://ghub.io/hyperscript) and [_observable_](https://www.npmjs.com/package/observable) backgrounds.
+_Spect_ is radical minimalistic [_aspect-oriented_](https://en.wikipedia.org/wiki/Aspect-oriented_programming) framework, enabling compact UI code and efficient DOM manipulations with 3 essential frontend functions − _**$**_, _**h**_ and _**v**_, already familiar from [_jquery_](https://ghub.io/jquery), [_hyperscript_/_JSX_](https://ghub.io/hyperscript) and [_observable_](https://www.npmjs.com/package/observable) backgrounds.
 
 ## Principles
 
@@ -209,50 +209,46 @@ Pending...
 
 ## API
 
-<details><summary><strong>$ − selector observer</strong></summary>
+<details><summary><strong>$ − selector observer</strong></summary><br/>
 
-> elements = $( scope? , selector? , aspect? )<br/>
+> elements = $( scope? , selector , aspect? )<br/>
 > elements = $\`.selector\`<br/>
 
-Get live collection of elements matching the `selector`. `aspect` function is triggered for each matched element.
+Create live collection of elements matching the `selector`. Optional `aspect` function is triggered for each matched element.
 
 * `selector` is a valid CSS selector.
-* `scope` is optional _HTMLElement_ or a list of elements to narrow down selector scope.
-* `fn` is a function with `(element) => teardown?` signature.
-* `elements` is live array with matched elements, implements [HTMLCollection](https://developer.mozilla.org/en-US/docs/Web/API/HTMLCollection), [WeakSet](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/WeakSet) and [Array](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array).
+* `scope` is optional _HTMLElement_ or a list of elements to narrow down selector.
+* `aspect` is a function with `(element) => teardown?` signature.
+* `elements` is live matched elements, an Array with [HTMLCollection](https://developer.mozilla.org/en-US/docs/Web/API/HTMLCollection) and [Set](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Set) methods.
 
 ```js
 import { $, v, h } from 'spect'
 
+// create collection of elements, matching `.foo` selector
 let $foo = $('.foo', el => {
   console.log('active')
   return () => console.log('inactive')
 })
 
 document.body.append(h`<div.foo/><div#bar/>`)
-
 // ... "active"
-
 $foo[0] // <div class="foo"></div>
-
 $foo.bar // <div id="bar"></div>
 
 foo.remove()
-
 // ... "inactive"
-
 $foo[0] // undefined
+$foo.bar // undefined
 
+// observe changes in $foo
+v($foo)(els => {
+  console.log(els), () => console.log('off', els)
+})
 
-// observe changes
-v($foo)(els => (console.log(els), () => console.log('off', els)))
 document.body.append(foo)
-
 // ... "active", [ foo ]
 
-// destroy
 $foo[Symbol.dispose]()
-
 // ... "inactive", "off", [ foo ]
 ```
 
@@ -270,48 +266,46 @@ const $timer = $('.timer', el => {
 })
 ```
 
-_Method_: class selectors technique from [fast-on-load](https://ghub.io/fast-on-load), feature-based selectors from [selector-set](https://github.com/josh/selector-set) and animation-based selectors from [insertionQuery](https://github.com/naugtur/insertionQuery).<br/>
-_R&D_: [jQuery](https://ghub.io/jquery), [selector-observer](https://github.com/josh/selector-observer), [reuse](https://ghub.io/reuse), [aspect-oriended-programming](https://en.wikipedia.org/wiki/Aspect-oriented_programming) libraries and others.
+_Mechanism_: class selectors for removal, feature-based selectors for primary rules and animation-based selectors for the rest.<br/>
+_R&D_: [fast-on-load](https://ghub.io/fast-on-load), [selector-set](https://github.com/josh/selector-set), [insertionQuery](https://github.com/naugtur/insertionQuery), [selector-observer](https://github.com/josh/selector-observer), [reuse](https://ghub.io/reuse), [aspect-oriended-programming](https://en.wikipedia.org/wiki/Aspect-oriented_programming) libraries and others.
 
 <br/>
 
 </details>
 
 
-<details><summary><strong>h − hyperscript / html</strong></summary>
+<details><summary><strong>h − hyperscript / html</strong></summary><br/>
 
-> el = h( tag | target , props? , ...children )<br/>
+> el = h( tag | target , props , ...children )<br/>
 > el = h\`...content\`<br/>
 
-[Hyperscript](https://ghub.io/hyperscript) with observables. Can be used via JSX or template literal with [HTML syntax](https://ghub.io/xhtm).
+[Hyperscript](https://ghub.io/hyperscript) with observables. Can be used as template literal or as JSX.
 
 ```js
 import { h, v } from 'spect'
 
 const text = v('foobar')
 
-// create element
+// hyperscript
 const foo = h('foo', {}, text)
 
-// create jsx
+// jsx
 /* jsx h */
 const bar = <bar>{ text }</bar>
 
-// update
+// update content
 text('fooobar')
 
 
 // template literal
 const foo = h`<baz>${ text }</baz>`
 
-// create multiple elements
-const [foo1, foo2] = h`<foo>1</foo><foo>2</foo>`
-
-// document fragment
-const fooBarFrag = h`<foo/><bar/>`
+// fragment
+const fooFoo = h`<foo>1</foo><foo>2</foo>`
 
 // hydrate / render
 h`<${foo} ...${props}>${ children }</>`
+
 h(foo, {...props}, ...children)
 ```
 
@@ -327,8 +321,7 @@ $('#clock', el => {
 })
 ```
 
-_Method_: cached `<template>`s with fast cloning.<br/>
-<!-- _Performance_: faster than manual DOM, see [benchmark](). -->
+_Mechanism_: cached `<template>`s with field evaluators.<br/>
 _R&D_: [lit-html](https://ghub.io/lit-html), [htm@1](https://ghub.io/htm) [htl](https://ghub.io/htl), [hyperscript](https://ghub.io/hyperscript), [incremental-dom](https://ghub.io/incremental-dom), [snabbdom](https://ghub.io/snabbdom), [nanomorph](https://ghub.io/nanomorph), [uhtml](https://ghub.io/uhtml) and others.
 
 <br/>
@@ -336,7 +329,7 @@ _R&D_: [lit-html](https://ghub.io/lit-html), [htm@1](https://ghub.io/htm) [htl](
 </details>
 
 
-<details><summary><strong>v − value observer</strong></summary>
+<details><summary><strong>v − value observer</strong></summary><br/>
 
 > value = v( source? , map? , inmap? )<br/>
 > value = v\`...content\`<br/>
@@ -454,7 +447,7 @@ $('.likes-count', el => h`<${el}>${
 likes.load()
 ```
 
-_Method_: stateful/stateless channels.<br/>
+_Mechanism_: stateful/stateless channels.<br/>
 _R&D_: [observable](https://ghub.io/observable), [react hooks](https://ghub.io/unihooks), [observable proposal](https://github.com/tc39/proposal-observable), [observ](https://ghub.io/observ), [mutant](https://ghub.io/mutant), [rxjs](https://ghub.io/rxjs), [iron](https://github.com/ironjs/iron), [icaro](https://ghub.io/icaro), [introspected](https://ghub.io/introspected), [augmentor](https://ghub.io/augmentor) and others.
 
 <br/>
