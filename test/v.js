@@ -85,24 +85,24 @@ t('v: core', async t => {
   // ;(async () => { for await (let value of s) log.push(value) })()
   s(value => log.push(value))
 
-  t.equal(+s, 0, 'toPrimitive')
-  t.equal(s.valueOf(), 0, 'valueOf')
-  t.equal(s.toString(), 0, 'toString')
+  t.is(+s, 0, 'toPrimitive')
+  t.is(s.valueOf(), 0, 'valueOf')
+  t.is(s.toString(), 0, 'toString')
 
-  t.equal(s(), 0, 's()')
+  t.is(s(), 0, 's()')
 
   await tick()
-  t.deepEqual(log, [0], 'should publish the initial state')
+  t.is(log, [0], 'should publish the initial state')
 
   s(1)
-  t.equal(+s, 1, 'state.current = value')
+  t.is(+s, 1, 'state.current = value')
 
   s(2)
-  t.equal(+s, 2, 'state(value)')
-  t.equal(s(), 2, 'state(value)')
+  t.is(+s, 2, 'state(value)')
+  t.is(s(), 2, 'state(value)')
 
   s(s() + 1)
-  t.equal(s(), 3, 'state(state + value)')
+  t.is(s(), 3, 'state(state + value)')
 
   // observer 2
   let log2 = []
@@ -110,17 +110,17 @@ t('v: core', async t => {
   s(value => log2.push(value))
 
   await tick(8)
-  t.deepEqual(log.slice(-1), [3], 'should track and notify first tick changes')
+  t.is(log.slice(-1), [3], 'should track and notify first tick changes')
   await tick(8)
-  t.deepEqual(log2, [3], 'should properly init set')
+  t.is(log2, [3], 'should properly init set')
   s(4)
   await tick(8) // why 4 ticks delay?
-  t.deepEqual(log.slice(-1), [4], 'arbitrary change 1')
+  t.is(log.slice(-1), [4], 'arbitrary change 1')
   s(5)
   await tick(8)
-  t.deepEqual(log.slice(-1), [5], 'arbitrary change 2')
+  t.is(log.slice(-1), [5], 'arbitrary change 2')
 
-  t.deepEqual(log2.slice(-1), [5], 'secondary observer is fine')
+  t.is(log2.slice(-1), [5], 'secondary observer is fine')
 
   t.end()
 })

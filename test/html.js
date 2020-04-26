@@ -1,30 +1,38 @@
 import t from 'tst'
-import { v, h } from '../index.js'
+import { v } from '../index.js'
+import h from '../h.js'
 import { tick, frame, idle, time } from 'wait-please'
-import { augmentor, useState, useEffect, useMemo } from 'augmentor'
-import Observable from 'zen-observable/esm'
 import observable from './observable.js'
-import morph from './morph.js'
 import { v as iv } from 'ironjs'
 
-t('html: single attribute', async t => {
-  const a = v(0)
+t('html: single attribute cases', async t => {
+  // direct
+  let el = h`<div a=0/>`
+  t.is(el.outerHTML, `<div a="0"></div>`, 'simple attr')
 
-  let el = h`<div a=${a}></div>`
+  el = h`<div a=a${'b'}c/>`
+  t.is(el.outerHTML, `<div a="abc"></div>`, 'multifield')
 
-  t.is(el.outerHTML, `<div a="0"></div>`)
-  await tick(28)
-  t.is(el.outerHTML, `<div a="0"></div>`)
+  // observable name
+  const a = v('a')
+  el = h`<div ${a}=0/>`
+  t.is(el.outerHTML, `<div a="0"></div>`, 'observable name')
 
-  a(1)
-  // FIXME: why so big delay?
-  await tick(24)
-  t.is(el.outerHTML, `<div a="1"></div>`)
+  // observable value
+  const val = v(0)
 
-  a(undefined)
-  a(null)
-  await tick(24)
-  t.is(el.outerHTML, `<div></div>`)
+  el = h`<div a=${val}></div>`
+
+  t.is(el.outerHTML, `<div a="0"></div>`, 'observable value')
+
+  val(1)
+  t.is(el.outerHTML, `<div a="1"></div>`, 'changed observable value')
+
+  val(null)
+  t.is(el.outerHTML, `<div></div>`, 'null value')
+
+  val[Symbol.dispose]()
+  t.is(el.outerHTML, `<div></div>`, 'disposed')
 })
 
 t('html: single attribute on mounted node', async t => {
@@ -42,14 +50,27 @@ t('html: single attribute on mounted node', async t => {
   // FIXME: why so big delay?
   await tick(24)
   t.is(div.outerHTML, `<div a="1"></div>`)
-
   a(undefined)
   a(null)
   await tick(24)
   t.is(div.outerHTML, `<div></div>`)
 })
 
+t('html: creation perf case', t => {
+  for (let i = 0; i < 2; i++) {
+    h`<a>a<b><c>${i}</c></b></a>`
+  }
+  t.is(h`<a>a<b><c>${0}</c></b></a>`.outerHTML, `<a>a<b><c>0</c></b></a>`)
+  t.is(h`<a>a<b><c>${1}</c></b></a>`.outerHTML, `<a>a<b><c>1</c></b></a>`)
+})
+
 t('html: text content', async t => {
+  let el = h`<div>${ 0 }</div>`
+
+  t.is(el.outerHTML, `<div>0</div>`)
+})
+
+t('html: observable text content', async t => {
   const a = v(0)
 
   let el = h`<div>${ a }</div>`
@@ -63,7 +84,6 @@ t('html: text content', async t => {
   t.is(el.outerHTML, `<div>1</div>`)
 
   a(undefined)
-  a(null)
   await tick(8)
   t.is(el.outerHTML, `<div></div>`)
 })
@@ -74,6 +94,7 @@ t('html: child node', async t => {
   const b = h`<b>${ a }</b>`
 
   t.is(b.outerHTML, `<b><a>0</a></b>`)
+  t.is(b.firstChild, a, 'b > a')
 
   text(1)
   await tick(8)
@@ -88,8 +109,6 @@ t('html: mixed static content', async t => {
 
   const a = h`<a> ${foo} ${bar} ${baz} </a>`
 
-  t.is(a.outerHTML, `<a> <foo></foo> bar <baz></baz> </a>`)
-  await tick(28)
   t.is(a.outerHTML, `<a> <foo></foo> bar <baz></baz> </a>`)
 })
 
@@ -113,19 +132,12 @@ t('html: dynamic list', async t => {
   content().shift()
   content(content())
   await tick(8)
-  t.is(a.outerHTML, `<a>bar<baz></baz>qux</a>`)
+  t.is(a.outerHTML, `<a>bar<baz></baz>qux</a>`, 'shift')
 
   content().length = 0
   content(content())
   await tick(8)
   t.is(a.outerHTML, `<a></a>`)
-})
-
-t('html: delayed init', async t => {
-  let w = h`<x></x>`
-  t.is(w.outerHTML, `<x></x>`)
-  await tick(28)
-  t.is(w.outerHTML, `<x></x>`)
 })
 
 t('html: 2-level fragment', async t => {
@@ -146,16 +158,10 @@ t('html: mount to another element', async t => {
   const c = v(0)
   const b = h`<${a}>${ c }</>`
 
-  // t.is(a, b)
+  t.is(a, b)
   t.is(a.outerHTML, `<a>0</a>`)
   await tick(8)
-  // t.is(b.outerHTML, `<a>0</a>`)
-})
-
-t('html: render new children to mounted element', async t => {
-  let a = document.createElement('a')
-  let el = h`<${a}>foo <bar><baz class="qux"/></></>`
-  t.is(el.outerHTML, `<a>foo <bar><baz class="qux"></baz></bar></a>`)
+  t.is(b.outerHTML, `<a>0</a>`)
 })
 
 t('html: simple hydrate', async t => {
@@ -163,6 +169,7 @@ t('html: simple hydrate', async t => {
   a.innerHTML = 'foo '
   let el = h`<${a}>foo <bar><baz class="qux"/></></>`
   t.is(el.outerHTML, `<a>foo <bar><baz class="qux"></baz></bar></a>`)
+  t.is(el.firstChild, a.firstChild)
 })
 
 t('html: function renders external component', async t => {
@@ -188,26 +195,26 @@ t('html: rerendering with props: must persist', async t => {
   let div = document.createElement('div')
 
   h`<${el}>${div}<x/></>`
-  t.equal(el.firstChild, div)
-  t.equal(el.childNodes.length, 2)
+  t.is(el.firstChild, div)
+  t.is(el.childNodes.length, 2)
 
   h`<${el}><${div}/><x/></>`
-  t.equal(el.firstChild, div)
-  t.equal(el.childNodes.length, 2)
+  t.is(el.firstChild, div)
+  t.is(el.childNodes.length, 2)
 
   h`<${el}><${div}/><x/></>`
-  t.equal(el.firstChild, div)
-  t.equal(el.childNodes.length, 2)
+  t.is(el.firstChild, div)
+  t.is(el.childNodes.length, 2)
 
   h`<${el}><div/><x/></>`
   // FIXME: this is being cloned by preact
-  // t.equal(el.firstChild, div)
-  t.equal(el.childNodes.length, 2)
+  // t.is(el.firstChild, div)
+  t.is(el.childNodes.length, 2)
 
   h`<${el}><div class="foo" items=${[]}/><x/></>`
-  // t.equal(el.firstChild, div)
-  t.equal(el.childNodes.length, 2)
-  t.equal(el.firstChild.className, 'foo')
+  // t.is(el.firstChild, div)
+  t.is(el.childNodes.length, 2)
+  t.is(el.firstChild.className, 'foo')
   t.is(el.firstChild.items, [])
 })
 
@@ -284,7 +291,7 @@ t('html: promises', async t => {
   let el = document.createElement('div')
   document.body.appendChild(el)
 
-  h`<${el}>${p}</>`
+  h`<${el}>${v(p)}</>`
   t.is(el.outerHTML, '<div></div>')
 
   return p
@@ -389,7 +396,7 @@ t('html: does not duplicate classes for container', t => {
   t.is(el.outerHTML, '<div class="x"></div>')
 })
 
-t('html: component static props', async t => {
+t.skip('html: component static props', async t => {
   let log = []
   let el = h`<div><${C} id="x" class="y z"/></>`
 
@@ -401,11 +408,11 @@ t('html: component static props', async t => {
 })
 
 t('html: classes must recognize false props', t => {
-  let el = h`<div class="${false}${null}${undefined}${'foo'}${false}"/>`
+  let el = h`<div class="${false} ${null} ${undefined} ${'foo'} ${false}"/>`
   t.is(el.outerHTML, `<div class="foo"></div>`)
 })
 
-t('html: preserves hidden attribute', t => {
+t('html: preserves hidden attribute / parent', t => {
   let el = document.createElement('div')
   el.innerHTML = '<div hidden></div>'
 
@@ -430,18 +437,18 @@ t('html: initial content should be morphed/hydrated', t => {
 
   const res = h`<${el}><foo/><bar/></>`
 
-  t.equal(res, el)
-  t.equal(el.childNodes.length, 2)
-  // t.equal(el.firstChild, foo)
-  // t.equal(el.lastChild, bar)
+  t.is(res, el)
+  t.is(el.childNodes.length, 2)
+  // t.is(el.firstChild, foo)
+  // t.is(el.lastChild, bar)
 
   let foo1 = h`<foo/>`
   h`<${el}>${foo1}<bar/></>`
 
   // t.notEqual(el.firstChild, foo)
-  // t.equal(el.firstChild, foo1)
-  t.equal(el.firstChild, foo1)
-  // t.equal(el.lastChild, bar)
+  // t.is(el.firstChild, foo1)
+  t.is(el.firstChild, foo1)
+  // t.is(el.lastChild, bar)
 })
 
 t('html: newline nodes should have space in between', t => {
@@ -458,7 +465,7 @@ t('legacy html: direct component rerendering should keep children', async t => {
   h`<${el}><${fn} class="foo"/></>`
   t.is(el.outerHTML, '<div><abc class="foo"></abc></div>')
   // let abc1 = el.firstChild
-  // t.equal(abc1, abc)
+  // t.is(abc1, abc)
 
   function fn ({children, ...props}) { return h`<abc ...${props}/>` }
 })
@@ -504,12 +511,12 @@ t('html: must not morph inserted nodes', async t => {
   let el = h`<div/>`
 
   h`<${el}>${foo}</>`
-  t.equal(el.firstChild, foo, 'keep child')
+  t.is(el.firstChild, foo, 'keep child')
   t.is(el.innerHTML, '<p>foo</p>')
   t.is(foo.outerHTML, '<p>foo</p>')
   t.is(bar.outerHTML, '<p>bar</p>')
   h`<${el}>${bar}</>`
-  t.equal(el.firstChild, bar, 'keep child')
+  t.is(el.firstChild, bar, 'keep child')
   t.is(el.innerHTML, '<p>bar</p>')
   t.is(foo.outerHTML, '<p>foo</p>')
   t.is(bar.outerHTML, '<p>bar</p>')
@@ -552,14 +559,14 @@ t('html: insert nodes list', t => {
   let orig = [...el.childNodes]
 
   h`<${el}><div class="prepended" /> foo ${ el.childNodes } qux <div class="appended" /></>`
-  t.equal(el.innerHTML, `<div class="prepended"></div> foo |bar <baz></baz>| qux <div class="appended"></div>`)
+  t.is(el.innerHTML, `<div class="prepended"></div> foo |bar <baz></baz>| qux <div class="appended"></div>`)
 
   h`<${el}>foo ${ orig } qux</>`
-  t.equal(el.innerHTML, `foo |bar <baz></baz>| qux`)
+  t.is(el.innerHTML, `foo |bar <baz></baz>| qux`)
 
 // console.log('set', ...orig)
   h`<${el}><div class="prepended" /> foo ${ orig } qux <div class="appended" /></>`
-  t.equal(el.innerHTML, `<div class="prepended"></div> foo |bar <baz></baz>| qux <div class="appended"></div>`)
+  t.is(el.innerHTML, `<div class="prepended"></div> foo |bar <baz></baz>| qux <div class="appended"></div>`)
 })
 
 t('legacy html: handle collections', t => {
@@ -570,7 +577,7 @@ t('legacy html: handle collections', t => {
   let content = b.childNodes
 
   h`<${b}><i class="material-icons">${ b.getAttribute('icon') }</i> ${ content }</>`
-  t.equal(b.innerHTML, '<i class="material-icons">phone_in_talk</i> Click <span>-</span>')
+  t.is(b.innerHTML, '<i class="material-icons">phone_in_talk</i> Click <span>-</span>')
   document.body.removeChild(b)
 })
 
@@ -581,7 +588,7 @@ t('html: insert self/array of nodes', t => {
   a1.id = 'x'
   a2.id = 'y'
   h`<${el}>${[ a1, a2 ]}</>`
-  t.equal(el.innerHTML, `<a id="x"></a><a id="y"></a>`)
+  t.is(el.innerHTML, `<a id="x"></a><a id="y"></a>`)
 })
 
 t.todo('legacy html: re-rendering inner nodes shouldn\'t trigger mount callback', async t => {
@@ -615,7 +622,7 @@ t.todo('legacy html: re-rendering inner nodes shouldn\'t trigger mount callback'
 
 t.todo('html: nested fragments', t => {
   let el = h`<><a>a</a><b><>b<c/></></b></>`
-  t.equal(el.outerHTML, '<><a>a</a><b>b<c></c></b></>')
+  t.is(el.outerHTML, '<><a>a</a><b>b<c></c></b></>')
 })
 
 t.skip('html: class components', async t => {
@@ -664,7 +671,7 @@ t('html: 50+ elements shouldnt invoke recursion', t => {
     return h`x: ${x}`
   }
 
-  t.is(el.childNodes[1].textContent, 'x: ')
+  t.is(el.childNodes[0].textContent, 'x: ')
   t.ok(el.childNodes.length >= 100, 'many els created')
 })
 
@@ -672,7 +679,7 @@ t('html: iron support', t => {
   const noun = iv('world')
   const message = iv(() => `Hello ${noun.v}`)
 
-  let el = h`<x>${message}</x>`
+  let el = h`<x>${v(message)}</x>`
   t.is(el.outerHTML, `<x>Hello world</x>`)
 
   noun.v = 'Iron'
@@ -686,9 +693,13 @@ t('html: empty children should clean up content', t => {
   t.is(a.childNodes.length, 0)
 })
 
-t('html: caching attr cases', async t => {
+t.todo('html: multiple attr fields', async t => {
   let a = h`<a x=1 ${'y'}=2 z=${3} ${'w'}=${4} ...${{_: 5}}>a${ 6 }b${ 7 }c</a>`
   t.is(a.outerHTML, `<a x="1" z="3" y="2" w="4" _="5">a6b7c</a>`)
+})
+t('html: caching fields', async t => {
+  let a = h`<a x=1 ${'y'}=2 z=${3} ...${{_: 5}}>a${ 6 }b${ 7 }c</a>`
+  t.is(a.outerHTML, `<a x="1" z="3" y="2" _="5">a6b7c</a>`)
 })
 
 t('html: a#b.c', async t => {

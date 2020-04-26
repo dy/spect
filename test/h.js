@@ -10,7 +10,7 @@ import { Reactor, v as iv } from 'ironjs'
 t('h: single attribute', async t => {
   const a = v(0)
 
-  let el = h('div', { a })
+  let el = h('div', v({ a }))
 
   t.is(el.outerHTML, `<div a="0"></div>`)
   await tick(28)
@@ -30,7 +30,7 @@ t('h: single attribute on mounted node', async t => {
   const a = v(0)
   let div = document.createElement('div')
 
-  let el = h(div, {a})
+  let el = h(div, v({a}))
 
   t.is(el, div)
   t.is(el.outerHTML, `<div a="0"></div>`)
@@ -175,24 +175,24 @@ t('h: rerendering with props: must persist', async t => {
   let div = document.createElement('div')
 
   h(el, null, div, h('x'))
-  t.equal(el.firstChild, div)
-  t.equal(el.childNodes.length, 2)
+  t.is(el.firstChild, div)
+  t.is(el.childNodes.length, 2)
 
   h(el, null, h(div), h('x'))
-  t.equal(el.firstChild, div)
-  t.equal(el.childNodes.length, 2)
+  t.is(el.firstChild, div)
+  t.is(el.childNodes.length, 2)
 
   h(el, null, h(div), h('x'))
-  t.equal(el.firstChild, div)
-  t.equal(el.childNodes.length, 2)
+  t.is(el.firstChild, div)
+  t.is(el.childNodes.length, 2)
 
   h(el, null, h('div'), h('x'))
-  // t.equal(el.firstChild, div)
-  t.equal(el.childNodes.length, 2)
+  // t.is(el.firstChild, div)
+  t.is(el.childNodes.length, 2)
   document.body.appendChild(h(el, null, h('div', {class:'foo', items:[]}), h('x')))
-  // t.equal(el.firstChild, div)
-  t.equal(el.childNodes.length, 2)
-  t.equal(el.firstChild.className, 'foo')
+  // t.is(el.firstChild, div)
+  t.is(el.childNodes.length, 2)
+  t.is(el.firstChild.className, 'foo')
   t.is(el.firstChild.items, [])
 })
 
@@ -257,18 +257,13 @@ t('h: wrapping with children', async t => {
 })
 
 t('h: input case', async t => {
-  let el = h('', h('input'))
-  t.is(el.outerHTML, `<><input></>`)
+  let el = h('', null, h('input'))
+  t.is(el.outerHTML, `<input>`)
 })
 
 t('h: select case', async t => {
-  let w = h('', null, ' ',
-    h('select', null, ' ',
-      h('option', {value:'a'}),
-      ' '
-    ),
-    ' '
-  )
+  const select = h('select', null, ' ', h('option', {value:'a'}), ' ')
+  let w = h('', null, ' ', select, ' ')
   await tick(8)
   t.is(w.outerHTML, `<> <select> <option value="a"></option> </select> </>`)
 })
@@ -284,7 +279,7 @@ t('h: promises', async t => {
   let el = document.createElement('div')
   document.body.appendChild(el)
 
-  h(el, null, p)
+  h(el, null, v(p))
   t.is(el.outerHTML, '<div></div>')
 
   return p
@@ -402,7 +397,7 @@ t('h: component props', async t => {
 
 t('h: observable in class', t => {
   let bar = v('')
-  let el = h('div', {class:[false, null, undefined, 'foo', bar]})
+  let el = h('div', v({class:[false, null, undefined, 'foo', bar]}))
   t.is(el.outerHTML, `<div class="foo"></div>`)
   bar('bar')
   t.is(el.outerHTML, `<div class="foo bar"></div>`)
@@ -432,12 +427,12 @@ t('h: must not morph inserted nodes', async t => {
   let el = h('div')
 
   h(el, null, foo)
-  t.equal(el.firstChild, foo, 'keep child')
+  t.is(el.firstChild, foo, 'keep child')
   t.is(el.innerHTML, '<p>foo</p>')
   t.is(foo.outerHTML, '<p>foo</p>')
   t.is(bar.outerHTML, '<p>bar</p>')
   h(el, null, bar)
-  t.equal(el.firstChild, bar, 'keep child')
+  t.is(el.firstChild, bar, 'keep child')
   t.is(el.innerHTML, '<p>bar</p>')
   t.is(foo.outerHTML, '<p>foo</p>')
   t.is(bar.outerHTML, '<p>bar</p>')
@@ -486,7 +481,7 @@ t('h: hydrate by id with existing content', t => {
   t.is(el2.outerHTML, `<div><b id="x"></b></div>`)
 })
 
-t('h: direct children', t => {
+t.skip('h: direct children', t => {
   let el1 = h('x', 1)
   let el2 = h('x', h('y'))
   let el3 = h('x', 'x')
@@ -502,7 +497,7 @@ t('h: array component', t => {
 })
 
 t('h: object props preserve internal observables, only high-levels are handled', t => {
-  let props, el = h('x', props = {x: v(0), y: {x: v(1)}})
+  let props, el = h('x', props = v({x: v(0), y: {x: v(1)}}))
   t.is(el.outerHTML, `<x x="0" y="x: 1;"></x>`)
   // t.is(el.y, props.y)
   t.is(el.y, {x: 1})
@@ -512,7 +507,7 @@ t('h: iron support', t => {
   const noun = iv('world')
   const message = iv(() => `Hello ${noun.v}`)
 
-  let el = h('x', message)
+  let el = h('x', null, v(message))
   t.is(el.outerHTML, `<x>Hello world</x>`)
 
   noun.v = 'Iron'

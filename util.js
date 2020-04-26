@@ -63,24 +63,28 @@ export const observer = (next, error, complete) => (next && next.call) || (error
 
 export const desc = value => Object.assign({configurable: false, enumerable: false}, value === undefined ? {writable: true} : {value})
 
+export const list = arg => {
+  return Array.isArray(arg) || (!primitive(arg) && !arg.nodeType && arg[Symbol.iterator])
+}
+
 export const primitive = (val) => {
   if (typeof val === 'object') return val === null
   return typeof val !== 'function'
 }
 
 export const immutable = (val) => {
-  return primitive(val) || val instanceof RegExp || val instanceof Date
+  return !val || primitive(val) || val instanceof RegExp || val instanceof Date
 }
 
 export const observable = (arg) => {
-  if (!arg) return false
+  if (immutable(arg)) return false
   return !!(
     arg[symbol.observable]
     || (typeof arg === 'function' && arg.set)
     || arg[Symbol.asyncIterator]
     || arg.next
     || arg.then
-    || arg && arg.mutation && '_state' in arg
+    || arg.mutation && arg._state != null
   )
 }
 
@@ -88,33 +92,4 @@ export const object = (value) => {
 	if (Object.prototype.toString.call(value) !== '[object Object]') return false;
 	const prototype = Object.getPrototypeOf(value);
 	return prototype === null || prototype === Object.prototype;
-}
-
-export const input = (arg) => {
-  return arg && (arg.tagName === 'INPUT' || arg.tagName === 'SELECT')
-}
-
-export const attr = (...args) => {
-  let [el, name, value] = args
-
-  if (args.length < 3) return (value = el.getAttribute(name)) === '' ? true : value
-
-  // test nodes etc
-  if (!el || !el.setAttribute) return
-
-  if (value === false || value == null) el.removeAttribute(name)
-  // class=[a, b, ...c] - possib observables
-  else if (Array.isArray(value)) {
-    el.setAttribute(name, value.filter(Boolean).join(' '))
-  }
-  // style={}
-  else if (object(value)) {
-    let values = Object.values(value)
-    el.setAttribute(name, Object.keys(value).map((key, i) => `${key}: ${values[i]};`).join(' '))
-  }
-  // onclick={} - just ignore
-  else if (typeof value === 'function') {}
-  else {
-    el.setAttribute(name, value === true ? '' : value)
-  }
 }
