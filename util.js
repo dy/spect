@@ -64,7 +64,7 @@ export const observer = (next, error, complete) => (next && next.call) || (error
 export const desc = value => Object.assign({configurable: false, enumerable: false}, value === undefined ? {writable: true} : {value})
 
 export const list = arg => {
-  return Array.isArray(arg) || (!primitive(arg) && arg[Symbol.iterator])
+  return Array.isArray(arg) || (!primitive(arg) && !arg.nodeType && arg[Symbol.iterator])
 }
 
 export const primitive = (val) => {

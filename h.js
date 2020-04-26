@@ -8,7 +8,7 @@ const FIELD = 'h--field', FIELD_CHILD = 'h--child', FIELD_ATTR = 'h--attrs'
 
 const EMPTY = 'area base br col command embed hr img input keygen link meta param source track wbr ! !doctype ? ?xml'.split(' ')
 
-const buildCache = new WeakMap
+const buildCache = new Map
 
 export default function h (statics, ...fields) {
   let build
@@ -25,15 +25,16 @@ export default function h (statics, ...fields) {
       const key = statics + '>' + fields.length
       build = buildCache[key]
       if (!build) {
-        if (EMPTY.includes(statics)) (buildCache[key] = build = createBuilder(`<${statics} ...${FIELD} />`)).empty = true
-        else (buildCache[key] = build = createBuilder(`<${statics} ...${FIELD}>${Array(fields.length + 1).fill('').join(FIELD)}</${statics}>`))
+        if (!statics) (buildCache[key] = build = createBuilder(FIELD.repeat(fields.length))).frag = true
+        else if (EMPTY.includes(statics)) (buildCache[key] = build = createBuilder(`<${statics} ...${FIELD} />`)).empty = true
+        else (buildCache[key] = build = createBuilder(`<${statics} ...${FIELD}>${FIELD.repeat(fields.length)}</${statics}>`))
       }
-      return build.empty ? build(props) : build(props, ...fields)
+      return build.frag ? build(...fields) : build.empty ? build(props) : build(props, ...fields)
     }
     // h(target, props?, ...children)
     else {
       build = buildCache.get(statics)
-      if (!build) buildCache.set(statics, build = createBuilder(`<${FIELD} ...${FIELD}>${Array(fields.length + 1).fill('').join(FIELD)}</>`))
+      if (!build) buildCache.set(statics, build = createBuilder(`<${FIELD} ...${FIELD}>${FIELD.repeat(fields.length)}</>`))
       return build(statics, props, ...fields)
     }
   }
@@ -110,8 +111,7 @@ function createBuilder(str) {
   // create field evaluators - for each field they make corresponding transformation to cloned template
   // getElementsByTagName('*') is faster than tree iterator/querySelector('*), but live and fragment doesn't have it
   // ref: https://jsperf.com/createnodeiterator-vs-createtreewalker-vs-getelementsby
-  const evalChild = [], evalAttrs = [], evalComp = [],
-        tplNodes = tpl.content.querySelectorAll('*')
+  const evalChild = [], evalAttrs = [], evalComp = [], tplNodes = tpl.content.querySelectorAll('*')
   let hasAttributes = false, hasChildren = false, hasComponents = false
 
   for (let tplNode, fieldId = 0, nodeId = 0; tplNode = tplNodes[nodeId]; nodeId++) {
@@ -153,7 +153,6 @@ function createBuilder(str) {
           node[_ref] = updateNode(node, document.createTextNode(''))
           return sube(arg, tag => (node[_ref] = updateNode(node[_ref], tag)))
         }
-        const parent = node.parentNode
         node[_ref] = updateNode(node[_ref] || node, arg)
       })
     }
@@ -176,10 +175,11 @@ function createBuilder(str) {
         evals.push((node, args, fast, subs = !fast && []) => {
           const arg = args[i]
           if (!arg) return
+
           // no need for placeholder props
           if (!fast && observable(arg)) return sube(arg, v => { for (let key in v) prop(node[_ref] || node, key, v[key]) })
-          for (let key in arg) if (fast || !observable(arg[key])) prop(node[_ref] || node, key, arg[key])
-            else subs.push(sube(arg[key], v => prop(node[_ref] || node, key, v)))
+
+          for (let key in arg) prop(node[_ref] || node, key, arg[key])
           return subs
         })
       }
@@ -230,6 +230,7 @@ function createBuilder(str) {
 
     frag = fast ? staticTpl : tpl.content.cloneNode(true)
 
+
     // query/apply different types of evaluators in turn
     // https://jsperf.com/getelementsbytagname-vs-queryselectorall-vs-treewalk/1
     // FIXME: try to replace with getElementsByClassName, getElementsByTagName
@@ -278,7 +279,7 @@ function sube(target, fn, unsub, stop) {
 }
 
 // we can't handle observable subscription here - it deals with node[_ref], which is not this function concern
-function prop (el, name, value=true) {
+function prop (el, name, value) {
   // if (arguments.length < 3) return (value = el.getAttribute(name)) === '' ? true : value
 
   el[name] = value
@@ -312,6 +313,7 @@ function updateNode (from, to) {
   if (list(to) || list(from)) {
     if (!list(from)) from = [from]
     if (!list(to)) to = [to]
+    if (to.length === 1 && from.length === 1) return morph(from[0], to[0])
     if (!to.length) to.push('')
     // non-arrays have unique elements
     if (to.map) to = to.map(item => immutable(item) ? document.createTextNode(item) : item)

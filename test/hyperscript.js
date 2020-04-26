@@ -99,7 +99,7 @@ test('hyperscript: observable content', function(t){
 test('hyperscript: observable property', function(t){
   var checked = o()
   checked(true)
-  var checkbox = h('input', {type: 'checkbox', checked: checked})
+  var checkbox = h('input', v({type: 'checkbox', checked: checked}))
   t.is(checkbox.checked, true)
   checked(false)
   t.is(checkbox.checked, false)
