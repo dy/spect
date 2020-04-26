@@ -139,7 +139,7 @@ t('$: remove/add internal should not retrigger element', async t => {
   setTimeout(() => document.body.appendChild(a))
   await time(5)
   await frame(2)
-  t.deepEqual(log, ['b'])
+  t.is(log, ['b'])
 
   a.remove()
   abs[Symbol.dispose]()
@@ -315,11 +315,11 @@ t.todo('subaspects', async t => {
     return () => log.push('-a')
   })
 
-  t.deepEqual(log, ['a', 'b', 'c'])
+  t.is(log, ['a', 'b', 'c'])
 
   $(a).dispose()
 
-  t.deepEqual(log, ['a', 'b', 'c', '-c', '-b', '-a'])
+  t.is(log, ['a', 'b', 'c', '-c', '-b', '-a'])
 
   document.body.removeChild(a)
 })
@@ -358,7 +358,7 @@ t.skip('same aspect different targets', t => {
   $el.target.innerHTML = '<span></span>'
   $($el.target.firstChild).use(fx)
 
-  t.deepEqual(log, ['A', 'SPAN'])
+  t.is(log, ['A', 'SPAN'])
 })
 t.todo('same target different aspects', async t => {
   let log = []
@@ -367,9 +367,9 @@ t.todo('same target different aspects', async t => {
 
   let afx, bfx
   await spect(a).use([afx = () => (log.push('a'), () => log.push('de a'))])
-  t.deepEqual(log, ['a'])
+  t.is(log, ['a'])
   await spect(a).use([bfx = () => (log.push('b'), () => log.push('de b'))])
-  t.deepEqual(log, ['a', 'b'])
+  t.is(log, ['a', 'b'])
 })
 t.todo('same aspect same target', async t => {
   let log = []
@@ -377,11 +377,11 @@ t.todo('same aspect same target', async t => {
 
   let fx = () => (log.push('a'), () => log.push('z'))
   await spect(a).use(fx)
-  t.deepEqual(log, ['a'])
+  t.is(log, ['a'])
   await spect(a).use(fx)
-  t.deepEqual(log, ['a'])
+  t.is(log, ['a'])
   await spect(a).use(fx)
-  t.deepEqual(log, ['a'])
+  t.is(log, ['a'])
 })
 t('async aspects', async t => {
   let a = document.createElement('a')

@@ -9,8 +9,8 @@
   "scripts": {
     "start": "es-dev-server --app-index test/index.html --node-resolve --dedupe",
     "test": "node -r esm -r ./test/register.js test/index.js",
+    "snowpack": "snowpack",
     "bundle": "rollup -c rollup.config.js",
-    "esbuild": "esbuild --name=spect --outfile=dist/spect.js --bundle index.js",
     "minify": "terser dist/spect.js -c -m --module --source-map -o dist/spect.min.js",
     "build": "npm run bundle && npm run minify",
     "prepublishOnly": "npm run build"
@@ -67,18 +67,26 @@
     "@rollup/plugin-node-resolve": "^7.1.1",
     "augmentor": "^2.1.5",
     "es-dev-server": "^1.32.0",
-    "esbuild-windows-64": "0.0.9",
     "esm": "^3.2.25",
+    "htl": "^0.2.0",
+    "htm": "^3.0.3",
+    "hyperscript": "^2.0.2",
+    "incremental-dom": "^0.7.0",
     "ironjs": "0.0.17-alpha",
     "jsdom": "^16.2.2",
+    "lit-html": "^1.2.1",
     "nanomorph": "^5.4.0",
     "nodom": "^2.4.0",
     "observable": "^2.1.4",
+    "preact": "^10.4.0",
     "rollup": "^2.2.0",
+    "snowpack": "^1.6.0",
     "terser": "^4.6.6",
-    "tst": "^5.3.3",
+    "tst": "^6.0.2",
+    "uhtml": "^1.9.1",
     "unihooks": "^1.4.5",
     "wait-please": "^3.0.0",
+    "xhtm": "^1.5.3",
     "zen-observable": "^0.8.15"
   },
   "files": [
@@ -86,5 +94,18 @@
     "src",
     "dist",
     "*.js"
-  ]
+  ],
+  "snowpack": {
+    "webDependencies": [
+      "htm",
+      "htl",
+      "observable",
+      "preact",
+      "hyperscript/index.js",
+      "lit-html",
+      "augmentor",
+      "uhtml",
+      "incremental-dom"
+    ]
+  }
 }

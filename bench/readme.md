@@ -18,7 +18,7 @@ Reference: https://ecss.io/appendix1.html.
 
 Comparing time spent on initializing selectors:
 
-                       | `spect@20` | `spect@19` | `vanilla` | `selector-observer` | `regular-elements` | `insertionQuery`
+                       | `spect@20` | `spect@19` | `vanilla` | `selector-observer` | `regular-elements` | `insertionQuery` | `mutation-summary` | `qso`
                     ---|---|---|---|---|---
 `#a`                   |
 `[name=a]`             |
@@ -41,16 +41,13 @@ Comparing time spent on initializing selectors:
 `div.tagDiv > div.tagDiv.layer2 > ul.tagUL > li.tagLi > b.tagB > a.tagA.link`
 `.tagLi .tagB a.TagA.link`
 
+hasInitialDelay
 
 
 ## h
 
-`vanilla` | `spect@20` | `spect@19` | `hyperscript` | `nanomorph` | `incremental-dom` | `lit-html` | `htl` | `react` | `preact/htm` | `uhtm`
+`vanilla` | `spect@20` | `spect@19` | `hyperscript` | `incremental-dom` | `lit-html` | `htl` | `react` | `preact/htm` | `uhtml`
 ---|---|---|---|---|---|---
-
-
-
-## v
 
 
 
