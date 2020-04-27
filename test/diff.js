@@ -2,7 +2,7 @@
 
 import t from 'tst'
 import {time} from 'wait-please'
-import { merge as diff } from '../h'
+import { merge as diff } from '../h.js'
 // import diff from './libs/list-difference.js'
 // import diff from './libs/udomdiff.js'
 // import diff from './libs/snabbdom.js'

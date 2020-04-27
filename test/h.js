@@ -5,7 +5,6 @@ import t from 'tst'
 import { h, v } from '../index.js'
 import { tick, frame, idle, time } from 'wait-please'
 import observable from './observable.js'
-import { Reactor, v as iv } from 'ironjs'
 
 t('h: single attribute', async t => {
   const a = v(0)
@@ -501,17 +500,6 @@ t('h: object props preserve internal observables, only high-levels are handled',
   t.is(el.outerHTML, `<x x="0" y="x: 1;"></x>`)
   // t.is(el.y, props.y)
   t.is(el.y, {x: 1})
-})
-
-t('h: iron support', t => {
-  const noun = iv('world')
-  const message = iv(() => `Hello ${noun.v}`)
-
-  let el = h('x', null, v(message))
-  t.is(el.outerHTML, `<x>Hello world</x>`)
-
-  noun.v = 'Iron'
-  t.is(el.outerHTML, `<x>Hello Iron</x>`)
 })
 
 t('h: caching attr cases', async t => {

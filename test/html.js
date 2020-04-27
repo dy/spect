@@ -3,7 +3,7 @@ import { v } from '../index.js'
 import h from '../h.js'
 import { tick, frame, idle, time } from 'wait-please'
 import observable from './observable.js'
-import { v as iv } from 'ironjs'
+// import { v as iv } from 'ironjs'
 
 t('html: single attribute cases', async t => {
   // direct
@@ -675,7 +675,7 @@ t('html: 50+ elements shouldnt invoke recursion', t => {
   t.ok(el.childNodes.length >= 100, 'many els created')
 })
 
-t('html: iron support', t => {
+t.skip('html: iron support', t => {
   const noun = iv('world')
   const message = iv(() => `Hello ${noun.v}`)
 

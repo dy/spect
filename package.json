@@ -8,7 +8,7 @@
   "type": "module",
   "scripts": {
     "start": "es-dev-server --app-index test/index.html --node-resolve --dedupe",
-    "test": "node -r esm -r ./test/register.js test/index.js",
+    "test": "node -r ./test/register.cjs test/index.js",
     "snowpack": "snowpack",
     "bundle": "rollup -c rollup.config.js",
     "minify": "terser dist/spect.js -c -m --module --source-map -o dist/spect.min.js",
@@ -85,7 +85,7 @@
     "tst": "^6.0.2",
     "uhtml": "^1.9.1",
     "unihooks": "^1.4.5",
-    "wait-please": "^3.0.0",
+    "wait-please": "^3.1.0",
     "xhtm": "^1.5.3",
     "zen-observable": "^0.8.15"
   },

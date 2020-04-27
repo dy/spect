@@ -1,7 +1,7 @@
 import t from 'tst'
 import { v } from '../index.js'
 import { tick, frame, time } from 'wait-please'
-import Observable from 'zen-observable/esm'
+import Observable from 'zen-observable'
 import observable from './observable.js'
 
 // value
