@@ -2,6 +2,7 @@
 
 Version | Changes
 ---|---
+21.0.0 | Faster `h` algorithm.
 20.0.0 | Stage 3: `$` live collections, `h` caching & templates, `v` errors & template literals.
 19.1.0 | Sealed deps; observed dep props.
 19.0.0 | Reduced API: `$`, `h`, `v`.
