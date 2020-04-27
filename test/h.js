@@ -480,7 +480,7 @@ t('h: hydrate by id with existing content', t => {
   t.is(el2.outerHTML, `<div><b id="x"></b></div>`)
 })
 
-t.skip('h: direct children', t => {
+t('h: direct children', t => {
   let el1 = h('x', 1)
   let el2 = h('x', h('y'))
   let el3 = h('x', 'x')

@@ -276,7 +276,7 @@ _R&D_: [fast-on-load](https://ghub.io/fast-on-load), [selector-set](https://gith
 
 <details><summary><strong>h − hyperscript / html</strong></summary><br/>
 
-> el = h( tag | target , props , ...children )<br/>
+> el = h( tag | target , props? , ...children )<br/>
 > el = h\`...content\`<br/>
 
 [Hyperscript](https://ghub.io/hyperscript) with observables. Can be used as template literal or as JSX.
@@ -287,7 +287,7 @@ import { h, v } from 'spect'
 const text = v('foobar')
 
 // hyperscript
-const foo = h('foo', {}, text)
+const foo = h('foo', { bar: 'baz' }, text)
 
 // jsx
 /* jsx h */
@@ -303,10 +303,11 @@ const foo = h`<baz>${ text }</baz>`
 // fragment
 const fooFoo = h`<foo>1</foo><foo>2</foo>`
 
-// hydrate / render
+// hydrate
 h`<${foo} ...${props}>${ children }</>`
 
-h(foo, {...props}, ...children)
+// render
+h(foo, ...children)
 ```
 
 #### Example

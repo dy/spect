@@ -1,4 +1,4 @@
-import { symbol, observable, primitive, object, immutable, list } from './util.js'
+import { symbol, observable, primitive, immutable, list } from './util.js'
 
 const _ref = Symbol.for('@spect.ref')
 
@@ -18,7 +18,7 @@ export default function h (statics, ...fields) {
   // FIXME: should be Array.isTemplateObject(statics)
   // h(tag, props, ...children)
   if (!statics.raw) {
-    let props = fields.shift()
+    let props = (fields[0] == null || fields[0].constructor === Object || observable(fields[0])) && fields.shift()
 
     // h('div', props?, ...children?)
     if (primitive(statics)){
@@ -294,13 +294,13 @@ function prop (el, name, value) {
   else if (Array.isArray(value)) {
     el.setAttribute(name, value.filter(Boolean).join(' '))
   }
+  // onclick={} - just ignore
+  else if (typeof value === 'function') {}
   // style={}
-  else if (object(value)) {
+  else if (value.constructor === Object) {
     let values = Object.values(value)
     el.setAttribute(name, Object.keys(value).map((key, i) => `${key}: ${values[i]};`).join(' '))
   }
-  // onclick={} - just ignore
-  else if (typeof value === 'function') {}
 }
 
 function updateNode (from, to) {
