@@ -447,6 +447,7 @@ t('h: must not morph inserted nodes', async t => {
 
 t('h: update own children', t => {
   let el = h('div', null, 123)
+  // h(el, null, [...el.childNodes])
   h(el, null, el.childNodes)
   t.is(el.outerHTML, '<div>123</div>')
   h(el, null, ...el.childNodes)
@@ -505,4 +506,11 @@ t('h: object props preserve internal observables, only high-levels are handled',
 t('h: caching attr cases', async t => {
   let a = h('a', { x: 1 }, 'a', 6, 'b', 7, 'c')
   t.is(a.outerHTML, `<a x="1">a6b7c</a>`)
+})
+
+t('h: avoid multiple templates for children', async t => {
+  let a1 = h('a', 'b', 'c')
+  let a2 = h('a', 'b', 'c', 'd')
+  t.is(a2.outerHTML, `<a>bcd</a>`)
+  // console.log(h.cache)
 })

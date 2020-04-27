@@ -2,7 +2,7 @@ import './$.js'
 import './h.js'
 import './v.js'
 import './performance.js'
-import './diff.js'
+// import './diff.js'
 
 Object.defineProperty(DocumentFragment.prototype, 'outerHTML', {
   get() {

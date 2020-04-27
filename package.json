@@ -6,6 +6,12 @@
   "module": "index.js",
   "unpkg": "dist/spect.min.js",
   "type": "module",
+  "exports": {
+    ".": "./index.js",
+    "./$": "./$.js",
+    "./h": "./h.js",
+    "./v": "./v.js"
+  },
   "scripts": {
     "start": "es-dev-server --app-index test/index.html --node-resolve --dedupe",
     "test": "node -r ./test/register.cjs test/index.js",
@@ -66,7 +72,7 @@
     "@rollup/plugin-commonjs": "^11.0.2",
     "@rollup/plugin-node-resolve": "^7.1.1",
     "augmentor": "^2.1.5",
-    "es-dev-server": "^1.32.0",
+    "es-dev-server": "^1.47.0",
     "esm": "^3.2.25",
     "htl": "^0.2.0",
     "htm": "^3.0.3",

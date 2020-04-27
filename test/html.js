@@ -708,8 +708,7 @@ t('html: a#b.c', async t => {
 })
 
 t.todo('html: non-tr > td elements must persist', async t => {
-  //
-  h`<${el} class=${false ? "danger" : ""}>
-      <td class="col-md-1">${el.item.id}</td>
-  </>`
+  let el = document.createElement('tr')
+  h`<${el}><td>${1}</td></>`
+  t.is(el.outerHTML, `<tr><td>1</td></tr>`)
 })

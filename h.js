@@ -114,6 +114,8 @@ function createBuilder(str) {
   const evalChild = [], evalAttrs = [], evalComp = [], tplNodes = tpl.content.querySelectorAll('*')
   let hasAttributes = false, hasChildren = false, hasComponents = false
 
+  // FIXME: instead of per-child eval, use single per-children eval, therefore less evaluators
+  // FIXME: use single loop above to create evaluators
   for (let tplNode, fieldId = 0, nodeId = 0; tplNode = tplNodes[nodeId]; nodeId++) {
     // <${node}
     if (tplNode.localName === FIELD) {
