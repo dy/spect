@@ -1,4 +1,4 @@
-import { symbol, observable, primitive, immutable, list } from './util.js'
+import { symbol, observable, primitive, immutable, list } from './src/util.js'
 
 const _ref = Symbol.for('@spect.ref')
 

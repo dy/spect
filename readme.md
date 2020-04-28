@@ -266,8 +266,7 @@ const $timer = $('.timer', el => {
 })
 ```
 
-_Mechanism_: class selectors for removal, feature-based selectors for primary rules and animation-based selectors for the rest.<br/>
-_R&D_: [fast-on-load](https://ghub.io/fast-on-load), [selector-set](https://github.com/josh/selector-set), [insertionQuery](https://github.com/naugtur/insertionQuery), [selector-observer](https://github.com/josh/selector-observer), [reuse](https://ghub.io/reuse), [aspect-oriended-programming](https://en.wikipedia.org/wiki/Aspect-oriented_programming) libraries and others.
+_R&D_: [fast-on-load](https://ghub.io/fast-on-load) (class selectors), [selector-set](https://github.com/josh/selector-set) (feature-based selectors), [insertionQuery](https://github.com/naugtur/insertionQuery) (animation-based selectors), [selector-observer](https://github.com/josh/selector-observer), [reuse](https://ghub.io/reuse), [aspect-oriended-programming](https://en.wikipedia.org/wiki/Aspect-oriented_programming) libraries and others.
 
 <br/>
 
@@ -322,12 +321,47 @@ $('#clock', el => {
 })
 ```
 
-_Mechanism_: cached `<template>`s with field evaluators.<br/>
 _R&D_: [lit-html](https://ghub.io/lit-html), [htm@1](https://ghub.io/htm) [htl](https://ghub.io/htl), [hyperscript](https://ghub.io/hyperscript), [incremental-dom](https://ghub.io/incremental-dom), [snabbdom](https://ghub.io/snabbdom), [nanomorph](https://ghub.io/nanomorph), [uhtml](https://ghub.io/uhtml) and others.
 
 <br/>
 
 </details>
+
+
+<details><summary><strong>i − input observer</strong></summary><br/>
+
+> value = i( input | selector )
+> value = i`selector`
+
+Input / Select observable. Creates a get/set/subscribe function for values from _Input_, _Checkbox_, _Radio_, _Select_ or _Range_.
+
+```js
+import { i, v } from 'spect'
+
+// input
+let ids = i(h`<input#id value=1/>`)
+
+// subscribe
+ids(value => console.log(value))
+
+// computed
+let sum = v([i`#a`, i`#b`], ([a, b]) => a + b)
+```
+
+#### Example
+
+```js
+import { i, v } from 'spect'
+
+const f = i`#fahren`, c = i`#celsius`
+const celsius = v(f, f => (f - 32) / 1.8)
+const fahren = v(c, c => (c * 9) / 5 + 32)
+
+celsius() // 0
+fahren() // 32
+```
+
+_R&D_: [observable](https://ghub.io/observable).
 
 
 <details><summary><strong>v − value observer</strong></summary><br/>
@@ -343,8 +377,7 @@ Universal observable − creates a getter/setter function with [observable](http
 * _AsyncIterator_ or [`[Symbol.asyncIterator]`](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Symbol/asyncIterator) − mapped iterator observable.
 * _Promise_ or _thenable_ − promise state observable.
 * _Standard observable_ or [`[Symbol.observable]`](https://ghub.io/symbol-observable) ([rxjs](https://ghub.io/rxjs), [zen-observable](https://ghub.io/zen-observable) etc.) − mapped source observable.
-* [_Ironjs_](https://ghub.io/ironjs) _Reactor_ − 2-way bound reactor observable.
-* _Array_, _Object_, _Element_ − props / group observable, inc. _input_ / _select_ value.
+* _Array_, _Object_ − list / group observable, eg. for computed observable.
 * _Template string_ − observable string with dynamic fields.
 
 ```js
@@ -358,74 +391,52 @@ v1()
 // set
 v1(1)
 
-// subscribe
-v1(value => {
-  // value === 1
-  return () => {
-    // teardown
-  }
-})
-
-// from value
+// transform
 let v2 = v(v1, v1 => v1 * 2)
 v2() // 2
 
-// from multiple values
+// compute
 let v3 = v([v1, v2], ([v1, v2]) => v1 + v2)
 v3() // 3
 v3[0]() // 1
 
-// run effect on every change
+// subscribe
 v([v1, v2, v3])(([v1, v2, v3]) => {
   console.log(v1, v2, v3)
   return () => console.log('teardown', v1, v2, v3)
 })
 // ... 1, 2, 3
 
-// live string
+// interpolate
 let vsum = v`${v1} + ${v2} = ${v3}`()
 vsum() // "1 + 2 = 3"
 
-// from input
-let v4 = v(h`<input#id value=1/>`)
-v4(input => console.log(input.value))
-
-// from object
+// props
 let item = { done: false, text: '' }
 let v5 = v(item)
 v5.done() // false
 
-// log diff
+// diff
 v5((item, diff) => console.log(item, diff))
 item.done = true
 v5().done // false
 // ... { done: true, text: '' }, { done: true }
 
-// initialize value
+// initialize
 let v6 = v(() => v5)
 v6() // v5
 
-// observe via async iterator
+// async iterator
 for await (const value of v(v6)) console.log(value)
+
+// attributes
+v(el, {})
 
 // dispose
 ;[v6, v5, v4, v3, v2, v1].map(v => v[Symbol.dispose]())
 ```
 
 #### Example
-
-```js
-import { $, v } from 'spect'
-
-const f = v(...$`#fahren`), c = v(...$`#celsius`)
-const celsius = v(f, f => (f - 32) / 1.8)
-const fahren = v(c, c => (c * 9) / 5 + 32)
-
-celsius() // 0
-fahren() // 32
-```
-
-#### Example 2
 
 ```js
 import { v } from 'spect'
@@ -448,44 +459,12 @@ $('.likes-count', el => h`<${el}>${
 likes.load()
 ```
 
-_Mechanism_: stateful/stateless channels.<br/>
-_R&D_: [observable](https://ghub.io/observable), [react hooks](https://ghub.io/unihooks), [observable proposal](https://github.com/tc39/proposal-observable), [observ](https://ghub.io/observ), [mutant](https://ghub.io/mutant), [rxjs](https://ghub.io/rxjs), [iron](https://github.com/ironjs/iron), [icaro](https://ghub.io/icaro), [introspected](https://ghub.io/introspected), [augmentor](https://ghub.io/augmentor) and others.
+_R&D_: [observable/transform](https://ghub.io/observable), [react hooks](https://ghub.io/unihooks), [observable proposal](https://github.com/tc39/proposal-observable), [observ](https://ghub.io/observ), [mutant](https://ghub.io/mutant), [rxjs](https://ghub.io/rxjs), [iron](https://github.com/ironjs/iron), [icaro](https://ghub.io/icaro), [introspected](https://ghub.io/introspected), [augmentor](https://ghub.io/augmentor) and others.
 
 <br/>
 
 </details>
 
-
-<!--
-### _`channel`_
-
-> ch = channel( callback, onCancel )
-
-Event bus. Thenable, Cancelable, AsyncIterable.
-
-```js
-import channel from 'spect/channel'
-
-let foobus = channel(
-  e => console.log('received', e),
-  reason => console.log('canceled', reason)
-)
-
-// post to channel
-foobus('a')
-foobus('b')
-
-// subscribe to channel
-for await (let e of foobus) {
-  console.log(e)
-}
-
-// close channel
-foobus.cancel()
-```
-
-<br/>
--->
 
 
 <p align="center">ॐ</p>

@@ -10,7 +10,9 @@
     ".": "./index.js",
     "./$": "./$.js",
     "./h": "./h.js",
-    "./v": "./v.js"
+    "./i": "./i.js",
+    "./v": "./v.js",
+    "./a": "./a.js"
   },
   "scripts": {
     "start": "es-dev-server --app-index test/index.html --node-resolve --dedupe",

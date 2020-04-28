@@ -1,7 +1,8 @@
 import './$.js'
 import './h.js'
+import './i.js'
 import './v.js'
-import './performance.js'
+// import './performance.js'
 // import './diff.js'
 
 Object.defineProperty(DocumentFragment.prototype, 'outerHTML', {

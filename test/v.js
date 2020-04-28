@@ -342,6 +342,13 @@ t('v: reserved words', async t => {
   let s = v({name: 1, arguments: 2})
   t.is(s(), {name:1, arguments: 2})
 })
+t('v: extend object', async t => {
+  let o = {x:1}, log = []
+  v(o)(o => log.push({...o}))
+  t.is(log, [{x:1}])
+  o.y = 2
+  t.is(log, [{x:1}])
+})
 
 // from
 t('v: from promise', async t => {
@@ -738,137 +745,6 @@ t('v: calc promises must be resolved fine', async t => {
   await time()
   t.is(x(), 2)
 })
-
-// input
-t('v: input text', async t => {
-  let el = document.createElement('input')
-  document.body.appendChild(el)
-  let text = v(el)
-  text(v => console.log(v.value))
-
-  let cb = document.createElement('input')
-  cb.setAttribute('type', 'checkbox')
-  document.body.appendChild(cb)
-  let bool = v(cb)
-  bool(v => console.log(v.value))
-
-  let sel = document.createElement('select')
-  sel.innerHTML = `<option value=1>A</option><option value=2>B</option>`
-  document.body.appendChild(sel)
-  let enm = v(sel)
-  enm(v => console.log(v.value))
-})
-t('v: input updates by changing value directly', async t => {
-  let el = document.createElement('input')
-  el.value = 0
-  let value = v(el)
-  t.is(value(), {value:'0'})
-
-  // observer 1
-  let log = []
-  value(v => log.push(v.value))
-
-  await tick(2)
-  t.is(log, ['0'], 'initial value notification')
-
-  el.focus()
-  el.dispatchEvent(new Event('focus'))
-  el.value = 1
-  el.dispatchEvent(new Event('change'))
-  await tick()
-  el.value = 2
-  el.dispatchEvent(new Event('change'))
-  await tick()
-  el.value = 3
-  el.dispatchEvent(new Event('change'))
-  el.value = 4
-  el.dispatchEvent(new Event('change'))
-  el.value = 5
-  el.dispatchEvent(new Event('change'))
-  await tick(8)
-  t.is(log.slice(-1), ['5'], 'updates to latest value')
-
-  el.value = 6
-  el.dispatchEvent(new Event('change'))
-  t.is(el.value, '6', 'reading value')
-  await tick(8)
-  t.is(log.slice(-1), ['6'], 'reading has no side-effects')
-
-  value[Symbol.dispose]()
-  el.value = 7
-  el.dispatchEvent(new Event('change'))
-  t.is(el.value, '7', 'end destructs inputerty')
-  await tick(10)
-  t.is(log.slice(-1), ['6'], 'end destructs inputerty')
-})
-t('v: input get/set', async t => {
-  let el = document.createElement('input')
-  let value = v(el)
-  value({value:0})
-  t.is(el.value, '0', 'set is ok')
-  t.is(value(), {value:'0'}, 'get is ok')
-  await tick(8)
-  t.is(el.value, '0', 'set is ok')
-  t.is(value(), {value:'0'}, 'get is ok')
-})
-t('v: input checkbox', async t => {
-  let el = document.createElement('input')
-  el.type = 'checkbox'
-  document.body.appendChild(el)
-  let bool = v(el)
-  t.is(bool(), {value:false})
-  t.is(el.checked, false)
-  t.is(el.value, '')
-
-  el.checked = true
-  el.dispatchEvent(new Event('change'))
-  t.is(bool(), {value:true})
-  t.is(el.checked, true)
-  t.is(el.value, 'on')
-
-  bool({value:false})
-  t.is(bool(), {value:false})
-  t.is(el.checked, false)
-  t.is(el.value, '')
-
-  bool[Symbol.dispose]()
-  // t.throws(() => bool(true))
-  bool({value:true})
-  t.is(bool(), undefined)
-  t.is(el.checked, false)
-  t.is(el.value, '')
-})
-t('v: input select', async t => {
-  let el = document.createElement('select')
-  el.innerHTML = '<option value=1 selected>A</option><option value=2>B</option>'
-  // document.body.appendChild(el)
-  let value = v(el)
-  t.is(value().value, '1')
-  t.is(el.value, '1')
-
-  el.value = '2'
-  el.dispatchEvent(new Event('change'))
-  t.is(value().value, '2')
-  t.is(el.value, '2')
-  t.is(el.innerHTML, '<option value="1">A</option><option value="2" selected="">B</option>')
-
-  value({value:'1'})
-  t.is(value().value, '1')
-  t.is(el.innerHTML, '<option value="1" selected="">A</option><option value="2">B</option>')
-  t.is(el.value, '1')
-
-  value[Symbol.dispose]()
-  // t.throws(() => value('2'))
-  value('2')
-  t.any(value(), [null, undefined, '1'])
-  t.is(el.innerHTML, '<option value="1" selected="">A</option><option value="2">B</option>')
-  t.is(el.value, '1')
-})
-t.todo('v: input radio')
-t.todo('v: input range')
-t.todo('v: input date')
-t.todo('v: input multiselect')
-t.todo('v: input form')
 
 // error
 t.skip('v: error in mapper', async t => {

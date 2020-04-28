@@ -1,4 +1,4 @@
-import { desc, channel as c, observer, immutable, observable, symbol } from './util.js'
+import { desc, channel as c, observer, immutable, observable, symbol } from './src/util.js'
 
 const depsCache = new WeakMap
 
@@ -99,12 +99,6 @@ export default function v(source, ...fields) {
       set = p => (delete channel.current, p.then(v => push(map(v)), error))
       set(source)
     }
-    // ironjs
-    else if (source && source.mutation && '_state' in source) {
-      const Reactor = source.constructor
-      const reaction = new Reactor(() => set(source.state))
-      set(source.state)
-    }
     else if (immutable(source)) {
       set(source)
     }
@@ -141,40 +135,9 @@ export default function v(source, ...fields) {
         fn[key] = dep
       })
 
-      if (input(source)) {
-        let dep
-        if (depsCache.get(source).value) dep = depsCache.get(source).value
-        else {
-          const el = source
-          const iget = el.type === 'checkbox' ? () => el.checked : () => el.value
-          const iset = ({
-            text: value => el.value = (value == null ? '' : value),
-            checkbox: value => (el.checked = value, el.value = (value ? 'on' : ''), value ? el.setAttribute('checked', '') : el.removeAttribute('checked')),
-            'select-one': value => {
-              [...el.options].map(el => el.removeAttribute('selected'))
-              el.value = value
-              if (el.selectedOptions[0]) el.selectedOptions[0].setAttribute('selected', '')
-            }
-          })[el.type]
-
-          // normalize initial value
-          iset(iget())
-
-          dep = v(iget(), v => v, v => (iset(v = unmap(v)), iget()))
-          fn.value = dep
-
-          const update = e => dep(iget())
-          el.addEventListener('change', update)
-          el.addEventListener('input', update)
-          subscribe(null, null, () => {
-            el.removeEventListener('change', update)
-            el.removeEventListener('input', update)
-          })
-        }
-      }
       // we can handle only static deps
       if (!source[symbol.dispose]) source[symbol.dispose] = null
-      try { Object.seal(source) } catch {}
+      // try { Object.seal(source) } catch {}
 
       const teardown = []
       for (const key in fn) {
@@ -218,6 +181,3 @@ export default function v(source, ...fields) {
   return fn
 }
 
-const input = (arg) => {
-  return arg && (arg.tagName === 'INPUT' || arg.tagName === 'SELECT')
-}
