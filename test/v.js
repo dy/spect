@@ -58,7 +58,7 @@ t('v: readme', async t => {
   // > 1, 2, 3
 
   // from object
-  let item = { done: false }
+  let item = { done: v(false) }
   let v5 = v(item)
   log = []
   v5(v => log.push({...v}))
@@ -66,7 +66,7 @@ t('v: readme', async t => {
   t.is(log, [{done: false}], 'emit props')
 
   // set property, notify
-  item.done = true
+  item.done(true)
   t.is(v5().done, true) // false
   t.is(log, [{done: false}, {done: true}])
 
@@ -223,7 +223,7 @@ t('v: object deps', async t => {
   t.is(log, [1,1, 2,1, 2,2])
 })
 t('v: recursion', async t => {
-  let x = {a: 1}
+  let x = {a: v(1)}
   x.x = x
   let vx = v(x)
   t.is(vx().a, 1)
@@ -264,7 +264,7 @@ t('v: propagates internal item updates', async t => {
   a(1)
   t.is(log, [{x: 1, a: 0}, {x: 1, a: 1}])
 
-  deps.x = 2
+  b.x(2)
   t.is(log, [{x: 1, a: 0}, {x: 1, a: 1}, {x: 2, a: 1}])
 
   let c = v({b})
@@ -296,7 +296,7 @@ t('v: push multiple values', async t => {
   t.is(x(), 1)
 })
 t('v: diff object', async t => {
-  let x = v({x: 1, y: 2})
+  let x = v({x: v(1), y: v(2)})
   let log = []
   x((vals, diff) => log.push(diff))
   t.is(log, [{x:1, y:2}])
@@ -305,7 +305,7 @@ t('v: diff object', async t => {
   t.is(log.slice(-1), [{x: 2}])
 })
 t('v: diff array', async t => {
-  let x = v([1, 2])
+  let x = v([v(1), v(2)])
   let log = []
   x((vals, diff) => log.push(diff))
   t.is(log, [[1,2]])
@@ -319,17 +319,17 @@ t('v: repeated init', async t => {
   let o2 = v(o, vals => log.push(vals))
   t.is(log, [{x:1}, {x:1}])
   log = []
-  o.x = 2
+  o1.x(2)
   t.is(log, [{x:2}, {x:2}])
 
   log = []
   o2[Symbol.dispose]()
-  o.x = 3
+  o1.x(3)
   t.is(log, [{x: 3}])
 
   log = []
   o1[Symbol.dispose]()
-  o.x = 4
+  o1.x(4)
   t.is(log, [])
 })
 t('v: template literals', async t => {

@@ -498,8 +498,8 @@ t('h: array component', t => {
 
 t('h: object props preserve internal observables, only high-levels are handled', t => {
   let props, el = h('x', props = v({x: v(0), y: {x: v(1)}}))
-  t.is(el.outerHTML, `<x x="0" y="x: 1;"></x>`)
-  // t.is(el.y, props.y)
+  t.is(el.outerHTML, `<x x="0"></x>`)
+  t.is(el.y, props.y())
   t.is(el.y, {x: 1})
 })
 

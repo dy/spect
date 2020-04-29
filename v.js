@@ -109,11 +109,8 @@ export default function v(source, ...fields) {
 
       // init observables
       keys.forEach(key => {
-        // reserved fn props
-        if (key in fn) {
-          delete fn[key]
-          Object.defineProperty(fn, key, {configurable: true, enumerable: true, writable: true})
-        }
+        // reserved fn props - length, arguments etc.
+        if (key in fn) (delete fn[key], Object.defineProperty(fn, key, {configurable: true, enumerable: true, writable: true}))
         let dep
         if (depsCache.has(source[key])) (dep = depsCache.get(source[key]))
         else if (!immutable(source[key])) (dep = v(source[key]))
@@ -121,13 +118,8 @@ export default function v(source, ...fields) {
         // redefine source property to observe it
         else {
           dep = v(() => vals[key] = source[key])
-          let orig = Object.getOwnPropertyDescriptor(source, key)
-          if (!orig || orig.configurable) Object.defineProperty(source, key, {
-            configurable: true,
-            enumerable: true,
-            get: dep,
-            set: orig && orig.set ? v => (orig.set.call(source, v), dep(orig.get())) : v => dep(v),
-          })
+          dep(v => vals[key] = source[key] = v)
+          // props observing logic is moved to `a`
         }
         fn[key] = dep
       })
