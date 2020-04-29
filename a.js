@@ -1,6 +1,5 @@
 import { desc, channel as Channel, observer, symbol, attr } from './src/util.js'
 
-
 export default function a(target, path) {
   const channel = Channel()
 
@@ -17,11 +16,24 @@ export default function a(target, path) {
 
   const proto = Object.getPrototypeOf(target)
   const orig = Object.getOwnPropertyDescriptor(target, path)
+  let sync
+
+  if (target.setAttribute) {
+    sync = (attr) => {
+      // own HTMLElement prototype props (like style, onxxx, class etc.) are expected to react themselves on attr update
+      if (path in proto) return target[path] !== attr ? channel.push(target[path]) : null
+
+      attr = attr === '' ? true : attr
+      if (target[path] != attr) target[path] = attr
+    }
+    if (!(path in target)) sync(target.getAttribute(path))
+  }
+
 
   let value = target[path],
       get = orig && orig.get || (() => value),
       set = orig && orig.set ? v => (orig.set.call(target, v), channel.push(get())) : v => channel.push(value = v)
-  if (!orig || orig.configurable) {
+  if (!orig || orig.configurable && !(path in proto)) {
     Object.defineProperty(target, path, {
       configurable: true,
       enumerable: true,
@@ -35,18 +47,9 @@ export default function a(target, path) {
 
   // set attribute observer
   if (target.setAttribute) {
-    const mo = new MutationObserver((records) => records.map(() => sync(target.getAttribute(path))))
+    const mo = new MutationObserver((records) => records.map(rec => sync(target.getAttribute(path))))
     mo.observe(target, { attributes: true, attributeFilter: [path] })
     channel.subscribe(null, null, () => mo.disconnect())
-
-    function sync (attr) {
-      attr = attr === '' ? true : attr
-      // own HTMLElement prototype props (like style, onxxx, class etc.) are expected to react themselves on attr update
-      if (path in proto) return channel.push(target[path])
-      if (target[path] != attr) target[path] = attr
-    }
-
-    sync(target.getAttribute(path))
   }
 
 

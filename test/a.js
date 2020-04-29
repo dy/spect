@@ -1,5 +1,5 @@
 import t from 'tst'
-import { a } from '../index.js'
+import { h, a } from '../index.js'
 import { tick, frame, time } from 'wait-please'
 
 
@@ -51,10 +51,19 @@ t('a: observe attribute / getset', async t => {
   t.is(log, ['1', 2, '3'])
 })
 
-t.todo('a: observe props')
+t('a: h recursion', async t => {
+  let x = document.createElement('x')
+  x.setAttribute('title', 'x')
+  h`<${x}>${ a(x, 'title') }</>`
+  t.is(x.innerHTML, 'x')
 
-t.todo('a: observe attributes', t => {
+  x.x = 1
+  h`<${x}>${ a(x, 'x') }</>`
+  t.is(x.innerHTML, '1')
 
+  x.setAttribute('y', 2)
+  h`<${x}>${ a(x, 'y') }</>`
+  t.is(x.innerHTML, '2')
 })
 
 
@@ -162,6 +171,7 @@ t.todo('v: store core', async t => {
   await tick(8)
   t.is(log, [{y: 'foo'}], 'delete props')
 })
+
 t.todo('v: store must not expose internal props', async t => {
   let s = o({x: 1})
   let log  =[]
