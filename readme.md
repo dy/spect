@@ -330,7 +330,7 @@ _R&D_: [lit-html](https://ghub.io/lit-html), [htm@1](https://ghub.io/htm) [htl](
 
 <details><summary><strong>i − input observer</strong></summary><br/>
 
-> value = i( input | selector )
+> value = i( input | selector )<br/>
 > value = i`selector`
 
 Input / Select observable. Creates a get/set/subscribe function for values from _Input_, _Checkbox_, _Radio_, _Select_ or _Range_.
@@ -465,26 +465,30 @@ _R&D_: [observable/transform](https://ghub.io/observable), [react hooks](https:/
 
 <details><summary><strong>a − attribute observable</strong></summary><br/>
 
-> props = a( source , path? )
+> props = a( source , path )
 
 Attribute / property observable for defined target or element. Useful for forwarding props/attributes to templates.
 
 ```js
-import { v, a } from 'spect'
+import { h, v, a } from 'spect'
 
 let item = { done: false, text: '' }
 
-// single prop
-v(a(item, 'done'))
+// observe single prop
+let done = a(item, 'done')
+done() // false
 
-// all props
+// observe multiple props
 let vitem = v({a(item, 'done'), a(item, 'text')})
+vitem.done() // false
 
-// single attribute
-a(el, 'loading')
+// observe attribute
+let el = h`<a loading/>`
+let loading = a(el, 'loading')
+loading() // true
 
-// all attributes
-a(el)
+el.setAttribute('loading', false)
+loading() // null
 ```
 
 #### Example
@@ -493,7 +497,10 @@ a(el)
 import { $, h, a } from 'spect'
 
 $('#my-component', el => {
-  h`<${el}><header>${ a(el, 'title') }</header></>`
+  h`<${el}>
+    <header>${ a(el, 'title') }</header>
+    <main>${ a(el, 'description') }</main>
+  </>`
 })
 ```
 
