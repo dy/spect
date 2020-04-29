@@ -13,7 +13,7 @@
   },
   "scripts": {
     "start": "es-dev-server --app-index test/index.html --node-resolve --dedupe",
-    "test": "node -r ./test/register.cjs test/index.js",
+    "test": "node -r ./test/register.cjs --experimental-loader ./test/esm.mjs test/index.js",
     "snowpack": "snowpack",
     "bundle": "rollup -c rollup.config.js",
     "minify": "terser dist/spect.js -c -m --module --source-map -o dist/spect.min.js",
