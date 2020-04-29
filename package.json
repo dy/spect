@@ -8,11 +8,7 @@
   "type": "module",
   "exports": {
     ".": "./index.js",
-    "./$": "./$.js",
-    "./h": "./h.js",
-    "./i": "./i.js",
-    "./v": "./v.js",
-    "./a": "./a.js",
+    "./": "./",
     "./dist/": "./dist/"
   },
   "scripts": {
