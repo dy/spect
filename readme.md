@@ -331,7 +331,7 @@ _R&D_: [lit-html](https://ghub.io/lit-html), [htm@1](https://ghub.io/htm) [htl](
 <details><summary><strong>i − input observer</strong></summary><br/>
 
 > value = i( input | selector )<br/>
-> value = i`selector`
+> value = i\`selector\`
 
 Input / Select observable. Creates a get/set/subscribe function for values from _Input_, _Checkbox_, _Radio_, _Select_ or _Range_.
 
