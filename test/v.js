@@ -228,9 +228,10 @@ t('v: recursion', async t => {
   let vx = v(x)
   t.is(vx().a, 1)
 })
-t('v: internal observers are preserved', async t => {
+t.todo('v: internal observers are preserved', async t => {
   // NOTE: we preserve internal observers to let object props be rewritable
   // DENOTE: internal objects/arrays are expected to be non-changeable props, only primitives can be rewritable
+  // DERESOLUTION: observable is not data storage, it is data observer. Array/object is used for calc purposes only. For data observation use `a`.
   let x = [{x: v(0)}]
   let log = []
   v(x)(v => log.push(v))
@@ -277,7 +278,8 @@ t('v: propagates internal item updates', async t => {
   a(2)
   t.is(log, [{b: {x:2, a: 2}}])
 })
-t('v: deep propagate internal props updates', async t => {
+t.todo('v: deep propagate internal props updates', async t => {
+  // DERESOLUTION: deep observables are confusing. Arrays/objects are used as a simple grouping container, sealed once passed.
   let a = v(0), b = v([[a]])
   let log
   b(v => log = v)
@@ -342,12 +344,19 @@ t('v: reserved words', async t => {
   let s = v({name: 1, arguments: 2})
   t.is(s(), {name:1, arguments: 2})
 })
-t('v: extend object', async t => {
+t.skip('v: extend object', async t => {
+  // DEPRECATED: what's the use-case? real objects must not be passed to observable
   let o = {x:1}, log = []
   v(o)(o => log.push({...o}))
   t.is(log, [{x:1}])
   o.y = 2
   t.is(log, [{x:1}])
+})
+t('v: internal array should not be considered an observable', async t => {
+  let o = v({records: []})
+  o.records([1,2,3])
+  t.is(o.records(), [1,2,3])
+  t.is(o().records, [1,2,3])
 })
 
 // from

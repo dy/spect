@@ -181,7 +181,12 @@ function createBuilder(str) {
           // no need for placeholder props
           if (!fast && observable(arg)) return sube(arg, v => { for (let key in v) prop(node[_ref] || node, key, v[key]) })
 
-          for (let key in arg) prop(node[_ref] || node, key, arg[key])
+          for (let key in arg) {
+            if (!fast && observable(arg[key]))
+              subs.push(sube(arg[key], v => prop(node[_ref] || node, key, v)))
+            else prop(node[_ref] || node, key, arg[key])
+          }
+
           return subs
         })
       }

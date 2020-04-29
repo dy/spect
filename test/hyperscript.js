@@ -99,7 +99,7 @@ test('hyperscript: observable content', function(t){
 test('hyperscript: observable property', function(t){
   var checked = o()
   checked(true)
-  var checkbox = h('input', v({type: 'checkbox', checked: checked}))
+  var checkbox = h('input', {type: 'checkbox', checked: checked})
   t.is(checkbox.checked, true)
   checked(false)
   t.is(checkbox.checked, false)
@@ -109,7 +109,7 @@ test('hyperscript: observable property', function(t){
 test('hyperscript: observable style', function(t){
   var color = o()
   color('red')
-  var div = h('div', v({style: {'color': color}}))
+  var div = h('div', {style: v({'color': color})})
   t.is(div.style.color, 'red')
   color('blue')
   t.is(div.style.color, 'blue')

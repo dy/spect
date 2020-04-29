@@ -396,7 +396,7 @@ t('h: component props', async t => {
 
 t('h: observable in class', t => {
   let bar = v('')
-  let el = h('div', v({class:[false, null, undefined, 'foo', bar]}))
+  let el = h('div', v({class: v([false, null, undefined, 'foo', bar])}))
   t.is(el.outerHTML, `<div class="foo"></div>`)
   bar('bar')
   t.is(el.outerHTML, `<div class="foo bar"></div>`)
@@ -497,7 +497,7 @@ t('h: array component', t => {
 })
 
 t('h: object props preserve internal observables, only high-levels are handled', t => {
-  let props, el = h('x', props = v({x: v(0), y: {x: v(1)}}))
+  let props, el = h('x', props = {x: v(0), y: v({x: v(1)})})
   t.is(el.outerHTML, `<x x="0"></x>`)
   t.is(el.y, props.y())
   t.is(el.y, {x: 1})

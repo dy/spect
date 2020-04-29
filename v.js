@@ -113,7 +113,8 @@ export default function v(source, ...fields) {
         if (key in fn) (delete fn[key], Object.defineProperty(fn, key, {configurable: true, enumerable: true, writable: true}))
         let dep
         if (depsCache.has(source[key])) (dep = depsCache.get(source[key]))
-        else if (!immutable(source[key])) (dep = v(source[key]))
+        else if (observable(source[key])) (dep = v(source[key]))
+        // reuse existing prop observable
         else if (depsCache.get(source)[key]) (dep = depsCache.get(source)[key])
         // redefine source property to observe it
         else {
@@ -126,7 +127,7 @@ export default function v(source, ...fields) {
 
       // we can handle only static deps
       if (!source[symbol.dispose]) source[symbol.dispose] = null
-      // try { Object.seal(source) } catch {}
+      try { Object.seal(source) } catch {}
 
       const teardown = []
       for (const key in fn) {
@@ -164,7 +165,7 @@ export default function v(source, ...fields) {
     delete channel.current
   })
 
-  // prevent any modifications
+  // prevent further modifications
   Object.seal(fn)
 
   return fn
