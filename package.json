@@ -1,6 +1,6 @@
 {
   "name": "spect",
-  "version": "21.1.1",
+  "version": "21.1.2",
   "description": "Hyper reactive aspects",
   "main": "index.js",
   "module": "index.js",
