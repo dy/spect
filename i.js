@@ -57,7 +57,7 @@ export default function i(el) {
       ))
       try {
         while (1) {
-          while (buf.length) yield buf.shift()
+          yield* buf.splice(0)
           await p
         }
       } catch {

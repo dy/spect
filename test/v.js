@@ -602,16 +602,16 @@ t('v: async iterator', async t => {
     }
   })();
 
-  await tick(4)
+  await tick(8)
   t.is(log, [0])
 
   s(1)
-  await tick(4)
+  await tick(8)
   t.is(log, [0, 1])
 
   s(2)
   s(3)
-  await tick(4)
+  await tick(8)
   t.is(log, [0, 1, 2, 3])
 })
 t('v: fx simple values', async t => {

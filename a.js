@@ -65,7 +65,7 @@ export default function a(target, path) {
       ))
       try {
         while (1) {
-          while (buf.length) yield buf.shift()
+          yield* buf.splice(0)
           await p
         }
       } catch {
