@@ -1,6 +1,5 @@
 import { desc, channel as Channel, observer, symbol } from './src/util.js'
 
-
 export default function i(el) {
   if (el.raw) el = document.querySelector(String.raw(...arguments))
 

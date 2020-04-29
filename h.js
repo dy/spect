@@ -1,4 +1,4 @@
-import { symbol, observable, primitive, immutable, list } from './src/util.js'
+import { symbol, observable, primitive, immutable, list, attr } from './src/util.js'
 
 const _ref = Symbol.for('@spect.ref')
 
@@ -280,29 +280,9 @@ function sube(target, fn, unsub, stop) {
   return unsub
 }
 
-// we can't handle observable subscription here - it deals with node[_ref], which is not this function concern
 function prop (el, name, value) {
-  // if (arguments.length < 3) return (value = el.getAttribute(name)) === '' ? true : value
-
   el[name] = value
-
-  if (!el.setAttribute) return
-
-  if (primitive(value)) {
-    if (value === false || value == null) el.removeAttribute(name)
-    else el.setAttribute(name, value === true ? '' : value)
-  }
-  // class=[a, b, ...c] - possib observables
-  else if (Array.isArray(value)) {
-    el.setAttribute(name, value.filter(Boolean).join(' '))
-  }
-  // onclick={} - just ignore
-  else if (typeof value === 'function') {}
-  // style={}
-  else if (value.constructor === Object) {
-    let values = Object.values(value)
-    el.setAttribute(name, Object.keys(value).map((key, i) => `${key}: ${values[i]};`).join(' '))
-  }
+  return attr(el, name, value)
 }
 
 function updateNode (from, to) {

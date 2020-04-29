@@ -12,7 +12,8 @@
     "./h": "./h.js",
     "./i": "./i.js",
     "./v": "./v.js",
-    "./a": "./a.js"
+    "./a": "./a.js",
+    "./dist/": "./dist/"
   },
   "scripts": {
     "start": "es-dev-server --app-index test/index.html --node-resolve --dedupe",

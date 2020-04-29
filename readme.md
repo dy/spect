@@ -60,7 +60,7 @@ _Spect_ is radical minimalistic [_aspect-oriented_](https://en.wikipedia.org/wik
 
 ```html
 <script type="module">
-import { $, h, v } from 'https://unpkg.com/spect?module'
+import { $, h, i, v, a } from 'https://unpkg.com/spect?module'
 
 // ... code here
 </script>
@@ -71,7 +71,7 @@ import { $, h, v } from 'https://unpkg.com/spect?module'
 [![npm i spect](https://nodei.co/npm/spect.png?mini=true)](https://npmjs.org/package/spect/)
 
 ```js
-import { $, h, v } from 'spect'
+import { $, h, i, v, a } from 'spect'
 
 // ... code here too
 ```
@@ -363,6 +363,10 @@ fahren() // 32
 
 _R&D_: [observable](https://ghub.io/observable).
 
+<br/>
+
+</details>
+
 
 <details><summary><strong>v − value observer</strong></summary><br/>
 
@@ -411,11 +415,6 @@ v([v1, v2, v3])(([v1, v2, v3]) => {
 let vsum = v`${v1} + ${v2} = ${v3}`()
 vsum() // "1 + 2 = 3"
 
-// props
-let item = { done: false, text: '' }
-let v5 = v(item)
-v5.done() // false
-
 // diff
 v5((item, diff) => console.log(item, diff))
 item.done = true
@@ -428,9 +427,6 @@ v6() // v5
 
 // async iterator
 for await (const value of v(v6)) console.log(value)
-
-// attributes
-v(el, {})
 
 // dispose
 ;[v6, v5, v4, v3, v2, v1].map(v => v[Symbol.dispose]())
@@ -465,6 +461,43 @@ _R&D_: [observable/transform](https://ghub.io/observable), [react hooks](https:/
 
 </details>
 
+
+
+<details><summary><strong>a − attribute observable</strong></summary><br/>
+
+> props = a( source , path? )
+
+Attribute / property observable for defined target or element. Useful for forwarding props/attributes to templates.
+
+```js
+import { v, a } from 'spect'
+
+let item = { done: false, text: '' }
+
+// single prop
+v(a(item, 'done'))
+
+// all props
+let vitem = v({a(item, 'done'), a(item, 'text')})
+
+// single attribute
+a(el, 'loading')
+
+// all attributes
+a(el)
+```
+
+#### Example
+
+```js
+import { $, h, a } from 'spect'
+
+$('#my-component', el => {
+  h`<${el}><header>${ a(el, 'title') }</header></>`
+})
+```
+
+</details>
 
 
 <p align="center">ॐ</p>

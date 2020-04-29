@@ -59,6 +59,29 @@ export const channel = () => {
   })
 }
 
+// we can't handle observable subscription here - it deals with node[_ref], which is not this function concern
+export function attr (el, name, value) {
+  // if (arguments.length < 3) return (value = el.getAttribute(name)) === '' ? true : value
+
+  if (!el.setAttribute) return
+
+  if (primitive(value)) {
+    if (value === false || value == null) el.removeAttribute(name)
+    else el.setAttribute(name, value === true ? '' : value)
+  }
+  // class=[a, b, ...c] - possib observables
+  else if (name === 'class' && Array.isArray(value)) {
+    el.setAttribute(name, value.filter(Boolean).join(' '))
+  }
+  // onclick={} - just ignore
+  else if (typeof value === 'function') {}
+  // style={}
+  else if (name === 'style' && value.constructor === Object) {
+    let values = Object.values(value)
+    el.setAttribute(name, Object.keys(value).map((key, i) => `${key}: ${values[i]};`).join(' '))
+  }
+}
+
 export const observer = (next, error, complete) => (next && next.call) || (error && error.call) || (complete && complete.call) || (next && observer(next.next, next.error, next.complete))
 
 export const desc = value => Object.assign({configurable: false, enumerable: false}, value === undefined ? {writable: true} : {value})
