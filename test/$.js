@@ -388,7 +388,7 @@ t('async aspects', async t => {
   document.body.appendChild(a)
 
   let log = []
-  $('a', async el => {
+  let as = $('a', async el => {
     log.push(1)
     await tick()
     log.push(2)
@@ -398,6 +398,8 @@ t('async aspects', async t => {
   document.body.removeChild(a)
   await frame(2)
   t.is(log, [1, 2, 3])
+
+  // as[Symbol.dispose]()
 })
 t('rebinding to other document', async t => {
   let all = await import('nodom')

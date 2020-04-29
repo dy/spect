@@ -105,7 +105,7 @@ class $ extends Array {
 
           if (!target.classList.contains(anim.id)) {
             target.classList.add(anim.id)
-            anim.forEach(set => set.add(target, false))
+            anim.forEach(set => Object.getPrototypeOf(set).add.call(set, target, false))
           }
           else {
             target.classList.remove(anim.id)
@@ -267,7 +267,7 @@ class $ extends Array {
 ;(new MutationObserver((list) => {
   const queryAdd = (targets, sets, check) => {
     if (!sets || !targets) return
-    ;[].forEach.call(targets.nodeType ? [targets] : targets, target => sets.forEach(set => set.add(target, check)))
+    ;[].forEach.call(targets.nodeType ? [targets] : targets, target => sets.forEach(set => Object.getPrototypeOf(set).add.call(set, target, check)))
   }
   const queryDelete = target => [target.classList.contains(SPECT_CLASS) ? target : null, ...target.getElementsByClassName(SPECT_CLASS)]
     .forEach(node => setCache.has(node) && setCache.get(node).forEach(set => set.delete(node)))
