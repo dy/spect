@@ -333,7 +333,7 @@ _R&D_: [lit-html](https://ghub.io/lit-html), [htm@1](https://ghub.io/htm) [htl](
 > value = i( input | selector )<br/>
 > value = i\`selector\`
 
-Input / Select observable. Creates a get/set/subscribe function for values from _Input_, _Checkbox_, _Radio_, _Select_ or _Range_.
+Input observable. Creates a get/set/subscribe function for values from _Input_, _Checkbox_, _Radio_, _Select_ or _Range_.
 
 ```js
 import { i, v } from 'spect'
@@ -463,7 +463,7 @@ _R&D_: [observable/transform](https://ghub.io/observable), [react hooks](https:/
 
 
 
-<details><summary><strong>a − attribute observable</strong></summary><br/>
+<details><summary><strong>a − attribute / property observer</strong></summary><br/>
 
 > props = a( source , path )
 
@@ -505,6 +505,10 @@ $('#my-component', el => {
 ```
 
 </details>
+
+## License
+
+MIT.
 
 
 <p align="center">ॐ</p>
