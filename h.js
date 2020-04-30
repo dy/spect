@@ -60,7 +60,7 @@ function createBuilder(str) {
     .replace(/([^<\s])\/>/g, '$1 />')
     // <a#b.c → <a #b.c
     .replace(/(<[\w:-]+)([#\.][^<>]*>)/g, '$1 $2')
-  tpl.innerHTML = str
+  tpl.innerHTML = str.trim()
 
   // normalize template tree
   let normWalker = document.createTreeWalker(tpl.content, SHOW_TEXT | SHOW_ELEMENT, null), split = [], node
@@ -153,7 +153,7 @@ function createBuilder(str) {
         if (!fast && observable(arg)) {
           // init placeholder node
           node[_ref] = updateNode(node, document.createTextNode(''))
-          return sube(arg, tag => (node[_ref] = updateNode(node[_ref], tag)))
+          return sube(arg, tag => (node[_ref] = updateNode(node[_ref], tag) ))
         }
         node[_ref] = updateNode(node[_ref] || node, arg)
       })
@@ -341,8 +341,9 @@ export function merge (parent, a, b, end = null) {
   while ((bi = b[i++]) || cur != end) {
     next = cur ? cur.nextSibling : end
 
-    // skip
-    if (same(cur, bi)) cur = next
+    // skip (update output array if morphed)
+    // FIXME: morphing can be avoided in a nicer way
+    if (same(cur, bi)) (b[i - 1] = cur, cur = next)
 
     // insert has higher priority, inc. tail-append shortcut
     else if (bi && (cur == end || bidx.has(cur))) {

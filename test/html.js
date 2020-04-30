@@ -1,5 +1,5 @@
 import t from 'tst'
-import { v } from '../index.js'
+import { v, $ } from '../index.js'
 import h from '../h.js'
 import { tick, frame, idle, time } from 'wait-please'
 import observable from './observable.js'
@@ -451,9 +451,9 @@ t('html: initial content should be morphed/hydrated', t => {
   // t.is(el.lastChild, bar)
 })
 
-t('html: newline nodes should have space in between', t => {
+t('html: newline nodes should have space in between, but not around', t => {
   let el = h` ${'a'} ${'b'} `
-  t.is(el.textContent, ' a b ')
+  t.is(el.textContent, 'a b')
 })
 
 t('legacy html: direct component rerendering should keep children', async t => {
@@ -711,4 +711,14 @@ t.todo('html: non-tr > td elements must persist', async t => {
   let el = document.createElement('tr')
   h`<${el}><td>${1}</td></>`
   t.is(el.outerHTML, `<tr><td>1</td></tr>`)
+})
+
+t('html: dynamic data case', async t => {
+  let table = document.createElement('table'), data = v(() => [])
+  h`<${table}>${ v(data, data => data.map(item => h`<tr><td>${ item }</td></tr>`)) }</>`
+  t.is(table.innerHTML, '')
+
+  console.log('---update')
+  data([1])
+  t.is(table.innerHTML, '<tr><td>1</td></tr>')
 })
