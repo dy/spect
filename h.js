@@ -139,14 +139,14 @@ function createBuilder(str) {
     if (hasFields) {
       let i = 0, nodes = fast ? fastNodes : frag.querySelectorAll('.' + FIELD_CLASS), tplNode
       while (tplNode = tplNodes[i]) {
-        let node = nodes[i++]
+        let node = nodes[i++], attrField, childField
 
         if (!fast) (node.classList.remove(FIELD_CLASS), !node.className && node.removeAttribute('class'))
 
         // eval attributes
-        if (tplNode._attrFields) {
-          for (let j = 0, n = tplNode._attrFields.length; j < n; j++) {
-            let [name, value, statics] = tplNode._attrFields[j]
+        if (attrField = tplNode._attrFields) {
+          for (let j = 0, n = attrField.length; j < n; j++) {
+            let [name, value, statics] = attrField[j]
             // <a ${foo}
             if (value == null) {
               if (!(arg = arguments[name])) {}
@@ -189,24 +189,31 @@ function createBuilder(str) {
         }
 
         // eval children
-        if (tplNode._childFields) {
-          const children = [], subs = !fast && []
+        if (childField = tplNode._childFields) {
+          const children = !fast && [], subs = !fast && []
           for (let j = 0, n = tplNode.childNodes.length; j < n; j++) {
-            let fieldId = tplNode._childFields[j]
+            let fieldId = childField[j], arg
+            if (!fast) {
+              if (fieldId == null) children.push(node.childNodes[j])
+              else if ((arg = arguments[fieldId]) != null) addChildren(children, arg, subs)
+            }
             // fast case is guaranteed to correspond index tplNode._childFields[i] ==> node.childNodes[i]
-            if (fieldId == null) children.push(node.childNodes[j])
-            let arg = arguments[fieldId]
-            if (arg != null) {
-              addChildren(children, arg)
-              if (!fast && observable(arg)) subs[subs.length] = arg
+            // render immediately (fast path)
+            else if (fieldId != null) {
+              let child = node.childNodes[j]
+              if (immutable(arg = arguments[fieldId])) child.data = arg || ''
+              else if (arg.nodeType) node.replaceChild(arg, child)
+              else merge(node, [child], addChildren([], arg))
             }
           }
-          merge(node, node.childNodes, children)
 
           // partial-merge only for observable fields
-          if (!fast) for (let j in subs) {
-            let before = children[j], prev = []
-            cleanup.push(sube(subs[j], arg => (prev = merge(node, prev, arg != null ? addChildren([], arg) : [], before))))
+          if (!fast) {
+            merge(node, node.childNodes, children)
+            for (let j in subs) {
+              let before = children[j], prev = []
+              cleanup.push(sube(subs[j], arg => (prev = merge(node, prev, addChildren([], arg), before))))
+            }
           }
         }
       }
@@ -245,11 +252,13 @@ function createBuilder(str) {
   return build
 }
 
-function addChildren(children, arg) {
-  if (arg.nodeType) children.push(arg)
+function addChildren(children, arg, subs) {
+  if (arg == null) {}
+  else if (arg.nodeType) children.push(arg)
   else if (immutable(arg)) (children.push(arg = new String(arg)))
   else if (Array.isArray(arg)) for (let i = 0; i < arg.length; i++) addChildren(children, arg[i])
   else if (arg[Symbol.iterator]) children.push(...arg)
+  else if (subs && observable(arg)) subs.push(arg)
   return children
 }
 
@@ -269,8 +278,6 @@ function sube(target, fn, unsub, stop) {
 
 const prop = (el, name, value) => (el[name] = value, attr(el, name, value))
 
-const morph = (a, b) => a.nodeType === TEXT && !b.nodeType ? a.data = b : parent.replaceChild(b, a)
-
 // ref: https://github.com/luwes/js-diff-benchmark/blob/master/libs/spect.js
 export function merge (parent, a, b, end = null) {
   let bidx = new Set(b), aidx = new Set(a), i = 0, cur = a[0], next, bi
@@ -287,14 +294,12 @@ export function merge (parent, a, b, end = null) {
       if (b[i] === next && aidx.has(bi)) cur = next
 
       // insert
-      parent.insertBefore(bi, cur)
+      parent.insertBefore(!bi.nodeType ? document.createTextNode(bi) : bi, cur)
     }
 
     // technically redundant, but enables morphing text
     else if (bi && !aidx.has(bi)) {
-      // morphing is faster
-      morph(cur, bi)
-      // parent.replaceChild(bi, cur)
+      cur.nodeType === TEXT && !bi.nodeType ? cur.data = bi : parent.replaceChild(bi, cur)
       cur = next
     }
 
