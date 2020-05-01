@@ -68,32 +68,7 @@ function createBuilder(str) {
   // fields are co-directional with node sequence in document, attributes and childNodes order, so we just increment fieldId
   while (tplNode = normWalker.nextNode()) {
     // collect component fields, like <${node}
-    if (tplNode.localName === FIELD) {
-      hasComponents = true
-      const i = fieldId++
-      evalComp.push((node, args) => {
-        const arg = args[i], props = node._ref
-
-        // collect simple props
-        for (let n = 0, name, value; n < node.attributes.length && ({ name, value } = node.attributes[n]); n++)
-          if (!(name in props)) props[name] = value
-
-        // <${el}
-        if (arg.nodeType) {
-          // h`<${b}/>` - b is kept in its own parent
-          // h`<a><${b}/></a>` - b is placed to a
-          node._ref = (updateNode(node, node.parentNode.nodeType === FRAGMENT ? document.createTextNode('') : arg))._ref = arg
-
-          // render tpl node children/attrs/props to the replacement
-          for (let key in props) prop(arg, key, props[key])
-            merge(arg, arg.childNodes, [...node.childNodes])
-        }
-        // <${Component} - collect props to render components later
-        else if (typeof arg === 'function') {
-          node._ref = updateNode(node, arg(props))
-        }
-      })
-    }
+    if (tplNode.localName === FIELD) { hasComponents = true, tplNode._compField = fieldId++ }
 
     // collect attribute fields
     const attrFields = []
@@ -113,7 +88,7 @@ function createBuilder(str) {
       }
       // <a ${'hidden'}, <a ...${props}
       else if (name.includes(FIELD)) {
-        tplNode.removeAttribute(name), n--, m--
+        tplNode.removeAttribute(name), n--, i--
         attrFields.push([fieldId++])
       }
       // <a a=${b}, <a a="b${c}d${e}f"
@@ -122,7 +97,7 @@ function createBuilder(str) {
         else (value = value.split(FIELD), attrFields.push([name, fieldId, value]), value.end = fieldId += value.length - 1)
       }
     }
-    if (attrFields.length) (hasAttrs = true, tplNode.classList.add(FIELD_CLASS), tplNode._attrFields = attrFields)
+    if (attrFields.length) (hasFields = true, tplNode.classList.add(FIELD_CLASS), tplNode._attrFields = attrFields)
 
     // collect children fields
     let childFields = null, i = 0, child
@@ -138,13 +113,14 @@ function createBuilder(str) {
 
   // static template is used for short-path rendering by changing tpl directly & cloning
   const fastTpl = !hasComponents && tpl.cloneNode(true),
-        fastNodes = hasFields && fastTpl.content.querySelectorAll('.' + FIELD_CLASS),
-        tplNodes = hasFields && tpl.content.querySelectorAll('.' + FIELD_CLASS)
+        fastNodes = fastTpl && hasFields && fastTpl.content.querySelectorAll('.' + FIELD_CLASS),
+        tplNodes = hasFields && tpl.content.querySelectorAll('.' + FIELD_CLASS),
+        tplComps = hasComponents && tpl.content.querySelector(FIELD)
 
   if (fastNodes) fastNodes.forEach(node => (node.classList.remove(FIELD_CLASS), !node.className && node.removeAttribute('class')))
 
   function build() {
-    let cleanup = [], fast = !hasComponents, frag
+    let cleanup, fast = !hasComponents, frag, arg
 
     // if all fields are primitives - take short path - modify fastTpl directly & clone
     // why `!immutables` and not `observable`:
@@ -152,35 +128,32 @@ function createBuilder(str) {
     // - object field may one-way add attribs (spoil fast node) and also may have observable prop
     // - array field can insert additional children, spoiling numeration of _childFields
     if (!hasComponents) for (let i = 0; i < arguments.length; i++) if (!immutable(arguments[i])) { fast = false; break }
-    frag = fast ? fastTpl : tpl.content.cloneNode(true)
+    frag = fast ? fastTpl : (cleanup = [], tpl.content.cloneNode(true))
 
     // query/apply different types of evaluators in turn
     // https://jsperf.com/getelementsbytagname-vs-queryselectorall-vs-treewalk/1
     // FIXME: try to replace with getElementsByClassName, getElementsByTagName
     if (hasFields) {
-      let i = 0, node, nodes = fast ? fastNodes : frag.querySelectorAll(FIELD_CLASS), subs = !fast && []
-      while ({_childFields, _attrFields} = tplNodes[i], node = nodes[i++]) {
-        if (!fast) (node.classList.remove(FIELD_CLASS), !node.className && child.removeAttribute('class'))
+      let i = 0, nodes = fast ? fastNodes : frag.querySelectorAll('.' + FIELD_CLASS), tplNode
+      while (tplNode = tplNodes[i]) {
+        let node = nodes[i++]
+
+        if (!fast) (node.classList.remove(FIELD_CLASS), !node.className && node.removeAttribute('class'))
 
         // eval attributes
-        if (_attrFields) {
-          // for (let j = 0, evals = evalAttrs[i++], evalAttr = evals[0]; j < evals.length; evalAttr = evals[++j])
-          //   cleanup.push(evalAttr(child, arguments, fast))
-          for (let j = 0, n = _attrFields.length, name, value; [name, value, statics] = _attrFields[j], j++ < n;) {
+        if (tplNode._attrFields) {
+          for (let j = 0, n = tplNode._attrFields.length; j < n; j++) {
+            let [name, value, statics] = tplNode._attrFields[j]
             // <a ${foo}
             if (value == null) {
-              const arg = arguments[name]
-
-              if (!arg) {}
+              if (!(arg = arguments[name])) {}
               // <a ${'name'}
               else if (fast || primitive(arg)) prop(node, arg, true)
               // <a ...${props}
-              else (subs = !fast && []) => {
-                // no need for placeholder props
-                if (observable(arg)) return sube(arg, v => { for (let key in v) prop(node, key, v[key]) })
-
-                for (let key in arg) {
-                  if (observable(arg[key])) subs.push(sube(arg[key], v => prop(node, key, v)))
+              else {
+                if (observable(arg)) cleanup.push(sube(arg, v => {for (let key in v) prop(node, key, v[key]) }))
+                else for (let key in arg) {
+                  if (observable(arg[key])) cleanup.push(sube(arg[key], v => prop(node, key, v)))
                   else prop(node, key, arg[key])
                 }
               }
@@ -188,11 +161,14 @@ function createBuilder(str) {
             // <a foo=bar${baz}qux
             else if (statics) {
               const fields = [].slice.call(arguments, value, statics.end)
-              if (fast) return prop(node, name, h.tpl(statics, ...fields))
-
-              subs = fields.map((field, i) => observable(field) ? (fields[i] = '', field) : null)
-              prop(node, name, h.tpl(statics, ...fields))
-              subs.map((sub, i) => sub && sube(sub, v => (fields[i] = v, prop(node, name, h.tpl(statics, ...fields)))))
+              if (fast) prop(node, name, h.tpl(statics, ...fields))
+              else {
+                const subs = fields.map((field, i) => observable(field) ? (fields[i] = '', true) : null)
+                if (!subs.length) prop(node, name, h.tpl(statics, ...fields))
+                else subs.map((sub, i) => sub &&
+                  cleanup.push(sube(sub, v => (fields[i] = v, prop(node, name, h.tpl(statics, ...fields)))))
+                )
+              }
             }
             // <a foo=${bar}
             else {
@@ -207,10 +183,10 @@ function createBuilder(str) {
         }
 
         // eval children
-        if (_childFields) {
+        if (tplNode._childFields) {
           let children = []
-          for (let j = 0, n = _childFields.length, fieldId; fieldId = _childFields[j], j++ < n;) {
-            // fast case is guaranteed to correspond index _childFields[i] ==> node.childNodes[i]
+          for (let j = 0, n = tplNode._childFields.length, fieldId; fieldId = tplNode._childFields[j], j++ < n;) {
+            // fast case is guaranteed to correspond index tplNode._childFields[i] ==> node.childNodes[i]
             if (fieldId == null) children.push(node.childNodes[i])
             let arg = arguments[fieldId]
             if (arg) {
@@ -228,21 +204,31 @@ function createBuilder(str) {
       }
     }
 
-    // assign props stash for components to collect attribs
-    // if (hasComponents) {
-    //   components = frag.querySelectorAll(FIELD), i = 0
-    //   while (child = components[i++]) child[_ref] = {}
-    // }
+    // eval components
+    if (hasComponents) {
+      let i = 0, comps = frag.querySelectorAll(FIELD), tplComp
+      while (tplComp = tplComps[i]) {
+        const comp = comps[i++], arg = arguments[tplComp._compField]
+        // <${el}
+        if (arg.nodeType) {
+          // render tpl node children/attrs/props to the replacement
+          // FIXME: merge(arg, arg.attributes, comp.attributes)
+          for (let i = 0, name; { name } = comp.attributes[i], i < comp.attributes.length; i++) prop(arg, name, comp[name])
+          merge(arg, arg.childNodes, [...comp.childNodes])
 
+          // h`<${b}/>` - b is kept in its own parent
+          if (comp.parentNode.nodeType === FRAGMENT) return arg
 
-    // evaluate components with collected props
-    // if (hasComponents) {
-    //   i = 0
-    //   while (child = components[i]) cleanup.push(evalComp[i++](child, arguments))
-    // }
+          // h`<a><${b}/></a>` - b is placed to a
+          comp.replaceWith(arg)
+        }
+        // <${Component}
+        else if (typeof arg === 'function') comp.replaceWith(arg(comp))
+      }
+    }
 
     if (fast) frag = frag.cloneNode(true).content
-    return frag.childNodes.length === 1 ? frag.firstChild[_ref] || frag.firstChild : frag
+    return frag.childNodes.length === 1 ? frag.firstChild : frag
   }
 
 
@@ -283,7 +269,7 @@ export function merge (parent, a, b, end = null) {
     next = cur ? cur.nextSibling : end
 
     // skip (update output array if morphed)
-    if (a === b || (a.key != null && a.key === b.key)) cur = next
+    if (cur === bi || (cur && cur.key != null && bi && cur.key === bi.key)) cur = next
 
     // insert has higher priority, inc. tail-append shortcut
     else if (bi && (cur == end || bidx.has(cur))) {
