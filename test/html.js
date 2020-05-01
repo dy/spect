@@ -15,8 +15,8 @@ t('html: single attribute cases', async t => {
 
   // observable name
   const a = v('a')
-  el = h`<div ${a}=0/>`
-  t.is(el.outerHTML, `<div a="0"></div>`, 'observable name')
+  el = h`<div ${a}/>`
+  t.is(el.outerHTML, `<div a=""></div>`, 'observable name')
 
   // observable value
   const val = v(0)
@@ -47,10 +47,8 @@ t('html: single attribute on mounted node', async t => {
   t.is(div.outerHTML, `<div a="0"></div>`)
 
   a(1)
-  // FIXME: why so big delay?
   await tick(24)
   t.is(div.outerHTML, `<div a="1"></div>`)
-  a(undefined)
   a(null)
   await tick(24)
   t.is(div.outerHTML, `<div></div>`)

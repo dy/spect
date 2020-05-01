@@ -25,7 +25,7 @@ t('h: single attribute', async t => {
   t.is(el.outerHTML, `<div></div>`)
 })
 
-t.only('h: single attribute on mounted node', async t => {
+t('h: single attribute on mounted node', async t => {
   const a = v(0)
   let div = document.createElement('div')
 

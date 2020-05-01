@@ -25,15 +25,15 @@ export default function h (statics, ...fields) {
       if (!build) {
         if (!statics) (buildCache[key] = build = createBuilder(FIELD.repeat(fields.length))).frag = true
         else if (EMPTY.includes(statics)) (buildCache[key] = build = createBuilder(`<${statics} ...${FIELD} />`)).empty = true
-        else (buildCache[key] = build = createBuilder(`<${statics} ...${FIELD}>${FIELD.repeat(fields.length)}</${statics}>`))
+        else (buildCache[key] = build = createBuilder(`<${statics} ...${FIELD}>${FIELD}</${statics}>`))
       }
-      return build.frag ? build(...fields) : build.empty ? build(props) : build(props, ...fields)
+      return build.frag ? build(...fields) : build.empty ? build(props) : build(props, fields)
     }
     // h(target, props?, ...children)
     else {
       build = buildCache.get(statics)
-      if (!build) buildCache.set(statics, build = createBuilder(`<${FIELD} ...${FIELD}>${FIELD.repeat(fields.length)}</>`))
-      return build(statics, props, ...fields)
+      if (!build) buildCache.set(statics, build = createBuilder(`<${FIELD} ...${FIELD}>${FIELD}</>`))
+      return build(statics, props, fields)
     }
   }
 
@@ -100,13 +100,16 @@ function createBuilder(str) {
     if (attrFields.length) (hasFields = true, tplNode.classList.add(FIELD_CLASS), tplNode._attrFields = attrFields)
 
     // collect children fields
-    let childFields = null, i = 0, child
-    while (child = tplNode.childNodes[i++]) {
-      if (child.nodeType === TEXT && ~(idx = child.data.indexOf(FIELD))) {
-        // querying by class is faster than traversing childNodes https://jsperf.com/queryselector-vs-prop-access
-        if (!childFields) { hasChildren = true, tplNode.classList.add(FIELD_CLASS), childFields = tplNode._childFields = [] }
-        child.splitText(idx).splitText(FIELD.length)
-        childFields[i++] = fieldId++
+    let childFields = null, j = 0, child, idx
+    while (child = tplNode.childNodes[j++]) {
+      if (child.nodeType === TEXT) {
+        if (~(idx = child.data.indexOf(FIELD))) {
+          // querying by class is faster than traversing childNodes https://jsperf.com/queryselector-vs-prop-access
+          if (!childFields) { hasFields = true, tplNode.classList.add(FIELD_CLASS), childFields = tplNode._childFields = [] }
+          if (idx) child = child.splitText(idx); else j--
+          if (child.data.length > FIELD.length) child.splitText(FIELD.length)
+          childFields[j++] = fieldId++
+        }
       }
     }
   }
@@ -115,7 +118,7 @@ function createBuilder(str) {
   const fastTpl = !hasComponents && tpl.cloneNode(true),
         fastNodes = fastTpl && hasFields && fastTpl.content.querySelectorAll('.' + FIELD_CLASS),
         tplNodes = hasFields && tpl.content.querySelectorAll('.' + FIELD_CLASS),
-        tplComps = hasComponents && tpl.content.querySelector(FIELD)
+        tplComps = hasComponents && tpl.content.querySelectorAll(FIELD)
 
   if (fastNodes) fastNodes.forEach(node => (node.classList.remove(FIELD_CLASS), !node.className && node.removeAttribute('class')))
 
@@ -151,9 +154,12 @@ function createBuilder(str) {
               else if (fast || primitive(arg)) prop(node, arg, true)
               // <a ...${props}
               else {
-                if (observable(arg)) cleanup.push(sube(arg, v => {for (let key in v) prop(node, key, v[key]) }))
+                if (observable(arg)) cleanup.push(sube(arg, v => {
+                  if (primitive(v)) prop(node._ref || node, v, true)
+                  else for (let key in v) prop(node._ref || node, key, v[key])
+                }))
                 else for (let key in arg) {
-                  if (observable(arg[key])) cleanup.push(sube(arg[key], v => prop(node, key, v)))
+                  if (observable(arg[key])) cleanup.push(sube(arg[key], v => prop(node._ref || node, key, v)))
                   else prop(node, key, arg[key])
                 }
               }
@@ -166,7 +172,7 @@ function createBuilder(str) {
                 const subs = fields.map((field, i) => observable(field) ? (fields[i] = '', true) : null)
                 if (!subs.length) prop(node, name, h.tpl(statics, ...fields))
                 else subs.map((sub, i) => sub &&
-                  cleanup.push(sube(sub, v => (fields[i] = v, prop(node, name, h.tpl(statics, ...fields)))))
+                  cleanup.push(sube(sub, v => (fields[i] = v, prop(node._ref || node, name, h.tpl(statics, ...fields)))))
                 )
               }
             }
@@ -176,7 +182,7 @@ function createBuilder(str) {
               if (fast || !observable(arg)) prop(node, name, arg)
               else {
                 prop(node, name, '')
-                sube(arg, v => prop(node, name, v))
+                sube(arg, v => prop(node._ref || node, name, v))
               }
             }
           }
@@ -184,21 +190,23 @@ function createBuilder(str) {
 
         // eval children
         if (tplNode._childFields) {
-          let children = []
-          for (let j = 0, n = tplNode._childFields.length, fieldId; fieldId = tplNode._childFields[j], j++ < n;) {
+          const children = [], subs = !fast && []
+          for (let j = 0, n = tplNode.childNodes.length; j < n; j++) {
+            let fieldId = tplNode._childFields[j]
             // fast case is guaranteed to correspond index tplNode._childFields[i] ==> node.childNodes[i]
-            if (fieldId == null) children.push(node.childNodes[i])
+            if (fieldId == null) children.push(node.childNodes[j])
             let arg = arguments[fieldId]
-            if (arg) {
+            if (arg != null) {
               addChildren(children, arg)
               if (!fast && observable(arg)) subs[subs.length] = arg
             }
           }
           merge(node, node.childNodes, children)
+
           // partial-merge only for observable fields
           if (!fast) for (let j in subs) {
             let before = children[j], prev = []
-            cleanup.push(sube(arg, arg => prev = merge(node, prev, addChildren([], arg), before)))
+            cleanup.push(sube(subs[j], arg => (prev = merge(node, prev, arg != null ? addChildren([], arg) : [], before))))
           }
         }
       }
@@ -209,11 +217,13 @@ function createBuilder(str) {
       let i = 0, comps = frag.querySelectorAll(FIELD), tplComp
       while (tplComp = tplComps[i]) {
         const comp = comps[i++], arg = arguments[tplComp._compField]
+        comp._ref = arg
+
         // <${el}
         if (arg.nodeType) {
           // render tpl node children/attrs/props to the replacement
           // FIXME: merge(arg, arg.attributes, comp.attributes)
-          for (let i = 0, name; { name } = comp.attributes[i], i < comp.attributes.length; i++) prop(arg, name, comp[name])
+          for (let i = 0, name; i < comp.attributes.length && ({ name } = comp.attributes[i]); i++) prop(arg, name, comp[name])
           merge(arg, arg.childNodes, [...comp.childNodes])
 
           // h`<${b}/>` - b is kept in its own parent
@@ -237,12 +247,10 @@ function createBuilder(str) {
 
 function addChildren(children, arg) {
   if (arg.nodeType) children.push(arg)
-  else if (immutable(arg)) children.push(document.createTextNode(arg))
-  else if (Array.isArray(arg)) {
-    for (let k = 0, item, l = arg.length; item = arg[k], k++ < l;)
-      children.push(immutable(item) ? document.createTextNode(item) : item)
-  }
+  else if (immutable(arg)) (children.push(arg = new String(arg)))
+  else if (Array.isArray(arg)) for (let i = 0; i < arg.length; i++) addChildren(children, arg[i])
   else if (arg[Symbol.iterator]) children.push(...arg)
+  return children
 }
 
 // interpolator
@@ -261,6 +269,8 @@ function sube(target, fn, unsub, stop) {
 
 const prop = (el, name, value) => (el[name] = value, attr(el, name, value))
 
+const morph = (a, b) => a.nodeType === TEXT && !b.nodeType ? a.data = b : parent.replaceChild(b, a)
+
 // ref: https://github.com/luwes/js-diff-benchmark/blob/master/libs/spect.js
 export function merge (parent, a, b, end = null) {
   let bidx = new Set(b), aidx = new Set(a), i = 0, cur = a[0], next, bi
@@ -269,7 +279,7 @@ export function merge (parent, a, b, end = null) {
     next = cur ? cur.nextSibling : end
 
     // skip (update output array if morphed)
-    if (cur === bi || (cur && cur.key != null && bi && cur.key === bi.key)) cur = next
+    if (cur === bi || (cur && bi && cur.key && cur.key === bi.key)) cur = next
 
     // insert has higher priority, inc. tail-append shortcut
     else if (bi && (cur == end || bidx.has(cur))) {
@@ -282,7 +292,9 @@ export function merge (parent, a, b, end = null) {
 
     // technically redundant, but enables morphing text
     else if (bi && !aidx.has(bi)) {
-      parent.replaceChild(bi, cur)
+      // morphing is faster
+      morph(cur, bi)
+      // parent.replaceChild(bi, cur)
       cur = next
     }
 
