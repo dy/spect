@@ -81,9 +81,9 @@ export default function v(source, ...fields) {
       let stop
       ;(async () => {
         try {
-          for await (let v of source) {
+          for await (source of source) {
             if (stop) break
-            push(map(v))
+            push(map(source))
           }
         } catch(e) {
           error(e)

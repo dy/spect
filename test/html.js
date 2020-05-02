@@ -720,3 +720,7 @@ t('html: dynamic data case', async t => {
   data([1])
   t.is(table.innerHTML, '<tr><td>1</td></tr>')
 })
+
+t('html: fields order', async t => {
+  t.is(h`<b> b${2}b <c>c${3}c</c> b${4}b </b> `.outerHTML, `<b> b2b <c>c3c</c> b4b </b>`)
+})
