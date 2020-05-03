@@ -5,14 +5,17 @@ import { tick, frame, idle, time } from 'wait-please'
 import observable from './observable.js'
 // import { v as iv } from 'ironjs'
 
-t('html: single attribute cases', async t => {
-  // direct
-  let el = h`<div a=0/>`
-  t.is(el.outerHTML, `<div a="0"></div>`, 'simple attr')
+t('html: direct attribute case', async t => {
+  let el = h`<div a=0 b=${1}/>`
+  t.is(el.outerHTML, `<div a="0" b="1"></div>`, 'simple attr')
+})
 
-  el = h`<div a=a${'b'}c/>`
-  t.is(el.outerHTML, `<div a="abc"></div>`, 'multifield')
+t('html: multifield attr case', t => {
+  let el = h`<div a=a${'b'}c${'d'} class="a ${'b'} c"/>`
+  t.is(el.outerHTML, `<div a="abcd" class="a b c"></div>`, 'multifield')
+})
 
+t('html: observable attr', t => {
   // observable name
   const a = v('a')
   el = h`<div ${a}/>`
@@ -20,9 +23,7 @@ t('html: single attribute cases', async t => {
 
   // observable value
   const val = v(0)
-
   el = h`<div a=${val}></div>`
-
   t.is(el.outerHTML, `<div a="0"></div>`, 'observable value')
 
   val(1)

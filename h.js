@@ -1,4 +1,4 @@
-import { symbol, observable, primitive, immutable, list, attr } from './src/util.js'
+import { symbol, observable, primitive, immutable, attr } from './src/util.js'
 
 const TEXT = 3, ELEMENT = 1, COMMENT = 8, FRAGMENT = 11, SHOW_ELEMENT = 1, SHOW_TEXT = 4, SHOW_COMMENT = 128
 
@@ -95,7 +95,7 @@ function createBuilder(str) {
         // <a a=${b}, <a a="b${c}d${e}f"
         else if (value.includes(FIELD)) {
           if (value === FIELD) attrFields.push([name, field++, true])
-          else (value = value.split(FIELD), attrFields.push([name, field, value]), value.end = field += value.length - 1)
+          else (value = value.split(FIELD), attrFields.push([name, field, value]), field += value.length - 1)
         }
       }
       if (attrFields.length) hasAttributes = !!(node._attibutes = attrFields)
@@ -117,7 +117,6 @@ function createBuilder(str) {
 
   return function build() {
     let cleanup, fast = !hasComponents, frag, nodes
-
     // if all fields are primitives - take short path - modify fastTpl directly & clone
     // why `!immutables` and not `observable`:
     // - fn field cannot be cloned afterwards (like onclick)
@@ -128,28 +127,78 @@ function createBuilder(str) {
     if (fast) {
       if (!fastEvaluate) {
         // fields are co-directional with node sequence in document, attributes and childNodes order, so we just increment fieldId
-        fastEvaluate = new Function('frag', 'nodes', 'args', `let child\n` + tplNodes.map((tplNode, nodeId) => {
+        fastEvaluate = new Function('frag', 'nodes', 'args', '_', `let node, child, attr\n` + tplNodes.map((tplNode, nodeId) => {
           let result = ``
+
+          if (tplNode._attibutes) tplNode._attibutes.forEach(([name, value, statics]) => {
+            if (statics) {
+              // <a foo=${bar}
+              if (statics === true) {
+                const fieldId = value
+                result += `_.prop(nodes[${nodeId}], '${esc(name)}', args[${fieldId}])\n`
+                // const arg = arguments[value]
+                // if (fast || !observable(arg)) prop(node, name, arg)
+                // else {
+                //   prop(node, name, '')
+                //   sube(arg, v => prop(node, name, v))
+                // }
+              }
+              // <a foo=bar${baz}qux
+              else {
+                const start = value
+                result += `_.prop(nodes[${nodeId}], '${esc(name)}', \`${join(statics, i => '${args[' + (start + i) + ']}')}\`)\n`
+                // const fields = [].slice.call(arguments, value, statics.end)
+                // if (fast) prop(node, name, h.tpl(statics, ...fields))
+                // else {
+                //   const subs = fields.map((field, i) => observable(field) ? (fields[i] = '', true) : null)
+                //   if (!subs.length) prop(node, name, h.tpl(statics, ...fields))
+                //   else subs.map((sub, i) => sub &&
+                //     cleanup.push(sube(sub, v => (fields[i] = v, prop(node, name, h.tpl(statics, ...fields)))))
+                //   )
+                // }
+              }
+            }
+            // <a ${foo}
+            else {
+              if (!(arg = arguments[name])) {}
+              // <a ${'name'}
+              else if (fast || primitive(arg)) prop(node, arg, value)
+              // <a ...${props}
+              else {
+                if (observable(arg)) cleanup.push(sube(arg, v => {
+                  if (primitive(v)) prop(node, v, true)
+                  else for (let key in v) prop(node, key, v[key])
+                }))
+                else for (let key in arg) {
+                  if (observable(arg[key])) cleanup.push(sube(arg[key], v => prop(node, key, v)))
+                  else prop(node, key, arg[key])
+                }
+              }
+            }
+          })
+
           if (tplNode._children) tplNode._children.forEach((fieldId, childId) => {
             if (fieldId == null) return
             result += `child = nodes[${nodeId}].childNodes[${childId}]\n` +
               `if (child.nodeType === ${TEXT}) child.data = args[${fieldId}]\n` +
               `else child.replaceWith(args[${fieldId}])\n`
           })
+
           return result
         }).join('\n'))
+        console.log(fastEvaluate)
         fastFrag = tpl.content.cloneNode(true)
         fastNodes = fastFrag.querySelectorAll('.' + FIELD_CLASS)
         fastNodes.forEach(node => (node.classList.remove(FIELD_CLASS), !node.className && node.removeAttribute('class')))
       }
-      fastEvaluate(frag, fastNodes, arguments)
+      fastEvaluate(frag, fastNodes, arguments, util)
       frag = fastFrag.cloneNode(true)
     }
     else {
       cleanup = []
       frag = tpl.content.cloneNode(true)
       nodes = frag.querySelectorAll('.' + FIELD_CLASS)
-      evaluate(frag, nodes, arguments)
+      evaluate(frag, nodes, arguments, util)
     }
 
     // query/apply different types of evaluators in turn
@@ -278,6 +327,8 @@ function createBuilder(str) {
   }
 }
 
+const esc = n => n.replace(/"|'|\s|\\/g, '')
+
 function addChildren(children, arg, subs) {
   if (arg == null) {}
   else if (arg.nodeType) children.push(arg)
@@ -289,7 +340,14 @@ function addChildren(children, arg, subs) {
 }
 
 // interpolator
-h.tpl = (statics, ...fields) => String.raw({raw: statics}, ...fields.map(value => !value ? '' : value)).trim()
+const tpl = (statics, ...fields) => String.raw({raw: statics}, ...fields.map(value => !value ? '' : value)).trim()
+
+// join an array with a function
+const join = (arr, fn) => {
+  let str = '', i = 0
+  for (; i < arr.length - 1; i++) str += arr[i] + fn(i)
+  return str += arr[i]
+}
 
 // lil subscriby (v-less)
 function sube(target, fn, unsub, stop) {
@@ -303,6 +361,8 @@ function sube(target, fn, unsub, stop) {
 }
 
 const prop = (el, name, value) => (el[name] = value, attr(el, name, value))
+
+const util = { prop, merge }
 
 // ref: https://github.com/luwes/js-diff-benchmark/blob/master/libs/spect.js
 export function merge (parent, a, b, end = null) {
