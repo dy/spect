@@ -64,64 +64,59 @@ function createBuilder(str) {
 
   // getElementsByTagName('*') is faster than tree iterator/querySelector('*), but live and fragment doesn't have it
   // ref: https://jsperf.com/createnodeiterator-vs-createtreewalker-vs-getelementsby
-  let it = document.createNodeIterator(tpl.content, SHOW_ELEMENT | SHOW_COMMENT, null), tplNode = tpl.content, fieldId = 0,
-      // FIXME: these can be detected from outside to be faster
-      hasFields = str.includes(FIELD), hasComponents = str.includes('<' + FIELD)
-
-  // fields are co-directional with node sequence in document, attributes and childNodes order, so we just increment fieldId
-  while (tplNode = it.nextNode()) {
-    if (tplNode.nodeType === COMMENT) {
-      if (tplNode.data === FIELD) {
-        tplNode._field = fieldId++
-        let parent = tplNode.parentNode
-        if (!parent._childFields) (parent._childFields = true, parent.classList && parent.classList.add(FIELD_CLASS))
-      }
-    }
-    else {
+  let it = document.createNodeIterator(tpl.content, SHOW_ELEMENT | SHOW_COMMENT, null), node, tplNodes = [], field = 0,
+      hasComponents = false, hasChildren = false, hasAttributes = false
+  while (node = it.nextNode()) {
+    if (node.nodeType === ELEMENT) {
       // collect component fields, like <${node}
-      if (tplNode.localName === FIELD) { tplNode._compField = fieldId++, tplNode.classList.add(FIELD_CLASS) }
+      if (node.localName === FIELD) { node._component = field++, hasComponents = true }
 
       // collect attribute fields
       const attrFields = []
-      for (let i = 0, n = tplNode.attributes.length; i < n; i++) {
-        let {name, value} = tplNode.attributes[i]
+      for (let i = 0, attr; attr = node.attributes[i++];) {
+        let {name, value} = attr
         // <a #b.c
         if (/^#|^\.\b/.test(name)) {
-          tplNode.removeAttribute(name), --i, --n;
+          node.removeAttribute(name), --i;
           let [beforeId, afterId = ''] = name.split('#')
           let beforeClx = beforeId.split('.')
           name = beforeClx.shift()
           let afterClx = afterId.split('.')
           let id = afterClx.shift()
           let clx = [...beforeClx, ...afterClx]
-          if (!tplNode.id && id) tplNode.id = id
-          if (clx.length) clx.map(cls => tplNode.classList.add(cls))
+          if (!node.id && id) node.id = id
+          if (clx.length) clx.map(cls => node.classList.add(cls))
         }
         // <a ${'hidden'}, <a ...${props}
         else if (name.includes(FIELD)) {
-          tplNode.removeAttribute(name), n--, i--
-          attrFields.push([fieldId++, value])
+          node.removeAttribute(name), --i
+          attrFields.push([field++, value])
         }
         // <a a=${b}, <a a="b${c}d${e}f"
         else if (value.includes(FIELD)) {
-          if (value === FIELD) attrFields.push([name, fieldId++, true])
-          else (value = value.split(FIELD), attrFields.push([name, fieldId, value]), value.end = fieldId += value.length - 1)
+          if (value === FIELD) attrFields.push([name, field++, true])
+          else (value = value.split(FIELD), attrFields.push([name, field, value]), value.end = field += value.length - 1)
         }
       }
+      if (attrFields.length) hasAttributes = !!(node._attibutes = attrFields)
+
+      // add indexes to childNodes
+      for (let child = node.firstChild, i = 0; child; child = child.nextSibling) {
+        if (!node._children && child.nodeType === COMMENT && child.data === FIELD) (hasChildren = true, node._children = [])
+        child._id = i++
+      }
+
       // querying by class is faster than traversing childNodes https://jsperf.com/queryselector-vs-prop-access
-      if (attrFields.length) (tplNode._attrFields = attrFields, tplNode.classList.add(FIELD_CLASS))
+      if (node._component || node._children || node._attibutes) (tplNodes.push(node), node.classList.add(FIELD_CLASS))
     }
+    else if (node.data === FIELD) node.parentNode._children[node._id] = (node._field = field++)
   }
 
-  // static template is used for short-path rendering by changing tpl directly & cloning
-  const fastTpl = !hasComponents && tpl.cloneNode(true),
-        fastNodes = fastTpl && hasFields && fastTpl.content.querySelectorAll('.' + FIELD_CLASS),
-        tplNodes = hasFields && tpl.content.querySelectorAll('.' + FIELD_CLASS)
-
-  if (fastNodes) fastNodes.forEach(node => (node.classList.remove(FIELD_CLASS), !node.className && node.removeAttribute('class')))
+  // fast template is used for short-path rendering by changing tpl directly & cloning
+  let fastEvaluate, fastNodes, fastFrag
 
   return function build() {
-    let cleanup, fast = !hasComponents, frag = fastTpl.content, arg, nodes = fastNodes
+    let cleanup, fast = !hasComponents, frag, nodes
 
     // if all fields are primitives - take short path - modify fastTpl directly & clone
     // why `!immutables` and not `observable`:
@@ -129,11 +124,38 @@ function createBuilder(str) {
     // - object field may one-way add attribs (spoil fast node) and also may have observable prop
     // - array field can insert additional children, spoiling numeration of _childFields
     if (!hasComponents) for (let i = 0; i < arguments.length; i++) if (!immutable(arguments[i])) { fast = false; break }
-    if (!fast) {cleanup = [], frag = tpl.content.cloneNode(true), nodes = frag.querySelectorAll('.' + FIELD_CLASS) }
+
+    if (fast) {
+      if (!fastEvaluate) {
+        // fields are co-directional with node sequence in document, attributes and childNodes order, so we just increment fieldId
+        fastEvaluate = new Function('frag', 'nodes', 'args', `let child\n` + tplNodes.map((tplNode, nodeId) => {
+          let result = ``
+          if (tplNode._children) tplNode._children.forEach((fieldId, childId) => {
+            if (fieldId == null) return
+            result += `child = nodes[${nodeId}].childNodes[${childId}]\n` +
+              `if (child.nodeType === ${TEXT}) child.data = args[${fieldId}]\n` +
+              `else child.replaceWith(args[${fieldId}])\n`
+          })
+          return result
+        }).join('\n'))
+        fastFrag = tpl.content.cloneNode(true)
+        fastNodes = fastFrag.querySelectorAll('.' + FIELD_CLASS)
+        fastNodes.forEach(node => (node.classList.remove(FIELD_CLASS), !node.className && node.removeAttribute('class')))
+      }
+      fastEvaluate(frag, fastNodes, arguments)
+      frag = fastFrag.cloneNode(true)
+    }
+    else {
+      cleanup = []
+      frag = tpl.content.cloneNode(true)
+      nodes = frag.querySelectorAll('.' + FIELD_CLASS)
+      evaluate(frag, nodes, arguments)
+    }
 
     // query/apply different types of evaluators in turn
     // https://jsperf.com/getelementsbytagname-vs-queryselectorall-vs-treewalk/1
     // FIXME: try to replace with getElementsByClassName, getElementsByTagName
+    /*
     if (hasFields) {
       let i = -1, tplNode
       while (tplNode = i<0 ? tpl.content : tplNodes[i]) {
@@ -250,8 +272,8 @@ function createBuilder(str) {
         i++
       }
     }
+    */
 
-    if (fast) frag = frag.cloneNode(true)
     return frag.childNodes.length === 1 ? frag.firstChild : frag
   }
 }

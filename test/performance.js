@@ -31,6 +31,16 @@ t('creation performance should be faster than direct DOM', async t => {
 
 
   container.innerHTML = ''
+  const ihtmlStart = performance.now()
+  for (let i = 0; i < N; i++) {
+    let a = document.createElement('a')
+    a.innerHTML = `a<b><c>${i}</c></b>`
+    container.appendChild(a)
+  }
+  const ihtmlTime = performance.now() - ihtmlStart
+
+
+  container.innerHTML = ''
   const hStart = performance.now()
   for (let i = 0; i < N; i++) {
     container.appendChild(h`<a>a<b><c>${i}</c></b></a>`)
@@ -38,7 +48,7 @@ t('creation performance should be faster than direct DOM', async t => {
   const hTime = performance.now() - hStart
   container.innerHTML = ''
 
-  console.log('h', hTime, 'dom', domTime, 'clone', cloneTime)
+  console.log('h', hTime, 'dom', domTime, 'clone', cloneTime, 'ihtml', ihtmlTime)
   t.ok(hTime < domTime, 'creation is fast')
 })
 
