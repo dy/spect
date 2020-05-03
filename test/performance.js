@@ -16,6 +16,20 @@ t('creation performance should be faster than direct DOM', async t => {
   }
   const domTime = performance.now() - domStart
 
+
+  container.innerHTML = ''
+  const cloneStart = performance.now()
+  let frag = document.createDocumentFragment(), b
+  frag.appendChild(document.createElement('a')).append(document.createTextNode('a'), b = document.createElement('b'))
+  b.appendChild(document.createElement('c')).appendChild(document.createTextNode(0))
+  for (let i = 0; i < N; i++) {
+    let node = frag.cloneNode(true)
+    node.querySelector('c').childNodes[0].data = i
+    container.appendChild(node)
+  }
+  const cloneTime = performance.now() - cloneStart
+
+
   container.innerHTML = ''
   const hStart = performance.now()
   for (let i = 0; i < N; i++) {
@@ -24,7 +38,7 @@ t('creation performance should be faster than direct DOM', async t => {
   const hTime = performance.now() - hStart
   container.innerHTML = ''
 
-  console.log('hTime', hTime, 'domTime', domTime)
+  console.log('h', hTime, 'dom', domTime, 'clone', cloneTime)
   t.ok(hTime < domTime, 'creation is fast')
 })
 

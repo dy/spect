@@ -170,6 +170,14 @@ t('html: simple hydrate', async t => {
   t.is(el.firstChild, a.firstChild)
 })
 
+t('html: simple hydrate with insertion', async t => {
+  let a = document.createElement('a')
+  a.innerHTML = 'foo '
+  let el = h`<${a}>foo <bar>${ h`<baz class="qux"/>` }</></>`
+  t.is(el.outerHTML, `<a>foo <bar><baz class="qux"></baz></bar></a>`)
+  t.is(el.firstChild, a.firstChild)
+})
+
 t('html: function renders external component', async t => {
   let el = h`<a>foo <${bar}/></a><b/>`
   function bar () {
@@ -194,7 +202,7 @@ t('html: rerendering with props: must persist', async t => {
 
   h`<${el}>${div}<x/></>`
   t.is(el.firstChild, div)
-  t.is(el.childNodes.length, 2)
+  t.is(el.childNodes.length, 2, 'children number')
 
   h`<${el}><${div}/><x/></>`
   t.is(el.firstChild, div)
@@ -454,7 +462,7 @@ t('html: newline nodes should have space in between, but not around', t => {
   t.is(el.textContent, 'a b')
 })
 
-t('legacy html: direct component rerendering should keep children', async t => {
+t('html: direct component rerendering should keep children', async t => {
   let el = h`<div><${fn}/></div>`
   let abc = el.firstChild
 
@@ -465,7 +473,7 @@ t('legacy html: direct component rerendering should keep children', async t => {
   // let abc1 = el.firstChild
   // t.is(abc1, abc)
 
-  function fn ({children, ...props}) { return h`<abc ...${props}/>` }
+  function fn ({children, ...props}) {return h`<abc ...${props}/>` }
 })
 
 t('html: functional components create element', t => {
@@ -562,7 +570,6 @@ t('html: insert nodes list', t => {
   h`<${el}>foo ${ orig } qux</>`
   t.is(el.innerHTML, `foo |bar <baz></baz>| qux`)
 
-// console.log('set', ...orig)
   h`<${el}><div class="prepended" /> foo ${ orig } qux <div class="appended" /></>`
   t.is(el.innerHTML, `<div class="prepended"></div> foo |bar <baz></baz>| qux <div class="appended"></div>`)
 })
