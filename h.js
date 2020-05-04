@@ -5,11 +5,11 @@ const TEXT = 3, ELEMENT = 1, ATTRIBUTE = 2, COMMENT = 8, FRAGMENT = 11, SHOW_ELE
 const FIELD = 'h:::', FIELD_CLASS = 'h--eval'
 
 // see also https://developer.mozilla.org/en-US/docs/Web/API/Node/nodeType
-const EMPTY = 'area base br col command embed hr img input keygen link meta param source track wbr ! !doctype ? ?xml'.split(' ')
+// const EMPTY = 'area base br col command embed hr img input keygen link meta param source track wbr ! !doctype ? ?xml'.split(' ')
 
 const buildCache = new Map
 
-export default function h (statics, ...fields) {
+export default function h (statics) {
   let build
 
   // hyperscript - turn to tpl literal call
@@ -46,8 +46,8 @@ export default function h (statics, ...fields) {
   // detect field types, as well as create indexes for affected by fields nodes
   // the node access strategy is childNodes path https://jsperf.com/queryselector-vs-prop-access
   // can't use getElementById because path can be
-  for (let part, mode = TEXT, ptr, field, n = statics.length - 1; i < n; i++) {
-    part = statics[i], ptr = 0, field = fields[i]
+  for (let part, mode = TEXT, ptr, field, n = statics.length - 1; i < n;) {
+    part = statics[i], ptr = 0, field = arguments[++i]
     // console.group('field', i, part)
 
     // track node path
@@ -86,7 +86,9 @@ export default function h (statics, ...fields) {
 
     fieldMeta.push(TEXT, 'nodes[' + path.join('].childNodes[') + ']')
 
-    if (mode === TEXT) str += part + '<!--' + i + '-->'
+    // <!-->field<!--> creates 2 extra nodes, but faster than post-walker to replace comments
+    // if (mode === TEXT) str += part + '<!--' + i + '-->'
+    if (mode === TEXT) (str += part + '<!-->' + field + '<!-->', path[path.length-1]+=2)
     // non-primitives cast to ''
     else str += part + (immutable(field) ? field : (fast = false, ''))
     // console.groupEnd()
@@ -95,13 +97,8 @@ export default function h (statics, ...fields) {
 
   // single root
   if (!path[0]) (single.innerHTML = str, frag = single.firstChild)
+  // FIXME: this multiple root is slow
   else (frag = document.createElement('template'), tpl.innerHTML = str, frag = tpl.content)
-
-  // FIXME: an alternative to post-walker is splitting via <!-->field<!-->, measure perf
-  let it = document.createNodeIterator(frag, SHOW_COMMENT), child, field = 0
-  while (child = it.nextNode()) {
-    child.replaceWith(fields[child.data])
-  }
 
   // if there are non-primitive fields, create evaluators immediately
   // if all primitives though - postpone creation of evaluators for the next call
@@ -109,7 +106,7 @@ export default function h (statics, ...fields) {
   return frag
 }
 
-const single = document.createElement('single')
+const single = document.createElement('div')
 
 function createBuilder(statics) {
   // fields order is co-directional with tree walker order, so field number can simply be incremented, avoiding regexps

@@ -8,7 +8,7 @@ import htm from './libs/htm.js'
 let hs = htm.bind(hyperscript)
 
 t('creation performance should be faster than direct DOM', async t => {
-  const N = 30
+  const N = 20
 
   const container = document.createElement('div')
   const domStart = performance.now()
