@@ -1,10 +1,14 @@
 import t from 'tst'
 import { $, v, h } from '../index.js'
 import { tick, frame, idle, time } from 'wait-please'
+import hyperscript from './libs/hyperscript.js'
+import htm from './libs/htm.js'
+// import htm from 'xhtm'
 
+let hs = htm.bind(hyperscript)
 
 t('creation performance should be faster than direct DOM', async t => {
-  const N = 10000
+  const N = 30
 
   const container = document.createElement('div')
   const domStart = performance.now()
@@ -46,9 +50,20 @@ t('creation performance should be faster than direct DOM', async t => {
     container.appendChild(h`<a>a<b><c>${i}</c></b></a>`)
   }
   const hTime = performance.now() - hStart
+
+
+  container.innerHTML = ''
+  const hsStart = performance.now()
+  for (let i = 0; i < N; i++) {
+    container.appendChild(hs`<a>a<b><c>${i}</c></b></a>`)
+  }
+  const hsTime = performance.now() - hsStart
   container.innerHTML = ''
 
-  console.log('h', hTime, 'dom', domTime, 'clone', cloneTime, 'ihtml', ihtmlTime)
+  console.log(
+    'h', hTime,
+    'hs', hsTime,
+    'dom', domTime, 'clone', cloneTime, 'ihtml', ihtmlTime)
   t.ok(hTime < domTime, 'creation is fast')
 })
 

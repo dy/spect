@@ -2,12 +2,18 @@ import t from 'tst'
 import { v, $ } from '../index.js'
 import h from '../h.js'
 import { tick, frame, idle, time } from 'wait-please'
-import observable from './observable.js'
+import observable from './libs/observable.js'
 // import { v as iv } from 'ironjs'
 
 t('html: direct attribute case', async t => {
   let el = h`<div a=0 b=${1}/>`
   t.is(el.outerHTML, `<div a="0" b="1"></div>`, 'simple attr')
+})
+
+t.only('html: simple tree', async t => {
+  let el = h`<a> ${0} <b>${1}</b> </a>`
+
+  t.is(el.outerHTML, `<a> 0 <b>1</b> </a>`)
 })
 
 t('html: multifield attr case', t => {
@@ -61,12 +67,6 @@ t('html: creation perf case', t => {
   }
   t.is(h`<a>a<b><c>${0}</c></b></a>`.outerHTML, `<a>a<b><c>0</c></b></a>`)
   t.is(h`<a>a<b><c>${1}</c></b></a>`.outerHTML, `<a>a<b><c>1</c></b></a>`)
-})
-
-t('html: text content', async t => {
-  let el = h`<div>${ 0 }</div>`
-
-  t.is(el.outerHTML, `<div>0</div>`)
 })
 
 t('html: observable text content', async t => {
