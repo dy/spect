@@ -1,9 +1,10 @@
 import { symbol, observable, primitive, immutable, attr } from './src/util.js'
 
-const TEXT = 3, ELEMENT = 1, COMMENT = 8, FRAGMENT = 11, SHOW_ELEMENT = 1, SHOW_TEXT = 4, SHOW_COMMENT = 128
+const TEXT = 3, ELEMENT = 1, ATTRIBUTE = 2, COMMENT = 8, FRAGMENT = 11, SHOW_ELEMENT = 1, SHOW_TEXT = 4, SHOW_COMMENT = 128
 
 const FIELD = 'h:::', FIELD_CLASS = 'h--eval'
 
+// see also https://developer.mozilla.org/en-US/docs/Web/API/Node/nodeType
 const EMPTY = 'area base br col command embed hr img input keygen link meta param source track wbr ! !doctype ? ?xml'.split(' ')
 
 const buildCache = new Map
@@ -14,36 +15,103 @@ export default function h (statics, ...fields) {
   // hyperscript - turn to tpl literal call
   // FIXME: should be Array.isTemplateObject(statics)
   if (!statics.raw) {
-    let props = (fields[0] == null || fields[0].constructor === Object || observable(fields[0])) && fields.shift()
+    // let props = (fields[0] == null || fields[0].constructor === Object || observable(fields[0])) && fields.shift()
 
-    build = buildCache.get(statics)
-    if (!build) {
-      // FIXME: no-props case can make static things even faster (almost as direct cloneNode)
-      // h('', 'b', 'c', 'd')
-      if (!statics) (buildCache.set(statics, build = createBuilder(FIELD.repeat(fields.length))), build.frag = true)
-      // h('div', props?, ...children?)
-      else if (primitive(statics)){
-        if (EMPTY.includes(statics)) (buildCache.set(statics, build = createBuilder(`<${statics} ...${FIELD} />`)), build.empty = true)
-        else (buildCache.set(statics, build = createBuilder(`<${statics} ...${FIELD}>${FIELD}</${statics}>`)))
-      }
-      // h(target, props?, ...children)
-      else (buildCache.set(statics, build = createBuilder(`<${FIELD} ...${FIELD}>${FIELD}</>`)), build.comp = true)
-    }
-    return build.comp ? build(statics, props, fields) :
-          build.empty ? build(props) :
-          build.frag ? build(...fields) :
-          build(props, fields)
+    // build = buildCache.get(statics)
+    // if (!build) {
+    //   // FIXME: no-props case can make static things even faster (almost as direct cloneNode)
+    //   // h('', 'b', 'c', 'd')
+    //   if (!statics) (buildCache.set(statics, build = createBuilder(FIELD.repeat(fields.length))), build.frag = true)
+    //   // h('div', props?, ...children?)
+    //   else if (primitive(statics)){
+    //     if (EMPTY.includes(statics)) (buildCache.set(statics, build = createBuilder(`<${statics} ...${FIELD} />`)), build.empty = true)
+    //     else (buildCache.set(statics, build = createBuilder(`<${statics} ...${FIELD}>${FIELD}</${statics}>`)))
+    //   }
+    //   // h(target, props?, ...children)
+    //   else (buildCache.set(statics, build = createBuilder(`<${FIELD} ...${FIELD}>${FIELD}</>`)), build.comp = true)
+    // }
+    // return build.comp ? build(statics, props, fields) :
+    //       build.empty ? build(props) :
+    //       build.frag ? build(...fields) :
+    //       build(props, fields)
   }
 
   build = buildCache.get(statics)
-  if (!build) buildCache.set(statics, build = createBuilder(statics.join(FIELD)))
 
-  return build(...fields)
+  // cached builder
+  if (build) return build(fields)
+
+  // first-run creates archetype node via innerHTML, which (should be) fast for 1-time run
+  let fieldMeta = [], str = '', fast = true, path = [0], frag, i = 0
+  // detect field types, as well as create indexes for affected by fields nodes
+  // the node access strategy is childNodes path https://jsperf.com/queryselector-vs-prop-access
+  // can't use getElementById because path can be
+  for (let part, mode = TEXT, ptr, field, n = statics.length - 1; i < n; i++) {
+    part = statics[i], ptr = 0, field = fields[i]
+    // console.group('field', i, part)
+
+    // track node path
+    while (~ptr) {
+      // outside tag  >...|...<
+      if (mode === TEXT) {
+        ptr = part.indexOf('<', ptr)
+        if (~ptr) {
+          // ...|</x> → ...</x>|
+          if (part[ptr] === '/') (path.pop(), ptr = part.indexOf('>', ptr+1))
+          // ...|<x
+          else {
+            // >x|<
+            if (ptr && part[ptr-1] !== '>') path[path.length-1]++
+            path.push(0), mode = ELEMENT, ptr++
+          }
+        }
+        // ...|${
+        else {
+          path[path.length-1]+=2
+        }
+      }
+      // inside tag  <...|...>
+      else {
+        ptr = part.indexOf('>', ptr)
+        if (~ptr) {
+          // x/>|
+          if (part[ptr-1] === '/') { mode = TEXT }
+          // x>|
+          else { mode = TEXT }
+          ptr++
+          mode = TEXT
+        }
+      }
+    }
+
+    fieldMeta.push(TEXT, 'nodes[' + path.join('].childNodes[') + ']')
+
+    if (mode === TEXT) str += part + '<!--' + i + '-->'
+    // non-primitives cast to ''
+    else str += part + (immutable(field) ? field : (fast = false, ''))
+    // console.groupEnd()
+  }
+  str += statics[i]
+
+  // single root
+  if (!path[0]) (single.innerHTML = str, frag = single.firstChild)
+  else (frag = document.createElement('template'), tpl.innerHTML = str, frag = tpl.content)
+
+  // FIXME: an alternative to post-walker is splitting via <!-->field<!-->, measure perf
+  let it = document.createNodeIterator(frag, SHOW_COMMENT), child, field = 0
+  while (child = it.nextNode()) {
+    child.replaceWith(fields[child.data])
+  }
+
+  // if there are non-primitive fields, create evaluators immediately
+  // if all primitives though - postpone creation of evaluators for the next call
+
+  return frag
 }
 
-function createBuilder(str) {
-  const tpl = document.createElement('template')
+const single = document.createElement('single')
 
+function createBuilder(statics) {
   // fields order is co-directional with tree walker order, so field number can simply be incremented, avoiding regexps
   str = str.trim()
     // <> → <h:::>
@@ -53,16 +121,24 @@ function createBuilder(str) {
     // <//>, </> → </h:::>
     .replace(/<\/+>/, '</' + FIELD + '>')
     // x/> → x />
-    .replace(/([^<\s])\/>/g, '$1 />')
+    // .replace(/([^<\s])\/>/g, '$1 />')
     // <a#b.c → <a #b.c
     .replace(/(<[\w:-]+)([#\.][^<>]*>)/g, '$1 $2')
     // >ah:::bh:::c< → >a<!--h:::-->b<!--h:::-->c<
     // comments have less html quirks than text nodes, also no need to split
     // FIXME: lookahead can be slow, but possibly can be optimized via UTF symbols
+    // or maybe before join - just check prev tag
     .replace(/h:::(?=[^<>]*(?:<|$))/g, '<!--' + FIELD + '-->')
+
+  return () => {
+    // FIXME: builder pays off after ~280 nodes, no-clone parsed args + field evaluator - after ~50 nodes
+    t.innerHTML = str, t.firstChild
+  }
+
+  const tpl = document.createElement('template')
   tpl.innerHTML = str
 
-  // getElementsByTagName('*') is faster than tree iterator/querySelector('*), but live and fragment doesn't have it
+  // getElementsByTagName('*') is faster than tree iterator/querySelector('*'), but live and fragment doesn't have it
   // ref: https://jsperf.com/createnodeiterator-vs-createtreewalker-vs-getelementsby
   let it = document.createNodeIterator(tpl.content, SHOW_ELEMENT | SHOW_COMMENT, null), node, tplNodes = [], field = 0,
       hasComponents = false, hasChildren = false, hasAttributes = false
@@ -112,10 +188,14 @@ function createBuilder(str) {
     else if (node.data === FIELD) node.parentNode._children[node._id] = (node._field = field++)
   }
 
+
   // fast template is used for short-path rendering by changing tpl directly & cloning
   let fastEvaluate, fastNodes, fastFrag
 
   return function build() {
+    // FIXME: first node can be made fast as so:
+    return tpl.content
+
     let cleanup, fast = !hasComponents, frag, nodes
     // if all fields are primitives - take short path - modify fastTpl directly & clone
     // why `!immutables` and not `observable`:
@@ -186,7 +266,7 @@ function createBuilder(str) {
 
           return result
         }).join('\n'))
-        console.log(fastEvaluate)
+        // console.log(fastEvaluate)
         fastFrag = tpl.content.cloneNode(true)
         fastNodes = fastFrag.querySelectorAll('.' + FIELD_CLASS)
         fastNodes.forEach(node => (node.classList.remove(FIELD_CLASS), !node.className && node.removeAttribute('class')))
