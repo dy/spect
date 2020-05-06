@@ -1,16 +1,85 @@
 import t from 'tst'
-import { $, v, h } from '../index.js'
+// import { $, v, h } from '../index.js'
+import { h as sh } from '../h.js'
 import { tick, frame, idle, time } from 'wait-please'
-import hyperscript from './libs/hyperscript.js'
+import hs from './libs/hyperscript.js'
+import {html as lhtml, render as lrender} from 'lit-html'
 import htm from './libs/htm.js'
 // import htm from 'xhtm'
 
-let hs = htm.bind(hyperscript)
+let hsHTM = htm.bind(hs)
 
-t('creation performance should be faster than direct DOM', async t => {
-  const N = 20
-
+t.only('<30 creation performance should be faster than hyperscript/lit-html', async t => {
+  let N = 30
   const container = document.createElement('div')
+
+  container.innerHTML = ''
+  const ihtmlStart = performance.now()
+  for (let i = 0; i < N; i++) {
+    let a = document.createElement('a')
+    a.innerHTML = `a<b><c>${i}</c></b>`
+    container.appendChild(a)
+  }
+  const ihtmlTime = performance.now() - ihtmlStart
+
+  container.innerHTML = ''
+  // const hStart = performance.now()
+  // for (let i = 0; i < N; i++) {
+  //   container.appendChild(h`<a>a<b><c>${i}</c></b></a>`)
+  // }
+  // const hTime = performance.now() - hStart
+
+
+  container.innerHTML = ''
+  hsHTM`<a>a<b><c>${0}</c></b></a>` //pre-heat cache
+  const hsHTMStart = performance.now()
+  for (let i = 0; i < N; i++) {
+    container.appendChild(hsHTM`<a>a<b><c>${i}</c></b></a>`)
+  }
+  const hsHTMTime = performance.now() - hsHTMStart
+
+
+  container.innerHTML = ''
+  const hsStart = performance.now()
+  for (let i = 0; i < N; i++) {
+    container.appendChild(hs('a', null, 'a',
+      hs('b', null,
+        hs('c', null, i)
+      )
+    ))
+  }
+  const hsTime = performance.now() - hsStart
+
+  container.innerHTML = ''
+  const shStart = performance.now()
+  for (let i = 0; i < N; i++) {
+    container.appendChild(sh('a', null, 'a',
+      sh('b', null,
+        sh('c', null, i)
+      )
+    ))
+  }
+  const shTime = performance.now() - shStart
+
+  container.innerHTML = ''
+  let nodes = []
+  lrender(nodes, container)
+  const lStart = performance.now()
+  for (let i = 0; i < N; i++) nodes.push(lhtml`<a>a<b><c>${i}</c></b></a>`)
+  lrender(nodes, container)
+  const lTime = performance.now() - lStart
+
+  console.log(
+    // 'h', hTime,
+    's/hs', shTime,  'ihtml', ihtmlTime, 'hs', hsTime, 'hs + htm', hsHTMTime, 'lit', lTime)
+  t.ok(shTime < hsTime * 1.08, 'h faster than hyperscript')
+  t.ok(shTime < ihtmlTime, 'h faster than innerHTML')
+})
+
+t('10k creation performance should be faster than direct DOM', async t => {
+  const N = 20
+  const container = document.createElement('div')
+
   const domStart = performance.now()
   for (let i = 0; i < N; i++) {
     let frag = document.createDocumentFragment(), b
@@ -19,7 +88,6 @@ t('creation performance should be faster than direct DOM', async t => {
     container.appendChild(frag)
   }
   const domTime = performance.now() - domStart
-
 
   container.innerHTML = ''
   const cloneStart = performance.now()
@@ -33,17 +101,6 @@ t('creation performance should be faster than direct DOM', async t => {
   }
   const cloneTime = performance.now() - cloneStart
 
-
-  container.innerHTML = ''
-  const ihtmlStart = performance.now()
-  for (let i = 0; i < N; i++) {
-    let a = document.createElement('a')
-    a.innerHTML = `a<b><c>${i}</c></b>`
-    container.appendChild(a)
-  }
-  const ihtmlTime = performance.now() - ihtmlStart
-
-
   container.innerHTML = ''
   const hStart = performance.now()
   for (let i = 0; i < N; i++) {
@@ -51,19 +108,7 @@ t('creation performance should be faster than direct DOM', async t => {
   }
   const hTime = performance.now() - hStart
 
-
-  container.innerHTML = ''
-  const hsStart = performance.now()
-  for (let i = 0; i < N; i++) {
-    container.appendChild(hs`<a>a<b><c>${i}</c></b></a>`)
-  }
-  const hsTime = performance.now() - hsStart
-  container.innerHTML = ''
-
-  console.log(
-    'h', hTime,
-    'hs', hsTime,
-    'dom', domTime, 'clone', cloneTime, 'ihtml', ihtmlTime)
+  console.log( 'h', hTime, 'dom', domTime, 'clone', cloneTime)
   t.ok(hTime < domTime, 'creation is fast')
 })
 

@@ -106,6 +106,34 @@ export default function h (statics) {
   return frag
 }
 
+
+// compact hyperscript
+export function h(tag, props) {
+  // render redirect
+  if (typeof tag === 'string') tag = document.createElement(tag)
+  if (typeof tag === 'function') {}
+
+  let value, name, i, arg
+  for (name in props) {
+    value = props[name]
+    if (primitive(value)) prop(el, name, value)
+    else if (observable(value)) {}
+    else prop(el, name, value)
+  }
+
+  // merge would require slicing arguments, also op is straightforward here, so we cah directly insert
+  for (i = 2; i < arguments.length; i++) {
+    arg = arguments[i]
+    if (arg.nodeType || primitive(arg)) tag.append(arg)
+    else if (observable(arg)) {}
+    else tag.append(...arg)
+  }
+  // merge(tag, [], [].slice.call(arguments, 2))
+
+  return tag
+}
+
+
 const single = document.createElement('div')
 
 function createBuilder(statics) {
@@ -437,41 +465,61 @@ function sube(target, fn, unsub, stop) {
   return unsub
 }
 
-const prop = (el, name, value) => (el[name] = value, attr(el, name, value))
+const prop = (el, name, value) => attr(el, name, el[name] = value)
 
-const util = { prop, merge }
+// test/libs/spect-inflate.js
+const merge = (parent, a, b, end = null) => {
+  let i = 0, cur, next, bi, n = b.length, m = a.length, bnext
 
-// ref: https://github.com/luwes/js-diff-benchmark/blob/master/libs/spect.js
-export function merge (parent, a, b, end = null) {
-  let bidx = new Set(b), aidx = new Set(a), i = 0, cur = a[0] || end, next, bi
+  // skip head
+  while (i < n && i < m && a[i] == b[i]) i++
 
-  while ((bi = b[i++]) || cur != end) {
-    next = cur ? cur.nextSibling : end
+  // skip tail
+  while (n && m && b[n-1] == a[m-1]) end = b[--m, --n]
 
-    // skip (update output array if morphed)
-    if (cur === bi || (cur && bi && cur.key && cur.key === bi.key)) cur = next
+  // append/prepend shortcut
+  if (i == m) {
+    while (i < n) insert(parent, b[i++], end)
+  }
 
-    // insert has higher priority, inc. tail-append shortcut
-    else if (bi && (cur == end || bidx.has(cur))) {
-      // swap
-      if (b[i] === next && aidx.has(bi)) cur = next
+  else {
+    cur = a[i]
+
+    while (i < n) {
+      bi = bnext || b[i], bnext = i == n ? end : b[++i], next = cur ? cur.nextSibling : end
+
+      // skip
+      if (cur == bi) cur = next
+
+      // swap / replace
+      else if (bnext === next) replace(parent, bi, cur, cur = next)
 
       // insert
-      parent.insertBefore(!bi.nodeType ? b[i-1] = document.createTextNode(bi) : bi, cur)
+      else insert(parent, bi, cur)
     }
 
-    // technically redundant, but enables morphing text
-    else if (bi && !aidx.has(bi)) {
-      // replaceWith can take in plain strings, but can't return created node
-      // cur.replaceWith(!bi.nodeType ? document.createTextNode(bi) : bi)
-      cur && cur.nodeType === TEXT && !bi.nodeType ? (cur.data = bi, b[i-1] = cur) :
-      parent.replaceChild(!bi.nodeType ? (b[i-1] = document.createTextNode(bi)) : bi, cur)
-      cur = next
-    }
-
-    // remove
-    else (parent.removeChild(cur), cur = next, i--)
+    // remove tail
+    while (cur != end) (next = cur.nextSibling, parent.removeChild(cur), cur = next)
   }
 
   return b
 }
+
+const insert = (parent, a, b) => {
+  if (a) {
+    if (primitive(a)) parent.insertBefore(document.createTextNode(a), b)
+    else if (a.nodeType) parent.insertBefore(a, b)
+    else for (a of a) parent.insertBefore(a, b)
+  }
+}
+
+const replace = (parent, a, b, end) => {
+  if (b) {
+    if (primitive(b) && a.nodeType == TEXT) a.data = b
+    else if (b.nodeType) parent.replaceChild(b, a)
+    // FIXME: make sure no slice needed here
+    else merge(parent, [a], b, end)
+  }
+}
+
+const util = { prop, merge }
