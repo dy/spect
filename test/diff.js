@@ -116,6 +116,41 @@ t('swap-tail', t => {
   t.is(parent.count, 2, 'ops')
 })
 
+t('one in the middle', t => {
+  let parent = frag();
+  diff(parent,[...parent.childNodes], [t1,t2,t3,t4,t5]);
+  parent.reset()
+
+  console.log('---swap')
+  diff(parent,[...parent.childNodes],[t1,t2,t6,t4,t5]);
+  t.is([...parent.childNodes], [t1,t2,t6,t4,t5])
+
+  t.is(parent.count, 2, 'ops')
+})
+
+t('ring', t => {
+  let parent = frag();
+  diff(parent,[...parent.childNodes], [t1,t2,t3,t4,t5]);
+  parent.reset()
+
+  console.log('---ring')
+  diff(parent,[...parent.childNodes],[t2,t3,t4,t5,t1]);
+  t.is([...parent.childNodes], [t2,t3,t4,t5,t1])
+
+  t.is(parent.count, 4, 'ops')
+})
+
+t('shiftpop', t => {
+  let parent = frag();
+  diff(parent,[...parent.childNodes], [t1,t2,t3,t4,t5]);
+  parent.reset()
+
+  console.log('---shiftpop')
+  diff(parent,[...parent.childNodes],[t0,t1,t2,t3,t4]);
+  t.is([...parent.childNodes], [t0,t1,t2,t3,t4])
+
+  t.is(parent.count, 2, 'ops')
+})
 
 t('shuffle1', t => {
   let parent = frag();
