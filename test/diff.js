@@ -104,6 +104,19 @@ t('swap', t => {
   t.is(parent.count, 2, 'ops')
 })
 
+t('swap-tail', t => {
+  let parent = frag();
+  diff(parent,[...parent.childNodes], [t1,t2,t3,t4,t5,t6,t7,t8,t9]);
+  parent.reset()
+
+  console.log('---swap')
+  diff(parent,[...parent.childNodes],[t9,t2,t3,t4,t5,t6,t7,t8,t1]);
+  t.is([...parent.childNodes], [t9,t2,t3,t4,t5,t6,t7,t8,t1])
+
+  t.is(parent.count, 2, 'ops')
+})
+
+
 t('shuffle1', t => {
   let parent = frag();
   diff(parent,[...parent.childNodes], [t1,t2,t3,t4,t5]);
