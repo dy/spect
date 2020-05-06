@@ -125,7 +125,7 @@ t('one in the middle', t => {
   diff(parent,[...parent.childNodes],[t1,t2,t6,t4,t5]);
   t.is([...parent.childNodes], [t1,t2,t6,t4,t5])
 
-  t.is(parent.count, 2, 'ops')
+  t.ok(parent.count < 2, 'ops')
 })
 
 t('ring', t => {
