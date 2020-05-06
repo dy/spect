@@ -2,7 +2,9 @@
 
 import t from 'tst'
 import {time} from 'wait-please'
-import { merge as diff } from '../h.js'
+// import { merge as diff } from '../h.js'
+import diff from './libs/spect-inflate.js'
+// import diff from './libs/spect-deflate.js'
 // import diff from './libs/list-difference.js'
 // import diff from './libs/udomdiff.js'
 // import diff from './libs/snabbdom.js'
@@ -41,7 +43,7 @@ const frag = () => {
 t('create', t => {
   let parent = frag();
 
-  diff(parent,[...parent.childNodes], [t1,t2,t3,t4,t5], );
+  diff(parent,[...parent.childNodes], [t1,t2,t3,t4,t5], null);
   t.is([...parent.childNodes], [t1,t2,t3,t4,t5], 'create')
   t.is(parent.count, 5)
 })
@@ -51,7 +53,7 @@ t('remove', t => {
   diff(parent,[...parent.childNodes], [t1,t2,t3,t4,t5], );
 
   console.log('---remove')
-  diff(parent,[...parent.childNodes],[t1,t3,t5],);
+  diff(parent,[...parent.childNodes], [t1,t3,t5],);
   t.is([...parent.childNodes], [t1,t3,t5], 'remove')
 })
 
@@ -70,6 +72,18 @@ t('append before', t => {
   diff(parent,[], [t1,t5]);
   diff(parent,[],[t3],t5);
   t.is([...parent.childNodes],[t1,t3,t5], 'insert')
+})
+
+t('swap25', t => {
+  let parent = frag();
+  diff(parent,[...parent.childNodes], [t1,t2,t3,t4,t5], );
+  parent.reset()
+
+  console.log('---swap')
+  diff(parent,[...parent.childNodes],[t1,t5,t3,t4,t2],);
+  t.is([...parent.childNodes], [t1,t5,t3,t4,t2])
+
+  t.is(parent.count, 2, 'ops')
 })
 
 t('swap', t => {
@@ -180,7 +194,7 @@ t('tiny-random-2', t => {
 
   console.log('---chain-swap')
   let ordered = initial.slice().sort(() => Math.random() - Math.random())
-  diff(parent, [...parent.childNodes], ordered,);
+  diff(parent, [...parent.childNodes], ordered, null);
   t.is([...parent.childNodes], ordered)
   t.ok(parent.count < 10, 'ops count')
 })
@@ -213,6 +227,16 @@ t('clear', t => {
   console.log('---clear')
   diff(parent,[...parent.childNodes],[],);
   t.is([...parent.childNodes], [])
+})
+
+t('remove with head/tail', t => {
+  let parent = frag();
+  console.groupCollapsed('init')
+  diff(parent,[...parent.childNodes],[t0,t1,t2,t3,t4,t5,t6]);
+  console.groupEnd()
+  console.log('---remove')
+  diff(parent,[...parent.childNodes],[t1,t3,t5],);
+  t.is([...parent.childNodes], [t1,t3,t5])
 })
 
 t('reverse-add', t => {
