@@ -2,10 +2,10 @@ export default (parent, a, b, end = null) => {
   let i = 0, cur, next, bi, n = b.length, dif = n - a.length
 
   // skip head
-  while (a[i] == b[i] && i++ < n);
+  while (i < n && a[i] == b[i]) i++
 
   // skip tail
-  while (--n >= dif && b[n] == a[n - dif]) end = b[n];
+  while (--n >= dif && b[n] == a[n - dif]) end = b[n]
 
   // append/prepend shortcut
   if (i > n - dif) while (i <= n) parent.insertBefore(b[i++], end)
