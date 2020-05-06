@@ -74,6 +74,12 @@ t('append before', t => {
   t.is([...parent.childNodes],[t1,t3,t5], 'insert')
 })
 
+t('prepend', t => {
+  let parent = frag();
+  diff(parent,[], [t4,t5]);
+  diff(parent,[t4,t5],[t1,t2,t3,t4,t5]);
+  t.is([...parent.childNodes],[t1,t2,t3,t4,t5], 'prepended')
+})
 t('swap25', t => {
   let parent = frag();
   diff(parent,[...parent.childNodes], [t1,t2,t3,t4,t5], );
