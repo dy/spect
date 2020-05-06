@@ -152,6 +152,28 @@ t('shiftpop', t => {
   t.is(parent.count, 2, 'ops')
 })
 
+t('endswap', t => {
+  let parent = frag();
+  diff(parent,[...parent.childNodes], [t1,t2,t3,t4,t5]);
+  parent.reset()
+
+  console.log('--->')
+  diff(parent,[...parent.childNodes],[t5,t2,t3,t4,t0]);
+  t.is([...parent.childNodes], [t5,t2,t3,t4,t0])
+
+  t.is(parent.count, 2, 'ops')
+})
+
+t('endswap2', t => {
+  let parent = frag();
+  diff(parent,[...parent.childNodes], [t1,t2,t3,t4,t5]);
+  parent.reset()
+
+  console.log('--->')
+  diff(parent,[...parent.childNodes],[t1,t2,t3,t4,t6]);
+  t.is([...parent.childNodes], [t1,t2,t3,t4,t6])
+})
+
 t('shuffle1', t => {
   let parent = frag();
   diff(parent,[...parent.childNodes], [t1,t2,t3,t4,t5]);
