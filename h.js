@@ -1,109 +1,51 @@
-import { symbol, observable, primitive, immutable, attr } from './src/util.js'
+import { symbol, observable, primitive, attr } from './src/util.js'
 
 const TEXT = 3, ELEMENT = 1, ATTRIBUTE = 2, COMMENT = 8, FRAGMENT = 11, SHOW_ELEMENT = 1, SHOW_TEXT = 4, SHOW_COMMENT = 128
 
-const FIELD = 'h:::', FIELD_CLASS = 'h--eval'
+// https://en.wikipedia.org/wiki/Zero-width_non-joiner, alternatively control codes
+const FIELD = '\u200C', FIELD_RE = new RegExp(FIELD, 'g')
 
 // see also https://developer.mozilla.org/en-US/docs/Web/API/Node/nodeType
 // const EMPTY = 'area base br col command embed hr img input keygen link meta param source track wbr ! !doctype ? ?xml'.split(' ')
 
-const buildCache = new Map
+const cache = new WeakMap
 
-export default function h (statics) {
-  let build
-
-  // hyperscript - turn to tpl literal call
+export default function html(statics) {
+  // hyperscript redirect
   // FIXME: should be Array.isTemplateObject(statics)
-  if (!statics.raw) {
-    // let props = (fields[0] == null || fields[0].constructor === Object || observable(fields[0])) && fields.shift()
+  if (!statics.raw) return h.apply(null, arguments)
 
-    // build = buildCache.get(statics)
-    // if (!build) {
-    //   // FIXME: no-props case can make static things even faster (almost as direct cloneNode)
-    //   // h('', 'b', 'c', 'd')
-    //   if (!statics) (buildCache.set(statics, build = createBuilder(FIELD.repeat(fields.length))), build.frag = true)
-    //   // h('div', props?, ...children?)
-    //   else if (primitive(statics)){
-    //     if (EMPTY.includes(statics)) (buildCache.set(statics, build = createBuilder(`<${statics} ...${FIELD} />`)), build.empty = true)
-    //     else (buildCache.set(statics, build = createBuilder(`<${statics} ...${FIELD}>${FIELD}</${statics}>`)))
-    //   }
-    //   // h(target, props?, ...children)
-    //   else (buildCache.set(statics, build = createBuilder(`<${FIELD} ...${FIELD}>${FIELD}</>`)), build.comp = true)
-    // }
-    // return build.comp ? build(statics, props, fields) :
-    //       build.empty ? build(props) :
-    //       build.frag ? build(...fields) :
-    //       build(props, fields)
-  }
+  let build = cache.get(statics), i = 0, field, fast = true, frag
 
-  build = buildCache.get(statics)
+  for (i = 1; i < arguments.length; i++) if (!primitive(arguments[i])) { fast = false; break }
 
   // cached builder
-  if (build) return build(fields)
+  if (build) return build(statics, arguments)
 
-  // first-run creates archetype node via innerHTML, which (should be) fast for 1-time run
-  let fieldMeta = [], str = '', fast = true, path = [0], frag, i = 0
-  // detect field types, as well as create indexes for affected by fields nodes
-  // the node access strategy is childNodes path https://jsperf.com/queryselector-vs-prop-access
-  // can't use getElementById because path can be
-  for (let part, mode = TEXT, ptr, field, n = statics.length - 1; i < n;) {
-    part = statics[i], ptr = 0, field = arguments[++i]
-    // console.group('field', i, part)
-
-    // track node path
-    while (~ptr) {
-      // outside tag  >...|...<
-      if (mode === TEXT) {
-        ptr = part.indexOf('<', ptr)
-        if (~ptr) {
-          // ...|</x> → ...</x>|
-          if (part[ptr] === '/') (path.pop(), ptr = part.indexOf('>', ptr+1))
-          // ...|<x
-          else {
-            // >x|<
-            if (ptr && part[ptr-1] !== '>') path[path.length-1]++
-            path.push(0), mode = ELEMENT, ptr++
-          }
-        }
-        // ...|${
-        else {
-          path[path.length-1]+=2
-        }
-      }
-      // inside tag  <...|...>
-      else {
-        ptr = part.indexOf('>', ptr)
-        if (~ptr) {
-          // x/>|
-          if (part[ptr-1] === '/') { mode = TEXT }
-          // x>|
-          else { mode = TEXT }
-          ptr++
-          mode = TEXT
-        }
-      }
-    }
-
-    fieldMeta.push(TEXT, 'nodes[' + path.join('].childNodes[') + ']')
-
-    // <!-->field<!--> creates 2 extra nodes, but faster than post-walker to replace comments
-    // if (mode === TEXT) str += part + '<!--' + i + '-->'
-    if (mode === TEXT) (str += part + '<!-->' + field + '<!-->', path[path.length-1]+=2)
-    // non-primitives cast to ''
-    else str += part + (immutable(field) ? field : (fast = false, ''))
-    // console.groupEnd()
+  if (fast) {
+    single.innerHTML = String.raw.apply(null, arguments)
+    cache.set(statics, buildTemplate)
+    frag = single.firstChild
   }
-  str += statics[i]
 
-  // single root
-  if (!path[0]) (single.innerHTML = str, frag = single.firstChild)
-  // FIXME: this multiple root is slow
-  else (frag = document.createElement('template'), tpl.innerHTML = str, frag = tpl.content)
 
   // if there are non-primitive fields, create evaluators immediately
   // if all primitives though - postpone creation of evaluators for the next call
 
   return frag
+}
+
+function buildTemplate (statics, args) {
+  const tpl = document.createElement('template')
+  tpl.innerHTML = statics.join(FIELD)
+
+  const build = () => {
+    return tpl.content.cloneNode(true)
+  }
+
+  cache.set(statics, build)
+
+  return build(args)
 }
 
 
@@ -121,7 +63,7 @@ export function h(tag, props) {
     else prop(el, name, value)
   }
 
-  // merge would require slicing arguments, also op is straightforward here, so we cah directly insert
+  // merge would require slicing arguments, also action is known in advance here, so we do directly
   for (i = 2; i < arguments.length; i++) {
     arg = arguments[i]
     if (arg.nodeType || primitive(arg)) tag.append(arg)
