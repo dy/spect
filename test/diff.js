@@ -3,6 +3,7 @@
 import t from 'tst'
 import {time} from 'wait-please'
 // import { merge as diff } from '../h.js'
+// import diff from './libs/spect-preswap.js'
 import diff from './libs/spect-inflate.js'
 // import diff from './libs/spect-deflate.js'
 // import diff from './libs/list-difference.js'
@@ -80,7 +81,7 @@ t('prepend', t => {
   diff(parent,[t4,t5],[t1,t2,t3,t4,t5]);
   t.is([...parent.childNodes],[t1,t2,t3,t4,t5], 'prepended')
 })
-t('swap25', t => {
+t('swap 2/5', t => {
   let parent = frag();
   diff(parent,[...parent.childNodes], [t1,t2,t3,t4,t5], );
   parent.reset()
@@ -125,7 +126,7 @@ t('one in the middle', t => {
   diff(parent,[...parent.childNodes],[t1,t2,t6,t4,t5]);
   t.is([...parent.childNodes], [t1,t2,t6,t4,t5])
 
-  t.ok(parent.count < 2, 'ops')
+  t.ok(parent.count < 3, 'ops')
 })
 
 t('ring', t => {
