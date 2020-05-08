@@ -4,7 +4,7 @@ import './html.js'
 import t from 'tst'
 import { h, v } from '../index.js'
 import { tick, frame, idle, time } from 'wait-please'
-import observable from './observable.js'
+import observable from './libs/observable.js'
 
 t('h: single attribute', async t => {
   const a = v(0)
@@ -403,9 +403,9 @@ t('h: observable in class', t => {
 })
 
 t('h: falsey prev attrs', t => {
-  let el = h(`div`, {hidden:true})
+  let el = h(`div`, { hidden:true })
   t.is(el.hidden, true)
-  h(el,{hidden:false})
+  h(el, { hidden:false })
   t.is(el.hidden, false)
 })
 
@@ -447,21 +447,22 @@ t('h: must not morph inserted nodes', async t => {
 
 t('h: update own children', t => {
   let el = h('div', null, 123)
-  // h(el, null, [...el.childNodes])
+  h(el, null, [...el.childNodes])
+  t.is(el.outerHTML, '<div>123</div>')
   h(el, null, el.childNodes)
   t.is(el.outerHTML, '<div>123</div>')
   h(el, null, ...el.childNodes)
   t.is(el.outerHTML, '<div>123</div>')
 })
 
-t('h: simple prop case', async t => {
+t('h: observable prop child', async t => {
   let obj = v()
   obj({ x: 1 })
   let el = h('div', null, v(obj, obj => obj.x))
 
   t.is(el.outerHTML, '<div>1</div>')
 
-  obj({x: 2})
+  obj({ x: 2 })
   await tick(8)
   t.is(el.outerHTML, '<div>2</div>')
 })
@@ -496,7 +497,7 @@ t('h: array component', t => {
   t.is(el.textContent, '12')
 })
 
-t('h: object props preserve internal observables, only high-levels are handled', t => {
+t('h: object props preserve internal observables, only high-levels are handled', async t => {
   let props, el = h('x', props = {x: v(0), y: v({x: v(1)})})
   t.is(el.outerHTML, `<x x="0"></x>`)
   t.is(el.y, props.y())

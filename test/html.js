@@ -5,15 +5,15 @@ import { tick, frame, idle, time } from 'wait-please'
 import observable from './libs/observable.js'
 // import { v as iv } from 'ironjs'
 
-t('html: direct attribute case', async t => {
-  let el = h`<div a=0 b=${1}/>`
-  t.is(el.outerHTML, `<div a="0" b="1"></div>`, 'simple attr')
+
+t.only('html: fast simple case', async t => {
+  let el = h`<div class=${'hello'} a><h1 id=${'hello'}>${'Hello World'}!</h1></div>`
+  t.is(el.outerHTMLClean, `<div class="hello" a=""><h1 id="hello">${'Hello World'}!</h1></div>`)
 })
 
-t.only('html: simple tree', async t => {
-  let el = h`<a> ${0} <b>${1}</b> </a>`
-
-  t.is(el.outerHTML, `<a> 0 <b>1</b> </a>`)
+t('html: direct attribute case', async t => {
+  let el = h`<div a=0 b=${1}/>`
+  t.is(el.outerHTMLClean, `<div a="0" b="1"></div>`, 'simple attr')
 })
 
 t('html: multifield attr case', t => {
