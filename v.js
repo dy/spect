@@ -1,4 +1,4 @@
-import { desc, channel as c, observer, immutable, observable, symbol } from './src/util.js'
+import { desc, channel as c, observer, primitive, observable, symbol } from './src/util.js'
 
 const depsCache = new WeakMap
 
@@ -96,7 +96,7 @@ export default function v(source, ...fields) {
       set = p => (delete channel.current, p.then(v => push(map(v)), error))
       set(source)
     }
-    else if (immutable(source)) {
+    else if (primitive(source)) {
       set(source)
     }
     // deps

@@ -90,17 +90,19 @@ export const list = arg => {
   return Array.isArray(arg) || (!primitive(arg) && !arg.nodeType && arg[Symbol.iterator])
 }
 
-export const primitive = (val) => {
-  if (typeof val === 'object') return val === null
-  return typeof val !== 'function'
-}
-
-export const immutable = (val) => {
-  return !val || primitive(val) || val instanceof RegExp || val instanceof Date
-}
+// not so generic, but performant
+export const primitive = (val) =>
+  !val ||
+  typeof val === 'string' ||
+  typeof val === 'boolean' ||
+  typeof val === 'number' ||
+  (typeof val === 'object' ?
+    (val instanceof RegExp || val instanceof Date) :
+    typeof val !== 'function'
+  )
 
 export const observable = (arg) => {
-  if (immutable(arg)) return false
+  if (primitive(arg)) return false
   return !!(
     arg[symbol.observable]
     || (typeof arg === 'function' && arg.set)
