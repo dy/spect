@@ -1,0 +1,44 @@
+export default (parent, a, b, end = null) => {
+  let i = 0, cur, next, bi, bnext, n = b.length, m = a.length, swap = [], min = m < n ? m : n
+
+  // skip head, collect swaps
+  while (i < min && (a[i] == b[i] || (i < min-1 && a[i+1] == b[i+1] && swap.push(i)))) i++
+  console.log(swap)
+  // collect swap items, though... it is handled by main loop anyways
+
+  // skip tail
+  while (n && m && b[n-1] == a[m-1]) end = b[--m, --n]
+
+  // append/prepend shortcut
+  if (!swap.length && i == m) while (i < n) parent.insertBefore(b[i++], end)
+
+  else {
+    while (i < n) swap.push(i++)
+
+    while (swap.length) {
+      i = swap.shift()
+      bi = bnext || b[i], cur = a[i], next = cur.nextSibling || end
+
+    }
+
+    // cur = a[i]
+
+    // while (i < n) {
+    //   bi = bnext || b[i], bnext = i == n ? end : b[++i], next = cur ? cur.nextSibling : end
+
+    //   // skip
+    //   if (cur == bi) cur = next
+
+    //   // swap / replace
+    //   else if (b === next) (parent.replaceChild(bi, cur), cur = next)
+
+    //   // insert
+    //   else parent.insertBefore(bi, cur)
+    // }
+
+    // remove tail
+    while (cur != end) (next = cur.nextSibling, parent.removeChild(cur), cur = next)
+  }
+
+  return b
+}
