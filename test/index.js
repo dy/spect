@@ -16,3 +16,17 @@ Object.defineProperty(DocumentFragment.prototype, 'outerHTML', {
     return s
   }
 })
+
+Object.defineProperty(Element.prototype, 'innerHTMLClean', {
+  get() {
+    let ihtml = this.innerHTML
+    return ihtml.replace(/<!---->/g, '')
+  }
+})
+
+Object.defineProperty(Element.prototype, 'outerHTMLClean', {
+  get() {
+    let ohtml = this.outerHTML
+    return ohtml.replace(/<!---->/g, '')
+  }
+})
