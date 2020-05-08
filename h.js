@@ -1,9 +1,12 @@
 import { symbol, observable, primitive, attr } from './src/util.js'
 
 const TEXT = 3, ELEMENT = 1, ATTRIBUTE = 2, COMMENT = 8, FRAGMENT = 11, SHOW_ELEMENT = 1, SHOW_TEXT = 4, SHOW_COMMENT = 128
+const ZWSP = '\u200B', ZWNJ = '\u200C', ZWJ = '\u200D'
+const FAST = false
 
-// https://en.wikipedia.org/wiki/Zero-width_non-joiner, alternatively control codes
-const FIELD = '\u200C', FIELD_RE = new RegExp(FIELD, 'g')
+// character for node id, ref https://mathiasbynens.be/notes/html5-id-class
+const CHARS = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789𘈱'
+const nextChar = c => CHARS.indexOf(c) < CHARS.length - 1 ? CHARS[CHARS.indexOf(c) + 1] : String.fromCharCode(c.charCodeAt(0) + 1)
 
 // see also https://developer.mozilla.org/en-US/docs/Web/API/Node/nodeType
 // const EMPTY = 'area base br col command embed hr img input keygen link meta param source track wbr ! !doctype ? ?xml'.split(' ')
@@ -15,32 +18,83 @@ export default function html(statics) {
   // FIXME: should be Array.isTemplateObject(statics)
   if (!statics.raw) return h.apply(null, arguments)
 
-  let build = cache.get(statics), i = 0, field, fast = true, frag
+  let i = 0, fast = FAST, frag, build = cache.get(statics)
 
-  for (i = 1; i < arguments.length; i++) if (!primitive(arguments[i])) { fast = false; break }
+  if (build) return build(arguments)
 
-  // cached builder
-  if (build) return build(statics, arguments)
+  if (fast) for (i = 1; i < arguments.length; i++) if (!primitive(arguments[i])) { fast = false; break }
 
-  if (fast) {
-    single.innerHTML = String.raw.apply(null, arguments)
-    cache.set(statics, buildTemplate)
-    frag = single.firstChild
-  }
+  // non-primitive args build template immediately
+  if (!fast) return buildTemplate(arguments)
 
-
-  // if there are non-primitive fields, create evaluators immediately
-  // if all primitives though - postpone creation of evaluators for the next call
-
+  cache.set(statics, buildTemplate)
+  single.innerHTML = String.raw.apply(null, arguments)
+  frag = single.firstChild
   return frag
 }
 
-function buildTemplate (statics, args) {
+
+function buildTemplate (args) {
   const tpl = document.createElement('template')
-  tpl.innerHTML = statics.join(FIELD)
+
+  // regex replace is faster, shorter and can identify node as global index
+  str = statics.join('\0')
+
+  // the node access strategy is getElementById https://jsperf.com/queryselector-vs-prop-access
+  // we collect nodes with fields - either as attribs or children, clean them and eval by h
+  let tags = Array(str.length), evalTags = [], quotes = [], pathId = '--'
+
+  str = str
+    // detecting quotes from fields is impossible, also it makes much easier to traverse tags
+    .replace(/".*?"|'.*?'/g, (match, i) => (quotes.push(match), ZWSP))
+    // <abc /> → <abc></abc> - makes possible identifying current node level by prev `<`, also easier parsing
+    .replace(/<([\w:-]+)([^>]*)\/>/g, '<$1$2></$1>')
+    // tag labeling like <a#a><a#aa/></a> <a#b><a#ba></a> <a#c/>... - slicing tail gives parent level id
+    .replace(/</g, (_, idx, str) => {
+      // </x>
+      if (str[idx+1] === '/') (
+        tags[idx] = pathId = pathId.slice(0, -1),
+        pathId = pathId.slice(0, -1) + nextChar(pathId.slice(-1))
+      )
+      // <!--, <!doctype, <?xml
+      else if (str[idx+1] === '!' || str[idx+1] === '?') tags[idx] = pathId
+      // <x
+      else tags[idx] = pathId += CHARS[0]
+
+      return '<'
+    })
+    // collect nodes affected by fields
+    .replace(/\0/g, (_,idx,str) => (evalTags.push(str.lastIndexOf('<', idx)), '\0'))
+
+    // replace affected nodes with clean tags
+    console.log(tags)
+    evalTags.forEach(idx => {
+      let tagStr = str.slice(idx, str.indexOf('>', idx))
+      console.log(tagStr)
+    })
+
+    // return '<!--' + ZWNJ + '-->'
+    // // <> → <h:::>
+    // .replace(/<(>|\s)/, '<' + FIELD + '$1')
+    // // <//>, </> → </h:::>
+    // .replace(/<\/+>/, '</' + FIELD + '>')
+    // // x/> → x />
+    // // .replace(/([^<\s])\/>/g, '$1 />')
+    // // <a#b.c → <a #b.c
+    // .replace(/(<[\w:-]+)([#\.][^<>]*>)/g, '$1 $2')
+    // // >ah:::bh:::c< → >a<!--h:::-->b<!--h:::-->c<
+    // // comments have less html quirks than text nodes, also no need to split
+    // // FIXME: lookahead can be slow, but possibly can be optimized via UTF symbols
+    // // or maybe before join - just check prev tag
+    // .replace(/h:::(?=[^<>]*(?:<|$))/g, '<!--' + FIELD + '-->')
+
+
+  // tpl.innerHTML = str
 
   const build = () => {
-    return tpl.content.cloneNode(true)
+    let frag = tpl.content.cloneNode(true)
+
+    return frag
   }
 
   cache.set(statics, build)
@@ -411,7 +465,7 @@ const prop = (el, name, value) => attr(el, name, el[name] = value)
 
 // test/libs/spect-inflate.js
 const merge = (parent, a, b, end = null) => {
-  let i = 0, cur, next, bi, n = b.length, m = a.length, bnext
+  let i = 0, cur, next, bi, n = b.length, m = a.length
 
   // skip head
   while (i < n && i < m && a[i] == b[i]) i++
@@ -420,23 +474,20 @@ const merge = (parent, a, b, end = null) => {
   while (n && m && b[n-1] == a[m-1]) end = b[--m, --n]
 
   // append/prepend shortcut
-  if (i == m) {
-    while (i < n) insert(parent, b[i++], end)
-  }
+  if (i == m) while (i < n) parent.insertBefore(b[i++], end)
 
   else {
     cur = a[i]
 
     while (i < n) {
-      bi = bnext || b[i], bnext = i == n ? end : b[++i], next = cur ? cur.nextSibling : end
+      bi = b[i++], next = cur ? cur.nextSibling : end
 
       // skip
       if (cur == bi) cur = next
 
-      // swap / replace
-      else if (bnext === next) replace(parent, bi, cur, cur = next)
+      // swap/replace 1:1
+      else if (i < n && b[i] == next) (replace(parent, bi, cur), cur = next)
 
-      // insert
       else insert(parent, bi, cur)
     }
 
@@ -446,6 +497,7 @@ const merge = (parent, a, b, end = null) => {
 
   return b
 }
+
 
 const insert = (parent, a, b) => {
   if (a) {
