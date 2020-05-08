@@ -8,18 +8,15 @@ import {default as HTM} from './libs/htm.js'
 
 let htm = HTM.bind(hs)
 
-t('h: <30 creation performance should be faster than hyperscript/lit-html', async t => {
+t.only('spect/hyperscript: <30 creation performance should be faster than hyperscript/lit-html', async t => {
   let N = 30
   const container = document.createElement('div')
 
   container.innerHTML = ''
-  // const hStart = performance.now()
-  // for (let i = 0; i < N; i++) {
-  //   container.appendChild(h`<a>a<b><c>${i}</c></b></a>`)
-  // }
-  // const hTime = performance.now() - hStart
-
-  container.innerHTML = ''
+  t.is(
+    hs('a', null, 'a', hs('b', null, hs('c', null, 0))).outerHTML,
+    `<a>a<b><c>0</c></b></a>`
+  )
   const hsStart = performance.now()
   for (let i = 0; i < N; i++) {
     container.appendChild(hs('a', null, 'a',
@@ -31,6 +28,10 @@ t('h: <30 creation performance should be faster than hyperscript/lit-html', asyn
   const hsTime = performance.now() - hsStart
 
   container.innerHTML = ''
+  t.is(
+    sh('a', null, 'a', sh('b', null, sh('c', null, 0))).outerHTML,
+    `<a>a<b><c>0</c></b></a>`
+  )
   const shStart = performance.now()
   for (let i = 0; i < N; i++) {
     container.appendChild(sh('a', null, 'a',
@@ -57,11 +58,12 @@ t('h: <30 creation performance should be faster than hyperscript/lit-html', asyn
   t.ok(shTime < ihtmlTime, 'h faster than innerHTML')
 })
 
-t('html: first call should be nearly htm + hyperscript or close to possible minimum', async t => {
+t.only('html: first call should be nearly htm + hyperscript or close to possible minimum', async t => {
   const N = 1000
 
   let arr = ['<a>a<b><c>','</c></b></a>']
 
+  t.is(htm((arr = arr.slice()).raw = arr, 0).outerHTML, `<a>a<b><c>0</c></b></a>`, 'htm is ok')
   let htmStart = performance.now()
   for (let i = 0; i < N; i++) {
     htm((arr = arr.slice()).raw = arr, i)
@@ -69,6 +71,7 @@ t('html: first call should be nearly htm + hyperscript or close to possible mini
   const htmTime = performance.now() - htmStart
 
 
+  t.is(h((arr = arr.slice()).raw = arr, 0).outerHTML, `<a>a<b><c>0</c></b></a>`, 'spect/h is ok')
   const hStart = performance.now()
   for (let i = 0; i < N; i++) {
     h((arr = arr.slice()).raw = arr, i)
@@ -77,6 +80,7 @@ t('html: first call should be nearly htm + hyperscript or close to possible mini
 
 
   let x = document.createElement('x')
+  t.is(ihtml((arr = arr.slice()).raw = arr, 0).outerHTML, `<a>a<b><c>0</c></b></a>`, 'innerHTML is ok')
   function ihtml () {
     x.innerHTML = String.raw.apply(this, arguments)
     return x.firstChild
@@ -88,9 +92,10 @@ t('html: first call should be nearly htm + hyperscript or close to possible mini
   const ihtmlTime = performance.now() - ihtmlStart
 
 
+  // t.is(x.innerHTML = String.raw.apply(this, arguments), `<a>a<b><c>0</c></b></a>`, 'innerHTML is ok')
   const lStart = performance.now()
   for (let i = 0; i < N; i++) {
-    ihtml((arr = arr.slice()).raw = arr, i)
+    lhtml((arr = arr.slice()).raw = arr, i)
   }
   const lTime = performance.now() - lStart
 
