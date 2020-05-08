@@ -38,11 +38,12 @@ function buildTemplate (args) {
   const tpl = document.createElement('template')
 
   // regex replace is faster, shorter and can identify node as global index
-  str = statics.join('\0')
+  let str = args[0].join('\0')
 
   // the node access strategy is getElementById https://jsperf.com/queryselector-vs-prop-access
   // we collect nodes with fields - either as attribs or children, clean them and eval by h
-  let tags = Array(str.length), evalTags = [], quotes = [], pathId = '--'
+  let tags = Array(str.length), fieldTags = [], quotes = [], pathId = '', lvl = 0
+  // FIXME: redo this algo with current level tracking
 
   str = str
     // detecting quotes from fields is impossible, also it makes much easier to traverse tags
@@ -52,24 +53,20 @@ function buildTemplate (args) {
     // tag labeling like <a#a><a#aa/></a> <a#b><a#ba></a> <a#c/>... - slicing tail gives parent level id
     .replace(/</g, (_, idx, str) => {
       // </x>
-      if (str[idx+1] === '/') (
-        tags[idx] = pathId = pathId.slice(0, -1),
-        pathId = pathId.slice(0, -1) + nextChar(pathId.slice(-1))
-      )
+      if (str[idx+1] === '/') tags[idx] = pathId.slice(0, --lvl)
       // <!--, <!doctype, <?xml
-      else if (str[idx+1] === '!' || str[idx+1] === '?') tags[idx] = pathId
+      else if (str[idx+1] === '!' || str[idx+1] === '?') tags[idx] = pathId.slice(0, lvl)
       // <x
-      else tags[idx] = pathId += CHARS[0]
+      else tags[idx] = (pathId = pathId.slice(0, lvl) + nextChar(pathId[lvl]) + pathId.slice(++lvl)).slice(0, lvl)
 
       return '<'
     })
     // collect nodes affected by fields
-    .replace(/\0/g, (_,idx,str) => (evalTags.push(str.lastIndexOf('<', idx)), '\0'))
+    .replace(/\0/g, (_,idx,str) => (fieldTags.push(str.lastIndexOf('<', idx)), '\0'))
 
     // replace affected nodes with clean tags
-    console.log(tags)
-    evalTags.forEach(idx => {
-      let tagStr = str.slice(idx, str.indexOf('>', idx))
+    fieldTags.forEach(idx => {
+      let tagStr = str.slice(idx, str.indexOf('>', idx) + 1)
       console.log(tagStr)
     })
 
