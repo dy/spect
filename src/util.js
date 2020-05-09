@@ -1,4 +1,4 @@
-const Symbol = globalThis.Symbol;
+const Symbol = globalThis.Symbol
 
 export const symbol = {
   dispose: Symbol ? (Symbol.dispose || (Symbol.dispose = Symbol('dispose'))) : '@@dispose',
@@ -86,9 +86,9 @@ export const observer = (next, error, complete) => (next && next.call) || (error
 
 export const desc = value => Object.assign({configurable: false, enumerable: false}, value === undefined ? {writable: true} : {value})
 
-export const list = arg => {
-  return Array.isArray(arg) || (!primitive(arg) && !arg.nodeType && arg[Symbol.iterator])
-}
+export const list = arg => Array.isArray(arg) || (!primitive(arg) && !arg.nodeType && arg[Symbol.iterator])
+
+export const esc = n => n.replace(/"|'|\s|\\/g, '')
 
 // not so generic, but performant
 export const primitive = (val) =>
@@ -102,13 +102,12 @@ export const primitive = (val) =>
   )
 
 export const observable = (arg) => {
-  if (primitive(arg)) return false
-  return !!(
+  return arg && !!(
     arg[symbol.observable]
     || (typeof arg === 'function' && arg.set)
     || arg[Symbol.asyncIterator]
     || arg.next
     || arg.then
-    || arg.mutation && arg._state != null
+    // || arg.mutation && arg._state != null
   )
 }

@@ -2,7 +2,7 @@ import { symbol, observable, primitive, attr } from './src/util.js'
 
 const TEXT = 3, ELEMENT = 1, ATTRIBUTE = 2, COMMENT = 8, FRAGMENT = 11, SHOW_ELEMENT = 1, SHOW_TEXT = 4, SHOW_COMMENT = 128
 const ZWSP = '\u200B', ZWNJ = '\u200C', ZWJ = '\u200D'
-const FAST = false
+const FAST = false // FIXME: don't forget to turn it on
 
 // character for node id, ref https://mathiasbynens.be/notes/html5-id-class
 const CHARS = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789𘈱'
@@ -35,61 +35,109 @@ export default function html(statics) {
 
 
 function buildTemplate (args) {
-  const tpl = document.createElement('template')
+  const tpl = document.createElement('template'), statics = args[0]
 
-  // regex replace is faster, shorter and can identify node as global index
-  let str = args[0].join('\0')
+  // regex replace is faster, shorter and can identify node by its `<` index in string
+  let str = statics.join('\0')
 
-  // the node access strategy is getElementById https://jsperf.com/queryselector-vs-prop-access
-  // we collect nodes with fields - either as attribs or children, clean them and eval by h
-  let tags = Array(str.length), fieldTags = [], quotes = [], pathId = '', lvl = 0
-  // FIXME: redo this algo with current level tracking
+  let ids = Array(str.length), fieldTags = [], prog = [], quotes = [], pathId = '', lvl = 0
 
+  // collect nodes with fields - either as attribs or children
   str = str
-    // detecting quotes from fields is impossible, also it makes much easier to traverse tags
+    // detecting quotes from inside fields `<a name="a${b}c" ${d}>` is hard, also hiding them makes much easier to detect tags
     .replace(/".*?"|'.*?'/g, (match, i) => (quotes.push(match), ZWSP))
-    // <abc /> → <abc></abc> - makes possible identifying current node level by prev `<`, also easier parsing
+    // <abc /> → <abc></abc> - makes possible identifying current node level by prev `<`, also no `/` detection in labeling needed
     .replace(/<([\w:-]+)([^>]*)\/>/g, '<$1$2></$1>')
-    // tag labeling like <a#a><a#aa/></a> <a#b><a#ba></a> <a#c/>... - slicing tail gives parent level id
+    // FIXME: use replaceAll when implemented
+    // label tags as `<a#a><a#aa/></a><a#b><a#ba></a><a#c/>...` - slicing tail gives parent level id
     .replace(/</g, (_, idx, str) => {
       // </x>
-      if (str[idx+1] === '/') tags[idx] = pathId.slice(0, --lvl)
+      if (str[idx+1] === '/') ids[idx] = pathId.slice(0, --lvl)
       // <!--, <!doctype, <?xml
-      else if (str[idx+1] === '!' || str[idx+1] === '?') tags[idx] = pathId.slice(0, lvl)
+      else if (str[idx+1] === '!' || str[idx+1] === '?' || str[idx+1] === '!') ids[idx] = pathId.slice(0, lvl)
       // <x
-      else tags[idx] = (pathId = pathId.slice(0, lvl) + nextChar(pathId[lvl]) + pathId.slice(++lvl)).slice(0, lvl)
+      else ids[idx] = (pathId = pathId.slice(0, lvl) + nextChar(pathId[lvl]) + pathId.slice(++lvl)).slice(0, lvl)
 
       return '<'
     })
+    // FIXME: possible to join with prev method for faster result
     // collect nodes affected by fields
-    .replace(/\0/g, (_,idx,str) => (fieldTags.push(str.lastIndexOf('<', idx)), '\0'))
-
-    // replace affected nodes with clean tags
-    fieldTags.forEach(idx => {
-      let tagStr = str.slice(idx, str.indexOf('>', idx) + 1)
-      console.log(tagStr)
+    .replace(/\0/g, (_,idx,str) => {
+      let openIdx = str.lastIndexOf('<', idx)
+      fieldTags.push(openIdx)
+      return ~str.slice(openIdx, idx).indexOf('>') ? '<!--' + ZWNJ + '-->' : ZWNJ
     })
-
-    // return '<!--' + ZWNJ + '-->'
     // // <> → <h:::>
     // .replace(/<(>|\s)/, '<' + FIELD + '$1')
     // // <//>, </> → </h:::>
     // .replace(/<\/+>/, '</' + FIELD + '>')
-    // // x/> → x />
-    // // .replace(/([^<\s])\/>/g, '$1 />')
     // // <a#b.c → <a #b.c
     // .replace(/(<[\w:-]+)([#\.][^<>]*>)/g, '$1 $2')
-    // // >ah:::bh:::c< → >a<!--h:::-->b<!--h:::-->c<
-    // // comments have less html quirks than text nodes, also no need to split
-    // // FIXME: lookahead can be slow, but possibly can be optimized via UTF symbols
-    // // or maybe before join - just check prev tag
-    // .replace(/h:::(?=[^<>]*(?:<|$))/g, '<!--' + FIELD + '-->')
 
+  // analyze operations for affected nodes - create commands for evaluator
+  // the node access strategy is getElementById https://jsperf.com/queryselector-vs-prop-access
+  // QUERY, id, 1 FIELD
+  // PROPS CREATE
+  // PROP STATIC name, value
+  // PROP VALUE name, 1 FIELD
+  // PROP TPL, name, statics, N FIELDS
+  // PROP SPREAD, 1 FIELD
+  // PROP BOOL, 1 FIELD
+  // NO CHILDREN
+  // SINGLE CHILD, 1 FIELD
+  // CHILDREN, statics, N FIELDS
+  // EVAL
+  for (let i = 0; i < fieldTags.length;) {
+    let idx = fieldTags[i++], id = ids[idx], tagStr = str.slice(idx, str.indexOf('>', idx) + 1)
 
-  // tpl.innerHTML = str
+    prog.push(QUERY, id)
 
-  const build = () => {
-    let frag = tpl.content.cloneNode(true)
+    // ref https://jsperf.com/replace-vs-split-join-vs-replaceall/95
+    str = str.slice(0, idx) + `<${tag} id=${ids[i]} />` + str.slice(idx + tagStr.length)
+
+    // tagStr.replace(/\0/)
+    tagStr.split(' ')
+    .map((part, i) => {
+      let props = current[2] || (current[2] = {})
+      if (part.slice(0, 3) === '...') {
+        Object.assign(props, arguments[++field])
+      }
+      else {
+        [name, value] = part.split('=')
+        props[evaluate(name)] = value ? evaluate(value) : true
+      }
+    })
+    prog.push(``)
+  }
+
+  tpl.innerHTML = str
+
+  const build = (args) => {
+    let frag = tpl.content.cloneNode(true), i = 0, c, f = 1, stack = [], tmp
+
+    // VM inspired by https://twitter.com/jviide/status/1257755526722662405, see ./test/stacker.html
+    // it prepares props/children for h function
+    for (; i < prog.length;) {
+      c = prog[i++]
+
+      if (c--) if (c--) if (c--) if (c--) if (c--) if (c--) if (c--) if (c--) (1)
+      // CHILDREN
+      else stack.push()
+      // CHILD
+      else stack.push(args[f++])
+      // 4 - PROP ${'name'}
+      else stack[1][args[f++]] = true
+      // 3 - PROP ...${props}
+      else Object.assign(stack[1], args[f++])
+      // 2 - PROP name="a${value}b"
+      else stack[1][prog[f++]] = tpl(prog[f++], args, f, prog[f++])
+      // 1 - PROP name=${value}
+      else stack[1][prog[i++]] = args[f++]
+      // N - QUERY
+      else (stack.push(frag.getElementById(idx[i++])), stack[0].id = '')
+      // N - EVAL
+      else h.apply(null, stack.splice(0))
+    }
 
     return frag
   }
@@ -101,27 +149,29 @@ function buildTemplate (args) {
 
 
 // compact hyperscript
-export function h(tag, props) {
+export function h(tag, props, ...children) {
   // render redirect
   if (typeof tag === 'string') tag = document.createElement(tag)
   if (typeof tag === 'function') {}
 
-  let value, name, i, arg
+  let value, name
   for (name in props) {
     value = props[name]
+    // primitive is more probable also less expensive than observable check
     if (primitive(value)) prop(el, name, value)
     else if (observable(value)) {}
     else prop(el, name, value)
   }
 
-  // merge would require slicing arguments, also action is known in advance here, so we do directly
-  for (i = 2; i < arguments.length; i++) {
-    arg = arguments[i]
-    if (arg.nodeType || primitive(arg)) tag.append(arg)
-    else if (observable(arg)) {}
-    else tag.append(...arg)
-  }
-  // merge(tag, [], [].slice.call(arguments, 2))
+  // merge requires slicing arguments, also action is known in advance here, so we do directly
+  // for (let i = 2, arg; i < arguments.length; i++) {
+  //   arg = arguments[i]
+  //   if (arg.nodeType || primitive(arg)) tag.append(arg)
+  //   else if (observable(arg)) {}
+  //   else tag.append(...arg)
+  // }
+  // FIXME: make faster by passing i=2 and args directly as children
+  merge(tag, tag.childNodes, children)
 
   return tag
 }
@@ -425,7 +475,6 @@ function createBuilder(statics) {
   }
 }
 
-const esc = n => n.replace(/"|'|\s|\\/g, '')
 
 function addChildren(children, arg, subs) {
   if (arg == null) {}
@@ -438,7 +487,7 @@ function addChildren(children, arg, subs) {
 }
 
 // interpolator
-const tpl = (statics, ...fields) => String.raw({raw: statics}, ...fields.map(value => !value ? '' : value)).trim()
+const tpl = (statics, args, from, to) => String.raw({raw: statics}, ...fields.map(value => !value ? '' : value)).trim()
 
 // join an array with a function
 const join = (arr, fn) => {
@@ -464,14 +513,13 @@ const prop = (el, name, value) => attr(el, name, el[name] = value)
 const merge = (parent, a, b, end = null) => {
   let i = 0, cur, next, bi, n = b.length, m = a.length
 
-  // skip head
+  // skip head/tail
   while (i < n && i < m && a[i] == b[i]) i++
+  while (i < n && i < m && b[n-1] == a[m-1]) end = b[--m, --n]
 
-  // skip tail
-  while (n && m && b[n-1] == a[m-1]) end = b[--m, --n]
-
-  // append/prepend shortcut
-  if (i == m) while (i < n) parent.insertBefore(b[i++], end)
+  // append/prepend/trim shortcuts
+  if (i == m) while (i < n) insert(parent, b[i++], end)
+  if (i == n) while (i < m) parent.removeChild(a[i++])
 
   else {
     cur = a[i]
@@ -482,9 +530,10 @@ const merge = (parent, a, b, end = null) => {
       // skip
       if (cur == bi) cur = next
 
-      // swap/replace 1:1
-      else if (i < n && b[i] == next) (replace(parent, bi, cur), cur = next)
+      // swap / replace
+      else if (i < n && b[i] == next) (replace(parent, cur, bi), cur = next)
 
+      // insert
       else insert(parent, bi, cur)
     }
 
@@ -496,6 +545,7 @@ const merge = (parent, a, b, end = null) => {
 }
 
 
+
 const insert = (parent, a, b) => {
   if (a) {
     if (primitive(a)) parent.insertBefore(document.createTextNode(a), b)
@@ -504,12 +554,15 @@ const insert = (parent, a, b) => {
   }
 }
 
-const replace = (parent, a, b, end) => {
-  if (b) {
-    if (primitive(b) && a.nodeType == TEXT) a.data = b
-    else if (b.nodeType) parent.replaceChild(b, a)
+// WARN: the order is different from replaceNode(new, old)
+const replace = (parent, from, to, end) => {
+  if (to) {
+    if (primitive(to)) {
+      if (from.nodeType === TEXT) from.data = to; else from.replaceWith(to)
+    }
+    else if (to.nodeType) parent.replaceChild(to, from)
     // FIXME: make sure no slice needed here
-    else merge(parent, [a], b, end)
+    else merge(parent, [from], to, end)
   }
 }
 
