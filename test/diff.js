@@ -9,6 +9,7 @@ import diff from './libs/spect-inflate.js'
 // import diff from './libs/list-difference.js'
 // import diff from './libs/udomdiff.js'
 // import diff from './libs/snabbdom.js'
+// import diff from './libs/stage0.js'
 
 
 const t1 = document.createElement('i1'),
@@ -77,8 +78,8 @@ t('append before', t => {
 
 t('prepend', t => {
   let parent = frag();
-  diff(parent,[], [t4,t5]);
-  diff(parent,[t4,t5],[t1,t2,t3,t4,t5]);
+  diff(parent,[], [t4,t5], null);
+  diff(parent,[t4,t5],[t1,t2,t3,t4,t5], null);
   t.is([...parent.childNodes],[t1,t2,t3,t4,t5], 'prepended')
 })
 t('swap 2/5', t => {
@@ -138,7 +139,7 @@ t('ring', t => {
   diff(parent,[...parent.childNodes],[t2,t3,t4,t5,t1]);
   t.is([...parent.childNodes], [t2,t3,t4,t5,t1])
 
-  t.is(parent.count, 4, 'ops')
+  t.ok(parent.count <= 4, 'ops')
 })
 
 t('shiftpop', t => {
@@ -162,7 +163,7 @@ t('endswap', t => {
   diff(parent,[...parent.childNodes],[t5,t2,t3,t4,t0]);
   t.is([...parent.childNodes], [t5,t2,t3,t4,t0])
 
-  t.is(parent.count, 2, 'ops')
+  t.ok(parent.count <= 3, 'ops')
 })
 
 t('endswap2', t => {
