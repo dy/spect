@@ -402,20 +402,6 @@ t('js-diff-benchmark random', t => {
   t.ok(childNodes.every((row, i) => row === parent.childNodes[i]), 'order')
 })
 
-
-
-  // start();
-  // childNodes = reverse(parent, diff, childNodes);
-  // stop(parent.operations.length, 1000);
-  // console.assert(
-  //   verifyNodes(parent, childNodes, 1000),
-  //   '%s reverse',
-  //   lib
-  // );
-  // reset(parent);
-
-
-
 // actual benchmark
 t('create 1000', async t => {
   const parent = frag()
