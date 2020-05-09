@@ -175,6 +175,16 @@ t('endswap2', t => {
   t.is([...parent.childNodes], [t1,t2,t3,t4,t6])
 })
 
+t.todo('skip', t => {
+  let parent = frag();
+  diff(parent,[], [t1,t2,t3,t4,t5]);
+  parent.reset()
+
+  console.log('--->')
+  diff(parent,[...parent.childNodes],[t1,t2,t3,t4,t5], null, 2);
+  t.is([...parent.childNodes], [t3,t4,t5])
+})
+
 t('shuffle1', t => {
   let parent = frag();
   diff(parent,[...parent.childNodes], [t1,t2,t3,t4,t5]);

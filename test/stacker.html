@@ -25,7 +25,7 @@ function μ(hash, ...fields){
                     console.log('6: BOOLEAN?', 1 < i) || 1 < i || [] :
                   // 5 - prop name
                   console.log('5: PUSH FIELD', fields[f]) || fields[f++] :
-              // 4 - end node / exit stack
+              // 4 - end node / exit stack / eval
               stack[d] = console.log('4: END LEVEL') || this(...stack[d]) :
             // 3 - ...${props}
             console.log('3: ...PROPS', fields[f]) || Object.assign( stack[d][1], fields[f++] ) :
