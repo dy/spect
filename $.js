@@ -1,4 +1,4 @@
-import { channel, symbol, desc } from './src/util.js'
+import { channel, symbol, desc, slice } from './src/util.js'
 
 const ELEMENT = 1
 const SPECT_CLASS = '👁'
