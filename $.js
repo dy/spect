@@ -12,7 +12,7 @@ const style = document.head.appendChild(document.createElement('style'))
 
 export default function (scope, selector, fn) {
   // spect`#x`
-  if (scope && scope.raw) return new $(null, String.raw(...arguments))
+  if (scope && scope.raw) return new $(null, String.raw.apply(null, arguments))
   // spect(selector, fn)
   if (typeof scope === 'string') return new $(null, scope, selector)
   // spect(target, fn)
@@ -220,7 +220,7 @@ class $ extends Array {
     const set = this
     return {
       subscribe(){
-        const unsubscribe = subscribe(...arguments)
+        const unsubscribe = subscribe.apply(null, arguments)
         push.call(observers.slice(-1), set)
         return unsubscribe
       }
@@ -258,7 +258,7 @@ class $ extends Array {
     }
 
     self._channel.close()
-    let els = [...self]
+    let els = slice(self)
     self.length = 0
     els.forEach(el => self.delete(el, true))
   }

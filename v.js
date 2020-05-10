@@ -1,10 +1,11 @@
-import { desc, channel as c, observer, primitive, observable, symbol } from './src/util.js'
+import { desc, channel as c, observer, primitive, observable, symbol, slice } from './src/util.js'
 
 const depsCache = new WeakMap
 
-export default function v(source, ...fields) {
+export default function v(source) {
+  let fields = slice(arguments, 1)
   if (source && source.raw) {
-    return v(fields, fields => String.raw({raw: source.raw}, ...fields))
+    return v(fields, fields => String.raw(source, ...fields))
   }
   const [map=v=>v, unmap=v=>v] = fields
   const channel = c(), { subscribe, observers, error } = channel
@@ -14,15 +15,15 @@ export default function v(source, ...fields) {
     else channel.push(channel.current = v, dif)
   }
 
-  function fn (...args) {
-    if (!args.length) return get()
-    if (observer(...args)) {
-      let unsubscribe = subscribe(...args)
+  function fn () {
+    if (!arguments.length) return get()
+    if (observer.apply(null, arguments)) {
+      let unsubscribe = subscribe.apply(null, arguments)
       // callback is registered as the last channel subscription, so send it immediately as value
       if ('current' in channel) channel.push.call(observers.slice(-1), get(), get())
       return unsubscribe
     }
-    return set(...args)
+    return set.apply(null, arguments)
   }
 
   // current is mapped value (map can be heavy to call each get)

@@ -6,12 +6,12 @@ export default function a(target, path) {
   function fn () {
     if (channel.closed) return
     if (!arguments.length) return get()
-    if (observer(...arguments)) {
-      let unsubscribe = channel.subscribe(...arguments)
+    if (observer.apply(null, arguments)) {
+      let unsubscribe = channel.subscribe.apply(null, arguments)
       channel.push.call(channel.observers.slice(-1), get())
       return unsubscribe
     }
-    return set(...arguments)
+    return set.apply(null, arguments)
   }
 
   const proto = Object.getPrototypeOf(target)
