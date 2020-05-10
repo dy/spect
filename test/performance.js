@@ -8,7 +8,7 @@ import {default as HTM} from './libs/htm.js'
 
 let htm = HTM.bind(hs)
 
-t.only('spect/hyperscript: <30 creation performance should be faster than hyperscript/lit-html', async t => {
+t('spect/hyperscript: <30 creation performance should be faster than hyperscript/lit-html', async t => {
   let N = 30
   const container = document.createElement('div')
 
@@ -58,7 +58,7 @@ t.only('spect/hyperscript: <30 creation performance should be faster than hypers
   t.ok(shTime < ihtmlTime, 'h faster than innerHTML')
 })
 
-t.only('html: first call should be nearly htm + hyperscript or close to possible minimum', async t => {
+t('html: first call should be nearly htm + hyperscript or close to possible minimum', async t => {
   const N = 1000
 
   let arr = ['<a>a<b><c>','</c></b></a>']
@@ -106,7 +106,7 @@ t.only('html: first call should be nearly htm + hyperscript or close to possible
 })
 
 t.only('html: cached primitive tpl should be close to DOM', async t => {
-  const N = 50
+  const N = 5000
   const container = document.createElement('div')
 
   let domFrag = document.createDocumentFragment()

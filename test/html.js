@@ -8,7 +8,7 @@ import observable from './libs/observable.js'
 
 t.only('html: fast simple case', async t => {
   let el = h`<div class=${'hello'} a><h1 id=${'hello'}>${'Hello World'}!</h1><p>Lorem Ipsum</p></div>`
-  t.is(el.outerHTMLClean, `<div class="hello" a=""><h1 id="hello">${'Hello World'}!</h1><p>Lorem Ipsum</p></div>`)
+  t.is(el.innerHTML, `<div class="hello" a=""><h1 id="hello">${'Hello World'}!</h1><p>Lorem Ipsum</p></div>`)
 })
 
 t('html: direct attribute case', async t => {
