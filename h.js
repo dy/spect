@@ -6,28 +6,27 @@ const TEXT = 3, ELEMENT = 1, ATTRIBUTE = 2, COMMENT = 8, FRAGMENT = 11, SHOW_ELE
 // placeholders
 const ZWSP = '\u200B', ZWNJ = '\u200C', ZWJ = '\u200D', FIELD = '\0', FIELD_RE = /\0/g, HTML_FIELD = ZWSP
 
-// FIXME: don't forget to turn it on
-const FAST = true
+html.FAST = true
 
 // evaluate program constants
-// const PROG_TAG = 1,
-//       PROG_COMPONENT = 2,
-//       PROG_QUERY = 3,
-//       PROP_NAME = 4,
-//       PROP_SPREAD = 5,
-//       PROP_VALUE = 6,
-//       PROP_TPL = 7,
-//       PROP_STATIC = 8,
-//       CHILDREN = 9
-const PROG_TAG = ('PROG_TAG'),
-      PROG_COMPONENT = ('PROG_COMPONENT'),
-      PROG_QUERY = ('PROG_QUERY'),
-      PROP_NAME = ('PROP_NAME'),
-      PROP_SPREAD = ('PROP_SPREAD'),
-      PROP_VALUE = ('PROP_VALUE'),
-      PROP_TPL = ('PROP_TPL'),
-      PROP_STATIC = ('PROP_STATIC'),
-      CHILDREN = ('CHILDREN')
+const PROG_TAG = 1,
+      PROG_COMPONENT = 2,
+      PROG_QUERY = 3,
+      PROP_NAME = 4,
+      PROP_SPREAD = 5,
+      PROP_VALUE = 6,
+      PROP_TPL = 7,
+      PROP_STATIC = 8,
+      CHILDREN = 9
+// const PROG_TAG = ('PROG_TAG'),
+//       PROG_COMPONENT = ('PROG_COMPONENT'),
+//       PROG_QUERY = ('PROG_QUERY'),
+//       PROP_NAME = ('PROP_NAME'),
+//       PROP_SPREAD = ('PROP_SPREAD'),
+//       PROP_VALUE = ('PROP_VALUE'),
+//       PROP_TPL = ('PROP_TPL'),
+//       PROP_STATIC = ('PROP_STATIC'),
+//       CHILDREN = ('CHILDREN')
 
 // character for node id, ref https://mathiasbynens.be/notes/html5-id-class
 const CHARS = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789𘈱'
@@ -44,7 +43,7 @@ export default function html(statics) {
   // FIXME: should be Array.isTemplateObject(statics)
   if (!statics.raw) return h.apply(null, arguments)
 
-  let i = 0, fast = FAST, frag, build = cache.get(statics)
+  let i = 0, fast = html.FAST, frag, build = cache.get(statics)
 
   if (build) return build(arguments)
 
@@ -68,7 +67,7 @@ function buildTemplate (args) {
   let str = statics.join(FIELD)
 
   let ids = Array(str.length), fieldTags = [], prog = [], quotes = [], pathTracker = '', lvl = 0, childFields = {},
-      prevIdx, openIdx, closeIdx, tagStr, id, tplParts = []
+      prevIdx, openIdx, closeIdx, tagStr, id, tplParts = [], fieldId = 0
 
   // collect nodes with fields - either as attribs or children
   // getElementById is faster than node path tracking (id is path in a way) https://jsperf.com/queryselector-vs-prop-access
@@ -96,14 +95,15 @@ function buildTemplate (args) {
     })
     // FIXME: possible to join with prev method for faster result
     // collect nodes affected by fields
-    .replace(FIELD_RE, (_,idx,str) => {
+    .replace(FIELD_RE, (_, idx, str) => {
       openIdx = str.lastIndexOf('<', idx)
       if (prevIdx !== openIdx) fieldTags.push(prevIdx = openIdx)
+      let field = args[++fieldId]
       if (~(closeIdx = str.slice(openIdx, idx).indexOf('>'))) {
         childFields[ids[openIdx]]++
-        return '<!--' + HTML_FIELD + '-->'
+        return primitive(field) ? field : ('<!--' + HTML_FIELD + '-->')
       }
-      return HTML_FIELD
+      return primitive(field) ? field : HTML_FIELD
     })
     // // <> → <h:::>
     // .replace(/<(>|\s)/, '<' + FIELD + '$1')
@@ -158,11 +158,18 @@ function buildTemplate (args) {
   // unquote
   tpl.innerHTML = tplParts.join('').replace(/__\d+__/, m => quotes[m.slice(2,-2)])
 
+  const ev = new Function('id', 'args', 'frag', `
+    let node = frag.getElementById(id)
+    node.firstChild.data = args[1]
+    node.removeAttribute('id')
+  `)
+
   const build = (args) => {
     let frag = tpl.content.cloneNode(true), i = 0, c, f = 1, stack = []
 
     // VM inspired by https://twitter.com/jviide/status/1257755526722662405, see ./test/stacker.html
     // it prepares props/children for h function
+
     for (; i < prog.length;) {
       c = prog[i++]
 
@@ -185,6 +192,7 @@ function buildTemplate (args) {
       // end
       else if (c === CHILDREN) {
         let childNodes = stack[0].childNodes, count = prog[i++]
+
         if (count) {
           // >${child}<, >${a}${b}<
           if (count === childNodes.length) while (count--) stack.push(args[f++])
@@ -196,10 +204,13 @@ function buildTemplate (args) {
             }
           }
         }
+
         // />
         h.apply(null, stack.splice(0))
       }
     }
+
+    // ev('--aaa', args, frag)
 
     return frag.childNodes.length === 1 ? frag.firstChild : frag
   }
@@ -225,8 +236,7 @@ export function h(tag, props) {
     else prop(el, name, value)
   }
 
-  // merge requires slicing arguments (slowish), so when also action is known in advance, so we add directly
-  // FIXME: check if that's slow indeed or we can just merge
+  // merge requires slicing arguments (slow), so for empty node do direct add
   if (arguments.length > 2) {
     if (tag.childNodes.length) merge(tag, tag.childNodes, slice(arguments, 2))
     else {

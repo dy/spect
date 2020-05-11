@@ -8,7 +8,7 @@ import {default as HTM} from './libs/htm.js'
 
 let htm = HTM.bind(hs)
 
-t('spect/hyperscript: <30 creation performance should be faster than hyperscript/lit-html', async t => {
+t('h perf: <30 creation performance should be faster than hyperscript/lit-html', async t => {
   let N = 30
   const container = document.createElement('div')
 
@@ -58,7 +58,7 @@ t('spect/hyperscript: <30 creation performance should be faster than hyperscript
   t.ok(shTime < ihtmlTime, 'h faster than innerHTML')
 })
 
-t('html: first call should be nearly htm + hyperscript or close to possible minimum', async t => {
+t('html perf: first call (no cache) - should be ≈ innerHTML', async t => {
   const N = 1000
 
   let arr = ['<a>a<b><c>','</c></b></a>']
@@ -69,7 +69,6 @@ t('html: first call should be nearly htm + hyperscript or close to possible mini
     htm((arr = arr.slice()).raw = arr, i)
   }
   const htmTime = performance.now() - htmStart
-
 
   t.is(h((arr = arr.slice()).raw = arr, 0).outerHTML, `<a>a<b><c>0</c></b></a>`, 'spect/h is ok')
   const hStart = performance.now()
@@ -102,11 +101,11 @@ t('html: first call should be nearly htm + hyperscript or close to possible mini
 
   console.log( 'h', hTime, 'ihtml', ihtmlTime, 'hs + htm', htmTime, 'lit', lTime)
   t.ok(hTime < ihtmlTime * 1.2, '<20% from direct innerHTML')
-  t.ok(hTime < htmTime * 1.08, 'faster than htm')
+  t.ok(hTime < htmTime * 1.08, 'faster than htm + hyperscript')
 })
 
-t.only('html: cached primitive tpl should be close to DOM', async t => {
-  const N = 5000
+t.only('html perf: cached primitive tpl should be close to DOM', async t => {
+  const N = 500
   const container = document.createElement('div')
 
   let domFrag = document.createDocumentFragment()
@@ -122,11 +121,14 @@ t.only('html: cached primitive tpl should be close to DOM', async t => {
   let frag = document.createDocumentFragment(), b
   frag.appendChild(document.createElement('a')).append(document.createTextNode('a'), b = document.createElement('b'))
   b.appendChild(document.createElement('c')).appendChild(document.createTextNode(0))
-  const cloneStart = performance.now()
-  for (let i = 0; i < N; i++) {
+  const createClone = (i) => {
     let node = frag.cloneNode(true)
     node.querySelector('c').childNodes[0].data = i
-    container.appendChild(node)
+    return node
+  }
+  const cloneStart = performance.now()
+  for (let i = 0; i < N; i++) {
+    container.appendChild(createClone(i))
   }
   const cloneTime = performance.now() - cloneStart
 
@@ -169,8 +171,8 @@ t.only('html: cached primitive tpl should be close to DOM', async t => {
   const lTime = performance.now() - lStart
 
   console.log( 'h', hTime, 'dom', domTime, 'clone', cloneTime, 'ihtml', ihtmlTime, 'hs + htm', htmTime, 'lit', lTime)
-  // t.ok(hTime < domTime, 'creation is fast')
-  // t.ok(hTime < htmTime * 1.08, 'single node is fast')
+  t.ok(hTime < domTime, 'faster than DOM')
+  t.ok(hTime < htmTime * 1.08, 'faster than HTM + hyperscript')
 })
 
 t.todo('html: 10k creation performance should be faster than direct DOM', async t => {
