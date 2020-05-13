@@ -1,0 +1,284 @@
+<!DOCTYPE html>
+<script type="module">
+import t from 'tst'
+import html from './libs/parse.js'
+
+
+
+t('empty', (t) => {
+  t.is(html``, undefined);
+  t.end()
+});
+
+t.only('single named elements', (t) => {
+  t.is(html`<div />`.html, '<div />')
+  t.is(html`<div />`.prog, [['ELEM', 'div']] );
+  t.is(html`<div />`, { html: '<div />', prog: [['ELEM', 'div']] });
+  t.is(html`<div/>`, { html: '<div />', prog: [['ELEM', 'div']] });
+  t.is(html`<span />`, { html: '<span />', prog: [['ELEM', 'span']] });
+  t.end()
+});
+
+t.only('multiple root elements', (t) => {
+  // t.is(html`<a /><b></b><${'c'}><//>`.html, `<a /><b></b><h--tag></h--tag>`)
+  t.is(html`<a /><b></b><${'c'}><//>`.prog, [['ELEM', 'a'], ['ELEM', 'b'], ['ELEM', 1]])
+  t.end()
+});
+
+t.only('single dynamic tag name', (t) => {
+  t.is(html`<${'foo'} />`.html, `<h--tag />`)
+  t.is(html`<${'foo'} />`.prog, [['ELEM', 1]])
+  function Foo() { }
+  t.is(html`<${Foo} />`.html, `<h--tag />`)
+  t.is(html`<${'foo'} />`.prog, [['ELEM', 1]])
+  t.end()
+});
+
+t.only('single boolean prop', (t) => {
+  t.is(html`<a disabled />`.html, `<a disabled />`);
+  t.is(html`<a disabled/>`.html, `<a disabled />`);
+  t.is(html`<a disabled />`.prog, [['ELEM', 'a']]);
+  t.is(html`<a disabled/>`.prog, [['ELEM', 'a']]);
+  t.end()
+});
+
+t.only('two boolean props', (t) => {
+  t.is(html`<a invisible disabled />`.html, `<a invisible disabled />`);
+  t.is(html`<a invisible disabled/>`.html, `<a invisible disabled />`);
+  t.is(html`<a invisible disabled/>`.prog, [['ELEM', 'a']]);
+  // t.is(html`<a invisible disabled />`, { tag: 'a', props: { invisible: true, disabled: true }, children: [] });
+  // t.is(html`<a invisible disabled />`, { tag: 'a', props: { invisible: true, disabled: true }, children: [] });
+  t.end()
+});
+
+t.only('single prop with empty value', (t) => {
+  t.is(html`<a href="" />`.html, `<a href="" />`);
+  t.is(html`<a href="" />`.prog, [['ELEM', 'a']]);
+  // t.is(html`<a href="" />`, { tag: 'a', props: { href: '' }, children: [] });
+  t.end()
+});
+
+t.only('two props with empty values', (t) => {
+  t.is(html`<a href="" foo="" />`.html, `<a href="" foo="" />`);
+  t.is(html`<a href="" foo="" />`.prog, [['ELEM', 'a']]);
+  // t.is(html`<a href="" foo="" />`, { tag: 'a', props: { href: '', foo: '' }, children: [] });
+  t.end()
+});
+
+t.skip('single prop with empty name', (t) => {
+  t.is(html`<a ""="foo" />`, { tag: 'a', props: { '': 'foo' }, children: [] });
+  t.end()
+});
+
+t.only('single prop with static value', (t) => {
+  t.is(html`<a href="/hello" />`.html, `<a href="/hello" />`);
+  t.is(html`<a href="/hello" />`.prog, [['ELEM', 'a']]);
+  // t.is(html`<a href="/hello" />`, { tag: 'a', props: { href: '/hello' }, children: [] });
+  t.end()
+});
+
+t.todo('single prop with static value followed by a single boolean prop', (t) => {
+  t.is(html`<a href="/hello" b />`, { tag: 'a', props: { href: '/hello', b: true }, children: [] });
+  t.end()
+});
+
+t.todo('two props with static values', (t) => {
+  t.is(html`<a href="/hello" target="_blank" />`, { tag: 'a', props: { href: '/hello', target: '_blank' }, children: [] });
+  t.end()
+});
+
+t.only('single prop with dynamic value', (t) => {
+  t.is(html`<a href=${'foo'} />`.html, `<a href=\u200C />`);
+  t.is(html`<a href=${'foo'} />`.prog, [['ELEM', 'a', 'ATTR', 'href', [1]]]);
+  // t.is(html`<a href=${'foo'} />`, { tag: 'a', props: { href: 'foo' }, children: [] });
+  t.end()
+});
+
+t.skip('slash in the middle of tag name or property name self-closes the element', (t) => {
+  // t.is(html`<ab/ba prop=value>`, { tag: 'ab', props: null, children: [] });
+  // t.is(html`<abba pr/op=value>`, { tag: 'abba', props: { pr: true }, children: [] });
+  // t.is(html`<ab/ba prop=value/>`, { tag: 'ab/ba', props: { prop: 'value' }, children: [] });
+  // t.is(html`<abba pr/op=value/>`, { tag: 'abba', props: { 'pr/op': 'value' }, children: [] });
+  t.end()
+});
+
+t.only('slash in a property value does not self-closes the element, unless followed by >', (t) => {
+  // t.is(html`<abba prop=val/ue></abba>`.html, `<abba prop=val/ue></abba>`);
+  // t.is(html`<abba prop=val/ue><//>`, { tag: 'abba', props: { prop: 'val/ue' }, children: [] });
+  t.is(html`<abba prop=value/>`.html, `<abba prop=value />`);
+  // t.is(html`<abba prop=value/>`, { tag: 'abba', props: { prop: 'value' }, children: [] });
+  t.is(html`<abba prop=value/ ></abba>`.html, `<abba prop=value/ ></abba>`);
+  // t.is(html`<abba prop=value/ ><//>`, { tag: 'abba', props: { prop: 'value/' }, children: [] });
+  t.end()
+});
+
+t.only('two props with dynamic values', (t) => {
+  function onClick(e) { }
+  t.is(html`<a href=${'foo'} onClick=${onClick} />`.html, '<a href=\u200C onClick=\u200C />');
+  t.is(html`<a href=${'foo'} onClick=${onClick} />`.prog, [['ELEM', 'a', 'ATTR', 'href', [1], 'ATTR', 'onClick', [2]]]);
+  // t.is(html`<a href=${'foo'} onClick=${onClick} />`, { tag: 'a', props: { href: 'foo', onClick }, children: [] });
+  t.end()
+});
+
+t.only('prop with multiple static and dynamic values get concatenated as strings', (t) => {
+  t.is(html`<a href="before${'foo'}after" />`.html, `<a href="before\u200Cafter" />`);
+  t.is(html`<a href="before${'foo'}after" />`.prog, [['ELEM','a', 'ATTR','href',['before',1,'after']]]);
+  // t.is(html`<a href="before${'foo'}after" />`, { tag: 'a', props: { href: 'beforefooafter' }, children: [] });
+
+  t.is(html`<a href=${1}${1} />`.html, `<a href=\u200C\u200C />`);
+  t.is(html`<a href=${1}${1} />`.prog, [['ELEM','a', 'ATTR','href',[1,2]]]);
+  // t.is(html`<a href=${1}${1} />`, { tag: 'a', props: { href: '11' }, children: [] });
+
+  t.is(html`<a href=${1}between${1} />`.html, `<a href=\u200Cbetween\u200C />`);
+  t.is(html`<a href=${1}between${1} />`.prog, [['ELEM', 'a', 'ATTR', 'href', [1,'between',2]]]);
+  // t.is(html`<a href=${1}between${1} />`, { tag: 'a', props: { href: '1between1' }, children: [] });
+
+  t.is(html`<a href=/before/${'foo'}/after />`.html, `<a href=/before/\u200C/after />`);
+  t.is(html`<a href=/before/${'foo'}/after />`.prog, [['ELEM', 'a', 'ATTR', 'href', ['/before/',1,'/after']]]);
+  // t.is(html`<a href=/before/${'foo'}/after />`, { tag: 'a', props: { href: '/before/foo/after' }, children: [] });
+
+  t.is(html`<a href=/before/${'foo'}/>`.html, `<a href=/before/\u200C />`);
+  t.is(html`<a href=/before/${'foo'}/>`.prog, [['ELEM', 'a', 'ATTR', 'href', ['/before/',1]]]);
+  // t.is(html`<a href=/before/${'foo'}/>`, { tag: 'a', props: { href: '/before/foo' }, children: [] });
+  t.end()
+});
+
+t.only('spread props', (t) => {
+  // t.is(html`<a  />`.html, { tag: 'a', props: null, children: [] });
+  t.is(html`<a ...${{ foo: 'bar' }} />`.html, `<a />`);
+  t.is(html`<a ...${{ foo: 'bar' }} />`.prog, [['ELEM', 'a', 'ATTR', '...', 1]]);
+  // t.is(html`<a ...${{ foo: 'bar' }} />`, { tag: 'a', props: { foo: 'bar' }, children: [] });
+  t.is(html`<a b ...${{ foo: 'bar' }} />`.html, `<a b />`);
+  t.is(html`<a b ...${{ foo: 'bar' }} />`.prog, [['ELEM', 'a', 'ATTR', '...', 1]]);
+  // t.is(html`<a b ...${{ foo: 'bar' }} />`, { tag: 'a', props: { b: true, foo: 'bar' }, children: [] });
+  // t.is(html`<a b c ...${{ foo: 'bar' }} />`, { tag: 'a', props: { b: true, c: true, foo: 'bar' }, children: [] });
+  t.is(html`<a ...${{ foo: 'bar' }} b />`.prog, [['ELEM', 'a', 'ATTR', '...', 1]]);
+  // t.is(html`<a ...${{ foo: 'bar' }} b />`, { tag: 'a', props: { b: true, foo: 'bar' }, children: [] });
+  t.is(html`<a b=${1}...${{ foo: 'bar' }} b />`.prog, [['ELEM', 'a', 'ATTR', 'b', [1], 'ATTR', '...', 2]]);
+  // t.is(html`<a b="1" ...${{ foo: 'bar' }} />`, { tag: 'a', props: { b: '1', foo: 'bar' }, children: [] });
+  t.is(html`<a x="1"><b y="2" ...${{ c: 'bar' }}/></a>`.prog, [['ELEM', 'a'],['ELEM', 'b', 'ATTR', '...', 1]]);
+  // t.is(html`<a x="1"><b y="2" ...${{ c: 'bar' }}/></a>`, h('a', { x: '1' }, h('b', { y: '2', c: 'bar' })));
+  t.is(html`<a b=${2} ...${{ c: 3 }}>d: ${4}</a>`.html, `<a b=\u200C>d: <!----></a>`);
+  t.is(html`<a b=${2} ...${{ c: 3 }}>d: ${4}</a>`.prog, [['ELEM', 'a', 'ATTR', 'b', [1], 'ATTR', '...', 2]]);
+  // t.is(html`<a b=${2} ...${{ c: 3 }}>d: ${4}</a>`, h('a', { b: 2, c: 3 }, 'd: ', 4));
+  t.is(html`<a ...${{ c: 'bar' }}><b ...${{ d: 'baz' }}/></a>`.prog, [['ELEM','a','ATTR','...',1],['ELEM','b','ATTR','...',2]]);
+  // t.is(html`<a ...${{ c: 'bar' }}><b ...${{ d: 'baz' }}/></a>`, h('a', { c: 'bar' }, h('b', { d: 'baz' })));
+  t.end()
+});
+
+t.only('multiple spread props in one element', (t) => {
+  t.is(html`<a ...${{ foo: 'bar' }} ...${{ quux: 'baz' }} />`, { tag: 'a', props: { foo: 'bar', quux: 'baz' }, children: [] });
+  t.end()
+});
+
+t('mixed spread + static props', (t) => {
+  t.is(html`<a b ...${{ foo: 'bar' }} />`, { tag: 'a', props: { b: true, foo: 'bar' }, children: [] });
+  t.is(html`<a b c ...${{ foo: 'bar' }} />`, { tag: 'a', props: { b: true, c: true, foo: 'bar' }, children: [] });
+  t.is(html`<a ...${{ foo: 'bar' }} b />`, { tag: 'a', props: { b: true, foo: 'bar' }, children: [] });
+  t.is(html`<a ...${{ foo: 'bar' }} b c />`, { tag: 'a', props: { b: true, c: true, foo: 'bar' }, children: [] });
+  t.end()
+});
+
+t('closing tag', (t) => {
+  t.is(html`<a></a>`, { tag: 'a', props: null, children: [] });
+  t.is(html`<a b></a>`, { tag: 'a', props: { b: true }, children: [] });
+  t.end()
+});
+
+t('auto-closing tag', (t) => {
+  t.is(html`<a><//>`, { tag: 'a', props: null, children: [] });
+  t.end()
+});
+
+t('non-element roots', (t) => {
+  t.is(html`foo`, 'foo');
+  t.is(html`${1}`, 1);
+  t.is(html`foo${1}`, ['foo', 1]);
+  t.is(html`${1}foo`, [1, 'foo']);
+  t.is(html`foo${1}bar`, ['foo', 1, 'bar']);
+  t.end()
+});
+
+t('text child', (t) => {
+  t.is(html`<a>foo</a>`, { tag: 'a', props: null, children: ['foo'] });
+  t.is(html`<a>foo bar</a>`, { tag: 'a', props: null, children: ['foo bar'] });
+  t.is(html`<a>foo "<b /></a>`, { tag: 'a', props: null, children: ['foo "', { tag: 'b', props: null, children: [] }] });
+  t.end()
+});
+
+t('dynamic child', (t) => {
+  t.is(html`<a>${'foo'}</a>`, { tag: 'a', props: null, children: ['foo'] });
+  t.end()
+});
+
+t('mixed text + dynamic children', (t) => {
+  t.is(html`<a>${'foo'}bar</a>`, { tag: 'a', props: null, children: ['foo', 'bar'] });
+  t.is(html`<a>before${'foo'}after</a>`, { tag: 'a', props: null, children: ['before', 'foo', 'after'] });
+  t.is(html`<a>foo${null}</a>`, { tag: 'a', props: null, children: ['foo', null] });
+  t.is(html`<a>foo${0}</a>`, { tag: 'a', props: null, children: ['foo', 0] });
+  t.end()
+});
+
+t('element child', (t) => {
+  t.is(html`<a><b /></a>`, h('a', null, h('b', null)));
+  t.end()
+});
+
+t('multiple element children', (t) => {
+  t.is(html`<a><b /><c /></a>`, h('a', null, h('b', null), h('c', null)));
+  t.is(html`<a x><b y /><c z /></a>`, h('a', { x: true }, h('b', { y: true }), h('c', { z: true })));
+  t.is(html`<a x=1><b y=2 /><c z=3 /></a>`, h('a', { x: '1' }, h('b', { y: '2' }), h('c', { z: '3' })));
+  t.is(html`<a x=${1}><b y=${2} /><c z=${3} /></a>`, h('a', { x: 1 }, h('b', { y: 2 }), h('c', { z: 3 })));
+  t.end()
+});
+
+t('mixed typed children', (t) => {
+  t.is(html`<a>foo<b /></a>`, h('a', null, 'foo', h('b', null)));
+  t.is(html`<a><b />bar</a>`, h('a', null, h('b', null), 'bar'));
+  t.is(html`<a>before<b />after</a>`, h('a', null, 'before', h('b', null), 'after'));
+  t.is(html`<a>before<b x=1 />after</a>`, h('a', null, 'before', h('b', { x: '1' }), 'after'));
+  t.end()
+});
+
+t('hyphens (-) are allowed in attribute names', (t) => {
+  t.is(html`<a b-c></a>`, h('a', { 'b-c': true }));
+  t.end()
+});
+
+t('NUL characters are allowed in attribute values', (t) => {
+  t.is(html`<a b="\0"></a>`, h('a', { b: '\0' }));
+  t.is(html`<a b="\0" c=${'foo'}></a>`, h('a', { b: '\0', c: 'foo' }));
+  t.end()
+});
+
+t('NUL characters are allowed in text', (t) => {
+  t.is(html`<a>\0</a>`, h('a', null, '\0'));
+  t.is(html`<a>\0${'foo'}</a>`, h('a', null, '\0', 'foo'));
+  t.end()
+});
+
+t('cache key should be unique', (t) => {
+  html`<a b="${'foo'}" />`;
+  t.is(html`<a b="\0" />`, h('a', { b: '\0' }));
+  t.notDeepEqual(html`<a>${''}9aaaaaaaaa${''}</a>`, html`<a>${''}0${''}aaaaaaaaa${''}</a>`);
+  t.notDeepEqual(html`<a>${''}0${''}aaaaaaaa${''}</a>`, html`<a>${''}.8aaaaaaaa${''}</a>`);
+  t.end()
+});
+
+t('do not mutate spread variables', (t) => {
+  const obj = {};
+  html`<a ...${obj} b="1" />`;
+  t.is(obj, {});
+  t.end()
+});
+
+t('ignore HTML comments', (t) => {
+  t.is(html`<a><!-- Hello, world! --></a>`, h('a', null));
+  t.is(html`<a><!-- Hello,\nworld! --></a>`, h('a', null));
+  t.is(html`<a><!-- ${'Hello, world!'} --></a>`, h('a', null));
+  t.is(html`<a><!--> Hello, world <!--></a>`, h('a', null));
+  t.end()
+});
+
+
+</script>
