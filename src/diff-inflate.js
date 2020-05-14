@@ -1,3 +1,8 @@
+// inflate version of differ, ~260b
+// - no sets / maps used
+// - prepend/append/remove/clear short paths
+// - a can be live childNodes/HTMLCollection
+
 export default (parent, a, b, end = null) => {
   let i = 0, cur, next, bi, n = b.length, m = a.length
 

@@ -22,7 +22,9 @@ export default (statics) => {
 		for (let j=0; j < statics[i].length; j++) {
 			char = statics[i][j];
 
-			if (mode === TEXT) { if (char === '<') { prog = [mode = ELEM], buf = '' } }
+			if (mode === TEXT) {
+        if (char === '<') { prog = [mode = ELEM], buf = '' }
+      }
       // Ignore everything until the last three characters are '-', '-' and '>'
 			else if (mode === COMM) {
         if (buf === '--' && char === '>') { mode = TEXT, buf = '' }

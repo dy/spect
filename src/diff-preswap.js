@@ -1,9 +1,10 @@
+// NOTE: no idea found on how to process collected fast swaps
+// so for now use diff-inflate
 // Features
 // - no sets/maps used
 // - fast prepend/append
 // - fast 1:1 swaps
 // - works on live input childNodes
-// → no nextSibling used - can merge attributes (Yay!)
 export default (parent, a, b, end = null) => {
   let i = 0, cur, next, bi, bnext, n = b.length, m = a.length,
     swap = [],

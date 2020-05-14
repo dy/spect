@@ -1,3 +1,4 @@
+// deflate version of differ, ~170b
 export default (parent, a, b, end = null) => {
   let i = 0, cur, next, bi, bidx = new Set(b)
 
