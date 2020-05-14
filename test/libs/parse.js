@@ -27,15 +27,14 @@ export default (statics) => {
     part = ''
 
 		for (let j=0; j < statics[i].length; j++) {
-			part += char = statics[i][j];
+			char = statics[i][j];
 
 			if (mode === TEXT) { if (char === '<') { prog = [mode = ELEMENT], buf = '' } }
       // Ignore everything until the last three characters are '-', '-' and '>'
 			else if (mode === COMMENT) {
-        if (buf === '--' && char === '>') {
-          mode = TEXT, buf = ''
-        }
-        else buf = char + buf[0]
+        if (buf === '--' && char === '>') { mode = TEXT, buf = '' }
+        else { buf = char + buf[0] }
+        char = ''
       }
 			else if (quote) { if (char === quote) (quote = ''); else (buf += char) }
 			else if (char === '"' || char === "'") (quote = char)
@@ -43,7 +42,7 @@ export default (statics) => {
 			else if (char === '>') {
         // <//>, </> → </comp>
         if (!mode) {
-          if (part.slice(-2) === '/>') part = part.slice(0, part.lastIndexOf('<') + 2) + H_TAG + '>'
+          if (part.slice(-1) === '/') part = part.slice(0, part.lastIndexOf('<') + 2) + H_TAG
         }
         commit(), mode = TEXT
       }
@@ -54,7 +53,7 @@ export default (statics) => {
         // </x...
         if (mode === ELEMENT && !buf) (mode = 0, buf = '/')
         // x/> → x />
-        else if ((!j || buf) && statics[i][j+1] === '>') { part = part.slice(0,-1) + ' /' }
+        else if ((!j || buf) && statics[i][j+1] === '>') { part += ' ' }
         else buf += char
       }
 
@@ -81,7 +80,8 @@ export default (statics) => {
 			else buf += char;
 
       // detect comment
-			if (mode === ELEMENT && buf === '!--') { mode = COMMENT; tmp = j - 3 }
+			if (mode === ELEMENT && buf === '!--') { mode = COMMENT, part = part.slice(0, -3) }
+      else part += char
 		}
 
     if (++i < statics.length) {
