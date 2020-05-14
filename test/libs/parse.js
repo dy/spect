@@ -15,39 +15,46 @@ export default (statics) => {
       // current element program (id/query, props, children type)
       progs = [], prog
 
-  // add chunk to program from current state, no modes management
+  // add chunk to output string, to program from current state; no modes management
   const commit = (field) => {
     if (mode === ELEMENT) { prog.push(buf), progs.push(prog) }
     else if (mode === ATTRIBUTE) { if (tmp && buf) tmp.push(buf) }
-    buf = '', tmp = null
+    buf = '', tmp = undefined
   }
 
   // walker / mode manager
 	for (let i=0; i<statics.length; ) {
-    part = statics[i]
+    part = ''
 
-		for (let j=0; j < part.length; j++) {
-			char = part[j];
+		for (let j=0; j < statics[i].length; j++) {
+			part += char = statics[i][j];
 
 			if (mode === TEXT) { if (char === '<') { prog = [mode = ELEMENT], buf = '' } }
       // Ignore everything until the last three characters are '-', '-' and '>'
-			else if (mode === COMMENT) { if (buf === '--' && char === '>') (mode = TEXT, buf = ''); else buf = char + buf[0] }
+			else if (mode === COMMENT) {
+        if (buf === '--' && char === '>') {
+          mode = TEXT, buf = ''
+        }
+        else buf = char + buf[0]
+      }
 			else if (quote) { if (char === quote) (quote = ''); else (buf += char) }
 			else if (char === '"' || char === "'") (quote = char)
 
 			else if (char === '>') {
         // <//>, </> → </comp>
-        if (!mode && buf === '/') { j -= part.length - (part = part.slice(0, tmp + 1) + H_TAG + part.slice(j)) }
+        if (!mode) {
+          if (part.slice(-2) === '/>') part = part.slice(0, part.lastIndexOf('<') + 2) + H_TAG + '>'
+        }
         commit(), mode = TEXT
       }
       // Ignore everything until the tag ends
-			else if (!mode) buf = char
+			else if (!mode) {}
 
       else if (char === '/') {
         // </x...
-        if (mode === ELEMENT && !buf) mode = 0
+        if (mode === ELEMENT && !buf) (mode = 0, buf = '/')
         // x/> → x />
-        else if ((!j || buf) && part[j+1] === '>') { part = part.slice(0, j) + ' ' + part.slice(j--) }
+        else if ((!j || buf) && statics[i][j+1] === '>') { part = part.slice(0,-1) + ' /' }
         else buf += char
       }
 
@@ -74,7 +81,7 @@ export default (statics) => {
 			else buf += char;
 
       // detect comment
-			if (mode === ELEMENT && buf === '!--') { mode = COMMENT; prog = null; }
+			if (mode === ELEMENT && buf === '!--') { mode = COMMENT; tmp = j - 3 }
 		}
 
     if (++i < statics.length) {

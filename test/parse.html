@@ -167,11 +167,13 @@ t.only('spread props', (t) => {
 });
 
 t.only('multiple spread props in one element', (t) => {
-  t.is(html`<a ...${{ foo: 'bar' }} ...${{ quux: 'baz' }} />`, { tag: 'a', props: { foo: 'bar', quux: 'baz' }, children: [] });
+  t.is(html`<a ...${{ foo: 'bar' }} ...${{ quux: 'baz' }} />`.html, `<a />`);
+  t.is(html`<a ...${{ foo: 'bar' }} ...${{ quux: 'baz' }} />`.prog, [['ELEM','a','ATTR','...',1,'ATTR','...',2]]);
+  // t.is(html`<a ...${{ foo: 'bar' }} ...${{ quux: 'baz' }} />`, { tag: 'a', props: { foo: 'bar', quux: 'baz' }, children: [] });
   t.end()
 });
 
-t('mixed spread + static props', (t) => {
+t.skip('mixed spread + static props', (t) => {
   t.is(html`<a b ...${{ foo: 'bar' }} />`, { tag: 'a', props: { b: true, foo: 'bar' }, children: [] });
   t.is(html`<a b c ...${{ foo: 'bar' }} />`, { tag: 'a', props: { b: true, c: true, foo: 'bar' }, children: [] });
   t.is(html`<a ...${{ foo: 'bar' }} b />`, { tag: 'a', props: { b: true, foo: 'bar' }, children: [] });
@@ -179,14 +181,19 @@ t('mixed spread + static props', (t) => {
   t.end()
 });
 
-t('closing tag', (t) => {
-  t.is(html`<a></a>`, { tag: 'a', props: null, children: [] });
-  t.is(html`<a b></a>`, { tag: 'a', props: { b: true }, children: [] });
+t.only('closing tag', (t) => {
+  // t.is(html`<a></a>`, { tag: 'a', props: null, children: [] });
+  t.is(html`<a></a>`.prog, [['ELEM','a']]);
+  // t.is(html`<a b></a>`, { tag: 'a', props: { b: true }, children: [] });
+  t.is(html`<a b></a>`.html, `<a b></a>`);
+  t.is(html`<a b></a>`.prog, [['ELEM','a']]);
   t.end()
 });
 
-t('auto-closing tag', (t) => {
-  t.is(html`<a><//>`, { tag: 'a', props: null, children: [] });
+t.only('auto-closing tag', (t) => {
+  t.is(html`<${1}></>`.html, `<h--tag></h--tag>`);
+  t.is(html`<${1}><//>`.html, `<h--tag></h--tag>`);
+  // t.is(html`<a><//>`, { tag: 'a', props: null, children: [] });
   t.end()
 });
 
@@ -272,11 +279,12 @@ t('do not mutate spread variables', (t) => {
   t.end()
 });
 
-t('ignore HTML comments', (t) => {
-  t.is(html`<a><!-- Hello, world! --></a>`, h('a', null));
-  t.is(html`<a><!-- Hello,\nworld! --></a>`, h('a', null));
-  t.is(html`<a><!-- ${'Hello, world!'} --></a>`, h('a', null));
-  t.is(html`<a><!--> Hello, world <!--></a>`, h('a', null));
+t.only('ignore HTML comments', (t) => {
+  t.is(html`<a><!-- Hello, world! --></a>`.html, `<a></a>`);
+  // t.is(html`<a><!-- Hello, world! --></a>`, h('a', null));
+  // t.is(html`<a><!-- Hello,\nworld! --></a>`, h('a', null));
+  // t.is(html`<a><!-- ${'Hello, world!'} --></a>`, h('a', null));
+  // t.is(html`<a><!--> Hello, world <!--></a>`, h('a', null));
   t.end()
 });
 
