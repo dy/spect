@@ -90,7 +90,7 @@ t.todo('two props with static values', (t) => {
 
 t('single prop with dynamic value', (t) => {
   t.is(html`<a href=${'foo'} />`.html, `<a href=\u200C />`);
-  t.is(html`<a href=${'foo'} />`.prog, [[ELEM, 'a', ATTR, 'href', [1]]]);
+  t.is(html`<a href=${'foo'} />`.prog, [[ELEM, 'a', ATTR, 'href', 1]]);
   // t.is(html`<a href=${'foo'} />`, { tag: 'a', props: { href: 'foo' }, children: [] });
   t.end()
 });
@@ -116,7 +116,7 @@ t('slash in a property value does not self-closes the element, unless followed b
 t('two props with dynamic values', (t) => {
   function onClick(e) { }
   t.is(html`<a href=${'foo'} onClick=${onClick} />`.html, '<a href=\u200C onClick=\u200C />');
-  t.is(html`<a href=${'foo'} onClick=${onClick} />`.prog, [[ELEM, 'a', ATTR, 'href', [1], ATTR, 'onClick', [2]]]);
+  t.is(html`<a href=${'foo'} onClick=${onClick} />`.prog, [[ELEM, 'a', ATTR, 'href', 1, ATTR, 'onClick', 2]]);
   // t.is(html`<a href=${'foo'} onClick=${onClick} />`, { tag: 'a', props: { href: 'foo', onClick }, children: [] });
   t.end()
 });
@@ -155,12 +155,12 @@ t('spread props', (t) => {
   // t.is(html`<a b c ...${{ foo: 'bar' }} />`, { tag: 'a', props: { b: true, c: true, foo: 'bar' }, children: [] });
   t.is(html`<a ...${{ foo: 'bar' }} b />`.prog, [[ELEM, 'a', ATTR, null, 1]]);
   // t.is(html`<a ...${{ foo: 'bar' }} b />`, { tag: 'a', props: { b: true, foo: 'bar' }, children: [] });
-  t.is(html`<a b=${1}...${{ foo: 'bar' }} b />`.prog, [[ELEM, 'a', ATTR, 'b', [1], ATTR, null, 2]]);
+  t.is(html`<a b=${1} ...${{ foo: 'bar' }} b />`.prog, [[ELEM, 'a', ATTR, 'b', 1, ATTR, null, 2]]);
   // t.is(html`<a b="1" ...${{ foo: 'bar' }} />`, { tag: 'a', props: { b: '1', foo: 'bar' }, children: [] });
   t.is(html`<a x="1"><b y="2" ...${{ c: 'bar' }}/></a>`.prog, [[ELEM, 'a'],[ELEM, 'b', ATTR, null, 1]]);
   // t.is(html`<a x="1"><b y="2" ...${{ c: 'bar' }}/></a>`, h('a', { x: '1' }, h('b', { y: '2', c: 'bar' })));
-  t.is(html`<a b=${2} ...${{ c: 3 }}>d: ${4}</a>`.html, `<a b=\u200C>d: <!----></a>`);
-  t.is(html`<a b=${2} ...${{ c: 3 }}>d: ${4}</a>`.prog, [[ELEM, 'a', ATTR, 'b', [1], ATTR, null, 2]]);
+  t.is(html`<a b=${2} ...${{ c: 3 }}>d: ${4}</a>`.html, `<a b=\u200C>d: <!--3--></a>`);
+  t.is(html`<a b=${2} ...${{ c: 3 }}>d: ${4}</a>`.prog, [[ELEM, 'a', ATTR, 'b', 1, ATTR, null, 2]]);
   // t.is(html`<a b=${2} ...${{ c: 3 }}>d: ${4}</a>`, h('a', { b: 2, c: 3 }, 'd: ', 4));
   t.is(html`<a ...${{ c: 'bar' }}><b ...${{ d: 'baz' }}/></a>`.prog, [[ELEM,'a',ATTR,null,1],[ELEM,'b',ATTR,null,2]]);
   // t.is(html`<a ...${{ c: 'bar' }}><b ...${{ d: 'baz' }}/></a>`, h('a', { c: 'bar' }, h('b', { d: 'baz' })));
@@ -203,7 +203,7 @@ t('non-element roots', (t) => {
   // t.is(html`${1}`, 1);
   // t.is(html`foo${1}`, ['foo', 1]);
   // t.is(html`${1}foo`, [1, 'foo']);
-  t.is(html`foo${1}bar`.html, `foo<!---->bar`);
+  t.is(html`foo${1}bar`.html, `foo<!--1-->bar`);
   t.is(html`foo${1}bar`.prog, []);
   // t.is(html`foo${1}bar`, ['foo', 1, 'bar']);
   t.end()
@@ -219,14 +219,14 @@ t('text child', (t) => {
 });
 
 t('dynamic child', (t) => {
-  t.is(html`<a>${'foo'}</a>`.html, `<a><!----></a>`);
+  t.is(html`<a>${'foo'}</a>`.html, `<a><!--1--></a>`);
   // t.is(html`<a>${'foo'}</a>`, { tag: 'a', props: null, children: ['foo'] });
   t.end()
 });
 
 t('mixed text + dynamic children', (t) => {
   // t.is(html`<a>${'foo'}bar</a>`, { tag: 'a', props: null, children: ['foo', 'bar'] });
-  t.is(html`<a>before${'foo'}after</a>`.html, `<a>before<!---->after</a>`);
+  t.is(html`<a>before${'foo'}after</a>`.html, `<a>before<!--1-->after</a>`);
   // t.is(html`<a>before${'foo'}after</a>`, { tag: 'a', props: null, children: ['before', 'foo', 'after'] });
   // t.is(html`<a>foo${null}</a>`, { tag: 'a', props: null, children: ['foo', null] });
   // t.is(html`<a>foo${0}</a>`, { tag: 'a', props: null, children: ['foo', 0] });
@@ -243,7 +243,7 @@ t('multiple element children', (t) => {
   // t.is(html`<a x><b y /><c z /></a>`, h('a', { x: true }, h('b', { y: true }), h('c', { z: true })));
   // t.is(html`<a x=1><b y=2 /><c z=3 /></a>`, h('a', { x: '1' }, h('b', { y: '2' }), h('c', { z: '3' })));
   t.is(html`<a x=${1}><b y=${2} /><c z=${3} /></a>`.html, `<a x=\u200c><b y=\u200c /><c z=\u200c /></a>`);
-  t.is(html`<a x=${1}><b y=${2} /><c z=${3} /></a>`.prog, [[ELEM,'a',ATTR,'x',[1]], [ELEM,'b',ATTR,'y',[2]], [ELEM,'c',ATTR,'z',[3]]]);
+  t.is(html`<a x=${1}><b y=${2} /><c z=${3} /></a>`.prog, [[ELEM,'a',ATTR,'x',1], [ELEM,'b',ATTR,'y',2], [ELEM,'c',ATTR,'z',3]]);
   // t.is(html`<a x=${1}><b y=${2} /><c z=${3} /></a>`, h('a', { x: 1 }, h('b', { y: 2 }), h('c', { z: 3 })));
   t.end()
 });
@@ -272,7 +272,7 @@ t.skip('NUL characters are allowed in attribute values', (t) => {
 
 t('NUL characters are allowed in text', (t) => {
   // t.is(html`<a>\0</a>`, h('a', null, '\0'));
-  t.is(html`<a>\0${'foo'}</a>`.html, `<a>\0<!----></a>`);
+  t.is(html`<a>\0${'foo'}</a>`.html, `<a>\0<!--1--></a>`);
   t.is(html`<a>\0${'foo'}</a>`.prog, [[ELEM, 'a']]);
   // t.is(html`<a>\0${'foo'}</a>`, h('a', null, '\0', 'foo'));
   t.end()
@@ -305,6 +305,17 @@ t('ignore HTML comments', (t) => {
   // t.is(html`<a><!--> Hello, world <!--></a>`, h('a', null));
   t.end()
 });
+
+t('div#frame', t => {
+  t.is(html`<div#frame />`.html, `<div id=frame />`)
+  t.is(html`<div#frame />`.prog, [[ELEM, 'div']])
+  t.is(html`<div#frame.panel />`.html, `<div id=frame class=panel />`)
+  t.is(html`<div.panel/>`.html, `<div class=panel />`)
+  t.is(html`<#frame />`.html, `<h--tag id=frame />`)
+
+  t.is(html`<div.panel x=${1}/>`.html, `<div class=panel x=\u200c />`)
+  t.is(html`<div.panel x=${1}/>`.prog, [[ELEM, 'div', ATTR, 'x', 1]])
+})
 
 
 </script>

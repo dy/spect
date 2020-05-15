@@ -9,11 +9,21 @@ const H_TAG = 'h--tag'
 
 export default (statics) => {
   // FIXME: <> → <comp>
-  let mode = TEXT, buf = '', quote = '', attr, char,
+  let mode = TEXT, buf = '', quote = '', attr, char, sel,
       // transformed statics
       parts = [], part,
       // current element program (id/query, props, children type)
       progs = [], prog
+
+  const commit = () => {
+    if (mode === ELEM) { prog.push(buf), progs.push(prog), mode = ATTR }
+    else if (attr) {
+      if (buf) attr.push(buf)
+      if (attr.length === 1) (prog.pop(), prog.push(attr[0]))
+      attr = undefined
+    }
+    sel = buf = ''
+  }
 
   // walker / mode manager
 	for (let i=0; i<statics.length; ) {
@@ -31,15 +41,24 @@ export default (statics) => {
         else { buf = char + buf[0] }
         char = ''
       }
-			else if (quote) { if (char === quote) (quote = ''); else (buf += char) }
+
+      // <a#id, <a.class
+      else if ((mode === ELEM || sel) && (char === '#' || char === '.')) {
+        part += buf ? '' : H_TAG
+        if (!sel) (commit(), mode = ATTR)
+        sel = char
+        part += (sel === '#' ? ' id=' : ' class=')
+        char = ''
+      }
+
+      else if (quote) { if (char === quote) (quote = ''); else (buf += char) }
 			else if (char === '"' || char === "'") (quote = char)
 
 			else if (char === '>') {
         // <//>, </> → </comp>
         if (!mode && (!buf || buf === '/')) part = part.slice(0, buf ? -buf.length : undefined) + H_TAG
-        else if (mode === ELEM) { prog.push(buf), progs.push(prog) }
-        else if (mode === ATTR && attr && buf) attr.push(buf)
-        buf = '', attr = undefined, mode = TEXT
+        else commit()
+        mode = TEXT
       }
       // Ignore everything until the tag ends
 			else if (!mode) buf = char
@@ -52,26 +71,8 @@ export default (statics) => {
         else buf += char
       }
 			else if (char === ' ' || char === '\t' || char === '\n' || char === '\r') {
-        // <a,   <#a ;    ELEM,  field
-        // if (mode === ELEM) {
-        //   // FIXME: <a#b.c → <a #b.c
-        //   if (/^#|^\.\b/.test(buf)) {
-        //     node.removeAttribute(name), --i;
-        //     let [beforeId, afterId = ''] = name.split('#')
-        //     let beforeClx = beforeId.split('.')
-        //     name = beforeClx.shift()
-        //     let afterClx = afterId.split('.')
-        //     let id = afterClx.shift()
-        //     let clx = [...beforeClx, ...afterClx]
-        //     // FIXME
-        //     // if (id) j -= part.length - (part = part.slice(0, attr + 1) + H_TAG + part.slice(j))
-        //   }
-        //   prog.push(buf), mode = ATTR
-        // }
-
-        if (mode === ELEM) { prog.push(buf), progs.push(prog), mode = ATTR }
-        else if (mode === ATTR && attr && buf) { attr.push(buf) }
-        buf = '', attr = undefined
+        // <a,   <#a ;  ELEM,  field
+        commit()
 			}
 			else buf += char;
 
@@ -81,7 +82,7 @@ export default (statics) => {
 
     if (++i < statics.length) {
       // >a${1}b${2}c<  →  >a<!--1-->b<!--2-->c<
-      if (mode === TEXT) part += '<!---->'
+      if (mode === TEXT) part += '<!--' + i + '-->'
       // <${el} → <h--tag;    ELEM, field
       else if (mode === ELEM) (prog.push(i), progs.push(prog), part += H_TAG, mode = ATTR)
       else if (mode === ATTR) {
