@@ -1,11 +1,11 @@
 // cleans up html from comments, replaces fields with placeholders, creates eval programs
+// heavily inspired by htm
 
 export const TEXT = 3, ELEM = 1, ATTR = 2, COMM = 8, FRAG = 11, COMP = FRAG
 // export const TEXT = 'TEXT', ELEM = 'ELEM', ATTR = 'ATTR', COMM = 'COMM', FRAG = 'FRAG'
 
 // placeholders
-const ZWSP = '\u200B', ZWNJ = '\u200C', ZWJ = '\u200D', FIELD = '\0', FIELD_RE = /\0/g, HTML_FIELD = ZWSP
-const H_TAG = 'h--tag'
+const ZWSP = '\u200B', ZWNJ = '\u200C', H_TAG = 'h--tag', H_FIELD = ZWNJ
 
 export default (statics) => {
   // FIXME: <> → <comp>
@@ -14,7 +14,7 @@ export default (statics) => {
       parts = [], part, prog = []
 
   const commit = () => {
-    if (mode === ELEM) {prog.push(ELEM, buf, null), mode = ATTR }
+    if (mode === ELEM) {prog.push(ELEM, buf), mode = ATTR }
     else if (attr) {
       if (buf) attr.push(buf)
       if (attr.length === 1) (prog.pop(), prog.push(attr[0]))
@@ -82,7 +82,7 @@ export default (statics) => {
       // >a${1}b${2}c<  →  >a<!--1-->b<!--2-->c<
       if (mode === TEXT) part += '<!--' + i + '-->'
       // <${el} → <h--tag;    ELEM, field, children
-      else if (mode === ELEM) (prog.push(COMP, i, null), part += H_TAG, mode = ATTR)
+      else if (mode === ELEM) (prog.push(COMP, i), part += H_TAG, mode = ATTR)
       else if (mode === ATTR) {
         // <xxx ...${{}};    ATTR, null, field
         if (buf === '...') { prog.push(ATTR, null, i), part = part.slice(0, -4) }
@@ -96,7 +96,7 @@ export default (statics) => {
           if (buf) attr.push(buf)
           attr.push(i)
 
-          part += ZWNJ
+          part += H_FIELD
         }
       }
 

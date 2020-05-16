@@ -1,40 +1,30 @@
 import { symbol, observable, primitive, attr, slice } from './src/util.js'
 
 // DOM
-const TEXT = 3, ELEMENT = 1, ATTRIBUTE = 2, COMMENT = 8, FRAGMENT = 11, SHOW_ELEMENT = 1, SHOW_TEXT = 4, SHOW_COMMENT = 128
+const TEXT = 3, ELEM = 1, ATTR = 2, COMM = 8, FRAG = 11, COMP = FRAG,
+      SHOW_ELEMENT = 1, SHOW_TEXT = 4, SHOW_COMMENT = 128
 
 // placeholders
-const ZWSP = '\u200B', ZWNJ = '\u200C', ZWJ = '\u200D', FIELD = '\0', FIELD_RE = /\0/g, HTML_FIELD = ZWSP
+const ZWSP = '\u200B', ZWNJ = '\u200C', ZWJ = '\u200D', H_TAG = 'h:tag', H_FIELD = ZWNJ
+
 
 html.FAST = true
 
-// evaluate program constants
-const PROG_TAG = 1,
-      PROG_COMPONENT = 2,
-      PROG_QUERY = 3,
-      PROP_NAME = 4,
-      PROP_SPREAD = 5,
-      PROP_VALUE = 6,
-      PROP_TPL = 7,
-      PROP_STATIC = 8,
-      CHILDREN = 9
-// const PROG_TAG = ('PROG_TAG'),
-//       PROG_COMPONENT = ('PROG_COMPONENT'),
-//       PROG_QUERY = ('PROG_QUERY'),
-//       PROP_NAME = ('PROP_NAME'),
-//       PROP_SPREAD = ('PROP_SPREAD'),
-//       PROP_VALUE = ('PROP_VALUE'),
-//       PROP_TPL = ('PROP_TPL'),
-//       PROP_STATIC = ('PROP_STATIC'),
-//       CHILDREN = ('CHILDREN')
-
 // character for node id, ref https://mathiasbynens.be/notes/html5-id-class
-const CHARS = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789𘈱'
-const nextChar = c => CHARS.indexOf(c) < CHARS.length - 1 ? CHARS[CHARS.indexOf(c) + 1] : String.fromCharCode(c.charCodeAt(0) + 1)
+// const CHARS = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789'
 
 // see also https://developer.mozilla.org/en-US/docs/Web/API/Node/nodeType
 // const EMPTY = 'area base br col command embed hr img input keygen link meta param source track wbr ! !doctype ? ?xml'.split(' ')
 
+// FIXME: move these comments to appropriate places
+// getElementById is faster than node path tracking (id is path in a way) https://jsperf.com/queryselector-vs-prop-access
+// fields order is co-directional with tree walker
+// why `!immutables` and not `observable`:
+// - fn field cannot be cloned afterwards (like onclick)
+// - object field may one-way add attribs (spoil fast node) and also may have observable prop
+// - array field can insert additional children, spoiling numeration of _childFields
+// getElementsByTagName('*') is faster than tree iterator/querySelector('*'), but live and fragment doesn't have it
+// ref: https://jsperf.com/createnodeiterator-vs-createtreewalker-vs-getelementsby
 
 const cache = new WeakMap
 
@@ -43,182 +33,253 @@ export default function html(statics) {
   // FIXME: should be Array.isTemplateObject(statics)
   if (!statics.raw) return h.apply(null, arguments)
 
-  let i = 0, fast = html.FAST, frag, build = cache.get(statics)
+  // the algorithm (after many considerations)
+  // 0. statics list prepared for innerHTML, fields stubbed with placeholders, comments removed, node programs collected
+  // 1. template is created via innerHTML
+  // 2. node iterator replaces comments (child fields) with blank texts (pre-optimizes for text morphing)
+  //    collects meaningful node programs, assigns their nodes ids
+  //    note that we can't modify template and clone it, like it is done in h-reducers fastTemplate
+  //    because if it happens to create async fields element, there will be flash of old content (cleaning up tpl is less effective)
+  //    also 1x iterator is better than 2x getElementsByTagName
+  //    ref: https://jsperf.com/createnodeiterator-vs-createtreewalker-vs-getelementsby
+  // 3. builder clones template and runs program on it - query/apply props/merge children/do observables
+  let fast = html.FAST, build = cache.get(statics)
 
   if (build) return build(arguments)
 
-  if (fast) for (i = 1; i < arguments.length; i++) if (!primitive(arguments[i])) { fast = false; break }
+  if (fast) for (let i = 1; i < arguments.length; i++) if (!primitive(arguments[i])) { fast = false; break }
 
   // non-primitive args build template immediately
-  if (!fast) return buildTemplate(arguments)
+  // if (!fast) return buildTemplate(arguments)
+  // cache.set(statics, buildTemplate)
+  // single.innerHTML = String.raw.apply(null, arguments)
+  // frag = single.firstChild
+  // return frag
 
-  cache.set(statics, buildTemplate)
-  single.innerHTML = String.raw.apply(null, arguments)
-  frag = single.firstChild
-  return frag
-}
+  let template = document.createElement('template')
 
+  // 0. prepares string for innerHTML, creates program for affected nodes
+  // source: src/parse.js
+  let mode = TEXT, buf = '', quote = '', attr, char, sel,
+      // transformed statics
+      parts = [], part,
+      // current element program (id/query, props, children type)
+      prog = [COMP, null]
 
-function buildTemplate (args) {
-  const tpl = document.createElement('template'), statics = args[0]
-
-  // regex replace is faster, shorter and can identify node by its `<` index in string
-  // FIXME: this initial part can be replaced with HTM-like parser (possibly faster?)
-  let str = statics.join(FIELD)
-
-  let ids = Array(str.length), fieldTags = [], prog = [], quotes = [], pathTracker = '', lvl = 0, childFields = {},
-      prevIdx, openIdx, closeIdx, tagStr, id, tplParts = [], fieldId = 0
-
-  // collect nodes with fields - either as attribs or children
-  // getElementById is faster than node path tracking (id is path in a way) https://jsperf.com/queryselector-vs-prop-access
-  str = str
-    // detecting quotes from inside fields `<a name="a${b}c" ${d}>` is hard, also hiding them makes much easier to detect tags
-    // but we have to keep refs to originals
-    // FIXME: that can be done faster by sequence indexOf's (not sure what I meant)
-    .replace(/".*?"|'.*?'/g, (match, i) => '__' + (quotes.push(match) - 1) + '__')
-    // <abc /> → <abc></abc> - makes possible identifying current node level by prev `<`, also no `/` detection in labeling needed
-    .replace(/<([\w:-]+)([^>]*)\/>/g, '<$1$2></$1>')
-    // label tags as `<a#a><a#aa/></a><a#b><a#ba></a><a#c/>...` - slicing tail gives parent level id
-    // FIXME: use replaceAll when implemented
-    .replace(/</g, (_, idx, str) => {
-      // </x>
-      if (str[idx+1] === '/') ids[idx] = pathTracker.slice(0, --lvl)
-      // <!--, <!doctype, <?xml
-      else if (str[idx+1] === '!' || str[idx+1] === '?' || str[idx+1] === '!') ids[idx] = pathTracker.slice(0, lvl)
-      // <x
-      else (
-        childFields[
-          ids[idx] = (pathTracker = pathTracker.slice(0, lvl) + nextChar(pathTracker[lvl]) + pathTracker.slice(++lvl)).slice(0, lvl)
-        ] = 0
-      )
-      return '<'
-    })
-    // FIXME: possible to join with prev method for faster result
-    // collect nodes affected by fields
-    .replace(FIELD_RE, (_, idx, str) => {
-      openIdx = str.lastIndexOf('<', idx)
-      if (prevIdx !== openIdx) fieldTags.push(prevIdx = openIdx)
-      let field = args[++fieldId]
-      if (~(closeIdx = str.slice(openIdx, idx).indexOf('>'))) {
-        childFields[ids[openIdx]]++
-        return primitive(field) ? field : ('<!--' + HTML_FIELD + '-->')
-      }
-      return primitive(field) ? field : HTML_FIELD
-    })
-    // // <> → <h:::>
-    // .replace(/<(>|\s)/, '<' + FIELD + '$1')
-    // // <//>, </> → </h:::>
-    // .replace(/<\/+>/, '</' + FIELD + '>')
-    // // <a#b.c → <a #b.c
-    // .replace(/(<[\w:-]+)([#\.][^<>]*>)/g, '$1 $2')
-
-  // analyze operations for affected nodes - will be evaluated in build VM
-  for (prevIdx = 0; fieldTags.length;) {
-    openIdx = fieldTags.shift(), id = ids[openIdx], tagStr = str.slice(openIdx + 1, closeIdx = str.indexOf('>', openIdx))
-
-    let parts = tagStr.split(/\s+/), tag = parts.shift()
-
-    // PROG_COMPONENT, n attrs, 1 field
-    if (tag === HTML_FIELD) prog.push(PROG_COMPONENT, parts.length)
-    // PROG_QUERY, n attrs, id
-    else if (tag[0] === '#' || tag[0] === '.') prog.push(PROG_QUERY, tag, parts.length)
-    // PROG_TAG, n attrs, name
-    else prog.push(PROG_TAG, id, parts.length)
-
-    parts.map(part => {
-      // PROP SPREAD, 1 field
-      if (part.slice(0, 3) === '...') prog.push(PROP_SPREAD)
-      // PROP BOOL, 1 field
-      else if (part[0] === HTML_FIELD) prog.push(PROP_NAME)
-      else {
-        let [name, value] = part.split('=')
-        if (value) {
-          // unquote
-          if (!'__'.indexOf(value)) value = quotes[value.slice(2,-2)]
-          // PROP VALUE name, 1 field
-          if (value === HTML_FIELD) prog.push(PROP_VALUE, name)
-          // PROP TPL, name, statics, N fields
-          else if (value.includes(HTML_FIELD)) prog.push(PROP_TPL, name, value.split(HTML_FIELD))
-          // PROP STATIC name, value
-          else (prog.push(PROP_STATIC, name, value))
-        }
-        else prog.push(PROP_STATIC, name, value || true)
-      }
-    })
-
-    // CHILDREN
-    prog.push(CHILDREN, childFields[id] || 0)
-
-    // ref https://jsperf.com/replace-vs-split-join-vs-replaceall/95
-    tplParts.push(str.slice(prevIdx, openIdx), `<${tag} id="--${id}">`)
-    prevIdx = closeIdx + 1
+  const commit = () => {
+    if (mode === ELEM) {prog.push(ELEM, buf), mode = ATTR }
+    else if (attr) {
+      if (buf) attr.push(buf)
+      if (attr.length === 1) (prog.pop(), prog.push(attr[0]))
+      attr = undefined
+    }
+    sel = buf = ''
   }
-  tplParts.push(str.slice(closeIdx + 1))
 
-  // unquote
-  tpl.innerHTML = tplParts.join('').replace(/__\d+__/, m => quotes[m.slice(2,-2)])
+  // walker / mode manager
+	for (let i=0; i<statics.length; ) {
+    part = ''
 
-  const ev = new Function('id', 'args', 'frag', `
-    let node = frag.getElementById(id)
-    node.firstChild.data = args[1]
-    node.removeAttribute('id')
-  `)
+		for (let j=0; j < statics[i].length; j++) {
+			char = statics[i][j];
 
-  const build = (args) => {
-    let frag = tpl.content.cloneNode(true), i = 0, c, f = 1, stack = []
-
-    // VM inspired by https://twitter.com/jviide/status/1257755526722662405, see ./test/stacker.html
-    // it prepares props/children for h function
-
-    for (; i < prog.length;) {
-      c = prog[i++]
-
-      // <a
-      if (c === PROG_TAG) (stack.push(frag.getElementById('--' + prog[i++]), prog[i++] ? {} : null), stack[0].removeAttribute('id'))
-      // <#x
-      else if (c === PROG_QUERY) {yyy}
-      // <${el}, <${Comp}
-      else if (c === PROG_COMPONENT) {xxx}
-      // ${'name'}
-      else if (c === PROP_NAME) stack[1][args[f++]] = true
-      // ...${props}
-      else if (c === PROP_SPREAD) Object.assign(stack[1], args[f++])
-      // name="a${value}b"
-      else if (c === PROP_TPL) stack[1][prog[i++]] = tpl(prog[i++], args, f, prog[i++])
-      // name=${value}
-      else if (c === PROP_VALUE) console.log('val', stack[1][prog[i++]] = args[f++], args)
-      // name=value
-      else if (c === PROP_STATIC) stack[1][prog[i++]] = prog[i++]
-      // end
-      else if (c === CHILDREN) {
-        let childNodes = stack[0].childNodes, count = prog[i++]
-
-        if (count) {
-          // >${child}<, >${a}${b}<
-          if (count === childNodes.length) while (count--) stack.push(args[f++])
-          // >a${child}b${child}c<
-          else {
-            // node has static content prerendered, we initialize only field comments
-            for (count = 0; count < childNodes.length; count++) {
-              stack.push(childNodes[count].nodeType === COMMENT && childNodes[count].data === HTML_FIELD ? args[f++] : childNodes[count])
-            }
-          }
-        }
-
-        // />
-        h.apply(null, stack.splice(0))
+			if (mode === TEXT) {
+        if (char === '<') { mode = ELEM, buf = '' }
       }
+      // Ignore everything until the last three characters are '-', '-' and '>'
+			else if (mode === COMM) {
+        if (buf === '--' && char === '>') { mode = TEXT, buf = '' }
+        else { buf = char + buf[0] }
+        char = ''
+      }
+
+      // <a#id, <a.class
+      else if ((mode === ELEM || sel) && (char === '#' || char === '.')) {
+        part += buf ? '' : H_TAG
+        if (!sel) ( commit(), mode = ATTR )
+        sel = char
+        part += (sel === '#' ? ' id=' : ' class=')
+        char = ''
+      }
+
+      else if (quote) { if (char === quote) (quote = ''); else (buf += char) }
+			else if (char === '"' || char === "'") (quote = char)
+
+			else if (char === '>') {
+        // <//>, </> → </comp>
+        if (!mode && (!buf || buf === '/')) part = part.slice(0, buf ? -buf.length : undefined) + H_TAG
+        else ( commit() )
+        mode = TEXT
+      }
+      // Ignore everything until the tag ends
+			else if (!mode) buf = char
+
+      else if (char === '/') {
+        // </x...
+        if (mode === ELEM && !buf) (mode = 0, buf = '' )
+        // x/> → x />
+        else if ((!j || buf) && statics[i][j+1] === '>') { part += ' ' }
+        else buf += char
+      }
+			else if (char === ' ' || char === '\t' || char === '\n' || char === '\r') {
+        // <a,   <#a ;  ELEM,  field, #children
+        commit()
+			}
+			else buf += char;
+
+      // detect comment
+			if (mode === ELEM && buf === '!--') { mode = COMM, part = part.slice(0, -3) } else part += char
+		}
+
+    if (++i < statics.length) {
+      // >a${1}b${2}c<  →  >a<!--1-->b<!--2-->c<
+      if (mode === TEXT) part += '<!--' + i + '-->'
+      // <${el} → <h--tag;    ELEM, field, children
+      else if (mode === ELEM) (prog.push(COMP, i), part += H_TAG, mode = ATTR)
+      else if (mode === ATTR) {
+        // <xxx ...${{}};    ATTR, null, field
+        if (buf === '...') { prog.push(ATTR, null, i), part = part.slice(0, -4) }
+        // <xxx ${};    ATTR, field, null
+        else if (!buf && !attr) { prog.push(ATTR, i, null) }
+        else {
+          let eq = buf.indexOf('=')
+
+          // <xxx c="a${b}c", <xxx c=a${b}c ;   ATTR, name, [a, field, b, ...]
+          if (~eq) {prog.push(ATTR, buf.slice(0, eq), attr = []), buf = buf.slice(eq + 1)}
+          if (buf) attr.push(buf)
+          attr.push(i)
+
+          part += H_FIELD
+        }
+      }
+
+      buf = ''
     }
 
-    // ev('--aaa', args, frag)
+    parts.push(part)
+	}
+
+  // 1.
+  template.innerHTML = parts.join('')
+
+  // 2. iterate over nodes, collect child ids, pre-optimize children, compose meaningful program for VM
+  let it = document.createTreeWalker(template.content, SHOW_ELEMENT), node = template.content, i = 0, program = [], id
+
+  while (node) {
+    let type = prog.shift(), sel = prog.shift(), children = []
+
+    // collect child ids
+    for (let j = 0, child; child = node.childNodes[j++];)
+      if (child.nodeType === COMM) children.push(+child.data), child.replaceWith(document.createTextNode(''))
+
+    // actualize program
+    if (prog[0] === ATTR || children.length) {
+      if (!node.id || node.id === H_FIELD) {
+        program.push(type, id = sel + '-' + (i++).toString(36), children)
+        // FIXME: -1 points to not existing argument, but is that safe?
+        if (!node.id) program.push(ATTR, 'id', -1)
+        node.id = id
+      }
+      else program.push(type, node.id, children)
+    }
+
+    // collect attrib commands / skip to the next element
+    while (prog[0] === ATTR) program.push(prog.shift(), prog.shift(), prog.shift())
+
+    node = it.nextNode()
+  }
+
+  // 3.
+  build = (args) => {
+    let frag = template.content.cloneNode(true), i = 0, c, el, k, v, j, fields
+
+    // VM inspired by https://twitter.com/jviide/status/1257755526722662405, see ./test/stacker.html
+    // iteration is cheap, but h call is slow, therefore props / children are evaluated in-place
+    // it is ~5% slower than direct eval, but without metaphysics
+    for (; i < program.length;) {
+      c = program[i++]
+
+      if (c === ATTR) {
+        k = program[i++], v = program[i++]
+        // ...${props}
+        if (k == null) for (k in v) prop(el, k, v[k])
+        // ${'name'}
+        else if (v == null) prop(el, args[k], true)
+        // name=${value}
+        else if (typeof v === 'number') prop(el, k, args[v])
+        // name="a${value}b"
+        else {
+          // xxx
+        }
+      }
+      // <a
+      else if (c === ELEM) {
+        el = frag.getElementById(program[i++])
+        for (j = 0, fields = program[i++]; j < fields.length; j++) replace(el, el.childNodes[j], args[fields[j]])
+      }
+      // <${el}, <${Comp}
+      else if (c === COMP) {
+        el = (el = program[i++]) ? args[el] : frag
+      }
+    }
 
     return frag.childNodes.length === 1 ? frag.firstChild : frag
   }
 
   cache.set(statics, build)
 
-  return build(args)
+  return build(arguments)
 }
+
+
+
+// // eval attributes
+// if (attrField = tplNode._attrFields) {
+//   for (let j = 0, n = attrField.length; j < n; j++) {
+//     let [name, value, statics] = attrField[j]
+//     if (statics) {
+//       // <a foo=${bar}
+//       if (statics === true) {
+//         const arg = arguments[value]
+//         if (fast || !observable(arg)) prop(node, name, arg)
+//         else {
+//           prop(node, name, '')
+//           sube(arg, v => prop(node, name, v))
+//         }
+//       }
+//       // <a foo=bar${baz}qux
+//       else {
+//         const fields = [].slice.call(arguments, value, statics.end)
+//         if (fast) prop(node, name, h.tpl(statics, ...fields))
+//         else {
+//           const subs = fields.map((field, i) => observable(field) ? (fields[i] = '', true) : null)
+//           if (!subs.length) prop(node, name, h.tpl(statics, ...fields))
+//           else subs.map((sub, i) => sub &&
+//             cleanup.push(sube(sub, v => (fields[i] = v, prop(node, name, h.tpl(statics, ...fields)))))
+//           )
+//         }
+//       }
+//     }
+//     // <a ${foo}
+//     else {
+//       if (!(arg = arguments[name])) {}
+//       // <a ${'name'}
+//       else if (fast || primitive(arg)) prop(node, arg, value)
+//       // <a ...${props}
+//       else {
+//         if (observable(arg)) cleanup.push(sube(arg, v => {
+//           if (primitive(v)) prop(node, v, true)
+//           else for (let key in v) prop(node, key, v[key])
+//         }))
+//         else for (let key in arg) {
+//           if (observable(arg[key])) cleanup.push(sube(arg[key], v => prop(node, key, v)))
+//           else prop(node, key, arg[key])
+//         }
+//       }
+//     }
+//   }
+// }
+
 
 
 // compact hyperscript
@@ -255,303 +316,6 @@ export function h(tag, props) {
 
 const single = document.createElement('div')
 
-function createBuilder(statics) {
-  // fields order is co-directional with tree walker order, so field number can simply be incremented, avoiding regexps
-  str = str.trim()
-    // <> → <h:::>
-    .replace(/<(>|\s)/, '<' + FIELD + '$1')
-    // <abc x/> → <abc x></abc>
-    .replace(/<([\w:-]+)([^<>]*)\/>/g, '<$1$2></$1>')
-    // <//>, </> → </h:::>
-    .replace(/<\/+>/, '</' + FIELD + '>')
-    // x/> → x />
-    // .replace(/([^<\s])\/>/g, '$1 />')
-    // <a#b.c → <a #b.c
-    .replace(/(<[\w:-]+)([#\.][^<>]*>)/g, '$1 $2')
-    // >ah:::bh:::c< → >a<!--h:::-->b<!--h:::-->c<
-    // comments have less html quirks than text nodes, also no need to split
-    // FIXME: lookahead can be slow, but possibly can be optimized via UTF symbols
-    // or maybe before join - just check prev tag
-    .replace(/h:::(?=[^<>]*(?:<|$))/g, '<!--' + FIELD + '-->')
-
-  return () => {
-    // FIXME: builder pays off after ~280 nodes, no-clone parsed args + field evaluator - after ~50 nodes
-    t.innerHTML = str, t.firstChild
-  }
-
-  const tpl = document.createElement('template')
-  tpl.innerHTML = str
-
-  // getElementsByTagName('*') is faster than tree iterator/querySelector('*'), but live and fragment doesn't have it
-  // ref: https://jsperf.com/createnodeiterator-vs-createtreewalker-vs-getelementsby
-  let it = document.createNodeIterator(tpl.content, SHOW_ELEMENT | SHOW_COMMENT, null), node, tplNodes = [], field = 0,
-      hasComponents = false, hasChildren = false, hasAttributes = false
-  while (node = it.nextNode()) {
-    if (node.nodeType === ELEMENT) {
-      // collect component fields, like <${node}
-      if (node.localName === FIELD) { node._component = field++, hasComponents = true }
-
-      // collect attribute fields
-      const attrFields = []
-      for (let i = 0, attr; attr = node.attributes[i++];) {
-        let {name, value} = attr
-        // <a #b.c
-        if (/^#|^\.\b/.test(name)) {
-          node.removeAttribute(name), --i;
-          let [beforeId, afterId = ''] = name.split('#')
-          let beforeClx = beforeId.split('.')
-          name = beforeClx.shift()
-          let afterClx = afterId.split('.')
-          let id = afterClx.shift()
-          let clx = [...beforeClx, ...afterClx]
-          if (!node.id && id) node.id = id
-          if (clx.length) clx.map(cls => node.classList.add(cls))
-        }
-        // <a ${'hidden'}, <a ...${props}
-        else if (name.includes(FIELD)) {
-          node.removeAttribute(name), --i
-          attrFields.push([field++, value])
-        }
-        // <a a=${b}, <a a="b${c}d${e}f"
-        else if (value.includes(FIELD)) {
-          if (value === FIELD) attrFields.push([name, field++, true])
-          else (value = value.split(FIELD), attrFields.push([name, field, value]), field += value.length - 1)
-        }
-      }
-      if (attrFields.length) hasAttributes = !!(node._attibutes = attrFields)
-
-      // add indexes to childNodes
-      for (let child = node.firstChild, i = 0; child; child = child.nextSibling) {
-        if (!node._children && child.nodeType === COMMENT && child.data === FIELD) (hasChildren = true, node._children = [])
-        child._id = i++
-      }
-
-      // querying by class is faster than traversing childNodes https://jsperf.com/queryselector-vs-prop-access
-      if (node._component || node._children || node._attibutes) (tplNodes.push(node), node.classList.add(FIELD_CLASS))
-    }
-    else if (node.data === FIELD) node.parentNode._children[node._id] = (node._field = field++)
-  }
-
-
-  // fast template is used for short-path rendering by changing tpl directly & cloning
-  let fastEvaluate, fastNodes, fastFrag
-
-  return function build() {
-    // FIXME: first node can be made fast as so:
-    return tpl.content
-
-    let cleanup, fast = !hasComponents, frag, nodes
-    // if all fields are primitives - take short path - modify fastTpl directly & clone
-    // why `!immutables` and not `observable`:
-    // - fn field cannot be cloned afterwards (like onclick)
-    // - object field may one-way add attribs (spoil fast node) and also may have observable prop
-    // - array field can insert additional children, spoiling numeration of _childFields
-    if (!hasComponents) for (let i = 0; i < arguments.length; i++) if (!immutable(arguments[i])) { fast = false; break }
-
-    if (fast) {
-      if (!fastEvaluate) {
-        // fields are co-directional with node sequence in document, attributes and childNodes order, so we just increment fieldId
-        fastEvaluate = new Function('frag', 'nodes', 'args', '_', `let node, child, attr\n` + tplNodes.map((tplNode, nodeId) => {
-          let result = ``
-
-          if (tplNode._attibutes) tplNode._attibutes.forEach(([name, value, statics]) => {
-            if (statics) {
-              // <a foo=${bar}
-              if (statics === true) {
-                const fieldId = value
-                result += `_.prop(nodes[${nodeId}], '${esc(name)}', args[${fieldId}])\n`
-                // const arg = arguments[value]
-                // if (fast || !observable(arg)) prop(node, name, arg)
-                // else {
-                //   prop(node, name, '')
-                //   sube(arg, v => prop(node, name, v))
-                // }
-              }
-              // <a foo=bar${baz}qux
-              else {
-                const start = value
-                result += `_.prop(nodes[${nodeId}], '${esc(name)}', \`${join(statics, i => '${args[' + (start + i) + ']}')}\`)\n`
-                // const fields = [].slice.call(arguments, value, statics.end)
-                // if (fast) prop(node, name, h.tpl(statics, ...fields))
-                // else {
-                //   const subs = fields.map((field, i) => observable(field) ? (fields[i] = '', true) : null)
-                //   if (!subs.length) prop(node, name, h.tpl(statics, ...fields))
-                //   else subs.map((sub, i) => sub &&
-                //     cleanup.push(sube(sub, v => (fields[i] = v, prop(node, name, h.tpl(statics, ...fields)))))
-                //   )
-                // }
-              }
-            }
-            // <a ${foo}
-            else {
-              if (!(arg = arguments[name])) {}
-              // <a ${'name'}
-              else if (fast || primitive(arg)) prop(node, arg, value)
-              // <a ...${props}
-              else {
-                if (observable(arg)) cleanup.push(sube(arg, v => {
-                  if (primitive(v)) prop(node, v, true)
-                  else for (let key in v) prop(node, key, v[key])
-                }))
-                else for (let key in arg) {
-                  if (observable(arg[key])) cleanup.push(sube(arg[key], v => prop(node, key, v)))
-                  else prop(node, key, arg[key])
-                }
-              }
-            }
-          })
-
-          if (tplNode._children) tplNode._children.forEach((fieldId, childId) => {
-            if (fieldId == null) return
-            result += `child = nodes[${nodeId}].childNodes[${childId}]\n` +
-              `if (child.nodeType === ${TEXT}) child.data = args[${fieldId}]\n` +
-              `else child.replaceWith(args[${fieldId}])\n`
-          })
-
-          return result
-        }).join('\n'))
-        // console.log(fastEvaluate)
-        fastFrag = tpl.content.cloneNode(true)
-        fastNodes = fastFrag.querySelectorAll('.' + FIELD_CLASS)
-        fastNodes.forEach(node => (node.classList.remove(FIELD_CLASS), !node.className && node.removeAttribute('class')))
-      }
-      fastEvaluate(frag, fastNodes, arguments, util)
-      frag = fastFrag.cloneNode(true)
-    }
-    else {
-      cleanup = []
-      frag = tpl.content.cloneNode(true)
-      nodes = frag.querySelectorAll('.' + FIELD_CLASS)
-      evaluate(frag, nodes, arguments, util)
-    }
-
-    // query/apply different types of evaluators in turn
-    // https://jsperf.com/getelementsbytagname-vs-queryselectorall-vs-treewalk/1
-    // FIXME: try to replace with getElementsByClassName, getElementsByTagName
-    /*
-    if (hasFields) {
-      let i = -1, tplNode
-      while (tplNode = i<0 ? tpl.content : tplNodes[i]) {
-        let node = i<0 ? frag : nodes[i], attrField, comp
-
-        if (!fast && node.classList) {node.classList.remove(FIELD_CLASS), !node.className && node.removeAttribute('class')}
-
-        // pre-insert target fields, parse component fields
-        if (hasComponents && (comp = tplNode._compField) != null) {
-          let arg = arguments[comp]
-          comp = null
-          // <${el}
-          if (arg.nodeType) {
-            // render tpl node children/attrs/props to the replacement
-            // FIXME: try to avoid this pre-rendering
-            merge(arg, arg.childNodes, [...node.childNodes])
-            for (let attr, i = 0; attr = node.attributes[i++];) prop(arg, attr.name, attr.value)
-            // h`<${b}/>` - b is kept in its own parent
-            if (node.parentNode.nodeType === FRAGMENT) frag = { firstChild: node = arg, childNodes: [node] }
-            // h`<a><${b}/></a>` - b is placed to a
-            else node.replaceWith(node = arg)
-          }
-          // <${Component}
-          else if (typeof arg === 'function') {
-            comp = { component: arg }
-            for (let attr, i = 0; attr = node.attributes[i++];) prop(comp, attr.name, attr.value)
-          }
-        }
-
-        // eval attributes
-        if (attrField = tplNode._attrFields) {
-          for (let j = 0, n = attrField.length; j < n; j++) {
-            let [name, value, statics] = attrField[j]
-            if (statics) {
-              // <a foo=${bar}
-              if (statics === true) {
-                const arg = arguments[value]
-                if (fast || !observable(arg)) prop(node, name, arg)
-                else {
-                  prop(node, name, '')
-                  sube(arg, v => prop(node, name, v))
-                }
-              }
-              // <a foo=bar${baz}qux
-              else {
-                const fields = [].slice.call(arguments, value, statics.end)
-                if (fast) prop(node, name, h.tpl(statics, ...fields))
-                else {
-                  const subs = fields.map((field, i) => observable(field) ? (fields[i] = '', true) : null)
-                  if (!subs.length) prop(node, name, h.tpl(statics, ...fields))
-                  else subs.map((sub, i) => sub &&
-                    cleanup.push(sube(sub, v => (fields[i] = v, prop(node, name, h.tpl(statics, ...fields)))))
-                  )
-                }
-              }
-            }
-            // <a ${foo}
-            else {
-              if (!(arg = arguments[name])) {}
-              // <a ${'name'}
-              else if (fast || primitive(arg)) prop(node, arg, value)
-              // <a ...${props}
-              else {
-                if (observable(arg)) cleanup.push(sube(arg, v => {
-                  if (primitive(v)) prop(node, v, true)
-                  else for (let key in v) prop(node, key, v[key])
-                }))
-                else for (let key in arg) {
-                  if (observable(arg[key])) cleanup.push(sube(arg[key], v => prop(node, key, v)))
-                  else prop(node, key, arg[key])
-                }
-              }
-            }
-          }
-        }
-
-        // eval children
-        if (tplNode._childFields) {
-          if (fast) {
-            let j = 0, tplChild = tplNode.firstChild, fieldId
-            while (tplChild) {
-              // fast case is guaranteed to correspond index tplNode._childFields[i] ==> node.childNodes[i], so it's simpler than merge
-              if ((fieldId = tplChild._field) != null) {
-                let child = node.childNodes[j], arg = arguments[fieldId]
-                if (child.nodeType === TEXT) (child.data = arg == null ? '' : arg)
-                else (child.replaceWith(arg == null ? document.createTextNode('') : arg))
-              }
-              tplChild = tplChild.nextSibling, j++
-            }
-          }
-          else {
-            let children = [], subs = []
-            for (let j = 0, n = tplNode.childNodes.length; j < n; j++) {
-              let fieldId = tplNode.childNodes[j]._field, arg
-              if (fieldId == null) children.push(node.childNodes[j])
-              else if ((arg = arguments[fieldId]) != null) addChildren(children, arg, subs)
-            }
-            // partial-merge only for observable fields
-            merge(node, node.childNodes, children)
-            for (let j in subs) {
-              let before = children[j], prev = []
-              cleanup.push(sube(subs[j], arg => (prev = merge(node, prev, addChildren([], arg), before))))
-            }
-          }
-        }
-
-        // init component
-        if (hasComponents && comp) {
-          let result = comp.component(comp)
-          if (immutable(result) || result.nodeType) node.replaceWith(result)
-          else merge(node.parentNode, [node], result, node.nextSibling)
-        }
-
-        i++
-      }
-    }
-    */
-
-    return frag.childNodes.length === 1 ? frag.firstChild : frag
-  }
-}
-
-
 function addChildren(children, arg, subs) {
   if (arg == null) {}
   else if (arg.nodeType) children.push(arg)
@@ -585,13 +349,15 @@ function sube(target, fn, unsub, stop) {
 
 const prop = (el, name, value) => attr(el, name, el[name] = value)
 
-// test/libs/spect-inflate.js
+const same = (a, b) => a === b || (a.nodeType === TEXT && b.nodeType === TEXT && a.data === b.data)
+
+// source: src/diff-inflate.js
 const merge = (parent, a, b, end = null) => {
   let i = 0, cur, next, bi, n = b.length, m = a.length
 
   // skip head/tail
-  while (i < n && i < m && a[i] == b[i]) i++
-  while (i < n && i < m && b[n-1] == a[m-1]) end = b[--m, --n]
+  while (i < n && i < m && same(a[i], b[i])) i++
+  while (i < n && i < m && same(b[n-1], a[m-1])) end = b[--m, --n]
 
   // append/prepend/trim shortcuts
   if (i == m) while (i < n) insert(parent, b[i++], end)
@@ -604,10 +370,10 @@ const merge = (parent, a, b, end = null) => {
       bi = b[i++], next = cur ? cur.nextSibling : end
 
       // skip
-      if (cur == bi) cur = next
+      if (same(cur, bi)) cur = next
 
       // swap / replace
-      else if (i < n && b[i] == next) (replace(parent, cur, bi), cur = next)
+      else if (i < n && same(b[i], next)) (replace(parent, cur, bi), cur = next)
 
       // insert
       else insert(parent, bi, cur)
@@ -620,8 +386,6 @@ const merge = (parent, a, b, end = null) => {
   return b
 }
 
-
-
 const insert = (parent, a, b) => {
   if (a != null) {
     if (primitive(a)) parent.insertBefore(document.createTextNode(a), b)
@@ -630,16 +394,12 @@ const insert = (parent, a, b) => {
   }
 }
 
-// WARN: the order is different from replaceNode(new, old)
+// note the order is different from replaceNode(new, old)
 const replace = (parent, from, to, end) => {
   if (to != null) {
-    if (primitive(to)) {
-      if (from.nodeType === TEXT) from.data = to; else from.replaceWith(to)
-    }
+    if (primitive(to)) if (from.nodeType === TEXT) from.data = to; else from.replaceWith(to)
     else if (to.nodeType) parent.replaceChild(to, from)
     // FIXME: make sure no slice needed here
     else merge(parent, [from], to, end)
   }
 }
-
-const util = { prop, merge }
