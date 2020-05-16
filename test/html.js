@@ -6,7 +6,7 @@ import observable from './libs/observable.js'
 // import { v as iv } from 'ironjs'
 
 
-t.only('html: fast simple case', async t => {
+t('html: fast simple case', async t => {
   let el = h`<div class=${'hello'} a><h1 id=${'hello'}>Hello</h1><p id=p>${'Hello World'}!</p></div>`
   t.is(el.outerHTML, `<div class="hello" a=""><h1 id="hello">Hello</h1><p id="p">${'Hello World'}!</p></div>`)
 })
@@ -24,7 +24,7 @@ t('html: multifield attr case', t => {
 t('html: observable attr', t => {
   // observable name
   const a = v('a')
-  el = h`<div ${a}/>`
+  let el = h`<div ${a}/>`
   t.is(el.outerHTML, `<div a=""></div>`, 'observable name')
 
   // observable value

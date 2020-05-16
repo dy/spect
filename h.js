@@ -16,8 +16,6 @@ const ZWSP = '\u200B', ZWNJ = '\u200C', ZWJ = '\u200D', H_TAG = 'h:tag', H_FIELD
 // const EMPTY = 'area base br col command embed hr img input keygen link meta param source track wbr ! !doctype ? ?xml'.split(' ')
 
 // FIXME: move these comments to appropriate places
-// getElementById is faster than node path tracking (id is path in a way) https://jsperf.com/queryselector-vs-prop-access
-// fields order is co-directional with tree walker
 // why `!immutables` and not `observable`:
 // - fn field cannot be cloned afterwards (like onclick)
 // - object field may one-way add attribs (spoil fast node) and also may have observable prop
@@ -31,25 +29,18 @@ export default function html(statics) {
   if (!statics.raw) return h.apply(null, arguments)
 
   let build = cache.get(statics)
-  if (build) return build(arguments)
 
-  // all-primitive args avoid building template first call to avoid caching cost
-  cache.set(statics, buildCached)
+  if (!build) cache.set(arguments[0], build = createTemplate(arguments[0]))
 
-  for (let i = 1; i < arguments.length; i++) if (!primitive(arguments[i])) return buildCached(arguments)
-
-  const tpl = document.createElement('template')
-  tpl.innerHTML = String.raw.apply(null, arguments)
-
-  return tpl.content.childNodes.length > 1 ? tpl.content : tpl.content.firstChild
+  return build(arguments)
 }
-
-const buildCached = (args, build) => (cache.set(args[0], build = createTemplate(args[0])), build(args))
 
 const createTemplate = (statics) => {
   let template = document.createElement('template')
 
   // 0. prepares string for innerHTML, creates program for affected nodes
+  // getElementById is faster than node path tracking (id is path in a way) https://jsperf.com/queryselector-vs-prop-access
+  // fields order is co-directional with tree walker
   // source: src/parse.js
   let mode = TEXT, buf = '', quote = '', attr, char, sel,
       // transformed statics
@@ -126,7 +117,7 @@ const createTemplate = (statics) => {
       // >a${1}b${2}c<  →  >a<!--1-->b<!--2-->c<
       if (mode === TEXT) part += '<!--' + i + '-->'
       // <${el} → <h--tag;    ELEM, field, children
-      else if (mode === ELEM) (prog.push(COMP, i), part += H_TAG, mode = ATTR)
+      else if (mode === ELEM) ( prog.push(COMP, i), part += H_TAG, mode = ATTR )
       else if (mode === ATTR) {
         // <xxx ...${{}};    ATTR, null, field
         if (buf === '...') { prog.push(ATTR, null, i), part = part.slice(0, -4) }
@@ -202,7 +193,12 @@ const createTemplate = (statics) => {
       }
       // <${el}, <${Comp}
       else if (c === COMP) {
-        el = (el = program[i++]) ? args[el] : frag
+        if (v = program[i++]) (el = frag.getElementById(v), v = args[v.split('-')[0]])
+        else el = frag
+        // apply static attribs
+        for (let i = 0, attr; attr = el.attributes[i++];) v.setAttribute(attr.name, attr.value)
+        merge(v, v.childNodes, slice(el.childNodes))
+        el = v
       }
       else if (c === ATTR) {
         k = program[i++], v = program[i++]
@@ -211,10 +207,15 @@ const createTemplate = (statics) => {
         // ${'name'}
         else if (v == null) prop(el, args[k], true)
         // name=${value}
-        else if (typeof v === 'number') prop(el, k, args[v])
+        else if (typeof v === 'number') {
+          v = args[v]
+          if (primitive(v) || !observable(v)) prop(el, k, v)
+          else sube(v, v => prop(el, k, v))
+        }
         // name="a${value}b"
         else {
-          // xxx
+          v = v.map(v => typeof v === 'number' ? args[v] : v).filter(Boolean)
+          prop(el, k, v.join(''))
         }
       }
     }
@@ -303,9 +304,6 @@ export function h(tag, props) {
   return tag
 }
 
-
-const single = document.createElement('div')
-
 function addChildren(children, arg, subs) {
   if (arg == null) {}
   else if (arg.nodeType) children.push(arg)
@@ -316,9 +314,6 @@ function addChildren(children, arg, subs) {
   return children
 }
 
-// interpolator
-const tpl = (statics, args, from, to) => String.raw({raw: statics}, ...fields.map(value => !value ? '' : value)).trim()
-
 // join an array with a function
 const join = (arr, fn) => {
   let str = '', i = 0
@@ -327,7 +322,8 @@ const join = (arr, fn) => {
 }
 
 // lil subscriby (v-less)
-function sube(target, fn, unsub, stop) {
+function sube(target, fn) {
+  let unsub, stop
   if (typeof target === 'function') unsub = target(fn)
   else if (target[symbol.observable]) target[symbol.observable](({subscribe}) => unsub = subscribe({ next: fn }))
   else if (target[Symbol.asyncIterator]) {
@@ -339,6 +335,7 @@ function sube(target, fn, unsub, stop) {
 
 const prop = (el, name, value) => attr(el, name, el[name] = value)
 
+// FIXME: make same-key merger for faster updates
 const same = (a, b) => a === b || (a.nodeType === TEXT && b.nodeType === TEXT && a.data === b.data)
 
 // source: src/diff-inflate.js

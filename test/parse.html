@@ -17,6 +17,7 @@ t('single named elements', (t) => {
   t.is(html`<div />`, { html: '<div />', prog: [ELEM, 'div'] });
   t.is(html`<div/>`, { html: '<div />', prog: [ELEM, 'div'] });
   t.is(html`<span />`, { html: '<span />', prog: [ELEM, 'span'] });
+  t.is(html`<div a=0 b=${1}/>`.html, `<div a=0 b=\u200c />`)
   t.end()
 });
 

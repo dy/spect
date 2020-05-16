@@ -96,13 +96,11 @@ export const primitive = (val) =>
   typeof val === 'string' ||
   typeof val === 'boolean' ||
   typeof val === 'number' ||
-  (typeof val === 'object' ?
-    (val instanceof RegExp || val instanceof Date) :
-    typeof val !== 'function'
-  )
+  (typeof val === 'object' ? (val instanceof RegExp || val instanceof Date) :
+  typeof val !== 'function')
 
-export const observable = (arg) => {
-  return arg && !!(
+export const observable = (arg) =>
+  arg && !!(
     arg[symbol.observable]
     || (typeof arg === 'function' && arg.set)
     || arg[Symbol.asyncIterator]
@@ -110,7 +108,7 @@ export const observable = (arg) => {
     || arg.then
     // || arg.mutation && arg._state != null
   )
-}
+
 
 // fast arguments slice https://www.npmjs.com/package/sliced
 export const slice = (args, slice, sliceEnd) => {
