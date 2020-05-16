@@ -1,6 +1,6 @@
 // cleans up html from comments, replaces fields with placeholders, creates eval programs
 
-export const TEXT = 3, ELEM = 1, ATTR = 2, COMM = 8, FRAG = 11
+export const TEXT = 3, ELEM = 1, ATTR = 2, COMM = 8, FRAG = 11, COMP = FRAG
 // export const TEXT = 'TEXT', ELEM = 'ELEM', ATTR = 'ATTR', COMM = 'COMM', FRAG = 'FRAG'
 
 // placeholders
@@ -11,12 +11,10 @@ export default (statics) => {
   // FIXME: <> → <comp>
   let mode = TEXT, buf = '', quote = '', attr, char, sel,
       // transformed statics
-      parts = [], part,
-      // current element program (id/query, props, children type)
-      progs = [], prog
+      parts = [], part, prog = []
 
   const commit = () => {
-    if (mode === ELEM) { prog.push(buf), progs.push(prog), mode = ATTR }
+    if (mode === ELEM) {prog.push(ELEM, buf, null), mode = ATTR }
     else if (attr) {
       if (buf) attr.push(buf)
       if (attr.length === 1) (prog.pop(), prog.push(attr[0]))
@@ -33,7 +31,7 @@ export default (statics) => {
 			char = statics[i][j];
 
 			if (mode === TEXT) {
-        if (char === '<') { prog = [mode = ELEM], buf = '' }
+        if (char === '<') { mode = ELEM, buf = '' }
       }
       // Ignore everything until the last three characters are '-', '-' and '>'
 			else if (mode === COMM) {
@@ -45,7 +43,7 @@ export default (statics) => {
       // <a#id, <a.class
       else if ((mode === ELEM || sel) && (char === '#' || char === '.')) {
         part += buf ? '' : H_TAG
-        if (!sel) (commit(), mode = ATTR)
+        if (!sel) ( commit(), mode = ATTR )
         sel = char
         part += (sel === '#' ? ' id=' : ' class=')
         char = ''
@@ -57,7 +55,7 @@ export default (statics) => {
 			else if (char === '>') {
         // <//>, </> → </comp>
         if (!mode && (!buf || buf === '/')) part = part.slice(0, buf ? -buf.length : undefined) + H_TAG
-        else commit()
+        else ( commit() )
         mode = TEXT
       }
       // Ignore everything until the tag ends
@@ -65,13 +63,13 @@ export default (statics) => {
 
       else if (char === '/') {
         // </x...
-        if (mode === ELEM && !buf) (mode = 0, buf = '')
+        if (mode === ELEM && !buf) (mode = 0, buf = '' )
         // x/> → x />
         else if ((!j || buf) && statics[i][j+1] === '>') { part += ' ' }
         else buf += char
       }
 			else if (char === ' ' || char === '\t' || char === '\n' || char === '\r') {
-        // <a,   <#a ;  ELEM,  field
+        // <a,   <#a ;  ELEM,  field, #children
         commit()
 			}
 			else buf += char;
@@ -83,8 +81,8 @@ export default (statics) => {
     if (++i < statics.length) {
       // >a${1}b${2}c<  →  >a<!--1-->b<!--2-->c<
       if (mode === TEXT) part += '<!--' + i + '-->'
-      // <${el} → <h--tag;    ELEM, field
-      else if (mode === ELEM) (prog.push(i), progs.push(prog), part += H_TAG, mode = ATTR)
+      // <${el} → <h--tag;    ELEM, field, children
+      else if (mode === ELEM) (prog.push(COMP, i, null), part += H_TAG, mode = ATTR)
       else if (mode === ATTR) {
         // <xxx ...${{}};    ATTR, null, field
         if (buf === '...') { prog.push(ATTR, null, i), part = part.slice(0, -4) }
@@ -108,5 +106,5 @@ export default (statics) => {
     parts.push(part)
 	}
 
-  return { html: parts.join(''), prog: progs }
+  return { html: parts.join(''), prog }
 }
