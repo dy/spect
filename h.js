@@ -8,7 +8,6 @@ const TEXT = 3, ELEM = 1, ATTR = 2, COMM = 8, FRAG = 11, COMP = FRAG,
 const ZWSP = '\u200B', ZWNJ = '\u200C', ZWJ = '\u200D', H_TAG = 'h:tag', H_FIELD = ZWNJ
 
 
-html.FAST = true
 
 // character for node id, ref https://mathiasbynens.be/notes/html5-id-class
 // const CHARS = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789'
@@ -23,8 +22,6 @@ html.FAST = true
 // - fn field cannot be cloned afterwards (like onclick)
 // - object field may one-way add attribs (spoil fast node) and also may have observable prop
 // - array field can insert additional children, spoiling numeration of _childFields
-// getElementsByTagName('*') is faster than tree iterator/querySelector('*'), but live and fragment doesn't have it
-// ref: https://jsperf.com/createnodeiterator-vs-createtreewalker-vs-getelementsby
 
 const cache = new WeakMap
 
@@ -33,29 +30,23 @@ export default function html(statics) {
   // FIXME: should be Array.isTemplateObject(statics)
   if (!statics.raw) return h.apply(null, arguments)
 
-  // the algorithm (after many considerations)
-  // 0. statics list prepared for innerHTML, fields stubbed with placeholders, comments removed, node programs collected
-  // 1. template is created via innerHTML
-  // 2. node iterator replaces comments (child fields) with blank texts (pre-optimizes for text morphing)
-  //    collects meaningful node programs, assigns their nodes ids
-  //    note that we can't modify template and clone it, like it is done in h-reducers fastTemplate
-  //    because if it happens to create async fields element, there will be flash of old content (cleaning up tpl is less effective)
-  //    also 1x iterator is better than 2x getElementsByTagName
-  //    ref: https://jsperf.com/createnodeiterator-vs-createtreewalker-vs-getelementsby
-  // 3. builder clones template and runs program on it - query/apply props/merge children/do observables
-  let fast = html.FAST, build = cache.get(statics)
-
+  let build = cache.get(statics)
   if (build) return build(arguments)
 
-  if (fast) for (let i = 1; i < arguments.length; i++) if (!primitive(arguments[i])) { fast = false; break }
+  // all-primitive args avoid building template first call to avoid caching cost
+  cache.set(statics, buildCached)
 
-  // non-primitive args build template immediately
-  // if (!fast) return buildTemplate(arguments)
-  // cache.set(statics, buildTemplate)
-  // single.innerHTML = String.raw.apply(null, arguments)
-  // frag = single.firstChild
-  // return frag
+  for (let i = 1; i < arguments.length; i++) if (!primitive(arguments[i])) return buildCached(arguments)
 
+  const tpl = document.createElement('template')
+  tpl.innerHTML = String.raw.apply(null, arguments)
+
+  return tpl.content.childNodes.length > 1 ? tpl.content : tpl.content.firstChild
+}
+
+const buildCached = (args, build) => (cache.set(args[0], build = createTemplate(args[0])), build(args))
+
+const createTemplate = (statics) => {
   let template = document.createElement('template')
 
   // 0. prepares string for innerHTML, creates program for affected nodes
@@ -159,10 +150,15 @@ export default function html(statics) {
     parts.push(part)
 	}
 
-  // 1.
+  // 1. template is created via innerHTML
   template.innerHTML = parts.join('')
 
-  // 2. iterate over nodes, collect child ids, pre-optimize children, compose meaningful program for VM
+  // 2. node iterator replaces comments (child fields) with blank texts (pre-optimizes for text morphing)
+  //    collects meaningful node programs, assigns their nodes ids.
+  //    Note that we can't modify template directly and then clone it, like it is done in h-reducers fastTemplate:
+  //    because if it happens to create async fields element, there will be flash of old content (cleaning up tpl is less effective)
+  // getElementsByTagName('*') is faster than tree iterator/querySelector('*'), but live and fragment doesn't have it
+  // ref: https://jsperf.com/createnodeiterator-vs-createtreewalker-vs-getelementsby
   let it = document.createTreeWalker(template.content, SHOW_ELEMENT), node = template.content, i = 0, program = [], id
 
   while (node) {
@@ -189,8 +185,8 @@ export default function html(statics) {
     node = it.nextNode()
   }
 
-  // 3.
-  build = (args) => {
+  // 3. builder clones template and runs program on it - query/apply props/merge children/do observables
+  return args => {
     let frag = template.content.cloneNode(true), i = 0, c, el, k, v, j, fields
 
     // VM inspired by https://twitter.com/jviide/status/1257755526722662405, see ./test/stacker.html
@@ -199,7 +195,16 @@ export default function html(statics) {
     for (; i < program.length;) {
       c = program[i++]
 
-      if (c === ATTR) {
+      // <a
+      if (c === ELEM) {
+        el = frag.getElementById(program[i++])
+        for (j = 0, fields = program[i++]; j < fields.length; j++) replace(el, el.childNodes[j], args[fields[j]])
+      }
+      // <${el}, <${Comp}
+      else if (c === COMP) {
+        el = (el = program[i++]) ? args[el] : frag
+      }
+      else if (c === ATTR) {
         k = program[i++], v = program[i++]
         // ...${props}
         if (k == null) for (k in v) prop(el, k, v[k])
@@ -212,26 +217,11 @@ export default function html(statics) {
           // xxx
         }
       }
-      // <a
-      else if (c === ELEM) {
-        el = frag.getElementById(program[i++])
-        for (j = 0, fields = program[i++]; j < fields.length; j++) replace(el, el.childNodes[j], args[fields[j]])
-      }
-      // <${el}, <${Comp}
-      else if (c === COMP) {
-        el = (el = program[i++]) ? args[el] : frag
-      }
     }
 
     return frag.childNodes.length === 1 ? frag.firstChild : frag
   }
-
-  cache.set(statics, build)
-
-  return build(arguments)
 }
-
-
 
 // // eval attributes
 // if (attrField = tplNode._attrFields) {
