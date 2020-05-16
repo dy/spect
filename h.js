@@ -30,6 +30,12 @@ export default function html(statics) {
 
   let build = cache.get(statics)
 
+  // FIXME: pre-parse program/parts the first run, render fast with primitives
+  // - that splits cost of template creation between the first and 2nd runs
+  // - ? can first created element be reused on second parse?
+  // FIXME: fall back to h function to handle evaluate-able elements:
+  // - central point of processing components / observable props (otherwise messy)
+  // - can cache props in some way to avoid evaluating props object cost
   if (!build) cache.set(arguments[0], build = createTemplate(arguments[0]))
 
   return build(arguments)
@@ -279,26 +285,33 @@ export function h(tag, props) {
   if (typeof tag === 'string') tag = document.createElement(tag)
   if (typeof tag === 'function') {}
 
+  // clean up previous observables
+  if (tag._cleanup) tag._cleanup.map(fn => fn())
+
+  // apply props
   let value, name
   for (name in props) {
     value = props[name]
     // primitive is more probable also less expensive than observable check
     if (primitive(value)) prop(tag, name, value)
-    else if (observable(value)) {}
-    else prop(el, name, value)
+    else if (observable(value)) {
+        // cleanup.push(sube(arg, v => {
+        //   if (primitive(v)) prop(node, v, true)
+        //   else for (let key in v) prop(node, key, v[key])
+        // })
+    }
+    else prop(tag, name, value)
   }
 
   // merge requires slicing arguments (slow), so for empty node do direct add
   if (arguments.length > 2) {
-    if (tag.childNodes.length) merge(tag, tag.childNodes, slice(arguments, 2))
-    else {
-      for (let i = 2, arg; i < arguments.length; i++) {
-        arg = arguments[i]
-        if (arg.nodeType || primitive(arg)) tag.append(arg)
-        else if (observable(arg)) {}
-        else tag.append(...arg)
-      }
-    }
+    let children = slice(arguments, 2), subs = tag._cleanup = []
+    for (let i = 0; i < children.length; i++)
+      if (observable(children[i])) subs[i] = children[i], children[i] = document.createTextNode('')
+
+    merge(tag, tag.childNodes, children)
+
+    subs.map((sub, i) => sube(sub, child => (children[i] = child, merge(tag, tag.childNodes, children))))
   }
 
   return tag
