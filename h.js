@@ -282,37 +282,41 @@ const createTemplate = (statics) => {
 // compact hyperscript
 export function h(tag, props) {
   // render redirect
-  if (typeof tag === 'string') tag = document.createElement(tag)
+  if (typeof tag === 'string') {
+    let id, cls
+    [tag, id] = tag.split('#'), [tag, ...cls] = tag.split('.')
+    if (id || cls.length) props = props || {}
+    if (id) props.id = id
+    if (cls.length) props.class = cls
+    tag = document.createElement(tag)
+  }
   if (typeof tag === 'function') {}
 
   // clean up previous observables
   if (tag._cleanup) tag._cleanup.map(fn => fn())
 
   // apply props
-  let value, name
+  let value, name, cleanup = []
   for (name in props) {
     value = props[name]
     // primitive is more probable also less expensive than observable check
     if (primitive(value)) prop(tag, name, value)
-    else if (observable(value)) {
-        // cleanup.push(sube(arg, v => {
-        //   if (primitive(v)) prop(node, v, true)
-        //   else for (let key in v) prop(node, key, v[key])
-        // })
-    }
+    else if (observable(value)) cleanup.push(sube(value, v => prop(tag, name, v)))
     else prop(tag, name, value)
   }
 
-  // merge requires slicing arguments (slow), so for empty node do direct add
+  // merge children
   if (arguments.length > 2) {
-    let children = slice(arguments, 2), subs = tag._cleanup = []
+    let children = slice(arguments, 2), subs = []
     for (let i = 0; i < children.length; i++)
-      if (observable(children[i])) subs[i] = children[i], children[i] = document.createTextNode('')
+      if (observable(children[i])) cleanup.push(subs[i] = children[i]), children[i] = document.createTextNode('')
 
     merge(tag, tag.childNodes, children)
 
     subs.map((sub, i) => sube(sub, child => (children[i] = child, merge(tag, tag.childNodes, children))))
   }
+
+  if (cleanup.length) tag._cleanup = cleanup
 
   return tag
 }
