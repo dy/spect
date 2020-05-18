@@ -268,9 +268,12 @@ export function h(tag, props, ...children) {
     for (let i = 0; i < children.length; i++)
       if (observable(children[i])) cleanup.push(subs[i] = children[i]), children[i] = document.createTextNode('')
 
-    merge(tag, tag.childNodes, children)
+    merge(tag, tag.childNodes, flat(children))
 
-    subs.map((sub, i) => sube(sub, child => (children[i] = child, merge(tag, tag.childNodes, children))))
+    subs.map((sub, i) => sube(sub, child => (
+      children[i] = child,
+      merge(tag, tag.childNodes, flat(children))
+    )))
   }
 
   if (cleanup.length) tag._cleanup = cleanup
@@ -278,14 +281,14 @@ export function h(tag, props, ...children) {
   return tag
 }
 
-function addChildren(children, arg, subs) {
-  if (arg == null) {}
-  else if (arg.nodeType) children.push(arg)
-  else if (immutable(arg)) (children.push(arg = new String(arg)))
-  else if (Array.isArray(arg)) for (let i = 0; i < arg.length; i++) addChildren(children, arg[i], subs)
-  else if (arg[Symbol.iterator]) { children.push(...arg) }
-  else if (subs && observable(arg)) subs[children.length] = arg
-  return children
+const flat = (list) => {
+  let out = []
+  for (let item of list) {
+    if (primitive(item) || item.nodeType) out.push(item)
+    else if (item[Symbol.iterator]) for (item of item) out.push(item)
+    else out.push(item)
+  }
+  return out
 }
 
 // join an array with a function
@@ -309,8 +312,8 @@ function sube(target, fn) {
 
 const prop = (el, name, value) => attr(el, name, el[name] = value)
 
-// FIXME: make same-key merger for faster updates
-const same = (a, b) => a === b || (a.nodeType === TEXT && b.nodeType === TEXT && a.data === b.data)
+// FIXME: make same-key morph for faster updates
+const same = (a, b) => a === b || (a && b && a.nodeType === TEXT && b.nodeType === TEXT && a.data === b.data)
 
 // source: src/diff-inflate.js
 const merge = (parent, a, b, end = null) => {
@@ -322,7 +325,6 @@ const merge = (parent, a, b, end = null) => {
 
   // append/prepend/trim shortcuts
   if (i == m) while (i < n) insert(parent, b[i++], end)
-  if (i == n) while (i < m) parent.removeChild(a[i++])
 
   else {
     cur = a[i]
@@ -350,8 +352,7 @@ const merge = (parent, a, b, end = null) => {
 const insert = (parent, a, b) => {
   if (a != null) {
     if (primitive(a)) parent.insertBefore(document.createTextNode(a), b)
-    else if (a.nodeType) parent.insertBefore(a, b)
-    else for (a of a) parent.insertBefore(a, b)
+    else parent.insertBefore(a, b)
   }
 }
 

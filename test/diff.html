@@ -338,6 +338,13 @@ t('clear', t => {
   diff(parent,[...parent.childNodes],[],);
   t.is([...parent.childNodes], [])
 })
+t('clear live', t => {
+  let parent = frag();
+  diff(parent,[...parent.childNodes],[t1,t2,t3,t4,t5]);
+  console.log('---clear')
+  diff(parent,parent.childNodes,[],);
+  t.is([...parent.childNodes], [])
+})
 
 t('remove with head/tail', t => {
   let parent = frag();

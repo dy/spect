@@ -12,7 +12,8 @@ export default (parent, a, b, end = null) => {
 
   // append/prepend/trim shortcuts
   if (i == m) while (i < n) parent.insertBefore(b[i++], end)
-  if (i == n) while (i < m) parent.removeChild(a[i++])
+  // FIXME: can't use shortcut for childNodes as input
+  // if (i == n) while (i < m) parent.removeChild(a[i++])
 
   else {
     cur = a[i]
