@@ -206,6 +206,7 @@ const createTemplate = (statics) => {
 
         // <${el}, <${Comp}
         if (c === COMP) comp = args[el.id.split('-')[0]]
+        else comp = null
       }
       else if (c === ATTR) {
         k = program[i++], v = program[i++]
@@ -224,8 +225,12 @@ const createTemplate = (statics) => {
         // i > 0 - take child from args, i <= 0 - take child from self children
         children = program[i++].map(i => i > 0 ? args[i] : el.childNodes[~i])
 
-        if (typeof comp === 'function') el = comp(Object.assign(props, {children}))
-        else if (comp) el = comp
+        if (comp) {
+          const newEl = typeof comp === 'function' ? comp(Object.assign(props, {children})) : comp
+          // console.log(el, el.parentNode, newEl)
+          // if (el.parentNode !== frag)
+          el.replaceWith(el = newEl)
+        }
 
         h(el, props, ...children)
       }
@@ -238,7 +243,8 @@ const createTemplate = (statics) => {
 // compact hyperscript
 export function h(tag, props, ...children) {
   // render redirect
-  if (typeof tag === 'string') {
+  if (!tag) tag = document.createDocumentFragment()
+  else if (typeof tag === 'string') {
     let id, cls
     [tag, id] = tag.split('#'), [tag, ...cls] = tag.split('.')
     if (id || cls.length) props = props || {}
@@ -248,6 +254,7 @@ export function h(tag, props, ...children) {
   }
   else if (typeof tag === 'function') {
     tag = tag(Object.assign({children}, props))
+    if (!tag) return
   }
 
   // clean up previous observables
