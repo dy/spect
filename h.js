@@ -52,7 +52,7 @@ const createTemplate = (statics) => {
       // transformed statics
       parts = [], part,
       // current element program (id/query, props, children type)
-      prog = [0, null]
+      prog = [0, 0]
 
   const commit = () => {
     if (mode === ELEM) {prog.push(ELEM, el = buf || H_TAG), mode = ATTR }
@@ -64,7 +64,7 @@ const createTemplate = (statics) => {
     sel = buf = ''
   }
 
-  // walker / mode manager
+  // parser
 	for (let i=0; i<statics.length; ) {
     part = ''
 
@@ -128,7 +128,7 @@ const createTemplate = (statics) => {
       else if (mode === ATTR) {
         // <xxx ...${{}};    ATTR, null, field
         if (buf === '...') { prog.push(ATTR, null, i), part = part.slice(0, -4) }
-        // <xxx ${'name'};    ATTR, field, true
+        // <xxx ${'name'};    ATTR, field, null
         else if (!buf && !attr) { prog.push(ATTR, i, true) }
         else {
           let eq = buf.indexOf('=')
@@ -173,13 +173,8 @@ const createTemplate = (statics) => {
       props = {}
       if (type === COMP) for (let attr of node.attributes) props[attr.name] = attr.value
 
-      if (!node.id || node.id === H_FIELD) {
-        program.push(type, id = sel + '-' + (i++).toString(36), props)
-        // FIXME: -1 points to not existing argument, but is that safe?
-        if (!node.id) program.push(ATTR, 'id', null)
-        node.id = id
-      }
-      else program.push(type, node.id, props)
+      program.push(type, id = sel + '-' + (i++).toString(36), props, ATTR, 'id', node.id || null)
+      node.id = id
 
       // collect attrib commands / skip to the next element
       while (prog[0] === ATTR) program.push(prog.shift(), prog.shift(), prog.shift())
@@ -200,7 +195,7 @@ const createTemplate = (statics) => {
     for (; i < program.length;) {
       c = program[i++]
 
-      if (c === ELEM || c === COMP) {
+      if (!c || c === ELEM || c === COMP) {
         // <a
         el = (el = program[i++]) ? frag.getElementById(el) : frag
         props = {...program[i++]}
@@ -226,7 +221,7 @@ const createTemplate = (statics) => {
         children = program[i++].map(i => i > 0 ? args[i] : el.childNodes[~i])
 
         let res = h(comp || el, props, ...children)
-        if (res !== el) el.replaceWith(res)
+        if (res !== el) el.replaceWith(el = res)
       }
     }
 
@@ -235,7 +230,10 @@ const createTemplate = (statics) => {
 }
 
 // compact hyperscript
-export function h(tag, props, ...children) {
+export function h(tag, ...children) {
+  // FIXME: should be simpler
+  let props = children[0] == null || children[0].constructor === Object ? children.shift() : null
+
   // render redirect
   if (!tag) tag = document.createDocumentFragment()
   else if (typeof tag === 'string') {
@@ -248,6 +246,12 @@ export function h(tag, props, ...children) {
   }
   else if (typeof tag === 'function') {
     tag = tag({children, ...props})
+    // FIXME: is there a more elegant way?
+    if (Array.isArray(tag)) {
+      let frag = document.createDocumentFragment()
+      frag.append(...tag)
+      tag = frag
+    }
     if (!tag) return
   }
 
@@ -265,7 +269,7 @@ export function h(tag, props, ...children) {
   }
 
   // merge children
-  if (arguments.length > 2) {
+  if (children.length) {
     for (let i = 0; i < children.length; i++)
       if (observable(children[i])) cleanup.push(subs[i] = children[i]), children[i] = document.createTextNode('')
 
@@ -279,7 +283,8 @@ export function h(tag, props, ...children) {
 
   if (cleanup.length) tag._cleanup = cleanup
 
-  return tag
+  // FIXME: 😬
+  return tag.nodeType === FRAG && tag.childNodes.length === 1 && tag.childElementCount === 1 ? tag.firstChild : tag
 }
 
 const flat = (list) => {

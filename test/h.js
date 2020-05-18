@@ -9,7 +9,7 @@ import observable from './libs/observable.js'
 t('h: single attribute', async t => {
   const a = v(0)
 
-  let el = h('div', v({ a }))
+  let el = h('div', { a })
 
   t.is(el.outerHTML, `<div a="0"></div>`)
   await tick(28)
@@ -29,7 +29,7 @@ t('h: single attribute on mounted node', async t => {
   const a = v(0)
   let div = document.createElement('div')
 
-  let el = h(div, v({a}))
+  let el = h(div, {a})
 
   t.is(el, div)
   t.is(el.outerHTML, `<div a="0"></div>`)
@@ -396,7 +396,7 @@ t('h: component props', async t => {
 
 t('h: observable in class', t => {
   let bar = v('')
-  let el = h('div', v({class: v([false, null, undefined, 'foo', bar])}))
+  let el = h('div', {class: v([false, null, undefined, 'foo', bar])})
   t.is(el.outerHTML, `<div class="foo"></div>`)
   bar('bar')
   t.is(el.outerHTML, `<div class="foo bar"></div>`)
@@ -484,11 +484,12 @@ t('h: hydrate by id with existing content', t => {
 
 t('h: direct children', t => {
   let el1 = h('x', 1)
-  let el2 = h('x', h('y'))
-  let el3 = h('x', 'x')
-
   t.is(el1.outerHTML, '<x>1</x>')
+
+  let el2 = h('x', h('y'))
   t.is(el2.outerHTML, '<x><y></y></x>')
+
+  let el3 = h('x', 'x')
   t.is(el3.outerHTML, '<x>x</x>')
 })
 

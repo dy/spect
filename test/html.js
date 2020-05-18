@@ -461,7 +461,7 @@ t('html: initial content should be morphed/hydrated', t => {
 
 t('html: newline nodes should have space in between, but not around', t => {
   let el = h` ${'a'} ${'b'} `
-  t.is(el.textContent, 'a b')
+  t.is(el.textContent, ' a b ')
 })
 
 t('html: direct component rerendering should keep children', async t => {
