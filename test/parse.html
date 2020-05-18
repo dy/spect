@@ -318,5 +318,8 @@ t('div#frame', t => {
   t.is(html`<div.panel x=${1}/>`.prog, [ELEM, 'div', ATTR, 'x', 1])
 })
 
+t('name arg', t => {
+  t.is(html`<div ${'x'}></div>`.prog, [ELEM, 'div', ATTR, 1, true])
+})
 
 </script>

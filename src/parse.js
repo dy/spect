@@ -86,8 +86,8 @@ export default (statics) => {
       else if (mode === ATTR) {
         // <xxx ...${{}};    ATTR, null, field
         if (buf === '...') { prog.push(ATTR, null, i), part = part.slice(0, -4) }
-        // <xxx ${};    ATTR, field, null
-        else if (!buf && !attr) { prog.push(ATTR, i, null) }
+        // <xxx ${'name'};    ATTR, field, null
+        else if (!buf && !attr) { prog.push(ATTR, i, true) }
         else {
           let eq = buf.indexOf('=')
 

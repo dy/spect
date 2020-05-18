@@ -52,7 +52,7 @@ const createTemplate = (statics) => {
       // transformed statics
       parts = [], part,
       // current element program (id/query, props, children type)
-      prog = [COMP, null]
+      prog = [0, null]
 
   const commit = () => {
     if (mode === ELEM) {prog.push(ELEM, buf), mode = ATTR }
@@ -127,8 +127,8 @@ const createTemplate = (statics) => {
       else if (mode === ATTR) {
         // <xxx ...${{}};    ATTR, null, field
         if (buf === '...') { prog.push(ATTR, null, i), part = part.slice(0, -4) }
-        // <xxx ${};    ATTR, field, null
-        else if (!buf && !attr) { prog.push(ATTR, i, null) }
+        // <xxx ${'name'};    ATTR, field, true
+        else if (!buf && !attr) { prog.push(ATTR, i, true) }
         else {
           let eq = buf.indexOf('=')
 
@@ -159,32 +159,39 @@ const createTemplate = (statics) => {
   let it = document.createTreeWalker(template.content, SHOW_ELEMENT), node = template.content, i = 0, program = [], id
 
   while (node) {
-    let type = prog.shift(), sel = prog.shift(), children = []
+    let type = prog.shift(), sel = prog.shift(), children = [], count = 0, props
 
     // collect child ids
     for (let j = 0, child; child = node.childNodes[j++];)
-      if (child.nodeType === COMM) children.push(+child.data), child.replaceWith(document.createTextNode(''))
+      if (child.nodeType === COMM) children.push(+child.data), child.replaceWith(document.createTextNode('')), count++
+      else children.push(-j)
 
     // actualize program
-    if (prog[0] === ATTR || children.length) {
+    if (prog[0] === ATTR || count || type === COMP) {
+      // collect static props for component
+      props = {}
+      if (type === COMP) for (let attr of node.attributes) props[attr.name] = attr.value
+
       if (!node.id || node.id === H_FIELD) {
-        program.push(type, id = sel + '-' + (i++).toString(36), children)
+        program.push(type, id = sel + '-' + (i++).toString(36), props)
         // FIXME: -1 points to not existing argument, but is that safe?
-        if (!node.id) program.push(ATTR, 'id', -1)
+        if (!node.id) program.push(ATTR, 'id', null)
         node.id = id
       }
-      else program.push(type, node.id, children)
-    }
+      else program.push(type, node.id, props)
 
-    // collect attrib commands / skip to the next element
-    while (prog[0] === ATTR) program.push(prog.shift(), prog.shift(), prog.shift())
+      // collect attrib commands / skip to the next element
+      while (prog[0] === ATTR) program.push(prog.shift(), prog.shift(), prog.shift())
+
+      program.push(TEXT, children)
+    }
 
     node = it.nextNode()
   }
 
   // 3. builder clones template and runs program on it - query/apply props/merge children/do observables
   return args => {
-    let frag = template.content.cloneNode(true), i = 0, c, el, k, v, j, fields
+    let frag = template.content.cloneNode(true), i = 0, c, el, k, v, props, children, comp
 
     // VM inspired by https://twitter.com/jviide/status/1257755526722662405, see ./test/stacker.html
     // iteration is cheap, but h call is slow, therefore props / children are evaluated in-place
@@ -192,37 +199,35 @@ const createTemplate = (statics) => {
     for (; i < program.length;) {
       c = program[i++]
 
-      // <a
-      if (c === ELEM) {
-        el = frag.getElementById(program[i++])
-        for (j = 0, fields = program[i++]; j < fields.length; j++) replace(el, el.childNodes[j], args[fields[j]])
-      }
-      // <${el}, <${Comp}
-      else if (c === COMP) {
-        if (v = program[i++]) (el = frag.getElementById(v), v = args[v.split('-')[0]])
-        else el = frag
-        // apply static attribs
-        for (let i = 0, attr; attr = el.attributes[i++];) v.setAttribute(attr.name, attr.value)
-        merge(v, v.childNodes, slice(el.childNodes))
-        el = v
+      if (c === ELEM || c === COMP) {
+        // <a
+        el = (el = program[i++]) ? frag.getElementById(el) : frag
+        props = Object.assign({}, program[i++])
+
+        // <${el}, <${Comp}
+        if (c === COMP) comp = args[el.id.split('-')[0]]
       }
       else if (c === ATTR) {
         k = program[i++], v = program[i++]
         // ...${props}
-        if (k == null) for (k in v) prop(el, k, v[k])
-        // ${'name'}
-        else if (v == null) prop(el, args[k], true)
+        if (k == null) Object.assign(props, v)
         // name=${value}
-        else if (typeof v === 'number') {
-          v = args[v]
-          if (primitive(v) || !observable(v)) prop(el, k, v)
-          else sube(v, v => prop(el, k, v))
-        }
+        else if (typeof v === 'number') props[k] = args[v]
         // name="a${value}b"
-        else {
-          v = v.map(v => typeof v === 'number' ? args[v] : v).filter(Boolean)
-          prop(el, k, v.join(''))
-        }
+        else if (Array.isArray(v)) props[k] = v.map(v => typeof v === 'number' ? args[v] : v).filter(Boolean).join('')
+        // ${'name'}
+        else if (typeof k === 'number') props[args[k]] = v
+        // a=b
+        else props[k] = v
+      }
+      else if (c === TEXT) {
+        // i > 0 - take child from args, i <= 0 - take child from self children
+        children = program[i++].map(i => i > 0 ? args[i] : el.childNodes[~i])
+
+        if (typeof comp === 'function') el = comp(Object.assign(props, {children}))
+        else if (comp) el = comp
+
+        h(el, props, ...children)
       }
     }
 
@@ -230,57 +235,8 @@ const createTemplate = (statics) => {
   }
 }
 
-// // eval attributes
-// if (attrField = tplNode._attrFields) {
-//   for (let j = 0, n = attrField.length; j < n; j++) {
-//     let [name, value, statics] = attrField[j]
-//     if (statics) {
-//       // <a foo=${bar}
-//       if (statics === true) {
-//         const arg = arguments[value]
-//         if (fast || !observable(arg)) prop(node, name, arg)
-//         else {
-//           prop(node, name, '')
-//           sube(arg, v => prop(node, name, v))
-//         }
-//       }
-//       // <a foo=bar${baz}qux
-//       else {
-//         const fields = [].slice.call(arguments, value, statics.end)
-//         if (fast) prop(node, name, h.tpl(statics, ...fields))
-//         else {
-//           const subs = fields.map((field, i) => observable(field) ? (fields[i] = '', true) : null)
-//           if (!subs.length) prop(node, name, h.tpl(statics, ...fields))
-//           else subs.map((sub, i) => sub &&
-//             cleanup.push(sube(sub, v => (fields[i] = v, prop(node, name, h.tpl(statics, ...fields)))))
-//           )
-//         }
-//       }
-//     }
-//     // <a ${foo}
-//     else {
-//       if (!(arg = arguments[name])) {}
-//       // <a ${'name'}
-//       else if (fast || primitive(arg)) prop(node, arg, value)
-//       // <a ...${props}
-//       else {
-//         if (observable(arg)) cleanup.push(sube(arg, v => {
-//           if (primitive(v)) prop(node, v, true)
-//           else for (let key in v) prop(node, key, v[key])
-//         }))
-//         else for (let key in arg) {
-//           if (observable(arg[key])) cleanup.push(sube(arg[key], v => prop(node, key, v)))
-//           else prop(node, key, arg[key])
-//         }
-//       }
-//     }
-//   }
-// }
-
-
-
 // compact hyperscript
-export function h(tag, props) {
+export function h(tag, props, ...children) {
   // render redirect
   if (typeof tag === 'string') {
     let id, cls
@@ -290,15 +246,17 @@ export function h(tag, props) {
     if (cls.length) props.class = cls
     tag = document.createElement(tag)
   }
-  if (typeof tag === 'function') {}
+  else if (typeof tag === 'function') {
+    tag = tag(Object.assign({children}, props))
+  }
 
   // clean up previous observables
   if (tag._cleanup) tag._cleanup.map(fn => fn())
 
   // apply props
-  let value, name, cleanup = []
-  for (name in props) {
-    value = props[name]
+  let cleanup = [], subs = []
+  for (let name in props) {
+    let value = props[name]
     // primitive is more probable also less expensive than observable check
     if (primitive(value)) prop(tag, name, value)
     else if (observable(value)) cleanup.push(sube(value, v => prop(tag, name, v)))
@@ -307,7 +265,6 @@ export function h(tag, props) {
 
   // merge children
   if (arguments.length > 2) {
-    let children = slice(arguments, 2), subs = []
     for (let i = 0; i < children.length; i++)
       if (observable(children[i])) cleanup.push(subs[i] = children[i]), children[i] = document.createTextNode('')
 
