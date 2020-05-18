@@ -9,12 +9,12 @@ const ZWSP = '\u200B', ZWNJ = '\u200C', H_TAG = 'h--tag', H_FIELD = ZWNJ
 
 export default (statics) => {
   // FIXME: <> → <comp>
-  let mode = TEXT, buf = '', quote = '', attr, char, sel,
+  let mode = TEXT, buf = '', quote = '', attr, char, sel, el,
       // transformed statics
       parts = [], part, prog = []
 
   const commit = () => {
-    if (mode === ELEM) {prog.push(ELEM, buf), mode = ATTR }
+    if (mode === ELEM) {prog.push(ELEM, el = buf || H_TAG), mode = ATTR }
     else if (attr) {
       if (buf) attr.push(buf)
       if (attr.length === 1) (prog.pop(), prog.push(attr[0]))
@@ -55,7 +55,9 @@ export default (statics) => {
 			else if (char === '>') {
         // <//>, </> → </comp>
         if (!mode && (!buf || buf === '/')) part = part.slice(0, buf ? -buf.length : undefined) + H_TAG
-        else ( commit() )
+        // <x/> → <x></x>
+        else if (buf.slice(-1) === '/') (buf = buf.slice(0,-1), commit(), part = part.slice(0, -1) + '></' + el + '>', char = '')
+        else commit()
         mode = TEXT
       }
       // Ignore everything until the tag ends
@@ -65,7 +67,6 @@ export default (statics) => {
         // </x...
         if (mode === ELEM && !buf) (mode = 0, buf = '' )
         // x/> → x />
-        else if ((!j || buf) && statics[i][j+1] === '>') { part += ' ' }
         else buf += char
       }
 			else if (char === ' ' || char === '\t' || char === '\n' || char === '\r') {
@@ -82,7 +83,7 @@ export default (statics) => {
       // >a${1}b${2}c<  →  >a<!--1-->b<!--2-->c<
       if (mode === TEXT) part += '<!--' + i + '-->'
       // <${el} → <h--tag;    ELEM, field, children
-      else if (mode === ELEM) (prog.push(COMP, i), part += H_TAG, mode = ATTR)
+      else if (mode === ELEM) (prog.push(COMP, i), part += el = H_TAG, mode = ATTR)
       else if (mode === ATTR) {
         // <xxx ...${{}};    ATTR, null, field
         if (buf === '...') { prog.push(ATTR, null, i), part = part.slice(0, -4) }

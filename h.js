@@ -48,14 +48,14 @@ const createTemplate = (statics) => {
   // getElementById is faster than node path tracking (id is path in a way) https://jsperf.com/queryselector-vs-prop-access
   // fields order is co-directional with tree walker
   // source: src/parse.js
-  let mode = TEXT, buf = '', quote = '', attr, char, sel,
+  let mode = TEXT, buf = '', quote = '', attr, char, sel, el,
       // transformed statics
       parts = [], part,
       // current element program (id/query, props, children type)
       prog = [0, null]
 
   const commit = () => {
-    if (mode === ELEM) {prog.push(ELEM, buf), mode = ATTR }
+    if (mode === ELEM) {prog.push(ELEM, el = buf || H_TAG), mode = ATTR }
     else if (attr) {
       if (buf) attr.push(buf)
       if (attr.length === 1) (prog.pop(), prog.push(attr[0]))
@@ -96,7 +96,9 @@ const createTemplate = (statics) => {
 			else if (char === '>') {
         // <//>, </> → </comp>
         if (!mode && (!buf || buf === '/')) part = part.slice(0, buf ? -buf.length : undefined) + H_TAG
-        else ( commit() )
+        // <x/> → <x></x>
+        else if (buf.slice(-1) === '/') (buf = buf.slice(0,-1), commit(), part = part.slice(0, -1) + '></' + el + '>', char = '')
+        else commit()
         mode = TEXT
       }
       // Ignore everything until the tag ends
@@ -106,7 +108,6 @@ const createTemplate = (statics) => {
         // </x...
         if (mode === ELEM && !buf) (mode = 0, buf = '' )
         // x/> → x />
-        else if ((!j || buf) && statics[i][j+1] === '>') { part += ' ' }
         else buf += char
       }
 			else if (char === ' ' || char === '\t' || char === '\n' || char === '\r') {
@@ -123,7 +124,7 @@ const createTemplate = (statics) => {
       // >a${1}b${2}c<  →  >a<!--1-->b<!--2-->c<
       if (mode === TEXT) part += '<!--' + i + '-->'
       // <${el} → <h--tag;    ELEM, field, children
-      else if (mode === ELEM) ( prog.push(COMP, i), part += H_TAG, mode = ATTR )
+      else if (mode === ELEM) (prog.push(COMP, i), part += el = H_TAG, mode = ATTR)
       else if (mode === ATTR) {
         // <xxx ...${{}};    ATTR, null, field
         if (buf === '...') { prog.push(ATTR, null, i), part = part.slice(0, -4) }
@@ -202,11 +203,10 @@ const createTemplate = (statics) => {
       if (c === ELEM || c === COMP) {
         // <a
         el = (el = program[i++]) ? frag.getElementById(el) : frag
-        props = Object.assign({}, program[i++])
+        props = {...program[i++]}
 
         // <${el}, <${Comp}
-        if (c === COMP) comp = args[el.id.split('-')[0]]
-        else comp = null
+        comp = c === COMP ? args[el.id.split('-')[0]] : null
       }
       else if (c === ATTR) {
         k = program[i++], v = program[i++]
@@ -225,14 +225,8 @@ const createTemplate = (statics) => {
         // i > 0 - take child from args, i <= 0 - take child from self children
         children = program[i++].map(i => i > 0 ? args[i] : el.childNodes[~i])
 
-        if (comp) {
-          const newEl = typeof comp === 'function' ? comp(Object.assign(props, {children})) : comp
-          // console.log(el, el.parentNode, newEl)
-          // if (el.parentNode !== frag)
-          el.replaceWith(el = newEl)
-        }
-
-        h(el, props, ...children)
+        let res = h(comp || el, props, ...children)
+        if (res !== el) el.replaceWith(res)
       }
     }
 
@@ -253,7 +247,7 @@ export function h(tag, props, ...children) {
     tag = document.createElement(tag)
   }
   else if (typeof tag === 'function') {
-    tag = tag(Object.assign({children}, props))
+    tag = tag({children, ...props})
     if (!tag) return
   }
 

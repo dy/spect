@@ -124,6 +124,7 @@ t('html: dynamic list', async t => {
   t.is(a.outerHTML, `<a><foo></foo>bar<baz></baz></a>`)
 
   content().push(h`qux`)
+  console.log('---update')
   content(content())
   await tick(8)
   t.is(a.outerHTML, `<a><foo></foo>bar<baz></baz>qux</a>`)
@@ -166,7 +167,7 @@ t('html: mount to another element', async t => {
 t('html: simple hydrate', async t => {
   let a = document.createElement('a')
   a.innerHTML = 'foo '
-  let el = h`<${a}>foo <bar><baz class="qux"/></></>`
+  let el = h`<${a}>foo <bar><baz class="qux"/></bar></>`
   t.is(el.outerHTML, `<a>foo <bar><baz class="qux"></baz></bar></a>`)
   t.is(el.firstChild, a.firstChild)
 })
@@ -174,7 +175,7 @@ t('html: simple hydrate', async t => {
 t('html: simple hydrate with insertion', async t => {
   let a = document.createElement('a')
   a.innerHTML = 'foo '
-  let el = h`<${a}>foo <bar>${ h`<baz class="qux"/>` }</></>`
+  let el = h`<${a}>foo <bar>${ h`<baz class="qux"/>` }</bar></>`
   t.is(el.outerHTML, `<a>foo <bar><baz class="qux"></baz></bar></a>`)
   t.is(el.firstChild, a.firstChild)
 })
