@@ -43,7 +43,7 @@ _Spect_ is minimalistic [_aspect-oriented_](https://en.wikipedia.org/wiki/Aspect
 
 :deciduous_tree: **Native first** − semantic clean tree, vanilla js.
 
-:calling: organic **progressive enhancement**.
+:calling: Organic **progressive enhancement**.
 
 :baby_chick: **Low entry barrier**.
 
