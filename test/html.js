@@ -705,8 +705,8 @@ t.todo('html: multiple attr fields', async t => {
   t.is(a.outerHTML, `<a x="1" z="3" y="2" w="4" _="5">a6b7c</a>`)
 })
 t('html: caching fields', async t => {
-  let a = h`<a x=1 ${'y'}=2 z=${3} ...${{_: 5}}>a${ 6 }b${ 7 }c</a>`
-  t.is(a.outerHTML, `<a x="1" z="3" y="2" _="5">a6b7c</a>`)
+  let a = h`<a x=1 z=${3} ...${{_: 5}}>a${ 6 }b${ 7 }c</a>`
+  t.is(a.outerHTML, `<a x="1" z="3" _="5">a6b7c</a>`)
 })
 
 t('html: a#b.c', async t => {
@@ -731,5 +731,5 @@ t('html: dynamic data case', async t => {
 })
 
 t('html: fields order', async t => {
-  t.is(h`<b> b${2}b <c>c${3}c</c> b${4}b </b> `.outerHTML, `<b> b2b <c>c3c</c> b4b </b>`)
+  t.is(h`<b> b${2}b <c>c${3}c</c> b${4}b </b>`.outerHTML, `<b> b2b <c>c3c</c> b4b </b>`)
 })

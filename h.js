@@ -173,7 +173,7 @@ const createTemplate = (statics) => {
       props = {}
       if (type === COMP) for (let attr of node.attributes) props[attr.name] = attr.value
 
-      program.push(type, id = sel + '-' + (i++).toString(36), props, ATTR, 'id', node.id || null)
+      program.push(type, type ? (id = sel + '-' + (i++).toString(36)) : null, props, ATTR, 'id', node.id || null)
       node.id = id
 
       // collect attrib commands / skip to the next element
@@ -206,7 +206,7 @@ const createTemplate = (statics) => {
       else if (c === ATTR) {
         k = program[i++], v = program[i++]
         // ...${props}
-        if (k == null) Object.assign(props, v)
+        if (k == null) Object.assign(props, args[v])
         // name=${value}
         else if (typeof v === 'number') props[k] = args[v]
         // name="a${value}b"
@@ -219,8 +219,13 @@ const createTemplate = (statics) => {
       else if (c === TEXT) {
         // i > 0 - take child from args, i <= 0 - take child from self children
         children = program[i++].map(i => i > 0 ? args[i] : el.childNodes[~i])
-
+          // h`<${b}/>` - b is kept in its own parent
+          // h`<a><${b}/></a>` - b is placed to a
         let res = h(comp || el, props, ...children)
+
+        // FIXME: there can be more elegant way to bail out single update element
+        if (i === program.length && comp === res) return res
+
         if (res !== el) el.replaceWith(el = res)
       }
     }
@@ -252,7 +257,8 @@ export function h(tag, ...children) {
       frag.append(...tag)
       tag = frag
     }
-    if (!tag) return
+    // component is completed - no need to post-merge children/props
+    return tag
   }
 
   // clean up previous observables
@@ -269,17 +275,15 @@ export function h(tag, ...children) {
   }
 
   // merge children
-  if (children.length) {
-    for (let i = 0; i < children.length; i++)
-      if (observable(children[i])) cleanup.push(subs[i] = children[i]), children[i] = document.createTextNode('')
+  for (let i = 0; i < children.length; i++)
+    if (observable(children[i])) cleanup.push(subs[i] = children[i]), children[i] = document.createTextNode('')
 
+  merge(tag, tag.childNodes, flat(children))
+
+  subs.map((sub, i) => sube(sub, child => (
+    children[i] = child,
     merge(tag, tag.childNodes, flat(children))
-
-    subs.map((sub, i) => sube(sub, child => (
-      children[i] = child,
-      merge(tag, tag.childNodes, flat(children))
-    )))
-  }
+  )))
 
   if (cleanup.length) tag._cleanup = cleanup
 
