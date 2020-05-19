@@ -1,10 +1,12 @@
+import './testfill.js'
 import './hyperscript.js'
 import './html.js'
-
 import t from 'tst'
 import { h, v } from '../index.js'
 import { tick, frame, idle, time } from 'wait-please'
 import observable from './libs/observable.js'
+
+
 
 t('h: single attribute', async t => {
   const a = v(0)
@@ -482,7 +484,8 @@ t('h: hydrate by id with existing content', t => {
   t.is(el2.outerHTML, `<div><b id="x"></b></div>`)
 })
 
-t('h: direct children', t => {
+t.skip('h: direct children', t => {
+  // NOTE: this sugar slows down performance, no much sense
   let el1 = h('x', 1)
   t.is(el1.outerHTML, '<x>1</x>')
 
@@ -511,8 +514,8 @@ t('h: caching attr cases', async t => {
 })
 
 t('h: avoid multiple templates for children', async t => {
-  let a1 = h('a', 'b', 'c')
-  let a2 = h('a', 'b', 'c', 'd')
+  let a1 = h('a', null, 'b', 'c')
+  let a2 = h('a', null, 'b', 'c', 'd')
   t.is(a2.outerHTML, `<a>bcd</a>`)
   // console.log(h.cache)
 })

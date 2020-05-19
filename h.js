@@ -5,7 +5,7 @@ const TEXT = 3, ELEM = 1, ATTR = 2, COMM = 8, FRAG = 11, COMP = FRAG,
       SHOW_ELEMENT = 1, SHOW_TEXT = 4, SHOW_COMMENT = 128
 
 // placeholders
-const ZWSP = '\u200B', ZWNJ = '\u200C', ZWJ = '\u200D', H_TAG = 'h:tag', H_FIELD = ZWNJ
+const ZWSP = '\u200B', ZWNJ = '\u200C', ZWJ = '\u200D', H_TAG = 'slot', H_FIELD = ZWNJ
 
 // character for node id, ref https://mathiasbynens.be/notes/html5-id-class
 // const CHARS = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789'
@@ -246,10 +246,7 @@ const createTemplate = (statics) => {
 }
 
 // compact hyperscript
-export function h(tag, ...children) {
-  // FIXME: should be simpler
-  let props = children[0] == null || children[0].constructor === Object ? children.shift() : null
-
+export function h(tag, props, ...children) {
   // render redirect
   if (!tag) tag = document.createDocumentFragment()
   else if (typeof tag === 'string') {
