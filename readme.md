@@ -507,6 +507,10 @@ $('#my-component', el => {
 </details>
 
 
+## License
+
 MIT
+
+---
 
 <p align="center">ॐ</p>
