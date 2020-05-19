@@ -309,7 +309,7 @@ t('html: render to fragment', async t => {
   let frag = document.createDocumentFragment()
   let el = h`<${frag}>1</>`
   // t.is(frag, el)
-  // t.is(el.outerHTML, '<></>')
+  t.is(el.outerHTML, '<>1</>')
   t.is(frag.outerHTML, '<>1</>')
 })
 
@@ -417,7 +417,7 @@ t.skip('html: component static props', async t => {
 
 t('html: classes must recognize false props', t => {
   let el = h`<div class="${false} ${null} ${undefined} ${'foo'} ${false}"/>`
-  t.is(el.outerHTML, `<div class="foo"></div>`)
+  t.is(el.outerHTML, `<div class="   foo "></div>`)
 })
 
 t('html: preserves hidden attribute / parent', t => {
@@ -576,7 +576,16 @@ t('html: insert nodes list', t => {
   t.is(el.innerHTML, `<div class="prepended"></div> foo |bar <baz></baz>| qux <div class="appended"></div>`)
 })
 
-t('legacy html: handle collections', t => {
+t('html: update preserves parent', t => {
+  // prepend icons to buttons
+  let b = document.body.appendChild(document.createElement('b'))
+
+  h`<${b}><i>${ 1 }</i></>`
+  t.is(b.parentNode, document.body, 'persists parent')
+  document.body.removeChild(b)
+})
+
+t('html: handle collections', t => {
   // prepend icons to buttons
   let b = document.body.appendChild(document.createElement('button'))
   b.innerHTML = 'Click <span>-</span>'

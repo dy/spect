@@ -219,14 +219,22 @@ const createTemplate = (statics) => {
       else if (c === TEXT) {
         // i > 0 - take child from args, i <= 0 - take child from self children
         children = program[i++].map(i => i > 0 ? args[i] : el.childNodes[~i])
-          // h`<${b}/>` - b is kept in its own parent
-          // h`<a><${b}/></a>` - b is placed to a
-        let res = h(comp || el, props, ...children)
 
-        // FIXME: there can be more elegant way to bail out single update element
-        if (i === program.length && comp === res) return res
-
-        if (res !== el) el.replaceWith(el = res)
+        // h`<${b}/>` - b is kept in its own parent
+        // h`<a><${b}/></a>` - b is placed to a
+        if (comp) {
+          // update case
+          if (comp.nodeType) {
+            let res = h(comp, props, ...children)
+            el.replaceWith(res)
+          }
+          else {
+            el.replaceWith(h(comp, props, ...children))
+          }
+        }
+        else {
+          h(el, props, ...children)
+        }
       }
     }
 
