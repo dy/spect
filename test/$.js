@@ -200,32 +200,32 @@ t('$: changed attribute matches new nodes', async t => {
     log.push('+3')
     return () => log.push('-3')
   })
-  await frame(2)
+  await frame(3)
 
   t.is(log, [])
-  await frame(2)
+  await frame(3)
   t.is(log, [])
 
   console.log('add .b')
   el.querySelector('b').classList.add('b')
-  await frame(2)
+  await frame(3)
   t.is(log, ['+2', '+2a', '+3'])
 
   console.log('remove .b')
   el.querySelector('b').classList.remove('b')
-  await frame(2)
+  await frame(3)
   t.is(log, ['+2', '+2a', '+3', '-2', '-3'])
 
 
   console.log('add .b again')
   log = []
   el.querySelector('b').classList.add('b')
-  await frame(2)
+  await frame(3)
   t.is(log, ['+2', '+2a', '+3'])
 
   console.log('remove .b again')
   el.querySelector('b').classList.remove('b')
-  await frame(2)
+  await frame(3)
   t.is(log, ['+2', '+2a', '+3', '-2', '-3'])
 
   abb[Symbol.dispose]()
