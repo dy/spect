@@ -1,28 +1,36 @@
 import t from 'tst'
 import { v, $ } from '../index.js'
 import h from '../h.js'
+// import h from './libs/h21.js'
 import { tick, frame, idle, time } from 'wait-please'
-import observable from './observable.js'
+import observable from './libs/observable.js'
 // import { v as iv } from 'ironjs'
 
-t('html: single attribute cases', async t => {
-  // direct
-  let el = h`<div a=0/>`
-  t.is(el.outerHTML, `<div a="0"></div>`, 'simple attr')
 
-  el = h`<div a=a${'b'}c/>`
-  t.is(el.outerHTML, `<div a="abc"></div>`, 'multifield')
+t('html: fast simple case', async t => {
+  let el = h`<div class=${'hello'} a><h1 id=${'hello'}>Hello</h1><p id=p>${'Hello World'}!</p></div>`
+  t.is(el.outerHTML, `<div class="hello" a=""><h1 id="hello">Hello</h1><p id="p">${'Hello World'}!</p></div>`)
+})
 
+t('html: direct attribute case', async t => {
+  let el = h`<div a=0 b=${1}/>`
+  t.is(el.outerHTMLClean, `<div a="0" b="1"></div>`, 'simple attr')
+})
+
+t('html: multifield attr case', t => {
+  let el = h`<div a=a${'b'}c${'d'} class="a ${'b'} c"/>`
+  t.is(el.outerHTML, `<div a="abcd" class="a b c"></div>`, 'multifield')
+})
+
+t('html: observable attr', t => {
   // observable name
   const a = v('a')
-  el = h`<div ${a}=0/>`
-  t.is(el.outerHTML, `<div a="0"></div>`, 'observable name')
+  let el = h`<div ${a}/>`
+  t.is(el.outerHTML, `<div a=""></div>`, 'observable name')
 
   // observable value
   const val = v(0)
-
   el = h`<div a=${val}></div>`
-
   t.is(el.outerHTML, `<div a="0"></div>`, 'observable value')
 
   val(1)
@@ -47,10 +55,8 @@ t('html: single attribute on mounted node', async t => {
   t.is(div.outerHTML, `<div a="0"></div>`)
 
   a(1)
-  // FIXME: why so big delay?
   await tick(24)
   t.is(div.outerHTML, `<div a="1"></div>`)
-  a(undefined)
   a(null)
   await tick(24)
   t.is(div.outerHTML, `<div></div>`)
@@ -62,12 +68,6 @@ t('html: creation perf case', t => {
   }
   t.is(h`<a>a<b><c>${0}</c></b></a>`.outerHTML, `<a>a<b><c>0</c></b></a>`)
   t.is(h`<a>a<b><c>${1}</c></b></a>`.outerHTML, `<a>a<b><c>1</c></b></a>`)
-})
-
-t('html: text content', async t => {
-  let el = h`<div>${ 0 }</div>`
-
-  t.is(el.outerHTML, `<div>0</div>`)
 })
 
 t('html: observable text content', async t => {
@@ -125,6 +125,7 @@ t('html: dynamic list', async t => {
   t.is(a.outerHTML, `<a><foo></foo>bar<baz></baz></a>`)
 
   content().push(h`qux`)
+  console.log('---update')
   content(content())
   await tick(8)
   t.is(a.outerHTML, `<a><foo></foo>bar<baz></baz>qux</a>`)
@@ -167,7 +168,15 @@ t('html: mount to another element', async t => {
 t('html: simple hydrate', async t => {
   let a = document.createElement('a')
   a.innerHTML = 'foo '
-  let el = h`<${a}>foo <bar><baz class="qux"/></></>`
+  let el = h`<${a}>foo <bar><baz class="qux"/></bar></>`
+  t.is(el.outerHTML, `<a>foo <bar><baz class="qux"></baz></bar></a>`)
+  t.is(el.firstChild, a.firstChild)
+})
+
+t('html: simple hydrate with insertion', async t => {
+  let a = document.createElement('a')
+  a.innerHTML = 'foo '
+  let el = h`<${a}>foo <bar>${ h`<baz class="qux"/>` }</bar></>`
   t.is(el.outerHTML, `<a>foo <bar><baz class="qux"></baz></bar></a>`)
   t.is(el.firstChild, a.firstChild)
 })
@@ -196,7 +205,7 @@ t('html: rerendering with props: must persist', async t => {
 
   h`<${el}>${div}<x/></>`
   t.is(el.firstChild, div)
-  t.is(el.childNodes.length, 2)
+  t.is(el.childNodes.length, 2, 'children number')
 
   h`<${el}><${div}/><x/></>`
   t.is(el.firstChild, div)
@@ -301,7 +310,7 @@ t('html: render to fragment', async t => {
   let frag = document.createDocumentFragment()
   let el = h`<${frag}>1</>`
   // t.is(frag, el)
-  // t.is(el.outerHTML, '<></>')
+  t.is(el.outerHTML, '<>1</>')
   t.is(frag.outerHTML, '<>1</>')
 })
 
@@ -396,7 +405,7 @@ t('html: does not duplicate classes for container', t => {
   t.is(el.outerHTML, '<div class="x"></div>')
 })
 
-t.skip('html: component static props', async t => {
+t('html: component static props', async t => {
   let log = []
   let el = h`<div><${C} id="x" class="y z"/></>`
 
@@ -409,7 +418,7 @@ t.skip('html: component static props', async t => {
 
 t('html: classes must recognize false props', t => {
   let el = h`<div class="${false} ${null} ${undefined} ${'foo'} ${false}"/>`
-  t.is(el.outerHTML, `<div class="foo"></div>`)
+  t.is(el.outerHTML, `<div class="   foo "></div>`)
 })
 
 t('html: preserves hidden attribute / parent', t => {
@@ -453,10 +462,10 @@ t('html: initial content should be morphed/hydrated', t => {
 
 t('html: newline nodes should have space in between, but not around', t => {
   let el = h` ${'a'} ${'b'} `
-  t.is(el.textContent, 'a b')
+  t.is(el.textContent, ' a b ')
 })
 
-t('legacy html: direct component rerendering should keep children', async t => {
+t('html: direct component rerendering should keep children', async t => {
   let el = h`<div><${fn}/></div>`
   let abc = el.firstChild
 
@@ -467,7 +476,7 @@ t('legacy html: direct component rerendering should keep children', async t => {
   // let abc1 = el.firstChild
   // t.is(abc1, abc)
 
-  function fn ({children, ...props}) { return h`<abc ...${props}/>` }
+  function fn ({children, ...props}) {return h`<abc ...${props}/>` }
 })
 
 t('html: functional components create element', t => {
@@ -564,12 +573,20 @@ t('html: insert nodes list', t => {
   h`<${el}>foo ${ orig } qux</>`
   t.is(el.innerHTML, `foo |bar <baz></baz>| qux`)
 
-// console.log('set', ...orig)
   h`<${el}><div class="prepended" /> foo ${ orig } qux <div class="appended" /></>`
   t.is(el.innerHTML, `<div class="prepended"></div> foo |bar <baz></baz>| qux <div class="appended"></div>`)
 })
 
-t('legacy html: handle collections', t => {
+t('html: update preserves parent', t => {
+  // prepend icons to buttons
+  let b = document.body.appendChild(document.createElement('b'))
+
+  h`<${b}><i>${ 1 }</i></>`
+  t.is(b.parentNode, document.body, 'persists parent')
+  document.body.removeChild(b)
+})
+
+t('html: handle collections', t => {
   // prepend icons to buttons
   let b = document.body.appendChild(document.createElement('button'))
   b.innerHTML = 'Click <span>-</span>'
@@ -640,8 +657,9 @@ t('html: null-like insertions', t => {
   t.is(c.textContent, '')
 })
 
-t.todo('html: component siblings', t => {
+t('html: component siblings', t => {
   let a = h`<x/> ${1}`
+  t.is(a.outerHTML, `<><x></x> 1</>`)
 })
 
 t('html: non-observables create flat string', t => {
@@ -698,8 +716,8 @@ t.todo('html: multiple attr fields', async t => {
   t.is(a.outerHTML, `<a x="1" z="3" y="2" w="4" _="5">a6b7c</a>`)
 })
 t('html: caching fields', async t => {
-  let a = h`<a x=1 ${'y'}=2 z=${3} ...${{_: 5}}>a${ 6 }b${ 7 }c</a>`
-  t.is(a.outerHTML, `<a x="1" z="3" y="2" _="5">a6b7c</a>`)
+  let a = h`<a x=1 z=${3} ...${{_: 5}}>a${ 6 }b${ 7 }c</a>`
+  t.is(a.outerHTML, `<a x="1" z="3" _="5">a6b7c</a>`)
 })
 
 t('html: a#b.c', async t => {
@@ -721,4 +739,8 @@ t('html: dynamic data case', async t => {
   console.log('---update')
   data([1])
   t.is(table.innerHTML, '<tr><td>1</td></tr>')
+})
+
+t('html: fields order', async t => {
+  t.is(h`<b> b${2}b <c>c${3}c</c> b${4}b </b>`.outerHTML, `<b> b2b <c>c3c</c> b4b </b>`)
 })

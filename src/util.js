@@ -1,4 +1,4 @@
-const Symbol = globalThis.Symbol;
+const Symbol = globalThis.Symbol
 
 export const symbol = {
   dispose: Symbol ? (Symbol.dispose || (Symbol.dispose = Symbol('dispose'))) : '@@dispose',
@@ -86,27 +86,42 @@ export const observer = (next, error, complete) => (next && next.call) || (error
 
 export const desc = value => Object.assign({configurable: false, enumerable: false}, value === undefined ? {writable: true} : {value})
 
-export const list = arg => {
-  return Array.isArray(arg) || (!primitive(arg) && !arg.nodeType && arg[Symbol.iterator])
-}
+export const list = arg => Array.isArray(arg) || (!primitive(arg) && !arg.nodeType && arg[Symbol.iterator])
 
-export const primitive = (val) => {
-  if (typeof val === 'object') return val === null
-  return typeof val !== 'function'
-}
+export const esc = n => n.replace(/"|'|\s|\\/g, '')
 
-export const immutable = (val) => {
-  return !val || primitive(val) || val instanceof RegExp || val instanceof Date
-}
+// not so generic, but performant
+export const primitive = (val) =>
+  !val ||
+  typeof val === 'string' ||
+  typeof val === 'boolean' ||
+  typeof val === 'number' ||
+  (typeof val === 'object' ? (val instanceof RegExp || val instanceof Date) :
+  typeof val !== 'function')
 
-export const observable = (arg) => {
-  if (immutable(arg)) return false
-  return !!(
+export const observable = (arg) =>
+  arg && !!(
     arg[symbol.observable]
     || (typeof arg === 'function' && arg.set)
     || arg[Symbol.asyncIterator]
     || arg.next
     || arg.then
-    || arg.mutation && arg._state != null
+    // || arg.mutation && arg._state != null
   )
+
+
+// fast arguments slice https://www.npmjs.com/package/sliced
+export const slice = (args, slice, sliceEnd) => {
+  let ret = [];
+  let len = args.length;
+
+  if (0 === len) return ret;
+
+  let start = slice < 0 ? Math.max(0, slice + len) : slice || 0;
+
+  if (sliceEnd !== undefined) len = sliceEnd < 0 ? sliceEnd + len : sliceEnd
+
+  while (len-- > start) ret[len - start] = args[len];
+
+  return ret;
 }

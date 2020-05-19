@@ -1,19 +1,19 @@
-import { desc, channel as Channel, observer, symbol } from './src/util.js'
+import { desc, channel as Channel, observer, symbol, slice } from './src/util.js'
 
 export default function i(el) {
-  if (el.raw) el = document.querySelector(String.raw(...arguments))
+  if (el.raw) el = document.querySelector(String.raw.apply(null, arguments))
 
   const channel = Channel()
 
-  function fn (...args) {
+  function fn () {
     if (channel.closed) return
-    if (!args.length) return iget()
-    if (observer(...args)) {
-      let unsubscribe = channel.subscribe(...args)
+    if (!arguments.length) return iget()
+    if (observer.apply(null, arguments)) {
+      let unsubscribe = channel.subscribe.apply(null, arguments)
       channel.push.call(channel.observers.slice(-1), iget(), iget())
       return unsubscribe
     }
-    return iset(...args)
+    return iset.apply(null, arguments)
   }
 
   const iget = el.type === 'checkbox' ? () => el.checked : () => el.value
@@ -25,7 +25,7 @@ export default function i(el) {
       value ? el.setAttribute('checked', '') : el.removeAttribute('checked')
     ),
     'select-one': value => {
-      [...el.options].map(el => el.removeAttribute('selected'))
+      slice(el.options).map(el => el.removeAttribute('selected'))
       el.value = value
       if (el.selectedOptions[0]) el.selectedOptions[0].setAttribute('selected', '')
     }

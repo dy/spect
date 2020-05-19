@@ -1,6 +1,6 @@
 import test from 'tst'
 import { h, v } from '../index.js'
-import o from './observable.js'
+import o from './libs/observable.js'
 
 test('hyperscript: simple', function (t) {
   t.is(h('h1').outerHTML, '<h1></h1>')

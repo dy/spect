@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<a href="https://twitter.com/jviide/status/1257755526722662405">ref</a>
+<script type="module">
+import t from 'tst'
+
+// function μ(h,...d){for(var a=[],g=0,f=0,b=-1,c;c=h[g++];)c--?c--?c--?c--?c--?a[++b]=c--?c--?[d[f++],c?{}:null]:1<g||[]:d[f++]:a[b]=this(...a[b]):Object.assign(a[b][1],d[f++]):a[b-1].push(a[b--]):a[b-2][1][a[b--]]=a[b--]:a[b-1]+=""+a[b--];return a[0]}
+
+function μ(hash, ...fields){
+  // [root, tag, props, ...children]
+  var stack=[], i=0, f=0, d=-1, c
+
+  for(;c=hash[i++];) {
+    c-- ?
+      c-- ?
+        c-- ?
+          c-- ?
+            c-- ?
+              // new level
+              stack[++d] =
+                c-- ?
+                  c-- ?
+                    // 7,8 - new tag stack with/without props
+                    console.log('8: PUSH TAG', fields[f]) || [fields[f++], c ? {} : null] :
+                    // 6 - props stack?
+                    console.log('6: BOOLEAN?', 1 < i) || 1 < i || [] :
+                  // 5 - prop name
+                  console.log('5: PUSH FIELD', fields[f]) || fields[f++] :
+              // 4 - end node / exit stack / eval
+              stack[d] = console.log('4: END LEVEL') || this(...stack[d]) :
+            // 3 - ...${props}
+            console.log('3: ...PROPS', fields[f]) || Object.assign( stack[d][1], fields[f++] ) :
+          // 2
+          console.log('2: ADD TO PARENT', stack[d]) || stack[d-1].push(stack[d--]) :
+        // 1 -
+        stack[d-2][1][stack[d--]] = console.log('1: COMMIT PROPERTY', stack[d+1], stack[d]) || stack[d--] :
+      // 0 - text node?
+      (stack[d-1] += console.log('0: ???') || ''+stack[d--]);
+    console.log([...stack])
+  }
+  return stack[0]
+}
+const html = μ.bind((type, props, ...children) => ({type, props, children}))
+
+t('μ', t => {
+  t.is(
+    html('85516518352424', 'div', 'hello', 'class', 'a', 'h1', {id: 'hello'}, 'Hello World!'),
+    {
+      type: 'div',
+      props: { class:'hello', a: true },
+      children: [
+        { type: 'h1', props: { id: 'hello' }, children: ['Hello World!'] }
+      ]
+    }
+  )
+})
+</script>

@@ -1,11 +1,17 @@
+<!DOCTYPE html>
+<script type="module">
 // dom diff algo benchmark
 
 import t from 'tst'
 import {time} from 'wait-please'
-import { merge as diff } from '../h.js'
+// import { merge as diff } from '../h.js'
+// import diff from '../src/diff-preswap.js'
+import diff from '../src/diff-inflate.js'
+// import diff from '../src/diff-deflate.js'
 // import diff from './libs/list-difference.js'
 // import diff from './libs/udomdiff.js'
 // import diff from './libs/snabbdom.js'
+// import diff from './libs/stage0.js'
 
 
 const t1 = document.createElement('i1'),
@@ -41,7 +47,7 @@ const frag = () => {
 t('create', t => {
   let parent = frag();
 
-  diff(parent,[...parent.childNodes], [t1,t2,t3,t4,t5], );
+  diff(parent,[...parent.childNodes], [t1,t2,t3,t4,t5], null);
   t.is([...parent.childNodes], [t1,t2,t3,t4,t5], 'create')
   t.is(parent.count, 5)
 })
@@ -51,7 +57,7 @@ t('remove', t => {
   diff(parent,[...parent.childNodes], [t1,t2,t3,t4,t5], );
 
   console.log('---remove')
-  diff(parent,[...parent.childNodes],[t1,t3,t5],);
+  diff(parent,[...parent.childNodes], [t1,t3,t5],);
   t.is([...parent.childNodes], [t1,t3,t5], 'remove')
 })
 
@@ -65,6 +71,40 @@ t('insert', t => {
   t.is([...parent.childNodes],[t1,t2,t3,t4,t5], 'insert')
 })
 
+t('append before', t => {
+  let parent = frag();
+  diff(parent,[], [t1,t5]);
+  diff(parent,[],[t3],t5);
+  t.is([...parent.childNodes],[t1,t3,t5], 'insert')
+})
+
+t('prepend', t => {
+  let parent = frag();
+  diff(parent,[], [t4,t5], null);
+  diff(parent,[t4,t5],[t1,t2,t3,t4,t5], null);
+  t.is([...parent.childNodes],[t1,t2,t3,t4,t5], 'prepended')
+})
+t('swap 2/5', t => {
+  let parent = frag();
+  diff(parent,[...parent.childNodes], [t1,t2,t3,t4,t5], );
+  parent.reset()
+
+  console.log('---swap')
+  diff(parent,[...parent.childNodes],[t1,t5,t3,t4,t2],);
+  t.is([...parent.childNodes], [t1,t5,t3,t4,t2])
+
+  t.is(parent.count, 2, 'ops')
+})
+t('swap-replace', t => {
+  let parent = frag();
+  diff(parent,[...parent.childNodes], [t1,t2,t3,t4,t5,t6], );
+  parent.reset()
+
+  console.log('---swap')
+  diff(parent,[...parent.childNodes],[t1,t5,t3,t8,t4],);
+  t.is([...parent.childNodes], [t1,t5,t3,t8,t4])
+})
+
 t('swap', t => {
   let parent = frag();
   diff(parent,[...parent.childNodes], [t1,t2,t3,t4,t5,t6,t7,t8,t9], );
@@ -75,6 +115,97 @@ t('swap', t => {
   t.is([...parent.childNodes], [t1,t8,t3,t4,t5,t6,t7,t2,t9])
 
   t.is(parent.count, 2, 'ops')
+})
+
+t('swap-tail', t => {
+  let parent = frag();
+  diff(parent,[...parent.childNodes], [t1,t2,t3,t4,t5,t6,t7,t8,t9]);
+  parent.reset()
+
+  console.log('---swap')
+  diff(parent,[...parent.childNodes],[t9,t2,t3,t4,t5,t6,t7,t8,t1]);
+  t.is([...parent.childNodes], [t9,t2,t3,t4,t5,t6,t7,t8,t1])
+
+  t.is(parent.count, 2, 'ops')
+})
+
+t('single', t => {
+  let parent = frag();
+  diff(parent,[...parent.childNodes], [t1]);
+  parent.reset()
+
+  diff(parent,[...parent.childNodes],[t2]);
+  t.is([...parent.childNodes], [t2])
+
+  t.ok(parent.count < 3, 'ops')
+})
+
+t('one in the middle', t => {
+  let parent = frag();
+  diff(parent,[...parent.childNodes], [t1,t2,t3,t4,t5]);
+  parent.reset()
+
+  console.log('---swap')
+  diff(parent,[...parent.childNodes],[t1,t2,t6,t4,t5]);
+  t.is([...parent.childNodes], [t1,t2,t6,t4,t5])
+
+  t.ok(parent.count < 3, 'ops')
+})
+
+t('ring', t => {
+  let parent = frag();
+  diff(parent,[...parent.childNodes], [t1,t2,t3,t4,t5]);
+  parent.reset()
+
+  console.log('---ring')
+  diff(parent,[...parent.childNodes],[t2,t3,t4,t5,t1]);
+  t.is([...parent.childNodes], [t2,t3,t4,t5,t1])
+
+  t.ok(parent.count <= 4, 'ops')
+})
+
+t('shiftpop', t => {
+  let parent = frag();
+  diff(parent,[...parent.childNodes], [t1,t2,t3,t4,t5]);
+  parent.reset()
+
+  console.log('---shiftpop')
+  diff(parent,[...parent.childNodes],[t0,t1,t2,t3,t4]);
+  t.is([...parent.childNodes], [t0,t1,t2,t3,t4])
+
+  t.is(parent.count, 2, 'ops')
+})
+
+t('endswap', t => {
+  let parent = frag();
+  diff(parent,[...parent.childNodes], [t1,t2,t3,t4,t5]);
+  parent.reset()
+
+  console.log('--->')
+  diff(parent,[...parent.childNodes],[t5,t2,t3,t4,t0]);
+  t.is([...parent.childNodes], [t5,t2,t3,t4,t0])
+
+  t.ok(parent.count <= 3, 'ops')
+})
+
+t('endswap2', t => {
+  let parent = frag();
+  diff(parent,[...parent.childNodes], [t1,t2,t3,t4,t5]);
+  parent.reset()
+
+  console.log('--->')
+  diff(parent,[...parent.childNodes],[t1,t2,t3,t4,t6]);
+  t.is([...parent.childNodes], [t1,t2,t3,t4,t6])
+})
+
+t.todo('skip', t => {
+  let parent = frag();
+  diff(parent,[], [t1,t2,t3,t4,t5]);
+  parent.reset()
+
+  console.log('--->')
+  diff(parent,[...parent.childNodes],[t1,t2,t3,t4,t5], null, 2);
+  t.is([...parent.childNodes], [t3,t4,t5])
 })
 
 t('shuffle1', t => {
@@ -173,7 +304,7 @@ t('tiny-random-2', t => {
 
   console.log('---chain-swap')
   let ordered = initial.slice().sort(() => Math.random() - Math.random())
-  diff(parent, [...parent.childNodes], ordered,);
+  diff(parent, [...parent.childNodes], ordered, null);
   t.is([...parent.childNodes], ordered)
   t.ok(parent.count < 10, 'ops count')
 })
@@ -206,6 +337,23 @@ t('clear', t => {
   console.log('---clear')
   diff(parent,[...parent.childNodes],[],);
   t.is([...parent.childNodes], [])
+})
+t('clear live', t => {
+  let parent = frag();
+  diff(parent,[...parent.childNodes],[t1,t2,t3,t4,t5]);
+  console.log('---clear')
+  diff(parent,parent.childNodes,[],);
+  t.is([...parent.childNodes], [])
+})
+
+t('remove with head/tail', t => {
+  let parent = frag();
+  console.groupCollapsed('init')
+  diff(parent,[...parent.childNodes],[t0,t1,t2,t3,t4,t5,t6]);
+  console.groupEnd()
+  console.log('---remove')
+  diff(parent,[...parent.childNodes],[t1,t3,t5],);
+  t.is([...parent.childNodes], [t1,t3,t5])
 })
 
 t('reverse-add', t => {
@@ -283,20 +431,6 @@ t('js-diff-benchmark random', t => {
   t.is(childNodes.length, 1000, 'result length')
   t.ok(childNodes.every((row, i) => row === parent.childNodes[i]), 'order')
 })
-
-
-
-  // start();
-  // childNodes = reverse(parent, diff, childNodes);
-  // stop(parent.operations.length, 1000);
-  // console.assert(
-  //   verifyNodes(parent, childNodes, 1000),
-  //   '%s reverse',
-  //   lib
-  // );
-  // reset(parent);
-
-
 
 // actual benchmark
 t('create 1000', async t => {
@@ -614,3 +748,5 @@ function updateEach10thRow(parent, diff) {
 
   );
 }
+
+</script>
