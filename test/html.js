@@ -404,7 +404,7 @@ t('html: does not duplicate classes for container', t => {
   t.is(el.outerHTML, '<div class="x"></div>')
 })
 
-t.skip('html: component static props', async t => {
+t('html: component static props', async t => {
   let log = []
   let el = h`<div><${C} id="x" class="y z"/></>`
 
@@ -656,8 +656,9 @@ t('html: null-like insertions', t => {
   t.is(c.textContent, '')
 })
 
-t.todo('html: component siblings', t => {
+t('html: component siblings', t => {
   let a = h`<x/> ${1}`
+  t.is(a.outerHTML, `<><x></x> 1</>`)
 })
 
 t('html: non-observables create flat string', t => {

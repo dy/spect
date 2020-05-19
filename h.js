@@ -223,6 +223,10 @@ const createTemplate = (statics) => {
             comp.replaceWith(comp._ref)
           }
           let res = h(comp, props, ...children)
+
+          // FIXME: ugh... single-case fix
+          if (comp.nodeType === FRAG) return res
+
           el.replaceWith(res)
         }
         else {
