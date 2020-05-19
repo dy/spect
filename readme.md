@@ -1,7 +1,7 @@
 <div align="center"><img src="https://avatars3.githubusercontent.com/u/53097200?s=200&v=4" width=108 /></div>
 <p align="center"><h1 align="center">spect</h1></p>
 <p align="center">
-  Hyper Reactive Aspects.<br/>
+  Reactive aspect-oriented web-framework.<br/>
   <!-- Build reactive UIs with rules, similar to CSS.<br/> -->
   <!-- Each rule specifies an <em>aspect</em> function, carrying a piece of logic.<br/> -->
 </p>
@@ -35,21 +35,21 @@
 </script>
 -->
 
-_Spect_ is radical minimalistic [_aspect-oriented_](https://en.wikipedia.org/wiki/Aspect-oriented_programming) framework, enabling compact UI code and efficient DOM manipulations with 3 essential frontend functions − _**$**_, _**h**_ and _**v**_, already familiar from [_jquery_](https://ghub.io/jquery), [_hyperscript_/_JSX_](https://ghub.io/hyperscript) and [_observable_](https://www.npmjs.com/package/observable) backgrounds.
+_Spect_ is minimalistic [_aspect-oriented_](https://en.wikipedia.org/wiki/Aspect-oriented_programming) web framework, enabling compact UI code and efficient DOM manipulations with 3 essential functions − _**$**_, _**h**_ and _**v**_, coming from [_jquery_](https://ghub.io/jquery), [_hyperscript_/_JSX_](https://ghub.io/hyperscript) and [_observable_](https://www.npmjs.com/package/observable) backgrounds.
 
 ## Principles
 
-:gem: **Separation of cross-cutting concerns** with _aspects_.
+:gem: **Separation of cross-cutting concerns**.
 
-:deciduous_tree: **Native first** − semantic clean tree, vanilla flavor.
+:deciduous_tree: **Native first** − semantic clean tree, vanilla js.
 
-:calling: **Progressive enhancement** − multiple aspects enrich functionality.
+:calling: organic **progressive enhancement**.
 
-:baby_chick: **Low entry barrier** − no code bureaucracy or complexity hostages.
+:baby_chick: **Low entry barrier**.
 
 :dizzy: **0** bundling, **0** server, **0** template.
 
-:shipit: **Low-profile** − doesn’t force stack, can be used as utility.
+:shipit: **Low-profile** − can be used as utility.
 
 :golf: Good **performance / size / memory** balance.
 
@@ -60,7 +60,7 @@ _Spect_ is radical minimalistic [_aspect-oriented_](https://en.wikipedia.org/wik
 
 ```html
 <script type="module">
-import { $, h, i, v, a } from 'https://unpkg.com/spect?module'
+import { $, h, v } from 'https://unpkg.com/spect?module'
 
 // ... code here
 </script>
@@ -71,12 +71,12 @@ import { $, h, i, v, a } from 'https://unpkg.com/spect?module'
 [![npm i spect](https://nodei.co/npm/spect.png?mini=true)](https://npmjs.org/package/spect/)
 
 ```js
-import { $, h, i, v, a } from 'spect'
+import { $, h, v } from 'spect'
 
 // ... code here too
 ```
 
-_Spect_ plays perfectly with [snowpack](https://www.snowpack.dev/), but any other bundler will do.
+_Spect_ plays well with [snowpack](https://www.snowpack.dev/), but any other bundler will do.
 
 
 ## Usage
