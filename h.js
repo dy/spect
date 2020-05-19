@@ -7,19 +7,11 @@ const TEXT = 3, ELEM = 1, ATTR = 2, COMM = 8, FRAG = 11, COMP = FRAG,
 // placeholders
 const ZWSP = '\u200B', ZWNJ = '\u200C', ZWJ = '\u200D', H_TAG = 'h:tag', H_FIELD = ZWNJ
 
-
-
 // character for node id, ref https://mathiasbynens.be/notes/html5-id-class
 // const CHARS = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789'
 
 // see also https://developer.mozilla.org/en-US/docs/Web/API/Node/nodeType
 // const EMPTY = 'area base br col command embed hr img input keygen link meta param source track wbr ! !doctype ? ?xml'.split(' ')
-
-// FIXME: move these comments to appropriate places
-// why `!immutables` and not `observable`:
-// - fn field cannot be cloned afterwards (like onclick)
-// - object field may one-way add attribs (spoil fast node) and also may have observable prop
-// - array field can insert additional children, spoiling numeration of _childFields
 
 const cache = new WeakMap
 
@@ -157,7 +149,9 @@ const createTemplate = (statics) => {
   //    because if it happens to create async fields element, there will be flash of old content (cleaning up tpl is less effective)
   // getElementsByTagName('*') is faster than tree iterator/querySelector('*'), but live and fragment doesn't have it
   // ref: https://jsperf.com/createnodeiterator-vs-createtreewalker-vs-getelementsby
-  let it = document.createTreeWalker(template.content, SHOW_ELEMENT), node = template.content, i = 0, program = [], id
+  let it = document.createTreeWalker(template.content, SHOW_ELEMENT),
+      i = 0, program = [], id,
+      node = template.content
 
   while (node) {
     let type = prog.shift(), sel = prog.shift(), children = [], count = 0, props
@@ -173,7 +167,7 @@ const createTemplate = (statics) => {
       props = {}
       if (type === COMP) for (let attr of node.attributes) props[attr.name] = attr.value
 
-      program.push(type, type ? (id = sel + '-' + (i++).toString(36)) : null, props, ATTR, 'id', node.id || null)
+      program.push(type, type ? (id = '--' + sel + '-' + (i++).toString(36)) : null, props, ATTR, 'id', node.id || null)
       node.id = id
 
       // collect attrib commands / skip to the next element
@@ -190,7 +184,6 @@ const createTemplate = (statics) => {
     let frag = template.content.cloneNode(true), i = 0, c, el, k, v, props, children, comp
 
     // VM inspired by https://twitter.com/jviide/status/1257755526722662405, see ./test/stacker.html
-    // iteration is cheap, but h call is slow, therefore props / children are evaluated in-place
     // it is ~5% slower than direct eval, but without metaphysics
     for (; i < program.length;) {
       c = program[i++]
@@ -201,7 +194,7 @@ const createTemplate = (statics) => {
         props = {...program[i++]}
 
         // <${el}, <${Comp}
-        comp = c === COMP ? args[el.id.split('-')[0]] : null
+        comp = c === COMP ? args[el.id.slice(2).split('-')[0]] : null
       }
       else if (c === ATTR) {
         k = program[i++], v = program[i++]
@@ -220,25 +213,31 @@ const createTemplate = (statics) => {
         // i > 0 - take child from args, i <= 0 - take child from self children
         children = program[i++].map(i => i > 0 ? args[i] : el.childNodes[~i])
 
-        // h`<${b}/>` - b is kept in its own parent
-        // h`<a><${b}/></a>` - b is placed to a
         if (comp) {
-          // update case
-          if (comp.nodeType) {
-            let res = h(comp, props, ...children)
-            el.replaceWith(res)
+          // h`<${b}/>` - b is kept in its own parent
+          // h`<a><${b}/></a>` - b is placed to a
+          // for that purpose a placeholder is put into parent container, and replaced back on return
+          // FIXME: if there's a better/faster way - do that. Tried detecting single mode in advance - failed.
+          if (comp.nodeType === ELEM && frag.childNodes.length === 1 && frag.firstChild === el) {
+            comp._ref = document.createTextNode('')
+            comp.replaceWith(comp._ref)
           }
-          else {
-            el.replaceWith(h(comp, props, ...children))
-          }
+          let res = h(comp, props, ...children)
+          el.replaceWith(res)
         }
         else {
           h(el, props, ...children)
         }
       }
     }
+    if (frag.childNodes.length === 1) {
+      let res = frag.firstChild
+      // revert to original parent
+      if (frag.firstChild._ref) res._ref.replaceWith(res)
+      return res
+    }
 
-    return frag.childNodes.length === 1 ? frag.firstChild : frag
+    return frag
   }
 }
 
