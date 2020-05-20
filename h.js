@@ -30,13 +30,13 @@ export default function html(statics) {
   // FIXME: fall back to h function to handle evaluate-able elements:
   // - central point of processing components / observable props (otherwise messy)
   // - can cache props in some way to avoid evaluating props object cost
-  if (!build) cache.set(arguments[0], build = createTemplate.apply(null, arguments))
+  if (!build) cache.set(arguments[0], build = createTemplate(arguments))
 
   return build(arguments)
 }
 
-function createTemplate (statics) {
-  let template = document.createElement('template')
+function createTemplate (args) {
+  let statics = args[0], template = document.createElement('template')
 
   // 0. prepares string for innerHTML, creates program for affected nodes
   // getElementById is faster than node path tracking (id is path in a way) https://jsperf.com/queryselector-vs-prop-access
@@ -49,7 +49,7 @@ function createTemplate (statics) {
       prog = [0, 0]
 
   const commit = () => {
-    if (mode === ELEM) {prog.push(ELEM, el = buf || H_TAG), mode = ATTR }
+    if (mode === ELEM) {prog.push(TEXT, el = buf || H_TAG), mode = ATTR }
     else if (attr) {
       if (buf) attr.push(buf)
       if (attr.length === 1) (prog.pop(), prog.push(attr[0]))
@@ -118,7 +118,7 @@ function createTemplate (statics) {
       // >a${1}b${2}c<  →  >a<!--1-->b<!--2-->c<
       if (mode === TEXT) part += '<!--' + i + '-->'
       // <${el} → <h--tag;    ELEM, field, children
-      else if (mode === ELEM) (prog.push(COMP, i), part += el = H_TAG, mode = ATTR)
+      else if (mode === ELEM) (prog.push(args[i].nodeType || COMP, i), part += el = H_TAG, mode = ATTR)
       else if (mode === ATTR) {
         // <xxx ...${{}};    ATTR, null, field
         if (buf === '...') { prog.push(ATTR, null, i), part = part.slice(0, -4) }
@@ -144,6 +144,7 @@ function createTemplate (statics) {
 
   // 1. template is created via innerHTML
   template.innerHTML = parts.join('')
+  // console.log(parts.join(''), template.innerHTML)
 
   // 2. node iterator replaces comments (child fields) with blank texts (pre-optimizes for text morphing)
   //    collects meaningful node programs, assigns their nodes ids.
@@ -152,10 +153,10 @@ function createTemplate (statics) {
   // getElementsByTagName('*') is faster than tree iterator/querySelector('*'), but live and fragment doesn't have it
   // ref: https://jsperf.com/createnodeiterator-vs-createtreewalker-vs-getelementsby
   let it = document.createTreeWalker(template.content, SHOW_ELEMENT),
-      i = 0, program = ['let el,comp,child,res\n'],
+      i = 0, program = ['let el,child\n'],
       node = template.content,
       single = node.childNodes.length === 1,
-      singleRender = false
+      singleRender = false, fragRender = false
 
   while (node) {
     let type = prog.shift(), sel = prog.shift(), children = [], count = 0, k, v, props = [], id
@@ -169,10 +170,10 @@ function createTemplate (statics) {
       else children.push(-j)
 
     // actualize program
-    if (prog[0] === ATTR || count || type === COMP || type === FRAG) {
+    if (prog[0] === ATTR || count || type === COMP || type === ELEM || type === FRAG) {
       if (type) {
         // collect static props for component
-        if (type === FRAG || type === COMP) for (let attr of node.attributes) props.push(`"${esc(attr.name)}":"${esc(attr.value)}"`)
+        if (type === ELEM || type === COMP) for (let attr of node.attributes) props.push(`"${esc(attr.name)}":"${esc(attr.value)}"`)
 
         if (!node.id) props.push('id:' + (node.hasAttribute('id') ? '""' : 'null')), node.id = id
 
@@ -181,18 +182,22 @@ function createTemplate (statics) {
         // for that purpose a placeholder is put into parent container, and replaced back on return
         // FIXME: if there's a better/faster way - do that. If keep element in own parent - have to figure out way to query els.
         if (i === 2) {
-          if (single && type === FRAG) program.push(`args[${sel}].replaceWith(frag._ref=document.createComment('')),`), singleRender = true
-          program.push(`el=frag.firstElementChild,child=el.childNodes,`)
+          if (single && type === FRAG) program.push(`child=frag.firstElementChild.childNodes,frag=el=args[${sel}],`), fragRender = true
+          else {
+            if (single && type === ELEM)
+              program.push(`args[${sel}].replaceWith(frag._ref=document.createComment('')),`), singleRender = true
+            program.push(`el=frag.firstElementChild,child=el.childNodes,`)
+          }
         }
         else program.push(`el=frag.getElementById("${esc(node.id)}"),child=el.childNodes,`)
 
-        if (type === COMP || type === FRAG) program.push(`el.replaceWith(this(args[${sel}]`)
-        else program.push(`this(el`)
+        if (type === COMP || type === ELEM) program.push(`el.replaceWith(h(args[${sel}]`)
+        else program.push(`h(el`)
       }
-      else program.push('child=frag.childNodes,this(frag')
+      else program.push('child=frag.childNodes,h(frag')
 
       // collect attrib commands / skip to the next element
-      if (props.length || prog[0] === ATTR || type === COMP || type === FRAG) {
+      if (props.length || prog[0] === ATTR || type === COMP || type === ELEM) {
         while (prog[0] === ATTR) {
           prog.shift()
           k = prog.shift(), v = prog.shift()
@@ -217,19 +222,21 @@ function createTemplate (statics) {
 
       if (children.length) program.push(',', children.map(i => i > 0 ? `args[${i}]` : `child[${~i}]`).join(','))
 
-      program.push(type === FRAG || type === COMP ? '))\n' : ')\n')
+      program.push(type === ELEM || type === COMP ? '))\n' : ')\n')
     }
 
     node = it.nextNode()
   }
   if (singleRender) program.push('frag._ref.replaceWith(el=frag.firstChild); return el')
-  else program.push(single ? 'return frag.firstChild' : 'return frag')
+  else if (fragRender) program.push('return frag')
+  else program.push('return frag.childNodes.length === 1 ? frag.firstChild : frag')
+  // else program.push(single ? 'return frag.firstChild' : 'return frag')
 
-
-  const evaluate = new Function('frag', 'args', program.join('')).bind(h)
+  // console.log(program.join(''), template.innerHTML)
+  const evaluate = new Function('frag', 'args', 'h', program.join('')).bind(h)
 
   // 3. builder clones template and runs program on it - query/apply props/merge children/do observables
-  return args => evaluate(template.content.cloneNode(true), args)
+  return args => evaluate(template.content.cloneNode(true), args, h)
 }
 
 // compact hyperscript

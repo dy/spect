@@ -88,7 +88,14 @@ export const desc = value => Object.assign({configurable: false, enumerable: fal
 
 export const list = arg => Array.isArray(arg) || (!primitive(arg) && !arg.nodeType && arg[Symbol.iterator])
 
-export const esc = n => n.replace(/"|'|\s|\\/g, '')
+export const esc = n => n.replace(/"|'|\\/g, '')
+
+// join an array with a function
+export const join = (arr, fn) => {
+  let str = '', i = 0
+  for (; i < arr.length - 1; i++) str += arr[i] + fn(i)
+  return str += arr[i]
+}
 
 // not so generic, but performant
 export const primitive = (val) =>

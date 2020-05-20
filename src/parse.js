@@ -14,7 +14,7 @@ export default function (statics) {
       parts = [], part, prog = []
 
   const commit = () => {
-    if (mode === ELEM) {prog.push(ELEM, el = buf || H_TAG), mode = ATTR }
+    if (mode === ELEM) {prog.push(TEXT, el = buf || H_TAG), mode = ATTR }
     else if (attr) {
       if (buf) attr.push(buf)
       if (attr.length === 1) (prog.pop(), prog.push(attr[0]))
@@ -83,7 +83,7 @@ export default function (statics) {
       // >a${1}b${2}c<  →  >a<!--1-->b<!--2-->c<
       if (mode === TEXT) part += '<!--' + i + '-->'
       // <${el} → <h--tag;    ELEM, field, children
-      else if (mode === ELEM) (prog.push(arguments[i].nodeType ? FRAG : COMP, i), part += el = H_TAG, mode = ATTR)
+      else if (mode === ELEM) (prog.push(arguments[i] || COMP, i), part += el = H_TAG, mode = ATTR)
       else if (mode === ATTR) {
         // <xxx ...${{}};    ATTR, null, field
         if (buf === '...') { prog.push(ATTR, null, i), part = part.slice(0, -4) }

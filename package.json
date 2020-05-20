@@ -1,7 +1,7 @@
 {
   "name": "spect",
   "version": "21.1.2",
-  "description": "Hyper reactive aspects",
+  "description": "Aspect-oriented DOM framework",
   "main": "index.js",
   "module": "index.js",
   "unpkg": "dist/spect.min.js",
