@@ -34,3 +34,5 @@ Object.defineProperty(Element.prototype, 'outerHTMLClean', {
     return ohtml.replace(/<!---->/g, '')
   }
 })
+
+export default null
