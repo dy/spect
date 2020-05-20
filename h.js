@@ -246,17 +246,20 @@ const createTemplate = (statics) => {
 }
 
 // compact hyperscript
-export function h(tag, props, ...children) {
+export function h(tag, props) {
   if (typeof tag === 'string') {
     let id, cls
+    // hyperscript-compat
     [tag, id] = tag.split('#'), [tag, ...cls] = tag.split('.')
-    if (id || cls.length) props = props || {}
-    if (id) props.id = id
-    if (cls.length) props.class = cls
+    if (id || cls.length) {
+      props = props || {}
+      if (id) props.id = id
+      if (cls.length) props.class = cls
+    }
     tag = document.createElement(tag)
   }
   else if (typeof tag === 'function') {
-    tag = tag({children, ...props})
+    tag = tag({children: slice(arguments, 2), ...props})
     // FIXME: is there a more elegant way?
     if (Array.isArray(tag)) {
       let frag = document.createDocumentFragment()
@@ -266,12 +269,11 @@ export function h(tag, props, ...children) {
     // component is completed - no need to post-merge children/props
     return tag
   }
-
   // clean up previous observables
-  if (tag._cleanup) { for (let fn of tag._cleanup) fn(); tag._cleanup = null }
+  else if (tag._cleanup) { for (let fn of tag._cleanup) fn(); tag._cleanup = null }
 
   // apply props
-  let cleanup = [], subs = []
+  let cleanup = [], subs = [], i
   for (let name in props) {
     let value = props[name]
     // primitive is more probable also less expensive than observable check
@@ -281,14 +283,16 @@ export function h(tag, props, ...children) {
   }
 
   // merge children
-  for (let i = 0; i < children.length; i++)
-    if (observable(children[i])) cleanup.push(subs[i] = children[i]), children[i] = document.createTextNode('')
+  for (i = 2; i < arguments.length; i++)
+    if (observable(arguments[i])) cleanup.push(subs[i] = arguments[i]), arguments[i] = document.createTextNode('')
 
-  merge(tag, tag.childNodes, flat(children))
+  // append shortcut
+  if (!tag.childNodes.length) for (i of flat(arguments)) tag.append(i)
+  else merge(tag, tag.childNodes, flat(arguments))
 
   subs.map((sub, i) => sube(sub, child => (
-    children[i] = child,
-    merge(tag, tag.childNodes, flat(children))
+    arguments[i] = child,
+    merge(tag, tag.childNodes, flat(arguments))
   )))
 
   if (cleanup.length) tag._cleanup = cleanup
@@ -296,12 +300,15 @@ export function h(tag, props, ...children) {
   return tag
 }
 
-const flat = (list) => {
-  let out = []
-  for (let item of list) {
-    if (primitive(item) || item.nodeType) out.push(item)
-    else if (item[Symbol.iterator]) for (item of item) out.push(item)
-    else out.push(item)
+const flat = (args) => {
+  let out = [], i = 2, item
+  for (; i < args.length;) {
+    item = args[i++]
+    if (item != null) {
+      if (primitive(item) || item.nodeType) out.push(item)
+      else if (item[Symbol.iterator]) for (item of item) out.push(item)
+      else out.push(item)
+    }
   }
   return out
 }
@@ -338,7 +345,7 @@ const merge = (parent, a, b, end = null) => {
   while (i < n && i < m && same(a[i], b[i])) i++
   while (i < n && i < m && same(b[n-1], a[m-1])) end = b[--m, --n]
 
-  // append/prepend/trim shortcuts
+  // append/prepend shortcut
   if (i == m) while (i < n) insert(parent, b[i++], end)
 
   else {

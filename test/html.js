@@ -649,10 +649,10 @@ t.skip('html: class components', async t => {
 t('html: null-like insertions', t => {
   let a = h`<a>foo ${ null } ${ undefined } ${ false } ${0}</a>`
 
-  t.is(a.innerHTML, 'foo   false 0')
+  t.is(a.innerHTML, 'foo  false 0')
 
   let b = h`${ null } ${ undefined } ${ false } ${0}`
-  t.is(b.textContent, '  false 0')
+  t.is(b.textContent, ' false 0')
   let c = h``
   t.is(c.textContent, '')
 })
