@@ -295,8 +295,7 @@ export function h(tag, props, ...children) {
 
   if (cleanup.length) tag._cleanup = cleanup
 
-  // FIXME: 😬
-  return tag.nodeType === FRAG && tag.childNodes.length === 1 && tag.childElementCount === 1 ? tag.firstChild : tag
+  return tag.nodeType === FRAG && tag.childNodes.length === 1 ? tag.firstChild : tag
 }
 
 const flat = (list) => {
