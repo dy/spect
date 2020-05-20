@@ -247,9 +247,7 @@ const createTemplate = (statics) => {
 
 // compact hyperscript
 export function h(tag, props, ...children) {
-  // render redirect
-  if (!tag) tag = document.createDocumentFragment()
-  else if (typeof tag === 'string') {
+  if (typeof tag === 'string') {
     let id, cls
     [tag, id] = tag.split('#'), [tag, ...cls] = tag.split('.')
     if (id || cls.length) props = props || {}
@@ -270,7 +268,7 @@ export function h(tag, props, ...children) {
   }
 
   // clean up previous observables
-  if (tag._cleanup) tag._cleanup.map(fn => fn())
+  if (tag._cleanup) { for (let fn of tag._cleanup) fn(); tag._cleanup = null }
 
   // apply props
   let cleanup = [], subs = []
@@ -295,7 +293,7 @@ export function h(tag, props, ...children) {
 
   if (cleanup.length) tag._cleanup = cleanup
 
-  return tag.nodeType === FRAG && tag.childNodes.length === 1 ? tag.firstChild : tag
+  return tag
 }
 
 const flat = (list) => {

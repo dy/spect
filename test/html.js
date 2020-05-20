@@ -310,7 +310,7 @@ t('html: render to fragment', async t => {
   let frag = document.createDocumentFragment()
   let el = h`<${frag}>1</>`
   // t.is(frag, el)
-  t.is(el.data, '1')
+  t.is(el.outerHTML, '<>1</>')
   t.is(frag.outerHTML, '<>1</>')
 })
 

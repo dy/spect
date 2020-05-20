@@ -81,7 +81,7 @@ t('h: child node', async t => {
 })
 
 t('h: fragments / text', async t => {
-  let a = h('', null, `foo`, [`bar`])
+  let a = h(document.createDocumentFragment(), null, `foo`, [`bar`])
   t.is(a.textContent, 'foobar')
   // let el2 = h(null, null, `foo`, [`bar`])
   // t.is(el2.textContent, 'foobar')
@@ -258,13 +258,13 @@ t('h: wrapping with children', async t => {
 })
 
 t('h: input case', async t => {
-  let el = h('', null, h('input'))
-  t.is(el.outerHTML, `<input>`)
+  let el = h(document.createDocumentFragment(''), null, h('input'))
+  t.is(el.outerHTML, `<><input></>`)
 })
 
 t('h: select case', async t => {
   const select = h('select', null, ' ', h('option', {value:'a'}), ' ')
-  let w = h('', null, ' ', select, ' ')
+  let w = h(document.createDocumentFragment(), null, ' ', select, ' ')
   await tick(8)
   t.is(w.outerHTML, `<> <select> <option value="a"></option> </select> </>`)
 })
@@ -289,8 +289,8 @@ t('h: promises', async t => {
 t('h: render to fragment', async t => {
   let frag = document.createDocumentFragment()
   let el = h(frag, null, 1)
-  // t.is(frag, el)
-  t.is(el.data, '1')
+  t.is(frag, el)
+  t.is(el.outerHTML, '<>1</>')
   t.is(frag.outerHTML, '<>1</>')
 })
 
