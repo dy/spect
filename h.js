@@ -1,7 +1,9 @@
-import { symbol, observable, primitive, attr, slice } from './src/util.js'
+import { symbol, observable, primitive, attr, slice, esc } from './src/util.js'
+
+// FIXME: avoid H_FIELD
 
 // DOM
-const TEXT = 3, ELEM = 1, ATTR = 2, COMM = 8, FRAG = 11, COMP = FRAG,
+const TEXT = 3, ELEM = 1, ATTR = 2, COMM = 8, FRAG = 11, COMP = 6,
       SHOW_ELEMENT = 1, SHOW_TEXT = 4, SHOW_COMMENT = 128
 
 // placeholders
@@ -28,12 +30,12 @@ export default function html(statics) {
   // FIXME: fall back to h function to handle evaluate-able elements:
   // - central point of processing components / observable props (otherwise messy)
   // - can cache props in some way to avoid evaluating props object cost
-  if (!build) cache.set(arguments[0], build = createTemplate(arguments[0]))
+  if (!build) cache.set(arguments[0], build = createTemplate.apply(null, arguments))
 
   return build(arguments)
 }
 
-const createTemplate = (statics) => {
+function createTemplate (statics) {
   let template = document.createElement('template')
 
   // 0. prepares string for innerHTML, creates program for affected nodes
@@ -150,11 +152,16 @@ const createTemplate = (statics) => {
   // getElementsByTagName('*') is faster than tree iterator/querySelector('*'), but live and fragment doesn't have it
   // ref: https://jsperf.com/createnodeiterator-vs-createtreewalker-vs-getelementsby
   let it = document.createTreeWalker(template.content, SHOW_ELEMENT),
-      i = 0, program = [], id,
-      node = template.content
+      i = 0, program = ['let el,comp,child,res\n'],
+      node = template.content,
+      single = node.childNodes.length === 1,
+      singleRender = false
 
   while (node) {
-    let type = prog.shift(), sel = prog.shift(), children = [], count = 0, props
+    let type = prog.shift(), sel = prog.shift(), children = [], count = 0, k, v, props = [], id
+
+    // increment id just to make i reflect node order
+    id = '--' + sel + '-' + (i++).toString(36)
 
     // collect child ids
     for (let j = 0, child; child = node.childNodes[j++];)
@@ -162,87 +169,67 @@ const createTemplate = (statics) => {
       else children.push(-j)
 
     // actualize program
-    if (prog[0] === ATTR || count || type === COMP) {
-      // collect static props for component
-      props = {}
-      if (type === COMP) for (let attr of node.attributes) props[attr.name] = attr.value
+    if (prog[0] === ATTR || count || type === COMP || type === FRAG) {
+      if (type) {
+        // collect static props for component
+        if (type === FRAG || type === COMP) for (let attr of node.attributes) props.push(`"${esc(attr.name)}":"${esc(attr.value)}"`)
 
-      program.push(type, type ? (id = '--' + sel + '-' + (i++).toString(36)) : null, props, ATTR, 'id', node.id || null)
-      node.id = id
+        if (!node.id) props.push('id:' + (node.hasAttribute('id') ? '""' : 'null')), node.id = id
+
+        // h`<${b}/>` - b is kept in its own parent
+        // h`<a><${b}/></a>` - b is placed to a
+        // for that purpose a placeholder is put into parent container, and replaced back on return
+        // FIXME: if there's a better/faster way - do that. If keep element in own parent - have to figure out way to query els.
+        if (i === 2) {
+          if (single && type === FRAG) program.push(`args[${sel}].replaceWith(frag._ref=document.createComment('')),`), singleRender = true
+          program.push(`el=frag.firstElementChild,child=el.childNodes,`)
+        }
+        else program.push(`el=frag.getElementById("${esc(node.id)}"),child=el.childNodes,`)
+
+        if (type === COMP || type === FRAG) program.push(`el.replaceWith(this(args[${sel}]`)
+        else program.push(`this(el`)
+      }
+      else program.push('child=frag.childNodes,this(frag')
 
       // collect attrib commands / skip to the next element
-      while (prog[0] === ATTR) program.push(prog.shift(), prog.shift(), prog.shift())
+      if (props.length || prog[0] === ATTR || type === COMP || type === FRAG) {
+        while (prog[0] === ATTR) {
+          prog.shift()
+          k = prog.shift(), v = prog.shift()
 
-      program.push(TEXT, children)
+          // ...${props}
+          if (k == null) props.push(`...args[${v}]`)
+          // name=${value}
+          else if (typeof v === 'number') props.push(`"${esc(k)}":args[${v}]`)
+          // name="a${value}b"
+          else if (Array.isArray(v)) props.push(`"${esc(k)}":[${
+            v.map(v => typeof v === 'number' ? `args[${v}]` : `"${esc(v)}"`).join(',')
+          }].filter(Boolean).join('')`)
+          // ${'name'}
+          else if (typeof k === 'number') props.push(`[args[${k}]]:true`)
+          // a=b
+          // else props[k] = v
+        }
+
+        program.push(',{',props.join(','),'}')
+      }
+      else program.push(',null')
+
+      if (children.length) program.push(',', children.map(i => i > 0 ? `args[${i}]` : `child[${~i}]`).join(','))
+
+      program.push(type === FRAG || type === COMP ? '))\n' : ')\n')
     }
 
     node = it.nextNode()
   }
+  if (singleRender) program.push('frag._ref.replaceWith(el=frag.firstChild); return el')
+  else program.push(single ? 'return frag.firstChild' : 'return frag')
+
+
+  const evaluate = new Function('frag', 'args', program.join('')).bind(h)
 
   // 3. builder clones template and runs program on it - query/apply props/merge children/do observables
-  return args => {
-    let frag = template.content.cloneNode(true), i = 0, c, el, k, v, props, children, comp
-
-    // VM inspired by https://twitter.com/jviide/status/1257755526722662405, see ./test/stacker.html
-    // it is ~5% slower than direct eval, but without metaphysics
-    for (; i < program.length;) {
-      c = program[i++]
-
-      if (!c || c === ELEM || c === COMP) {
-        // <a
-        el = (el = program[i++]) ? frag.getElementById(el) : frag
-        props = {...program[i++]}
-
-        // <${el}, <${Comp}
-        comp = c === COMP ? args[el.id.slice(2).split('-')[0]] : null
-      }
-      else if (c === ATTR) {
-        k = program[i++], v = program[i++]
-        // ...${props}
-        if (k == null) Object.assign(props, args[v])
-        // name=${value}
-        else if (typeof v === 'number') props[k] = args[v]
-        // name="a${value}b"
-        else if (Array.isArray(v)) props[k] = v.map(v => typeof v === 'number' ? args[v] : v).filter(Boolean).join('')
-        // ${'name'}
-        else if (typeof k === 'number') props[args[k]] = v
-        // a=b
-        else props[k] = v
-      }
-      else if (c === TEXT) {
-        // i > 0 - take child from args, i <= 0 - take child from self children
-        children = program[i++].map(i => i > 0 ? args[i] : el.childNodes[~i])
-
-        if (comp) {
-          // h`<${b}/>` - b is kept in its own parent
-          // h`<a><${b}/></a>` - b is placed to a
-          // for that purpose a placeholder is put into parent container, and replaced back on return
-          // FIXME: if there's a better/faster way - do that. Tried detecting single mode in advance - failed.
-          if (comp.nodeType === ELEM && frag.childNodes.length === 1 && frag.firstChild === el) {
-            comp._ref = document.createTextNode('')
-            comp.replaceWith(comp._ref)
-          }
-          let res = h(comp, props, ...children)
-
-          // FIXME: ugh... single-case fix
-          if (comp.nodeType === FRAG) return res
-
-          el.replaceWith(res)
-        }
-        else {
-          h(el, props, ...children)
-        }
-      }
-    }
-    if (frag.childNodes.length === 1) {
-      let res = frag.firstChild
-      // revert to original parent
-      if (frag.firstChild._ref) res._ref.replaceWith(res)
-      return res
-    }
-
-    return frag
-  }
+  return args => evaluate(template.content.cloneNode(true), args)
 }
 
 // compact hyperscript
@@ -311,13 +298,6 @@ const flat = (args) => {
     }
   }
   return out
-}
-
-// join an array with a function
-const join = (arr, fn) => {
-  let str = '', i = 0
-  for (; i < arr.length - 1; i++) str += arr[i] + fn(i)
-  return str += arr[i]
 }
 
 // lil subscriby (v-less)

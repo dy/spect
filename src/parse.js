@@ -7,7 +7,7 @@ export const TEXT = 3, ELEM = 1, ATTR = 2, COMM = 8, FRAG = 11, COMP = FRAG
 // placeholders
 const ZWSP = '\u200B', ZWNJ = '\u200C', H_TAG = 'h--tag', H_FIELD = ZWNJ
 
-export default (statics) => {
+export default function (statics) {
   // FIXME: <> → <comp>
   let mode = TEXT, buf = '', quote = '', attr, char, sel, el,
       // transformed statics
@@ -83,7 +83,7 @@ export default (statics) => {
       // >a${1}b${2}c<  →  >a<!--1-->b<!--2-->c<
       if (mode === TEXT) part += '<!--' + i + '-->'
       // <${el} → <h--tag;    ELEM, field, children
-      else if (mode === ELEM) (prog.push(COMP, i), part += el = H_TAG, mode = ATTR)
+      else if (mode === ELEM) (prog.push(arguments[i].nodeType ? FRAG : COMP, i), part += el = H_TAG, mode = ATTR)
       else if (mode === ATTR) {
         // <xxx ...${{}};    ATTR, null, field
         if (buf === '...') { prog.push(ATTR, null, i), part = part.slice(0, -4) }
