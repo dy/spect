@@ -1,3 +1,5 @@
+// original spect/h@21 implementation with fast templates and direct children replace
+
 import { symbol, observable, primitive, primitive as immutable, list, attr } from '../../src/util.js'
 
 const _ref = Symbol.for('@spect.ref')

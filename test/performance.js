@@ -1,6 +1,8 @@
 import t from 'tst'
 import h, { h as sh } from '../h.js'
 // import h, { default as sh } from './libs/h21.js'
+// import h, { default as sh } from './libs/h-compact.js'
+// import h, { default as sh } from './libs/h-vm.js'
 import { tick, frame, idle, time } from 'wait-please'
 import hs from './libs/hyperscript.js'
 import {html as lhtml, render as lrender} from 'lit-html'
