@@ -242,13 +242,15 @@ function createTemplate (args) {
 // compact hyperscript
 export function h(tag, props) {
   if (typeof tag === 'string') {
-    let id, cls
     // hyperscript-compat
-    [tag, id] = tag.split('#'), [tag, ...cls] = tag.split('.')
-    if (id || cls.length) {
-      props = props || {}
-      if (id) props.id = id
-      if (cls.length) props.class = cls
+    if (/#|\./.test(tag)) {
+      let id, cls
+      [tag, id] = tag.split('#'), [tag, ...cls] = tag.split('.')
+      if (id || cls.length) {
+        props = props || {}
+        if (id) props.id = id
+        if (cls.length) props.class = cls
+      }
     }
     tag = document.createElement(tag)
   }
