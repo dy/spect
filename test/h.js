@@ -1,4 +1,3 @@
-import './testfill.js'
 import './hyperscript.js'
 import './html.js'
 import t from 'tst'

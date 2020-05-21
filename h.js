@@ -23,20 +23,16 @@ export default function html(statics) {
   if (!statics.raw) return h.apply(null, arguments)
 
   let build = cache.get(statics)
+  if (build) return build(arguments)
 
   // FIXME: pre-parse program/parts the first run, render fast with primitives
   // - that splits cost of template creation between the first and 2nd runs
   // - ? can first created element be reused on second parse?
-  // FIXME: fall back to h function to handle evaluate-able elements:
+  // fall back to h function to handle evaluate-able elements:
   // - central point of processing components / observable props (otherwise messy)
   // - can cache props in some way to avoid evaluating props object cost
-  if (!build) cache.set(arguments[0], build = createTemplate(arguments))
 
-  return build(arguments)
-}
-
-function createTemplate (args) {
-  let statics = args[0], template = document.createElement('template')
+  let template = document.createElement('template')
 
   // 0. prepares string for innerHTML, creates program for affected nodes
   // getElementById is faster than node path tracking (id is path in a way) https://jsperf.com/queryselector-vs-prop-access
@@ -118,7 +114,7 @@ function createTemplate (args) {
       // >a${1}b${2}c<  →  >a<!--1-->b<!--2-->c<
       if (mode === TEXT) part += '<!--' + i + '-->'
       // <${el} → <h--tag;    ELEM, field, children
-      else if (mode === ELEM) (prog.push(args[i].nodeType || COMP, i), part += el = H_TAG, mode = ATTR)
+      else if (mode === ELEM) (prog.push(arguments[i].nodeType || COMP, i), part += el = H_TAG, mode = ATTR)
       else if (mode === ATTR) {
         // <xxx ...${{}};    ATTR, null, field
         if (buf === '...') { prog.push(ATTR, null, i), part = part.slice(0, -4) }
@@ -236,7 +232,9 @@ function createTemplate (args) {
   const evaluate = new Function('frag', 'args', 'h', program.join('')).bind(h)
 
   // 3. builder clones template and runs program on it - query/apply props/merge children/do observables
-  return args => evaluate(template.content.cloneNode(true), args, h)
+  cache.set(statics, build = args => evaluate(template.content.cloneNode(true), args, h))
+
+  return build(arguments)
 }
 
 // compact hyperscript
