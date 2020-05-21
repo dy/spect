@@ -73,7 +73,7 @@ t('html perf: first call (no cache) - should be ≈ innerHTML', async t => {
   }
   const htmTime = performance.now() - htmStart
 
-  t.is(h((arr = arr.slice()).raw = arr, 0).outerHTML, `<a>a<b><c>0</c></b></a>`, 'spect/h is ok')
+  t.is(h((arr = arr.slice()).raw = arr, 0).outerHTMLClean, `<a>a<b><c>0</c></b></a>`, 'spect/h is ok')
   const hStart = performance.now()
   for (let i = 0; i < N; i++) {
     h((arr = arr.slice()).raw = arr, i)
@@ -111,7 +111,7 @@ t('html perf: 5k cached primitives tpl should be close to DOM', async t => {
   const N = 5000
   const container = document.createElement('div')
 
-  t.is(h`<a>a<b><c id=a>${0}</c></b></a>`.outerHTML, `<a>a<b><c id="a">${0}</c></b></a>`, 'builds correct html')
+  t.is(h`<a>a<b><c id=a>${0}</c></b></a>`.outerHTMLClean, `<a>a<b><c id="a">${0}</c></b></a>`, 'builds correct html')
 
   let domFrag = document.createDocumentFragment()
   const domStart = performance.now()
