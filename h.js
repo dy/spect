@@ -166,7 +166,7 @@ export default function html(statics) {
       else children.push(-j)
 
     // actualize program
-    if (prog[0] === ATTR || count || type === COMP || type === ELEM || type === FRAG) {
+    if (prog[0] === ATTR || count || node.localName === H_TAG) {
       if (type) {
         // collect static props for component
         if (type === ELEM || type === COMP) for (let attr of node.attributes) props.push(`"${esc(attr.name)}":"${esc(attr.value)}"`)
@@ -185,6 +185,8 @@ export default function html(statics) {
             program.push(`el=frag.firstElementChild,child=el.childNodes,`)
           }
         }
+        // FIXME: h`<#smth>`
+        // else if (type === TEXT && node.localName === H_TAG) program.push(`el=document.querySelector("${node.id}"),child=el.childNodes,`)
         else program.push(`el=frag.getElementById("${esc(node.id)}"),child=el.childNodes,`)
 
         if (type === COMP || type === ELEM) program.push(`el.replaceWith(h(args[${sel}]`)
@@ -278,7 +280,9 @@ export function h(tag, props) {
 
   // merge children
   for (i = 2; i < arguments.length; i++)
-    if (observable(arguments[i])) cleanup.push(subs[i] = arguments[i]), arguments[i] = document.createTextNode('')
+    if (observable(arguments[i])) {
+      cleanup.push(subs[i] = arguments[i]), arguments[i] = document.createTextNode('')
+    }
 
   // append shortcut
   if (!tag.childNodes.length) for (i of flat(arguments)) tag.append(i)
@@ -311,7 +315,7 @@ const flat = (args) => {
 function sube(target, fn) {
   let unsub, stop
   if (typeof target === 'function') unsub = target(fn)
-  else if (target[symbol.observable]) target[symbol.observable](({subscribe}) => unsub = subscribe({ next: fn }))
+  else if (target[symbol.observable]) unsub = target[symbol.observable]().subscribe({next:fn})
   else if (target[Symbol.asyncIterator]) {
     unsub = () => stop = true
     ;(async () => { for await (target of target) { if (stop) break; fn(target) } })()

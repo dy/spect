@@ -1,0 +1,13 @@
+<!DOCTYPE html>
+<div id="location"></div>
+<script type="module">
+  // import { h, $ } from 'https://unpkg.com/spect?module'
+  import { h, $ } from '../'
+  import { fromEvent } from 'https://unpkg.com/rxjs?module'
+  import { scan } from 'https://unpkg.com/rxjs@6.5.5/_esm5/operators/index.js?module'
+
+
+  $('#location', el => {
+    h`<${el}>Clicked ${ fromEvent(document, 'click').pipe(scan(count => count + 1, 0)) } times</>`
+  })
+</script>

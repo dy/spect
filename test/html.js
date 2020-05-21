@@ -5,6 +5,7 @@ import h from '../h.js'
 import { tick, frame, idle, time } from 'wait-please'
 import observable from './libs/observable.js'
 // import { v as iv } from 'ironjs'
+import Observable from 'zen-observable/esm.js'
 
 
 t('html: fast simple case', async t => {
@@ -743,4 +744,23 @@ t('html: dynamic data case', async t => {
 
 t('html: fields order', async t => {
   t.is(h`<b> b${2}b <c>c${3}c</c> b${4}b </b>`.outerHTMLClean, `<b> b2b <c>c3c</c> b4b </b>`)
+})
+
+t.todo('html: render to selector', async t=> {
+  let x = document.createElement('x')
+  x.id = x
+  document.body.appendChild(x)
+  h`<#x>1</>`
+
+  t.is(x.textContent, '1')
+})
+
+t('html: accepts rxjs directly', async t => {
+  const foo = new Observable(subscriber => {
+    subscriber.next(42);
+  });
+
+  let el = h`<div>${ foo }</div>`
+  await frame(2)
+  t.is(el.outerHTMLClean, `<div>42</div>`)
 })
