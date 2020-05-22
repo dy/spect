@@ -1,13 +1,14 @@
-import { desc, channel as Channel, observer, symbol, attr } from './src/util.js'
+import { desc, observer, symbol, attr } from './src/util.js'
+import Channel from './src/channel.js'
 
-export default function a(target, path) {
-  const channel = Channel()
+export default function a(target, path, map) {
+  const channel = new Channel()
 
   function fn () {
     if (channel.closed) return
     if (!arguments.length) return get()
     if (observer.apply(null, arguments)) {
-      let unsubscribe = channel.subscribe.apply(null, arguments)
+      let unsubscribe = channel.subscribe(...arguments)
       channel.push.call(channel.observers.slice(-1), get())
       return unsubscribe
     }
@@ -19,7 +20,7 @@ export default function a(target, path) {
   let sync
 
   if (target.setAttribute) {
-    sync = (attr) => {
+    sync = attr => {
       // own HTMLElement prototype props (like style, onxxx, class etc.) are expected to react themselves on attr update
       if (path in proto) return target[path] !== attr ? channel.push(target[path]) : null
 
@@ -37,8 +38,7 @@ export default function a(target, path) {
     Object.defineProperty(target, path, {
       configurable: true,
       enumerable: true,
-      get,
-      set
+      get, set
     })
     channel.subscribe(value => attr(target, path, value), null, () => {
       Object.defineProperty(target, path, orig || { value, configurable: true })
@@ -58,7 +58,7 @@ export default function a(target, path) {
     toString: desc(get),
     [Symbol.toPrimitive]: desc(get),
     [symbol.observable]: desc(() => channel),
-    [symbol.dispose]: desc(channel.close),
+    [symbol.dispose]: desc(channel.close.bind(channel)),
     [Symbol.asyncIterator]: desc(async function*() {
       let resolve = () => {}, buf = [], p,
       unsubscribe = fn(v => (

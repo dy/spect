@@ -1,16 +1,16 @@
-import { desc, channel as c, observer, primitive, observable, symbol, slice } from './src/util.js'
+import { desc, observer, primitive, observable, symbol, slice } from './src/util.js'
+import Channel from './src/channel.js'
 
 const depsCache = new WeakMap
 
 export default function v(source) {
   let fields = slice(arguments, 1)
-  if (source && source.raw) {
-    return v(fields, fields => String.raw(source, ...fields))
-  }
-  const [map=v=>v, unmap=v=>v] = fields
-  const channel = c(), { subscribe, observers, error } = channel
+  if (source && source.raw) return v(fields, fields => String.raw(source, ...fields))
 
-  const push = (v, dif) => {
+  const [map=v=>v, unmap=v=>v] = fields,
+  channel = new Channel(),
+  error = channel.error.bind(channel),
+  push = (v, dif) => {
     if (v && v.then) v.then(push)
     else channel.push(channel.current = v, dif)
   }
@@ -18,17 +18,17 @@ export default function v(source) {
   function fn () {
     if (!arguments.length) return get()
     if (observer.apply(null, arguments)) {
-      let unsubscribe = subscribe.apply(null, arguments)
+      let unsubscribe = channel.subscribe(...arguments)
       // callback is registered as the last channel subscription, so send it immediately as value
-      if ('current' in channel) channel.push.call(observers.slice(-1), get(), get())
+      if ('current' in channel) channel.push.call(channel.observers.slice(-1), get(), get())
       return unsubscribe
     }
     return set.apply(null, arguments)
   }
 
   // current is mapped value (map can be heavy to call each get)
-  let get = () => channel.current
-  let set = (val, dif) => push(map(unmap(val)), dif)
+  let get = () => channel.current,
+      set = (val, dif) => push(map(unmap(val)), dif)
 
   // we define props on fn - must hide own props
   delete fn.length
@@ -37,7 +37,7 @@ export default function v(source) {
     toString: desc(get),
     [Symbol.toPrimitive]: desc(get),
     [symbol.observable]: desc(() => channel),
-    [symbol.dispose]: desc(channel.close),
+    [symbol.dispose]: desc(channel.close.bind(channel)),
     [Symbol.asyncIterator]: desc(async function*() {
       let resolve = () => {}, buf = [], p,
       unsubscribe = fn(v => (buf.push(v), resolve(), p = new Promise(r => resolve = r)))
@@ -59,7 +59,7 @@ export default function v(source) {
       // v / observ
       if (observable(source)) {
         set = v => source(unmap(v))
-        subscribe(null, null, source(v => push(map(v)), error))
+        channel.subscribe(null, null, source(v => push(map(v)), error))
       }
       // initializer
       else {
@@ -74,7 +74,7 @@ export default function v(source) {
         error
       })
       unsubscribe = unsubscribe.unsubscribe || unsubscribe
-      subscribe(null, null, unsubscribe)
+      channel.subscribe(null, null, unsubscribe)
     }
     // async iterator (stateful, initial undefined)
     else if (source && (source.next || source[Symbol.asyncIterator])) {
@@ -90,7 +90,7 @@ export default function v(source) {
           error(e)
         }
       })()
-      subscribe(null, null, () => stop = true)
+      channel.subscribe(null, null, () => stop = true)
     }
     // promise (stateful, initial undefined)
     else if (source && source.then) {
@@ -103,7 +103,7 @@ export default function v(source) {
     // deps
     // NOTE: array/object may have symbol.observable, which redefines default deps behavior
     else {
-      let vals = Array.isArray(source) ? [] : {}, keys = Object.keys(source), dchannel = c()
+      let vals = Array.isArray(source) ? [] : {}, keys = Object.keys(source), dchannel = new Channel()
 
       // prevent recursion
       if (!depsCache.has(source)) depsCache.set(source, fn)
@@ -136,18 +136,18 @@ export default function v(source) {
         teardown.push(dep(val => {
           vals[key] = val
           // avoid self-recursion
-          if (fn !== dep) dchannel(vals, {[key]: val})
+          if (fn !== dep) dchannel.push(vals, {[key]: val})
         }, error))
       }
 
       // any deps change triggers update
-      dchannel((values, diff) => (push(map(values), diff)))
+      dchannel.subscribe((values, diff) => (push(map(values), diff)))
 
       // if initial value is derivable from initial deps - set it
-      if (Object.keys(vals).length || !keys.length) dchannel(vals, vals)
+      if (Object.keys(vals).length || !keys.length) dchannel.push(vals, vals)
 
       set = v => (Object.keys(v = unmap(v)).map(key => fn[key](v[key])))
-      subscribe(null, null, () => {
+      channel.subscribe(null, null, () => {
         dchannel.close()
         teardown.map(teardown => teardown())
         teardown.length = 0
@@ -160,7 +160,7 @@ export default function v(source) {
   }
 
   // cancel subscriptions, dispose
-  subscribe(null, null, () => {
+  channel.subscribe(null, null, () => {
     // get = set = () => {throw Error('closed')}
     get = set = () => {}
     delete channel.current

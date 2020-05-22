@@ -66,6 +66,14 @@ t('a: h recursion', async t => {
   t.is(x.innerHTML, '2')
 })
 
+t.todo('a: mapper', t => {
+  let x = {x:1}
+  let vx = a(x,'x',x => x*2)
+  t.is(vx(), 2)
+  x.x = 2
+  t.is(vx(), 4)
+})
+
 
 // object
 t.skip('v: object init', t => {

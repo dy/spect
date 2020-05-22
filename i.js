@@ -1,15 +1,16 @@
-import { desc, channel as Channel, observer, symbol, slice } from './src/util.js'
+import { desc, observer, symbol, slice } from './src/util.js'
+import Channel from './src/channel.js'
 
 export default function i(el) {
   if (el.raw) el = document.querySelector(String.raw.apply(null, arguments))
 
-  const channel = Channel()
+  const channel = new Channel()
 
   function fn () {
     if (channel.closed) return
     if (!arguments.length) return iget()
     if (observer.apply(null, arguments)) {
-      let unsubscribe = channel.subscribe.apply(null, arguments)
+      let unsubscribe = channel.subscribe(...arguments)
       channel.push.call(channel.observers.slice(-1), iget(), iget())
       return unsubscribe
     }
@@ -47,7 +48,7 @@ export default function i(el) {
     toString: desc(iget),
     [Symbol.toPrimitive]: desc(iget),
     [symbol.observable]: desc(() => channel),
-    [symbol.dispose]: desc(channel.close),
+    [symbol.dispose]: desc(channel.close.bind(channel)),
     [Symbol.asyncIterator]: desc(async function*() {
       let resolve = () => {}, buf = [], p,
       unsubscribe = fn(v => (

@@ -5,82 +5,25 @@ export const symbol = {
   observable: Symbol ? (Symbol.observable || (Symbol.observable = Symbol('observable'))) : '@@observable'
 }
 
-export const channel = () => {
-  const observers = []
-
-  function push (...vals) {
-      const observers = this ? this.observers || this : channel.observers
-      observers.map(sub => {
-          if (sub.out && sub.out.call) sub.out()
-          if (sub.next) sub.out = sub.next(...vals)
-      })
-  }
-
-  const error = (e) => observers.map(sub => sub.error && sub.error(e))
-
-  const close = () => {
-      let unsubs = observers.map(sub => {
-          if (sub.out && sub.out.call) sub.out()
-          return sub.unsubscribe
-      })
-      observers.length = 0
-      unsubs.map(unsub => unsub())
-      channel.closed = true
-  }
-
-  const subscribe = (next, error, complete) => {
-      next = next && next.next || next
-      error = next && next.error || error
-      complete = next && next.complete || complete
-
-      const unsubscribe = () => {
-          if (observers.length) observers.splice(observers.indexOf(subscription) >>> 0, 1)
-          if (complete) complete()
-          unsubscribe.closed = true
-      }
-      unsubscribe.unsubscribe = unsubscribe
-      unsubscribe.closed = false
-
-      const subscription = { next, error, complete, unsubscribe }
-      observers.push(subscription)
-
-      return unsubscribe
-  }
-
-  const channel = (...vals) => observer(...vals) ? subscribe(...vals) : push(...vals)
-
-  return Object.assign(channel, {
-      observers,
-      closed: false,
-      push,
-      subscribe,
-      close,
-      error
-  })
-}
-
 // we can't handle observable subscription here - it deals with node[_ref], which is not this function concern
-export function attr (el, name, value) {
+export const attr = (el, k, v) => {
   // if (arguments.length < 3) return (value = el.getAttribute(name)) === '' ? true : value
 
   if (!el.setAttribute) return
 
-  if (primitive(value)) {
-    if (value === false || value == null) el.removeAttribute(name)
-    else el.setAttribute(name, value === true ? '' : value)
-  }
-  // class=[a, b, ...c] - possib observables
-  else if (name === 'class' && Array.isArray(value)) {
-    el.setAttribute(name, value.filter(Boolean).join(' '))
-  }
-  // onclick={} - just ignore
-  else if (typeof value === 'function') {}
+  if (v === false || v == null) el.removeAttribute(k)
+  else if (v === true) el.setAttribute(k, '')
+  else if (typeof v === 'number' || typeof v === 'string') el.setAttribute(k, v)
+  // class=[a, b, ...c]
+  else if (k === 'class' && Array.isArray(v)) el.setAttribute(k, v.filter(Boolean).join(' '))
+  // onclick={} - skip
+  else if (typeof v === 'function') {}
   // style={}
-  else if (name === 'style' && value.constructor === Object) {
-    let values = Object.values(value)
-    el.setAttribute(name, Object.keys(value).map((key, i) => `${key}: ${values[i]};`).join(' '))
-  }
+  else if (k === 'style' && v.constructor === Object)
+    el.setAttribute(k,(k=v,v=Object.values(v),Object.keys(k).map((k,i) => `${k}: ${v[i]};`).join(' ')))
+  else el.setAttribute(k, v)
 }
+
 
 export const observer = (next, error, complete) => (next && next.call) || (error && error.call) || (complete && complete.call) || (next && observer(next.next, next.error, next.complete))
 

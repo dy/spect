@@ -1,4 +1,5 @@
-import { channel, symbol, desc, slice } from './src/util.js'
+import { symbol, desc, slice } from './src/util.js'
+import Channel from './src/channel.js'
 
 const ELEMENT = 1
 const SPECT_CLASS = '👁'
@@ -38,7 +39,7 @@ class $ extends Array {
     super()
 
     Object.defineProperties(this, {
-      _channel: desc(channel()),
+      _channel: desc(new Channel()),
       _items: desc(new WeakMap),
       _delete: desc(new WeakSet),
       _teardown: desc(new WeakMap),
@@ -216,12 +217,11 @@ class $ extends Array {
   }
 
   [symbol.observable]() {
-    const { subscribe, observers, push } = this._channel
-    const set = this
+    const channel = this._channel, set = this
     return {
       subscribe(){
-        const unsubscribe = subscribe.apply(null, arguments)
-        push.call(observers.slice(-1), set)
+        const unsubscribe = channel.subscribe(...arguments)
+        channel.push.call(channel.observers.slice(-1), set)
         return unsubscribe
       }
     }
