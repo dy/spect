@@ -286,13 +286,11 @@ const text = v('foobar')
 // hyperscript
 const foo = h('foo', { bar: 'baz' }, text)
 
-// jsx
 /* jsx h */
 const bar = <bar>{ text }</bar>
 
 // update content
 text('fooobar')
-
 
 // template literal
 const foo = h`<baz>${ text }</baz>`
@@ -303,8 +301,9 @@ const fooFoo = h`<foo>1</foo><foo>2</foo>`
 // hydrate
 h`<${foo} ...${props}>${ children }</>`
 
-// render
-h(foo, ...children)
+// exposes props
+const a = h`<a x=1 y=2 />`
+a.props // { x: 1, y: 2 }
 ```
 
 #### Example
@@ -368,7 +367,7 @@ _R&D_: [observable](https://ghub.io/observable).
 
 <details><summary><strong>v − value observer</strong></summary><br/>
 
-> value = v( source? , map? , inmap? )<br/>
+> value = v( source? , map? , unmap? )<br/>
 > value = v\`...content\`<br/>
 
 Universal observable − creates a getter/setter function with [observable](https://ghub.io/observable) interface from any `source`:
@@ -463,7 +462,7 @@ _R&D_: [observable/transform](https://ghub.io/observable), [react hooks](https:/
 
 <details><summary><strong>a − attribute / property observer</strong></summary><br/>
 
-> props = a( source , path )
+> props = a( source , path, map? )
 
 Attribute / property observable for defined target or element. Useful for forwarding props/attributes to templates.
 
@@ -497,7 +496,7 @@ import { $, h, a } from 'spect'
 $('#my-component', el => {
   h`<${el}>
     <header>${ a(el, 'title') }</header>
-    <main>${ a(el, 'description') }</main>
+    <main>${ a(el, 'description', desc => desc.slice(0,82) + '...') }</main>
   </>`
 })
 ```

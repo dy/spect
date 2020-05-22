@@ -190,15 +190,6 @@ t('html: function renders external component', async t => {
   t.is(el.outerHTMLClean, `<><a>foo <bar></bar><baz></baz></a><b></b></>`)
   // t.is(el[1].outerHTMLClean, `<b></b>`)
 })
-t.skip('html: element should be observable', async t => {
-  // NOTE: Observable support is dropped - no much use
-  let a = v(1)
-  let el = h`<a>${a}</a>`
-  let log = []
-  v(el)(el => log.push(el.textContent))
-  a(2)
-  t.is(log, ['1', '2'])
-})
 
 t('html: rerendering with props: must persist', async t => {
   let el = document.createElement('x')
@@ -643,10 +634,6 @@ t.todo('html: nested fragments', t => {
   t.is(el.outerHTMLClean, '<><a>a</a><b>b<c></c></b></>')
 })
 
-t.skip('html: class components', async t => {
-  // doesn't seem like registering web-component is spect's concern
-})
-
 t('html: null-like insertions', t => {
   let a = h`<a>foo ${ null } ${ undefined } ${ false } ${0}</a>`
 
@@ -712,10 +699,6 @@ t('html: empty children should clean up content', t => {
   t.is(a.childNodes.length, 0)
 })
 
-t.todo('html: multiple attr fields', async t => {
-  let a = h`<a x=1 ${'y'}=2 z=${3} ${'w'}=${4} ...${{_: 5}}>a${ 6 }b${ 7 }c</a>`
-  t.is(a.outerHTMLClean, `<a x="1" z="3" y="2" w="4" _="5">a6b7c</a>`)
-})
 t('html: caching fields', async t => {
   let a = h`<a x=1 z=${3} ...${{_: 5}}>a${ 6 }b${ 7 }c</a>`
   t.is(a.outerHTMLClean, `<a x="1" z="3" _="5">a6b7c</a>`)
@@ -724,12 +707,6 @@ t('html: caching fields', async t => {
 t('html: a#b.c', async t => {
   let el = h`<a#b><c.d/></a><a/>`
   t.is(el.outerHTMLClean, `<><a id="b"><c class="d"></c></a><a></a></>`)
-})
-
-t.todo('html: non-tr > td elements must persist', async t => {
-  let el = document.createElement('tr')
-  h`<${el}><td>${1}</td></>`
-  t.is(el.outerHTMLClean, `<tr><td>1</td></tr>`)
 })
 
 t('html: dynamic data case', async t => {
@@ -746,6 +723,40 @@ t('html: fields order', async t => {
   t.is(h`<b> b${2}b <c>c${3}c</c> b${4}b </b>`.outerHTMLClean, `<b> b2b <c>c3c</c> b4b </b>`)
 })
 
+t('html: accepts rxjs directly', async t => {
+  const foo = new Observable(subscriber => {
+    subscriber.next(42);
+  });
+
+  let el = h`<div>${ foo }</div>`
+  await frame(2)
+  t.is(el.outerHTMLClean, `<div>42</div>`)
+})
+
+t.skip('html: element should be observable', async t => {
+  // NOTE: Observable support is dropped - no much use
+  let a = v(1)
+  let el = h`<a>${a}</a>`
+  let log = []
+  v(el)(el => log.push(el.textContent))
+  a(2)
+  t.is(log, ['1', '2'])
+})
+t.skip('html: class components', async t => {
+  // doesn't seem like registering web-component is spect's concern
+})
+
+t.todo('html: multiple attr fields', async t => {
+  let a = h`<a x=1 ${'y'}=2 z=${3} ${'w'}=${4} ...${{_: 5}}>a${ 6 }b${ 7 }c</a>`
+  t.is(a.outerHTMLClean, `<a x="1" z="3" y="2" w="4" _="5">a6b7c</a>`)
+})
+
+t.todo('html: non-tr > td elements must persist', async t => {
+  let el = document.createElement('tr')
+  h`<${el}><td>${1}</td></>`
+  t.is(el.outerHTMLClean, `<tr><td>1</td></tr>`)
+})
+
 t.todo('html: render to selector', async t=> {
   let x = document.createElement('x')
   x.id = x
@@ -755,12 +766,11 @@ t.todo('html: render to selector', async t=> {
   t.is(x.textContent, '1')
 })
 
-t('html: accepts rxjs directly', async t => {
-  const foo = new Observable(subscriber => {
-    subscriber.next(42);
-  });
+t.todo('html: element exposes internal id refs', async t=> {
+  h`<x#x><y#y/></x><w#childNodes/><z#z/>`
 
-  let el = h`<div>${ foo }</div>`
-  await frame(2)
-  t.is(el.outerHTMLClean, `<div>42</div>`)
+  t.is(x.x, x.firstChild)
+  t.is(x.y, x.firstChild.firstChild)
+  t.is(x.z, x.lastChild)
+  t.is(x.childNodes.length, 3)
 })

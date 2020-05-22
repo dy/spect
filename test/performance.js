@@ -10,6 +10,7 @@ import {default as HTM} from './libs/htm.js'
 // import htm from 'xhtm'
 
 let htm = HTM.bind(hs)
+let shtm = HTM.bind(sh)
 
 t('h perf: <30 creation performance should be faster than hyperscript/lit-html', async t => {
   let N = 30
@@ -66,12 +67,6 @@ t('html perf: first call (no cache) - should be ≈ innerHTML', async t => {
 
   let arr = ['<a>a<b><c>','</c></b></a>']
 
-  t.is(htm((arr = arr.slice()).raw = arr, 0).outerHTML, `<a>a<b><c>0</c></b></a>`, 'htm is ok')
-  let htmStart = performance.now()
-  for (let i = 0; i < N; i++) {
-    htm((arr = arr.slice()).raw = arr, i)
-  }
-  const htmTime = performance.now() - htmStart
 
   t.is(h((arr = arr.slice()).raw = arr, 0).outerHTMLClean, `<a>a<b><c>0</c></b></a>`, 'spect/h is ok')
   const hStart = performance.now()
@@ -79,6 +74,21 @@ t('html perf: first call (no cache) - should be ≈ innerHTML', async t => {
     h((arr = arr.slice()).raw = arr, i)
   }
   const hTime = performance.now() - hStart
+
+  t.is(shtm((arr = arr.slice()).raw = arr, 0).outerHTMLClean, `<a>a<b><c>0</c></b></a>`, 'spect/h is ok')
+  const shtmStart = performance.now()
+  for (let i = 0; i < N; i++) {
+    shtm((arr = arr.slice()).raw = arr, i)
+  }
+  const shtmTime = performance.now() - shtmStart
+
+
+  t.is(htm((arr = arr.slice()).raw = arr, 0).outerHTML, `<a>a<b><c>0</c></b></a>`, 'htm is ok')
+  let htmStart = performance.now()
+  for (let i = 0; i < N; i++) {
+    htm((arr = arr.slice()).raw = arr, i)
+  }
+  const htmTime = performance.now() - htmStart
 
 
   let x = document.createElement('x')
@@ -102,7 +112,7 @@ t('html perf: first call (no cache) - should be ≈ innerHTML', async t => {
   const lTime = performance.now() - lStart
 
 
-  console.log( 'h', hTime, 'ihtml', ihtmlTime, 'hs + htm', htmTime, 'lit', lTime)
+  console.log( 'h', hTime, 'shtm', shtmTime, 'ihtml', ihtmlTime, 'hs + htm', htmTime, 'lit', lTime)
   t.ok(hTime < ihtmlTime * 1.2, '<20% from direct innerHTML')
   t.ok(hTime < htmTime * 1.08, 'faster than htm + hyperscript')
 })
@@ -159,6 +169,17 @@ t('html perf: 5k cached primitives tpl should be close to DOM', async t => {
 
 
   container.innerHTML = ''
+  // warmup
+  let shtmStart
+  for (let i = -1; i < N; i++) {
+      // first run warms up cache
+    if (!i) shtmStart = performance.now()
+    container.appendChild(shtm`<a>a<b><c id=a>${i}</c></b></a>`)
+  }
+  const shtmTime = performance.now() - shtmStart
+
+
+  container.innerHTML = ''
   let x = document.createElement('x')
   const ihtmlStart = performance.now()
   for (let i = 0; i < N; i++) {
@@ -175,7 +196,7 @@ t('html perf: 5k cached primitives tpl should be close to DOM', async t => {
   lrender(nodes, container)
   const lTime = performance.now() - lStart
 
-  console.log( 'h', hTime, 'dom', domTime, 'clone', cloneTime, 'ihtml', ihtmlTime, 'hs + htm', htmTime, 'lit', lTime)
+  console.log( 'h', hTime, 'shtm', shtmTime, 'dom', domTime, 'clone', cloneTime, 'ihtml', ihtmlTime, 'hs + htm', htmTime, 'lit', lTime)
   t.ok(hTime < domTime * 1.25, '<25% slower than the real DOM')
   t.ok(hTime < htmTime * 1.08, 'faster than HTM + hyperscript')
 })
