@@ -9,13 +9,10 @@ export default function v(source) {
 
   const [map=v=>v, unmap=v=>v] = fields,
   channel = new Channel(),
-  error = channel.error.bind(channel),
-  push = (v, dif) => {
-    if (v && v.then) v.then(push)
-    else channel.push(channel.current = v, dif)
-  }
+  error = channel.error.bind(channel)
 
   function fn () {
+    if (channel.closed) return
     if (!arguments.length) return get()
     if (observer.apply(null, arguments)) {
       let unsubscribe = channel.subscribe(...arguments)
@@ -28,7 +25,7 @@ export default function v(source) {
 
   // current is mapped value (map can be heavy to call each get)
   let get = () => channel.current,
-      set = (val, dif) => push(map(unmap(val)), dif)
+      set = (val, dif) => channel.push(map(unmap(val)), dif)
 
   // we define props on fn - must hide own props
   delete fn.length
@@ -59,7 +56,7 @@ export default function v(source) {
       // v / observ
       if (observable(source)) {
         set = v => source(unmap(v))
-        channel.subscribe(null, null, source(v => push(map(v)), error))
+        channel.subscribe(null, null, source(v => channel.push(map(v)), error))
       }
       // initializer
       else {
@@ -70,7 +67,7 @@ export default function v(source) {
     else if (source && source[symbol.observable]) {
       set = () => {}
       let unsubscribe = source[symbol.observable]().subscribe({
-        next: v => push(map(v)),
+        next: v => channel.push(map(v)),
         error
       })
       unsubscribe = unsubscribe.unsubscribe || unsubscribe
@@ -84,7 +81,7 @@ export default function v(source) {
         try {
           for await (source of source) {
             if (stop) break
-            push(map(source))
+            channel.push(map(source))
           }
         } catch(e) {
           error(e)
@@ -94,7 +91,7 @@ export default function v(source) {
     }
     // promise (stateful, initial undefined)
     else if (source && source.then) {
-      set = p => (delete channel.current, p.then(v => push(map(v)), error))
+      set = p => (delete channel.current, p.then(v => channel.push(map(v)), error))
       set(source)
     }
     else if (primitive(source)) {
@@ -141,7 +138,7 @@ export default function v(source) {
       }
 
       // any deps change triggers update
-      dchannel.subscribe((values, diff) => (push(map(values), diff)))
+      dchannel.subscribe((values, diff) => channel.push(map(values), diff))
 
       // if initial value is derivable from initial deps - set it
       if (Object.keys(vals).length || !keys.length) dchannel.push(vals, vals)

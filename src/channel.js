@@ -2,11 +2,15 @@ export default class Channel {
   constructor() {
     this.observers = []
     this.closed = false
+
+    // keeps last pushed channel state
+    this.current
   }
-  push(...vals){
-    (Array.isArray(this) ? this : this.observers).map(sub => {
+  push(v, dif){
+    if (v && v.then) v.then((v, dif) => this.push(v, dif))
+    else this.current = v, (Array.isArray(this) ? this : this.observers).map(sub => {
       if (sub.out && sub.out.call) sub.out()
-      if (sub.next) sub.out = sub.next(...vals)
+      if (sub.next) sub.out = sub.next(v, dif)
     })
   }
   subscribe(next, error, complete){
@@ -40,3 +44,37 @@ export default class Channel {
     this.observers.map(sub => sub.error && sub.error(e))
   }
 }
+
+
+
+// function fn () {
+// if (channel.closed) return
+// if (!arguments.length) return get()
+// if (observer.apply(null, arguments)) {
+//   let unsubscribe = channel.subscribe(...arguments)
+//   channel.push.call(channel.observers.slice(-1), get(), get())
+//   return unsubscribe
+// }
+// return set.apply(null, arguments)
+// }
+// function fn () {
+// if (channel.closed) return
+// if (!arguments.length) return get()
+// if (observer.apply(null, arguments)) {
+//   let unsubscribe = channel.subscribe(...arguments)
+//   channel.push.call(channel.observers.slice(-1), get(), get())
+//   return unsubscribe
+// }
+// return set.apply(null, arguments)
+// }
+// function fn () {
+// if (channel.closed) return
+// if (!arguments.length) return get()
+// if (observer.apply(null, arguments)) {
+//   let unsubscribe = channel.subscribe(...arguments)
+//   // callback is registered as the last channel subscription, so send it immediately as value
+//   if ('current' in channel) channel.push.call(channel.observers.slice(-1), get(), get())
+//   return unsubscribe
+// }
+// return set.apply(null, arguments)
+// }

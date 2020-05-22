@@ -15,8 +15,8 @@ export default function a(target, path, map) {
     return set.apply(null, arguments)
   }
 
-  const proto = Object.getPrototypeOf(target)
-  const orig = Object.getOwnPropertyDescriptor(target, path)
+  const proto = Object.getPrototypeOf(target),
+        orig = Object.getOwnPropertyDescriptor(target, path)
   let sync
 
   if (target.setAttribute) {
@@ -34,15 +34,18 @@ export default function a(target, path, map) {
   let value = target[path],
       get = orig && orig.get || (() => value),
       set = orig && orig.set ? v => (orig.set.call(target, v), channel.push(get())) : v => channel.push(value = v)
+
   if (!orig || orig.configurable && !(path in proto)) {
     Object.defineProperty(target, path, {
       configurable: true,
       enumerable: true,
       get, set
     })
-    channel.subscribe(value => attr(target, path, value), null, () => {
-      Object.defineProperty(target, path, orig || { value, configurable: true })
-    })
+    channel.subscribe(
+      value => attr(target, path, value),
+      null,
+      () => Object.defineProperty(target, path, orig || { value, configurable: true })
+    )
   }
 
   // set attribute observer
