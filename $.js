@@ -264,14 +264,14 @@ class $ extends Array {
   }
 }
 
-;(new MutationObserver((list) => {
-  const queryAdd = (targets, sets, check) => {
-    if (!sets || !targets) return
-    ;[].forEach.call(targets.nodeType ? [targets] : targets, target => sets.forEach(set => Object.getPrototypeOf(set).add.call(set, target, check)))
-  }
-  const queryDelete = target => [target.classList.contains(SPECT_CLASS) ? target : null, ...target.getElementsByClassName(SPECT_CLASS)]
-    .forEach(node => setCache.has(node) && setCache.get(node).forEach(set => set.delete(node)))
+const queryAdd = (targets, sets, check) => {
+  if (!sets || !targets) return
+  ;[].forEach.call(targets.nodeType ? [targets] : targets, target => sets.forEach(set => Object.getPrototypeOf(set).add.call(set, target, check)))
+}
+const queryDelete = target => [target.classList.contains(SPECT_CLASS) ? target : null, ...target.getElementsByClassName(SPECT_CLASS)]
+  .forEach(node => setCache.has(node) && setCache.get(node).forEach(set => set.delete(node)))
 
+;(new MutationObserver((list) => {
   for (let mutation of list) {
     let { addedNodes, removedNodes, target } = mutation
 
@@ -279,39 +279,32 @@ class $ extends Array {
     // WARN: O(n*m) or worse performance (insignificant for small docs)
     if (!hasAnimevent) {
       queryDelete(target)
-      for (let sel in animations) {
-        queryAdd([target, ...target.querySelectorAll(sel)], animations[sel], true)
+      for (let sel in animations) queryAdd([target, ...target.querySelectorAll(sel)], animations[sel], true)
+    }
+
+    removedNodes.forEach(target => target.nodeType === ELEMENT && queryDelete(target))
+
+    addedNodes.forEach(target => {
+      if (target.nodeType !== ELEMENT) return
+
+      // selector-set optimization:
+      // instead of walking all registered selectors for each node, we detect which selectors are applicable for the node
+      if (target.id) {
+        queryAdd(target, ids[target.id])
+        // NOTE: <a> and other inlines may not have `getElementById`
+        if (target.getElementById) for (let id in ids) queryAdd(target.getElementById(id), ids[id])
       }
-    }
-
-    if (mutation.type === 'childList') {
-      removedNodes.forEach(target => {
-        if (target.nodeType !== ELEMENT) return
-        queryDelete(target)
-      })
-
-      addedNodes.forEach(target => {
-        if (target.nodeType !== ELEMENT) return
-
-        // selector-set optimization:
-        // instead of walking all registered selectors for each node, we detect which selectors are applicable for the node
-        if (target.id) {
-          queryAdd(target, ids[target.id])
-          // NOTE: <a> and other inlines may not have `getElementById`
-          if (target.getElementById) for (let id in ids) queryAdd(target.getElementById(id), ids[id])
-        }
-        if (target.name) {
-          queryAdd(target, names[target.name])
-          for (let name in names) queryAdd(target.getElementsByName(name), names[name])
-        }
-        if (target.className) {
-          target.classList.forEach(cls => queryAdd(target, classes[cls]))
-          for (let cls in classes) queryAdd(target.getElementsByClassName(cls), classes[cls])
-        }
-        queryAdd(target, tags[target.tagName])
-        for (let tag in tags) queryAdd(target.getElementsByTagName(tag), tags[tag])
-      })
-    }
+      if (target.name) {
+        queryAdd(target, names[target.name])
+        for (let name in names) queryAdd(target.getElementsByName(name), names[name])
+      }
+      if (target.className) {
+        target.classList.forEach(cls => queryAdd(target, classes[cls]))
+        for (let cls in classes) queryAdd(target.getElementsByClassName(cls), classes[cls])
+      }
+      queryAdd(target, tags[target.tagName])
+      for (let tag in tags) queryAdd(target.getElementsByTagName(tag), tags[tag])
+    })
   }
 }))
 .observe(document, {

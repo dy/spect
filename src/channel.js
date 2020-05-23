@@ -37,6 +37,7 @@ export default class Channel {
       })
     })
   }
+  // universal get/set/sub function
   fn(){
     if (this.closed) return
     if (!arguments.length) return this.get()
