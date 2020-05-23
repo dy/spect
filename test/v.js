@@ -370,7 +370,7 @@ t('v: from promise', async t => {
   await time(10)
   t.is(vp(), 1)
   t.is(log, [1])
-
+  console.log('----')
   vp(time(10).then(() => 2))
   t.is(vp(), undefined)
   await time(10)

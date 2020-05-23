@@ -13,7 +13,7 @@ export const attr = (el, k, v) => {
 
   if (v === false || v == null) el.removeAttribute(k)
   else if (v === true) el.setAttribute(k, '')
-  else if (typeof v === 'number' || typeof v === 'string') el.setAttribute(k, v)
+  else if (primitive(v)) el.setAttribute(k, v)
   // class=[a, b, ...c]
   else if (k === 'class' && Array.isArray(v)) el.setAttribute(k, v.filter(Boolean).join(' '))
   // onclick={} - skip
@@ -21,7 +21,6 @@ export const attr = (el, k, v) => {
   // style={}
   else if (k === 'style' && v.constructor === Object)
     el.setAttribute(k,(k=v,v=Object.values(v),Object.keys(k).map((k,i) => `${k}: ${v[i]};`).join(' ')))
-  else el.setAttribute(k, v)
 }
 
 

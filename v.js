@@ -1,4 +1,4 @@
-import { desc, observer, primitive, observable, symbol, slice } from './src/util.js'
+import { primitive, observable, symbol, slice } from './src/util.js'
 import Channel from './src/channel.js'
 
 const depsCache = new WeakMap
@@ -12,45 +12,10 @@ export default function v(source) {
       set = (val, dif) => channel.push(map(unmap(val)), dif)
 
   const [map=v=>v, unmap=v=>v] = fields,
-  channel = Channel(get, set),
-  error = channel.error.bind(channel)
+    channel = new Channel(get, set),
+    error = channel.error.bind(channel)
 
-  // const fn = channel.fn.bind(channel)
-  function fn () {
-    if (channel.closed) return
-    if (!arguments.length) return get()
-    if (observer.apply(null, arguments)) {
-      let unsubscribe = channel.subscribe(...arguments)
-      // callback is registered as the last channel subscription, so send it immediately as value
-      if ('current' in channel) channel.push.call(channel.observers.slice(-1), get(), get())
-      return unsubscribe
-    }
-    return set.apply(null, arguments)
-  }
-
-  // we define props on fn - must hide own props
-  delete fn.length
-  Object.defineProperties(fn, {
-    valueOf: desc(get),
-    toString: desc(get),
-    [Symbol.toPrimitive]: desc(get),
-    [symbol.observable]: desc(() => channel),
-    [symbol.dispose]: desc(channel.close.bind(channel)),
-    [Symbol.asyncIterator]: desc(async function*() {
-      let resolve = () => {}, buf = [], p,
-      unsubscribe = fn(v => (buf.push(v), resolve(), p = new Promise(r => resolve = r)))
-      try {
-        while (1) {
-          // while (buf.length) yield buf.shift()
-          yield* buf.splice(0)
-          await p
-        }
-      } catch {
-      } finally {
-        unsubscribe()
-      }
-    })
-  })
+  const fn = channel.fn
 
   if (arguments.length) {
     if (primitive(source)) {
@@ -59,7 +24,7 @@ export default function v(source) {
     else if (typeof source === 'function') {
       // v / observ
       if (observable(source)) {
-        set = v => source(unmap(v))
+        channel.set = set = v => source(unmap(v))
         channel.subscribe(null, null, source(v => channel.push(map(v)), error))
       }
       // initializer
@@ -69,7 +34,7 @@ export default function v(source) {
     }
     // Observable (stateless)
     else if (source && source[symbol.observable]) {
-      set = () => {}
+      channel.set = set = () => {}
       let unsubscribe = source[symbol.observable]().subscribe({
         next: v => channel.push(map(v)),
         error
@@ -79,7 +44,7 @@ export default function v(source) {
     }
     // async iterator (stateful, initial undefined)
     else if (source && (source.next || source[Symbol.asyncIterator])) {
-      set = () => {}
+      channel.set = set = () => {}
       let stop
       ;(async () => {
         try {
@@ -95,7 +60,7 @@ export default function v(source) {
     }
     // promise (stateful, initial undefined)
     else if (source && source.then) {
-      set = p => (delete channel.current, p.then(v => channel.push(map(v)), error))
+      channel.set = set = p => (delete channel.current, p.then(v => channel.push(map(v)), error))
       set(source)
     }
     // deps
@@ -144,7 +109,7 @@ export default function v(source) {
       // if initial value is derivable from initial deps - set it
       if (Object.keys(vals).length || !keys.length) dchannel.push(vals, vals)
 
-      set = v => (Object.keys(v = unmap(v)).map(key => fn[key](v[key])))
+      channel.set = set = v => (Object.keys(v = unmap(v)).map(key => fn[key](v[key])))
       channel.subscribe(null, null, () => {
         dchannel.close()
         teardown.map(teardown => teardown())
@@ -159,8 +124,7 @@ export default function v(source) {
 
   // cancel subscriptions, dispose
   channel.subscribe(null, null, () => {
-    // get = set = () => {throw Error('closed')}
-    get = set = () => {}
+    channel.get = get = channel.set = set = () => {}
     delete channel.current
   })
 

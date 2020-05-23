@@ -1,21 +1,8 @@
-import { desc, observer, symbol, slice } from './src/util.js'
+import { slice } from './src/util.js'
 import Channel from './src/channel.js'
 
 export default function i(el) {
   if (el.raw) el = document.querySelector(String.raw.apply(null, arguments))
-
-  const channel = new Channel()
-
-  function fn () {
-    if (channel.closed) return
-    if (!arguments.length) return iget()
-    if (observer.apply(null, arguments)) {
-      let unsubscribe = channel.subscribe(...arguments)
-      channel.push.call(channel.observers.slice(-1), iget(), iget())
-      return unsubscribe
-    }
-    return iset.apply(null, arguments)
-  }
 
   const iget = el.type === 'checkbox' ? () => el.checked : () => el.value
   const iset = ({
@@ -32,8 +19,10 @@ export default function i(el) {
     }
   })[el.type]
 
+  const channel = new Channel(iget, iset)
+
   // normalize initial value
-  iset(iget())
+  iset(channel.current = iget())
 
   const update = e => (iset(iget()), channel.push(iget()))
   el.addEventListener('change', update)
@@ -43,32 +32,7 @@ export default function i(el) {
     el.removeEventListener('input', update)
   })
 
-  Object.defineProperties(fn, {
-    valueOf: desc(iget),
-    toString: desc(iget),
-    [Symbol.toPrimitive]: desc(iget),
-    [symbol.observable]: desc(() => channel),
-    [symbol.dispose]: desc(channel.close.bind(channel)),
-    [Symbol.asyncIterator]: desc(async function*() {
-      let resolve = () => {}, buf = [], p,
-      unsubscribe = fn(v => (
-        buf.push(v),
-        resolve(),
-        p = new Promise(r => resolve = r)
-      ))
-      try {
-        while (1) {
-          yield* buf.splice(0)
-          await p
-        }
-      } catch {
-      } finally {
-        unsubscribe()
-      }
-    })
-  })
-
-  return fn
+  return channel.fn
 }
 
 const input = (arg) => arg && (arg.tagName === 'INPUT' || arg.tagName === 'SELECT')

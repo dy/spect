@@ -1,24 +1,14 @@
-import { desc, observer, symbol, attr } from './src/util.js'
+import { attr } from './src/util.js'
 import Channel from './src/channel.js'
 
-export default function a(target, path, map) {
-  const channel = new Channel()
-
-  function fn () {
-    if (channel.closed) return
-    if (!arguments.length) return get()
-    if (observer.apply(null, arguments)) {
-      let unsubscribe = channel.subscribe(...arguments)
-      channel.push.call(channel.observers.slice(-1), get())
-      return unsubscribe
-    }
-    return set.apply(null, arguments)
-  }
-
+export default function a(target, path) {
   const proto = Object.getPrototypeOf(target),
-        orig = Object.getOwnPropertyDescriptor(target, path)
-  let sync
+        orig = Object.getOwnPropertyDescriptor(target, path),
+        get = orig && orig.get || (() => value),
+        set = orig && orig.set ? v => (orig.set.call(target, v), channel.push(get())) : v => channel.push(value = v),
+        channel = new Channel(get, set)
 
+  let sync
   if (target.setAttribute) {
     sync = attr => {
       // own HTMLElement prototype props (like style, onxxx, class etc.) are expected to react themselves on attr update
@@ -30,10 +20,7 @@ export default function a(target, path, map) {
     if (!(path in target)) sync(target.getAttribute(path))
   }
 
-
-  let value = target[path],
-      get = orig && orig.get || (() => value),
-      set = orig && orig.set ? v => (orig.set.call(target, v), channel.push(get())) : v => channel.push(value = v)
+  let value = channel.current = target[path]
 
   if (!orig || orig.configurable && !(path in proto)) {
     Object.defineProperty(target, path, {
@@ -55,31 +42,5 @@ export default function a(target, path, map) {
     channel.subscribe(null, null, () => mo.disconnect())
   }
 
-
-  Object.defineProperties(fn, {
-    valueOf: desc(get),
-    toString: desc(get),
-    [Symbol.toPrimitive]: desc(get),
-    [symbol.observable]: desc(() => channel),
-    [symbol.dispose]: desc(channel.close.bind(channel)),
-    [Symbol.asyncIterator]: desc(async function*() {
-      let resolve = () => {}, buf = [], p,
-      unsubscribe = fn(v => (
-        buf.push(v),
-        resolve(),
-        p = new Promise(r => resolve = r)
-      ))
-      try {
-        while (1) {
-          yield* buf.splice(0)
-          await p
-        }
-      } catch {
-      } finally {
-        unsubscribe()
-      }
-    })
-  })
-
-  return fn
+  return channel.fn
 }
