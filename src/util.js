@@ -57,20 +57,3 @@ export const observable = (arg) =>
     || arg.then
     // || arg.mutation && arg._state != null
   )
-
-
-// fast arguments slice https://www.npmjs.com/package/sliced
-export const slice = (args, slice, sliceEnd) => {
-  let ret = [];
-  let len = args.length;
-
-  if (0 === len) return ret;
-
-  let start = slice < 0 ? Math.max(0, slice + len) : slice || 0;
-
-  if (sliceEnd !== undefined) len = sliceEnd < 0 ? sliceEnd + len : sliceEnd
-
-  while (len-- > start) ret[len - start] = args[len];
-
-  return ret;
-}

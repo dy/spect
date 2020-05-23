@@ -1,4 +1,4 @@
-import { symbol, desc, slice } from './src/util.js'
+import { symbol, desc } from './src/util.js'
 import Channel from './src/channel.js'
 
 const ELEMENT = 1
@@ -258,7 +258,7 @@ class $ extends Array {
     }
 
     self._channel.close()
-    let els = slice(self)
+    let els = [...self]
     self.length = 0
     els.forEach(el => self.delete(el, true))
   }

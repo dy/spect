@@ -1,18 +1,16 @@
-import { primitive, observable, symbol, slice } from './src/util.js'
+import { primitive, observable, symbol } from './src/util.js'
 import Channel from './src/channel.js'
 
 const depsCache = new WeakMap
 
-export default function v(source) {
-  let fields = slice(arguments, 1)
-  if (source && source.raw) return v(fields, fields => String.raw(source, ...fields))
+export default function v(source, map=v=>v,unmap=v=>v) {
+  if (source && source.raw) return v([].slice.call(arguments, 1), fields => String.raw(source, ...fields))
 
   // current is mapped value (map can be heavy to call each get)
   let get = () => channel.current,
       set = (val, dif) => channel.push(map(unmap(val)), dif)
 
-  const [map=v=>v, unmap=v=>v] = fields,
-    channel = new Channel(get, set),
+  const channel = new Channel(get, set),
     error = channel.error.bind(channel)
 
   const fn = channel.fn

@@ -1,4 +1,4 @@
-import { symbol, observable, primitive, attr, slice, esc } from './src/util.js'
+import { symbol, observable, primitive, attr, esc } from './src/util.js'
 
 // FIXME: avoid H_FIELD
 
@@ -255,7 +255,7 @@ export function h(tag, props) {
     tag = document.createElement(tag)
   }
   else if (typeof tag === 'function') {
-    tag = tag({children: slice(arguments, 2), ...props})
+    tag = tag({children: [].slice.call(arguments, 2), ...props})
     // FIXME: is there a more elegant way?
     if (Array.isArray(tag)) {
       let frag = document.createDocumentFragment()

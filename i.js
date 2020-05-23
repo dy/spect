@@ -1,4 +1,3 @@
-import { slice } from './src/util.js'
 import Channel from './src/channel.js'
 
 export default function i(el) {
@@ -13,7 +12,7 @@ export default function i(el) {
       value ? el.setAttribute('checked', '') : el.removeAttribute('checked')
     ),
     'select-one': value => {
-      slice(el.options).map(el => el.removeAttribute('selected'))
+      [...el.options].map(el => el.removeAttribute('selected'))
       el.value = value
       if (el.selectedOptions[0]) el.selectedOptions[0].setAttribute('selected', '')
     }
