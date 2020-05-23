@@ -209,45 +209,28 @@ Pending...
 
 <details><summary><strong>$ − selector observer</strong></summary><br/>
 
-> elements = $( scope? , selector , aspect? )<br/>
-> elements = $\`.selector\`<br/>
+> $( scope? , selector , aspect? )<br/>
 
-Create live collection of elements matching the `selector`. Optional `aspect` function is triggered for each matched element.
+Observe selector, trigger callback for elements matching the selector.
 
 * `selector` is a valid CSS selector.
 * `scope` is optional _HTMLElement_ or a list of elements to narrow down selector.
 * `aspect` is a function with `(element) => teardown?` signature.
-* `elements` is live matched elements, an Array with [HTMLCollection](https://developer.mozilla.org/en-US/docs/Web/API/HTMLCollection) and [Set](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Set) methods.
 
 ```js
 import { $, v, h } from 'spect'
 
-// create collection of elements, matching `.foo` selector
-let $foo = $('.foo', el => {
+$('.foo', el => {
   console.log('active')
   return () => console.log('inactive')
 })
 
-document.body.append(h`<div.foo/><div#bar/>`)
+let foo = h`<div.foo/>`
+document.body.append(foo)
 // ... "active"
-$foo[0] // <div class="foo"></div>
-$foo.bar // <div id="bar"></div>
 
 foo.remove()
 // ... "inactive"
-$foo[0] // undefined
-$foo.bar // undefined
-
-// observe changes in $foo
-v($foo)(els => {
-  console.log(els), () => console.log('off', els)
-})
-
-document.body.append(foo)
-// ... "active", [ foo ]
-
-$foo[Symbol.dispose]()
-// ... "inactive", "off", [ foo ]
 ```
 
 #### Example
@@ -264,7 +247,7 @@ const $timer = $('.timer', el => {
 })
 ```
 
-_R&D_: [fast-on-load](https://ghub.io/fast-on-load) (class selectors), [selector-set](https://github.com/josh/selector-set) (feature-based selectors), [insertionQuery](https://github.com/naugtur/insertionQuery) (animation-based selectors), [selector-observer](https://github.com/josh/selector-observer), [reuse](https://ghub.io/reuse), [aspect-oriended-programming](https://en.wikipedia.org/wiki/Aspect-oriented_programming) libraries and others.
+_Related_: [selector-collection](ghub.io/selector-collection)
 
 <br/>
 
