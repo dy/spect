@@ -7,10 +7,15 @@ export default function v(source) {
   let fields = slice(arguments, 1)
   if (source && source.raw) return v(fields, fields => String.raw(source, ...fields))
 
+  // current is mapped value (map can be heavy to call each get)
+  let get = () => channel.current,
+      set = (val, dif) => channel.push(map(unmap(val)), dif)
+
   const [map=v=>v, unmap=v=>v] = fields,
-  channel = new Channel(),
+  channel = Channel(get, set),
   error = channel.error.bind(channel)
 
+  // const fn = channel.fn.bind(channel)
   function fn () {
     if (channel.closed) return
     if (!arguments.length) return get()
@@ -22,10 +27,6 @@ export default function v(source) {
     }
     return set.apply(null, arguments)
   }
-
-  // current is mapped value (map can be heavy to call each get)
-  let get = () => channel.current,
-      set = (val, dif) => channel.push(map(unmap(val)), dif)
 
   // we define props on fn - must hide own props
   delete fn.length
@@ -52,7 +53,10 @@ export default function v(source) {
   })
 
   if (arguments.length) {
-    if (typeof source === 'function') {
+    if (primitive(source)) {
+      set(source)
+    }
+    else if (typeof source === 'function') {
       // v / observ
       if (observable(source)) {
         set = v => source(unmap(v))
@@ -92,9 +96,6 @@ export default function v(source) {
     // promise (stateful, initial undefined)
     else if (source && source.then) {
       set = p => (delete channel.current, p.then(v => channel.push(map(v)), error))
-      set(source)
-    }
-    else if (primitive(source)) {
       set(source)
     }
     // deps
