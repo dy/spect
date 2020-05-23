@@ -305,7 +305,6 @@ const flat = (args) => {
     if (item != null) {
       if (primitive(item) || item.nodeType) out.push(item)
       else if (item[Symbol.iterator]) for (item of item) out.push(item)
-      else out.push(item)
     }
   }
   return out
