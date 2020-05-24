@@ -1,3 +1,6 @@
+<!DOCTYPE html>
+<script type="module">
+import './testfill.js'
 import t from 'tst'
 import h, { h as sh } from '../h.js'
 // import h, { default as sh } from './libs/h21.js'
@@ -9,27 +12,12 @@ import {html as lhtml, render as lrender} from 'lit-html'
 import {default as HTM} from './libs/htm.js'
 // import htm from 'xhtm'
 
-let htm = HTM.bind(hs)
 let shtm = HTM.bind(sh)
+let htm = HTM.bind(hs)
 
 t('h perf: <30 creation performance should be faster than hyperscript/lit-html', async t => {
-  let N = 30
+  let N = 100
   const container = document.createElement('div')
-
-  container.innerHTML = ''
-  t.is(
-    hs('a', null, 'a', hs('b', null, hs('c', null, 0))).outerHTML,
-    `<a>a<b><c>0</c></b></a>`
-  )
-  const hsStart = performance.now()
-  for (let i = 0; i < N; i++) {
-    container.appendChild(hs('a', null, 'a',
-      hs('b', null,
-        hs('c', null, i)
-      )
-    ))
-  }
-  const hsTime = performance.now() - hsStart
 
   container.innerHTML = ''
   t.is(
@@ -45,6 +33,22 @@ t('h perf: <30 creation performance should be faster than hyperscript/lit-html',
     ))
   }
   const shTime = performance.now() - shStart
+
+
+  container.innerHTML = ''
+  t.is(
+    hs('a', null, 'a', hs('b', null, hs('c', null, 0))).outerHTML,
+    `<a>a<b><c>0</c></b></a>`
+  )
+  const hsStart = performance.now()
+  for (let i = 0; i < N; i++) {
+    container.appendChild(hs('a', null, 'a',
+      hs('b', null,
+        hs('c', null, i)
+      )
+    ))
+  }
+  const hsTime = performance.now() - hsStart
 
 
   container.innerHTML = ''
@@ -117,7 +121,7 @@ t('html perf: first call (no cache) - should be ≈ innerHTML', async t => {
   t.ok(hTime < htmTime * 1.08, 'faster than htm + hyperscript')
 })
 
-t('html perf: 5k cached primitives tpl should be close to DOM', async t => {
+t.only('html perf: 5k cached primitives tpl should be close to DOM', async t => {
   const N = 5000
   const container = document.createElement('div')
 
@@ -147,6 +151,8 @@ t('html perf: 5k cached primitives tpl should be close to DOM', async t => {
   }
   const cloneTime = performance.now() - cloneStart
 
+
+
   container.innerHTML = ''
   let htmStart
   for (let i = -1; i < N; i++) {
@@ -159,24 +165,24 @@ t('html perf: 5k cached primitives tpl should be close to DOM', async t => {
 
   container.innerHTML = ''
   // warmup
-  let hStart
-  for (let i = -1; i < N; i++) {
-      // first run warms up cache
-    if (!i) hStart = performance.now()
-    container.appendChild(h`<a>a<b><c id=a>${i}</c></b></a>`)
-  }
-  const hTime = performance.now() - hStart
-
-
-  container.innerHTML = ''
-  // warmup
   let shtmStart
   for (let i = -1; i < N; i++) {
       // first run warms up cache
     if (!i) shtmStart = performance.now()
-    container.appendChild(shtm`<a>a<b><c id=a>${i}</c></b></a>`)
+    container.appendChild(shtm`<a>a<b><c>${i}</c></b></a>`)
   }
   const shtmTime = performance.now() - shtmStart
+
+
+  container.innerHTML = ''
+  // warmup
+  let hStart
+  for (let i = -1; i < N; i++) {
+    // first run warms up cache
+    if (!i) hStart = performance.now()
+    container.appendChild(h`<a>a<b><c id=a>${i}</c></b></a>`)
+  }
+  const hTime = performance.now() - hStart
 
 
   container.innerHTML = ''
@@ -196,7 +202,8 @@ t('html perf: 5k cached primitives tpl should be close to DOM', async t => {
   lrender(nodes, container)
   const lTime = performance.now() - lStart
 
-  console.log( 'h', hTime, 'shtm', shtmTime, 'dom', domTime, 'clone', cloneTime, 'ihtml', ihtmlTime, 'hs + htm', htmTime, 'lit', lTime)
+  console.log( 'hs + htm', htmTime, 'shtm', shtmTime, 'h', hTime, 'dom', domTime, 'clone', cloneTime, 'ihtml', ihtmlTime, 'lit', lTime)
+
   t.ok(hTime < domTime * 1.25, '<25% slower than the real DOM')
   t.ok(hTime < htmTime * 1.08, 'faster than HTM + hyperscript')
 })
@@ -237,3 +244,5 @@ t.todo('updating only props must not create performance penality', async t => {
 t.todo('js-framework creating 1000 nodes via h footprint should be 0')
 
 t.todo('js-framework creating 1000 nodes via $ should be as fast as just iterating over 1000 nodes')
+
+</script>
