@@ -11,6 +11,8 @@ const ids = {}, classes = {}, tags = {}, names = {}, animations = {}, setCache =
 const hasAnimevent = typeof AnimationEvent !== 'undefined'
 const style = document.head.appendChild(document.createElement('style'))
 
+// FIXME: use Symbol.species to fix add/map/etc
+
 export default function (scope, selector, fn) {
   // spect`#x`
   if (scope && scope.raw) return new $(null, String.raw.apply(null, arguments))
