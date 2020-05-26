@@ -25,9 +25,9 @@ t('html: multifield attr case', t => {
 
 t('html: observable attr', t => {
   // observable name
-  const a = v('a')
-  let el = h`<div ${a}/>`
-  t.is(el.outerHTMLClean, `<div a=""></div>`, 'observable name')
+  let a = v('a'), el
+  // let el = h`<div ${a}/>`
+  // t.is(el.outerHTMLClean, `<div a=""></div>`, 'observable name')
 
   // observable value
   const val = v(0)
@@ -637,10 +637,10 @@ t.todo('html: nested fragments', t => {
 t('html: null-like insertions', t => {
   let a = h`<a>foo ${ null } ${ undefined } ${ false } ${0}</a>`
 
-  t.is(a.innerHTML, 'foo  false 0')
+  t.is(a.innerHTML, 'foo   false 0')
 
   let b = h`${ null } ${ undefined } ${ false } ${0}`
-  t.is(b.textContent, ' false 0')
+  t.is(b.textContent, '  false 0')
   let c = h``
   t.is(c.textContent, '')
 })
@@ -654,8 +654,8 @@ t('html: non-observables create flat string', t => {
   let b = h`1 ${2} <${() => 3}/> ${[4, ' ', h`5 ${6}`]}`
   t.is(b.textContent, `1 2 3 4 5 6`)
 
-  // let c = h`1 ${v(2)} 3`
-  // t.is(c.textContent, `1 2 3`)
+  let c = h`1 ${v(2)} 3`
+  t.is(c.textContent, `1 2 3`)
 })
 
 t('html: recursion case', t => {
@@ -733,6 +733,12 @@ t('html: accepts rxjs directly', async t => {
   t.is(el.outerHTMLClean, `<div>42</div>`)
 })
 
+t('html: should not delete element own attribs', t => {
+  let div = document.createElement('div')
+  div.id = 'a'
+  t.is(h`<${div}/>`.outerHTML, `<div id="a"></div>`)
+})
+
 t.skip('html: element should be observable', async t => {
   // NOTE: Observable support is dropped - no much use
   let a = v(1)
@@ -745,6 +751,13 @@ t.skip('html: element should be observable', async t => {
 t.skip('html: class components', async t => {
   // doesn't seem like registering web-component is spect's concern
 })
+t('html: a#b.c etc.', t => {
+  t.is(h`<b#c.d></b>`.outerHTML, `<b id="c" class="d"></b>`)
+  t.is(h`<b#c></b>`.outerHTML, `<b id="c"></b>`)
+  t.is(h`<b.d></b>`.outerHTML, `<b class="d"></b>`)
+  t.is(h`<b.d.e></b>`.outerHTML, `<b class="d e"></b>`)
+  t.is(h`<b#c.d.e></b>`.outerHTML, `<b id="c" class="d e"></b>`)
+})
 
 t.todo('html: multiple attr fields', async t => {
   let a = h`<a x=1 ${'y'}=2 z=${3} ${'w'}=${4} ...${{_: 5}}>a${ 6 }b${ 7 }c</a>`
@@ -755,6 +768,10 @@ t.todo('html: non-tr > td elements must persist', async t => {
   let el = document.createElement('tr')
   h`<${el}><td>${1}</td></>`
   t.is(el.outerHTMLClean, `<tr><td>1</td></tr>`)
+})
+
+t('html: tr is ok', async t => {
+  t.is(h`<tr><td>${1}</td></tr>`.tagName, 'TR')
 })
 
 t.todo('html: render to selector', async t=> {

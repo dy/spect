@@ -1,6 +1,5 @@
 import { symbol, observable, primitive, attr, esc } from './src/util.js'
-
-// FIXME: avoid H_FIELD
+import htm from 'htm'
 
 // DOM
 const TEXT = 3, ELEM = 1, ATTR = 2, COMM = 8, FRAG = 11, COMP = 6,
@@ -17,235 +16,26 @@ const ZWSP = '\u200B', ZWNJ = '\u200C', ZWJ = '\u200D', H_TAG = 'slot', H_FIELD 
 
 const cache = new WeakMap
 
-export default function html(statics) {
-  // hyperscript redirect
-  // FIXME: should be Array.isTemplateObject(statics)
-  if (!statics.raw) return h.apply(null, arguments)
+const html = htm.bind(h)
+export default function (statics) {
+  if (!Array.isArray(statics)) return h(...arguments)
 
-  let build = cache.get(statics)
-  if (build) return build(arguments)
+  let result = html(...arguments)
 
-  // FIXME: pre-parse program/parts the first run, render fast with primitives
-  // - that splits cost of template creation between the first and 2nd runs
-  // - ? can first created element be reused on second parse?
-  // fall back to h function to handle evaluate-able elements:
-  // - central point of processing components / observable props (otherwise messy)
-  // - can cache props in some way to avoid evaluating props object cost
-
-  let template = document.createElement('template')
-
-  // 0. prepares string for innerHTML, creates program for affected nodes
-  // getElementById is faster than node path tracking (id is path in a way) https://jsperf.com/queryselector-vs-prop-access
-  // fields order is co-directional with tree walker
-  // source: src/parse.js
-  let mode = TEXT, buf = '', quote = '', attr, char, sel, el,
-      // transformed statics
-      parts = [], part,
-      // current element program (id/query, props, children type)
-      prog = [0, 0]
-
-  const commit = () => {
-    if (mode === ELEM) {prog.push(TEXT, el = buf || H_TAG), mode = ATTR }
-    else if (attr) {
-      if (buf) attr.push(buf)
-      if (attr.length === 1) (prog.pop(), prog.push(attr[0]))
-      attr = undefined
-    }
-    sel = buf = ''
-  }
-
-  // parser
-	for (let i=0; i<statics.length; ) {
-    part = ''
-
-		for (let j=0; j < statics[i].length; j++) {
-			char = statics[i][j];
-
-			if (mode === TEXT) {
-        if (char === '<') { mode = ELEM, buf = '' }
-      }
-      // Ignore everything until the last three characters are '-', '-' and '>'
-			else if (mode === COMM) {
-        if (buf === '--' && char === '>') { mode = TEXT, buf = '' }
-        else { buf = char + buf[0] }
-        char = ''
-      }
-
-      // <a#id, <a.class
-      else if ((mode === ELEM || sel) && (char === '#' || char === '.')) {
-        part += buf ? '' : H_TAG
-        if (!sel) ( commit(), mode = ATTR )
-        sel = char
-        part += (sel === '#' ? ' id=' : ' class=')
-        char = ''
-      }
-
-      else if (quote) { if (char === quote) (quote = ''); else (buf += char) }
-			else if (char === '"' || char === "'") (quote = char)
-
-			else if (char === '>') {
-        // <//>, </> → </comp>
-        if (!mode && (!buf || buf === '/')) part = part.slice(0, buf ? -buf.length : undefined) + H_TAG
-        // <x/> → <x></x>
-        else if (buf.slice(-1) === '/') (buf = buf.slice(0,-1), commit(), part = part.slice(0, -1) + '></' + el + '>', char = '')
-        else commit()
-        mode = TEXT
-      }
-      // Ignore everything until the tag ends
-			else if (!mode) buf = char
-
-      else if (char === '/') {
-        // </x...
-        if (mode === ELEM && !buf) (mode = 0, buf = '' )
-        // x/> → x />
-        else buf += char
-      }
-			else if (char === ' ' || char === '\t' || char === '\n' || char === '\r') {
-        // <a,   <#a ;  ELEM,  field, #children
-        commit()
-			}
-			else buf += char;
-
-      // detect comment
-			if (mode === ELEM && buf === '!--') { mode = COMM, part = part.slice(0, -3) } else part += char
-		}
-
-    if (++i < statics.length) {
-      // >a${1}b${2}c<  →  >a<!--1-->b<!--2-->c<
-      if (mode === TEXT) part += '<!--' + i + '-->'
-      // <${el} → <h--tag;    ELEM, field, children
-      else if (mode === ELEM) (prog.push(arguments[i].nodeType || COMP, i), part += el = H_TAG, mode = ATTR)
-      else if (mode === ATTR) {
-        // <xxx ...${{}};    ATTR, null, field
-        if (buf === '...') { prog.push(ATTR, null, i), part = part.slice(0, -4) }
-        // <xxx ${'name'};    ATTR, field, null
-        else if (!buf && !attr) { prog.push(ATTR, i, true) }
-        else {
-          let eq = buf.indexOf('=')
-
-          // <xxx c="a${b}c", <xxx c=a${b}c ;   ATTR, name, [a, field, b, ...]
-          if (~eq) {prog.push(ATTR, buf.slice(0, eq), attr = []), buf = buf.slice(eq + 1)}
-          if (buf) attr.push(buf)
-          attr.push(i)
-
-          part += H_FIELD
-        }
-      }
-
-      buf = ''
-    }
-
-    parts.push(part)
-	}
-
-  // 1. template is created via innerHTML
-  template.innerHTML = parts.join('')
-  // console.log(parts.join(''), template.innerHTML)
-
-  // 2. node iterator replaces comments (child fields) with blank texts (pre-optimizes for text morphing)
-  //    collects meaningful node programs, assigns their nodes ids.
-  //    Note that we can't modify template directly and then clone it, like it is done in h-reducers fastTemplate:
-  //    because if it happens to create async fields element, there will be flash of old content (cleaning up tpl is less effective)
-  // getElementsByTagName('*') is faster than tree iterator/querySelector('*'), but live and fragment doesn't have it
-  // ref: https://jsperf.com/createnodeiterator-vs-createtreewalker-vs-getelementsby
-  let it = document.createTreeWalker(template.content, SHOW_ELEMENT),
-      i = 0, program = ['let el,child\n'],
-      node = template.content,
-      single = node.childNodes.length === 1,
-      singleRender = false, fragRender = false
-
-  while (node) {
-    let type = prog.shift(), sel = prog.shift(), children = [], count = 0, k, v, props = [], id
-
-    // increment id just to make i reflect node order
-    id = '--' + sel + '-' + (i++).toString(36)
-
-    // collect child ids
-    for (let j = 0, child; child = node.childNodes[j++];)
-      if (child.nodeType === COMM) children.push(+child.data), child.replaceWith(document.createTextNode('')), count++
-      else children.push(-j)
-
-    // actualize program
-    if (prog[0] === ATTR || count || node.localName === H_TAG) {
-      if (type) {
-        // collect static props for component
-        if (type === ELEM || type === COMP) for (let attr of node.attributes) props.push(`"${esc(attr.name)}":"${esc(attr.value)}"`)
-
-        if (!node.id) props.push('id:' + (node.hasAttribute('id') ? '""' : 'null')), node.id = id
-
-        // h`<${b}/>` - b is kept in its own parent
-        // h`<a><${b}/></a>` - b is placed to a
-        // for that purpose a placeholder is put into parent container, and replaced back on return
-        // FIXME: if there's a better/faster way - do that. If keep element in own parent - have to figure out way to query els.
-        if (i === 2) {
-          if (single && type === FRAG) program.push(`child=frag.firstElementChild.childNodes,frag=el=args[${sel}],`), fragRender = true
-          else {
-            if (single && type === ELEM)
-              program.push(`args[${sel}].replaceWith(frag._ref=document.createComment('')),`), singleRender = true
-            program.push(`el=frag.firstElementChild,child=el.childNodes,`)
-          }
-        }
-        // FIXME: h`<#smth>`
-        // else if (type === TEXT && node.localName === H_TAG) program.push(`el=document.querySelector("${node.id}"),child=el.childNodes,`)
-        else program.push(`el=frag.getElementById("${esc(node.id)}"),child=el.childNodes,`)
-
-        if (type === COMP || type === ELEM) program.push(`el.replaceWith(h(args[${sel}]`)
-        else program.push(`h(el`)
-      }
-      else program.push('child=frag.childNodes,h(frag')
-
-      // collect attrib commands / skip to the next element
-      if (props.length || prog[0] === ATTR || type === COMP || type === ELEM) {
-        while (prog[0] === ATTR) {
-          prog.shift()
-          k = prog.shift(), v = prog.shift()
-
-          // ...${props}
-          if (k == null) props.push(`...args[${v}]`)
-          // name=${value}
-          else if (typeof v === 'number') props.push(`"${esc(k)}":args[${v}]`)
-          // name="a${value}b"
-          else if (Array.isArray(v)) props.push(`"${esc(k)}":[${
-            v.map(v => typeof v === 'number' ? `args[${v}]` : `"${esc(v)}"`).join(',')
-          }].filter(Boolean).join('')`)
-          // ${'name'}
-          else if (typeof k === 'number') props.push(`[args[${k}]]:true`)
-          // a=b
-          // else props[k] = v
-        }
-
-        program.push(',{',props.join(','),'}')
-      }
-      else program.push(',null')
-
-      if (children.length) program.push(',', children.map(i => i > 0 ? `args[${i}]` : `child[${~i}]`).join(','))
-
-      program.push(type === ELEM || type === COMP ? '))\n' : ')\n')
-    }
-
-    node = it.nextNode()
-  }
-  if (singleRender) program.push('frag._ref.replaceWith(el=frag.firstChild); return el')
-  else if (fragRender) program.push('return frag')
-  else program.push('return frag.childNodes.length === 1 ? frag.firstChild : frag')
-  // else program.push(single ? 'return frag.firstChild' : 'return frag')
-
-  // console.log(program.join(''), template.innerHTML)
-  const evaluate = new Function('frag', 'args', 'h', program.join('')).bind(h)
-
-  // 3. builder clones template and runs program on it - query/apply props/merge children/do observables
-  cache.set(statics, build = args => evaluate(template.content.cloneNode(true), args, h))
-
-  return build(arguments)
+  return primitive(result) ? document.createTextNode(result == null ? '' : result) :
+        Array.isArray(result) ? h(document.createDocumentFragment(), null, ...result) :
+        result
 }
 
-// compact hyperscript
+// hyperscript
 export function h(tag, props, ...children) {
   if (typeof tag === 'string') {
     // hyperscript-compat
     if (/#|\./.test(tag)) {
       let id, cls
-      [tag, id] = tag.split('#'), [tag, ...cls] = tag.split('.')
+      [tag, id] = tag.split('#')
+      if (id) [id, ...cls] = id.split('.')
+      else [tag, ...cls] = tag.split('.')
       if (id || cls.length) {
         props = props || {}
         if (id) props.id = id
@@ -272,6 +62,9 @@ export function h(tag, props, ...children) {
   let cleanup = [], subs, i
   for (let name in props) {
     let value = props[name]
+    // FIXME: tweak own compiler
+    if (typeof value === 'string') value = value.replace(/false|null|undefined/g,'')
+
     // primitive is more probable also less expensive than observable check
     if (primitive(value)) prop(tag, name, value)
     else if (observable(value)) cleanup.push(sube(value, v => prop(tag, name, v)))

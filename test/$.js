@@ -527,7 +527,7 @@ t('$: simple selector cases', async t => {
 
   let b = $('a b#c.d[name=e] f')
   root.append(h`<a><b><f/></b><b#c.d><f/></b><b#c.d name=e><d/><f/></b></a>`)
-  await tick()
+  await tick(2)
   t.is([...b], [root.childNodes[2].childNodes[2].childNodes[1]])
 
   let c = $('a[name~="b"]')
