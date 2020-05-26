@@ -240,7 +240,7 @@ export default function html(statics) {
 }
 
 // compact hyperscript
-export function h(tag, props) {
+export function h(tag, props, ...children) {
   if (typeof tag === 'string') {
     // hyperscript-compat
     if (/#|\./.test(tag)) {
@@ -255,7 +255,7 @@ export function h(tag, props) {
     tag = document.createElement(tag)
   }
   else if (typeof tag === 'function') {
-    tag = tag({children: [].slice.call(arguments, 2), ...props})
+    tag = tag({children, ...props})
     // FIXME: is there a more elegant way?
     if (Array.isArray(tag)) {
       let frag = document.createDocumentFragment()
@@ -269,7 +269,7 @@ export function h(tag, props) {
   else if (tag._cleanup) { for (let fn of tag._cleanup) fn(); tag._cleanup = null }
 
   // apply props
-  let cleanup = [], subs = [], i
+  let cleanup = [], subs, i
   for (let name in props) {
     let value = props[name]
     // primitive is more probable also less expensive than observable check
@@ -278,19 +278,17 @@ export function h(tag, props) {
     else prop(tag, name, value)
   }
 
-  // merge children
-  for (i = 2; i < arguments.length; i++)
-    if (observable(arguments[i])) {
-      cleanup.push(subs[i] = arguments[i]), arguments[i] = document.createTextNode('')
-    }
+  // detect observables
+  for (i = 0; i < children.length; i++)
+    if (observable(children[i])) cleanup.push((subs || (subs = []))[i] = children[i]), children[i] = document.createTextNode('')
 
   // append shortcut
-  if (!tag.childNodes.length) for (i of flat(arguments)) tag.append(i)
-  else merge(tag, tag.childNodes, flat(arguments))
+  if (!tag.childNodes.length) for (i of flat(children)) tag.append(i)
+  else merge(tag, tag.childNodes, flat(children))
 
-  subs.map((sub, i) => sube(sub, child => (
-    arguments[i] = child,
-    merge(tag, tag.childNodes, flat(arguments))
+  if (subs) subs.map((sub, i) => sube(sub, child => (
+    children[i] = child,
+    merge(tag, tag.childNodes, flat(children))
   )))
 
   if (cleanup.length) tag._cleanup = cleanup
@@ -298,11 +296,10 @@ export function h(tag, props) {
   return tag
 }
 
-const flat = (args) => {
-  let out = [], i = 2, item
-  for (; i < args.length;) {
-    item = args[i++]
-    if (item != null) {
+const flat = (children) => {
+  let out = [], i = 0, item
+  for (; i < children.length;) {
+    if ((item = children[i++]) != null) {
       if (primitive(item) || item.nodeType) out.push(item)
       else if (item[Symbol.iterator]) for (item of item) out.push(item)
     }
