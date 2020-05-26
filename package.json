@@ -66,7 +66,9 @@
     "url": "https://github.com/spectjs/spect/issues"
   },
   "homepage": "https://github.com/spectjs/spect#readme",
-  "dependencies": {},
+  "dependencies": {
+    "htm": "^3.0.4"
+  },
   "devDependencies": {
     "@rollup/plugin-commonjs": "^11.0.2",
     "@rollup/plugin-node-resolve": "^7.1.1",
@@ -75,7 +77,6 @@
     "es-dev-server": "^1.47.0",
     "esm": "^3.2.25",
     "htl": "^0.2.0",
-    "htm": "^3.0.4",
     "hyperscript": "^2.0.2",
     "incremental-dom": "^0.7.0",
     "ironjs": "0.0.17-alpha",
