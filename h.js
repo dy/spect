@@ -66,9 +66,9 @@ export function h(tag, props, ...children) {
     if (typeof value === 'string') value = value.replace(/false|null|undefined/g,'')
 
     // primitive is more probable also less expensive than observable check
-    if (primitive(value)) prop(tag, name, value)
-    else if (observable(value)) cleanup.push(sube(value, v => prop(tag, name, v)))
-    else prop(tag, name, value)
+    if (primitive(value)) attr(tag, name, value)
+    else if (observable(value)) cleanup.push(sube(value, v => attr(tag, name, v)))
+    else attr(tag, name, value)
   }
 
   // detect observables
@@ -112,9 +112,8 @@ function sube(target, fn) {
   return unsub
 }
 
-const prop = (el, name, value) => attr(el, name, el[name] = value)
-
 // FIXME: make same-key morph for faster updates
+// FIXME: modifying prev key can also make it faster
 const same = (a, b) => a === b || (a && b && a.nodeType === TEXT && b.nodeType === TEXT && a.data === b.data)
 
 // source: src/diff-inflate.js

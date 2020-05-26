@@ -1,5 +1,5 @@
 import t from 'tst'
-import { v, $ } from '../index.js'
+import { v, $, a } from '../index.js'
 import h from '../h.js'
 // import h from './libs/h21.js'
 import { tick, frame, idle, time } from 'wait-please'
@@ -751,6 +751,7 @@ t.skip('html: element should be observable', async t => {
 t.skip('html: class components', async t => {
   // doesn't seem like registering web-component is spect's concern
 })
+
 t('html: a#b.c etc.', t => {
   t.is(h`<b#c.d></b>`.outerHTML, `<b id="c" class="d"></b>`)
   t.is(h`<b#c></b>`.outerHTML, `<b id="c"></b>`)
@@ -759,12 +760,12 @@ t('html: a#b.c etc.', t => {
   t.is(h`<b#c.d.e></b>`.outerHTML, `<b id="c" class="d e"></b>`)
 })
 
-t.todo('html: multiple attr fields', async t => {
-  let a = h`<a x=1 ${'y'}=2 z=${3} ${'w'}=${4} ...${{_: 5}}>a${ 6 }b${ 7 }c</a>`
-  t.is(a.outerHTMLClean, `<a x="1" z="3" y="2" w="4" _="5">a6b7c</a>`)
+t('html: multiple attr fields', async t => {
+  let a = h`<a x=1 y=2 z=${3} w=${4} ...${{_: 5}}>a${ 6 }b${ 7 }c</a>`
+  t.is(a.outerHTMLClean, `<a x="1" y="2" z="3" w="4" _="5">a6b7c</a>`)
 })
 
-t.todo('html: non-tr > td elements must persist', async t => {
+t('html: non-tr > td elements must persist', async t => {
   let el = document.createElement('tr')
   h`<${el}><td>${1}</td></>`
   t.is(el.outerHTMLClean, `<tr><td>1</td></tr>`)
@@ -772,6 +773,46 @@ t.todo('html: non-tr > td elements must persist', async t => {
 
 t('html: tr is ok', async t => {
   t.is(h`<tr><td>${1}</td></tr>`.tagName, 'TR')
+})
+
+t('html: read-only props', async t => {
+  let f = h`<form id="x"><button form="x"/></form>`
+  t.is(f.firstChild.getAttribute('form'), 'x')
+})
+
+t.todo('html: skipped similar content case', async t => {
+  let el = h`<ap-dialog id="ap-add-user-dialog" title="Add user" confirm="Create User" form="ap-add-user-form">
+    <form id="ap-add-user-form" class="grid-col grid-gap-1">
+      <input is="mdc-text-field" name="email" label="Email" required/>
+      <input is="mdc-text-field" name="login" label="Username" required/>
+      <input is="mdc-text-field" name="name" label="Name" required/>
+      <!-- <input is="mdc-text-field" name="password" label="Password" trailing="visibility"/> -->
+      <select is="mdc-select" class="ap-select" id="ap-add-user-select" name="groupId" label="Group"></select>
+    </form>
+  </ap-dialog>`
+
+  let content = [...el.childNodes]
+
+  h`
+  <${el} class="mdc-dialog">
+    <div class="mdc-dialog__container">
+      <div class="mdc-dialog__surface" style="min-width: 24rem">
+        <h2 class="mdc-dialog__title" id="ap-dialog-title">${ a(el, 'title') }</h2>
+        <div class="mdc-dialog__content" id="ap-dialog-content">
+          ${ content }
+        </div>
+        <footer class="mdc-dialog__actions">
+          <button type="button" class="mdc-button mdc-dialog__button" data-mdc-dialog-action="close">
+            <span class="mdc-button__label">${ el.attributes.cancel?.value }</span>
+          </button>
+          <button disabled=${ el.attributes.loading?.value } form=${ el.attributes.form?.value } type=${ el.attributes.form?.value ? 'submit' : 'button' } class="mdc-button mdc-dialog__button" data-mdc-dialog-button-default>
+            <span class="mdc-button__label">${ !el.attributes.loading?.value ? el.attributes.confirm?.value : 'Loading' }</span>
+          </button>
+        </footer>
+      </div>
+    </div>
+  <div class="mdc-dialog__scrim"></div>
+  `
 })
 
 t.todo('html: render to selector', async t=> {

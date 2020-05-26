@@ -7,7 +7,8 @@ export const symbol = {
 
 // we can't handle observable subscription here - it deals with node[_ref], which is not this function concern
 export const attr = (el, k, v) => {
-  // if (arguments.length < 3) return (value = el.getAttribute(name)) === '' ? true : value
+  // safe-set readonly attribs
+  if (el[k] !== v && !(k in el.constructor.prototype)) el[k] = v
 
   if (!el.setAttribute) return
 
@@ -17,7 +18,7 @@ export const attr = (el, k, v) => {
   // class=[a, b, ...c]
   else if (k === 'class' && Array.isArray(v)) el.setAttribute(k, v.filter(Boolean).join(' '))
   // onclick={} - skip
-  else if (typeof v === 'function') {}
+  else if (typeof v === 'function') el[k] = v
   // style={}
   else if (k === 'style' && v.constructor === Object)
     el.setAttribute(k,(k=v,v=Object.values(v),Object.keys(k).map((k,i) => `${k}: ${v[i]};`).join(' ')))
