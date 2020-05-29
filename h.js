@@ -5,30 +5,38 @@ import htm from 'htm'
 const TEXT = 3, ELEM = 1, ATTR = 2, COMM = 8, FRAG = 11, COMP = 6,
       SHOW_ELEMENT = 1, SHOW_TEXT = 4, SHOW_COMMENT = 128
 
-// placeholders
-const ZWSP = '\u200B', ZWNJ = '\u200C', ZWJ = '\u200D', H_TAG = 'slot', H_FIELD = ZWNJ
+const cache = new WeakSet
 
-// character for node id, ref https://mathiasbynens.be/notes/html5-id-class
-// const CHARS = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789'
+const _cleanup = Symbol('cleanup'), _static = Symbol('static')
 
-// see also https://developer.mozilla.org/en-US/docs/Web/API/Node/nodeType
-// const EMPTY = 'area base br col command embed hr img input keygen link meta param source track wbr ! !doctype ? ?xml'.split(' ')
+const ctx = {init:false}
 
-const cache = new WeakMap
+export const h = hyperscript.bind(ctx)
 
 const html = htm.bind(h)
+
 export default function (statics) {
   if (!Array.isArray(statics)) return h(...arguments)
 
-  let result = html(...arguments)
+  // HTM caches nodes that don't have attr or children fields
+  // eg. <a><b>${1}</b></a> - won't cache `a`,`b`, but <a>${1}<b/></a> - will cache `b`
+  // for that purpose we first build template with blank fields, marking all fields as tpl
+  // NOTE: static nodes caching is bound to htm.this (h) function, so can't substitute it
+  // NOTE: we can't use first non-cached call result, because it serves as source for further cloning static nodes
+  let result, count = 1
+  if (!cache.has(statics)) count++, cache.add(statics)
+  while (count--) {
+    ctx.init = count ? true : false
+    // init render may setup observables, which is undesirable - so we skip attributes
+    result = html(...(count ? [statics] : arguments))
+  }
 
   return primitive(result) ? document.createTextNode(result == null ? '' : result) :
         Array.isArray(result) ? h(document.createDocumentFragment(), null, ...result) :
-        result
+        result[_static] ? result.cloneNode(true) : result
 }
 
-// hyperscript
-export function h(tag, props, ...children) {
+function hyperscript(tag, props, ...children) {
   if (typeof tag === 'string') {
     // hyperscript-compat
     if (/#|\./.test(tag)) {
@@ -43,7 +51,12 @@ export function h(tag, props, ...children) {
       }
     }
     tag = document.createElement(tag)
+
+    // init-time render creates nodes that HTM caches, later hctx calls clones them instead of h call
+    if (this.init) tag[_static] = true
   }
+  // init call is irrelevant for dynamic nodes
+  else if (this.init) return
   else if (typeof tag === 'function') {
     tag = tag({children, ...props})
     // FIXME: is there a more elegant way?
@@ -56,10 +69,10 @@ export function h(tag, props, ...children) {
     return tag
   }
   // clean up previous observables
-  else if (tag._cleanup) { for (let fn of tag._cleanup) fn(); tag._cleanup = null }
+  else if (tag[_cleanup]) { for (let fn of tag[_cleanup]) fn(); tag[_cleanup] = null }
 
   // apply props
-  let cleanup = [], subs, i
+  let cleanup = [], subs, i, child
   for (let name in props) {
     let value = props[name]
     // FIXME: tweak own compiler
@@ -73,7 +86,11 @@ export function h(tag, props, ...children) {
 
   // detect observables
   for (i = 0; i < children.length; i++)
-    if (observable(children[i])) cleanup.push((subs || (subs = []))[i] = children[i]), children[i] = document.createTextNode('')
+    if (child = children[i]) {
+      // static nodes (cached by HTM) must be cloned, because h is not called for them more than once
+      if (child[_static]) (children[i] = child.cloneNode(true))
+      else if (observable(child)) cleanup.push((subs || (subs = []))[i] = child), child = document.createTextNode('')
+    }
 
   // append shortcut
   if (!tag.childNodes.length) for (i of flat(children)) tag.append(i)
@@ -84,7 +101,7 @@ export function h(tag, props, ...children) {
     merge(tag, tag.childNodes, flat(children))
   )))
 
-  if (cleanup.length) tag._cleanup = cleanup
+  if (cleanup.length) tag[_cleanup] = cleanup
 
   return tag
 }
@@ -150,10 +167,10 @@ const merge = (parent, a, b, end = null) => {
   return b
 }
 
-const insert = (parent, a, b) => {
+const insert = (parent, a, before) => {
   if (a != null) {
-    if (primitive(a)) parent.insertBefore(document.createTextNode(a), b)
-    else parent.insertBefore(a, b)
+    if (primitive(a)) parent.insertBefore(document.createTextNode(a), before)
+    else parent.insertBefore(a, before)
   }
 }
 

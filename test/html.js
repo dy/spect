@@ -156,7 +156,7 @@ t('html: 2-level attribs', async t => {
 })
 
 t('html: mount to another element', async t => {
-  const a = h`<a></a>`
+  const a = document.createElement('a')
   const c = v(0)
   const b = h`<${a}>${ c }</>`
 
@@ -330,13 +330,14 @@ t.skip('html: generator', async t => {
 
 t('html: async generator', async t => {
   let el = h`<div>${(async function* () {
-    await tick(4)
+    await tick(10)
     yield 1
-    await tick(4)
+    await tick(10)
     yield 2
-    await tick(4)
+    await tick(10)
   })()}</div>`
-  await tick(12)
+  t.is(el.outerHTMLClean, `<div></div>`)
+  await tick(20)
   t.is(el.outerHTMLClean, `<div>1</div>`)
   await tick(28)
   t.is(el.outerHTMLClean, `<div>2</div>`)
@@ -780,39 +781,37 @@ t('html: read-only props', async t => {
   t.is(f.firstChild.getAttribute('form'), 'x')
 })
 
-t.todo('html: skipped similar content case', async t => {
-  let el = h`<ap-dialog id="ap-add-user-dialog" title="Add user" confirm="Create User" form="ap-add-user-form">
-    <form id="ap-add-user-form" class="grid-col grid-gap-1">
-      <input is="mdc-text-field" name="email" label="Email" required/>
-      <input is="mdc-text-field" name="login" label="Username" required/>
-      <input is="mdc-text-field" name="name" label="Name" required/>
-      <!-- <input is="mdc-text-field" name="password" label="Password" trailing="visibility"/> -->
-      <select is="mdc-select" class="ap-select" id="ap-add-user-select" name="groupId" label="Group"></select>
-    </form>
-  </ap-dialog>`
+t('html: same-stack call creates new element', t => {
+  let c = () => h`<a></a>`
+  t.not(c(), c())
 
-  let content = [...el.childNodes]
+  console.log('---')
+  let c2 = () => h`<a>${1}</a><b/>`
+  t.not(c2(), c2())
+})
 
-  h`
-  <${el} class="mdc-dialog">
-    <div class="mdc-dialog__container">
-      <div class="mdc-dialog__surface" style="min-width: 24rem">
-        <h2 class="mdc-dialog__title" id="ap-dialog-title">${ a(el, 'title') }</h2>
-        <div class="mdc-dialog__content" id="ap-dialog-content">
-          ${ content }
-        </div>
-        <footer class="mdc-dialog__actions">
-          <button type="button" class="mdc-button mdc-dialog__button" data-mdc-dialog-action="close">
-            <span class="mdc-button__label">${ el.attributes.cancel?.value }</span>
-          </button>
-          <button disabled=${ el.attributes.loading?.value } form=${ el.attributes.form?.value } type=${ el.attributes.form?.value ? 'submit' : 'button' } class="mdc-button mdc-dialog__button" data-mdc-dialog-button-default>
-            <span class="mdc-button__label">${ !el.attributes.loading?.value ? el.attributes.confirm?.value : 'Loading' }</span>
-          </button>
-        </footer>
-      </div>
-    </div>
-  <div class="mdc-dialog__scrim"></div>
-  `
+t('html: various-stack htm caching', t => {
+  let c1 = () => h`<a>${1}<b/></a>`
+  t.not(c1(), c1())
+  let c2 = () => h`<${'x'}/>`
+  t.not(c2(), c2())
+  let c3 = () => h`<${'x'}/>`
+  t.not(c3(), c3())
+  let c4 = () => h`<${document.createElement('x')}/>`
+  t.not(c4(), c4())
+  let c5 = () => h`<x x=${'x'}/>`
+  t.not(c5(), c5())
+  let c6 = () => h`<x/>`
+  t.not(c6(), c6())
+})
+
+t.todo('html: onClick and onclick - both should work', t => {
+  let log = []
+  let x = h`<x onClick=${e => log.push('x')}/>`
+  let y = h`<y onclick=${e => log.push('y')}/>`
+  x.click()
+  y.click()
+  t.is(log, ['x','y'])
 })
 
 t.todo('html: render to selector', async t=> {
