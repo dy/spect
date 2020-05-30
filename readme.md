@@ -49,7 +49,7 @@ _Spect_ is minimalistic [_aspect-oriented_](https://en.wikipedia.org/wiki/Aspect
 
 :shipit: **Low-profile** − can be used as utility.
 
-:golf: Good **performance / size / memory** balance.
+:golf: Reasonable **performance / size** balance.
 
 
 ## Installation
