@@ -256,7 +256,6 @@ const $timer = $('.timer', el => {
 
 <details><summary><strong>h − hyperscript / html</strong></summary><br/>
 
-> el = h( tag , props , ...children )<br/>
 > el = h\`...content\`<br/>
 
 [Hyperscript](https://ghub.io/hyperscript) with observables. Can be used as template literal or as JSX. Uses [htm](https://ghub.io/htm) syntax, so can be compiled away for production.

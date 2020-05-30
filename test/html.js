@@ -1,5 +1,5 @@
 import t from 'tst'
-import { v, $, a } from '../index.js'
+import { v, $ } from '../index.js'
 import h from '../h.js'
 // import h from './libs/h21.js'
 import { tick, frame, idle, time } from 'wait-please'
