@@ -484,6 +484,5 @@ $('#my-component', el => {
 
 MIT
 
----
 
 <p align="center">ॐ</p>
