@@ -207,11 +207,11 @@ Pending...
 
 ## API
 
-<details><summary><strong>$ − selector observer</strong></summary><br/>
+<details><summary><strong>$ − selector aspect</strong></summary><br/>
 
 > $( scope? , selector , aspect? )<br/>
 
-Observe selector, trigger callback for elements matching the selector.
+Observe selector, trigger `aspect` callback for elements matching the selector.
 
 * `selector` is a valid CSS selector.
 * `scope` is optional _HTMLElement_ or a list of elements to narrow down selector.
@@ -256,7 +256,7 @@ const $timer = $('.timer', el => {
 
 <details><summary><strong>h − hyperscript / html</strong></summary><br/>
 
-> el = h( tag | target , props? , ...children )<br/>
+> el = h( tag , props , ...children )<br/>
 > el = h\`...content\`<br/>
 
 [Hyperscript](https://ghub.io/hyperscript) with observables. Can be used as template literal or as JSX. Uses [htm](https://ghub.io/htm) syntax, so can be compiled away for production.
@@ -303,7 +303,7 @@ $('#clock', el => {
 
 </details>
 
-
+<!--
 <details><summary><strong>i − input observer</strong></summary><br/>
 
 > value = i( input | selector )<br/>
@@ -336,20 +336,20 @@ celsius() // 0
 fahren() // 32
 ```
 
-<!-- _R&D_: [observable](https://ghub.io/observable). -->
-
-<br/>
-
 </details>
+-->
 
 
-<details><summary><strong>v − value observer</strong></summary><br/>
+<details><summary><strong>v − value / observable</strong></summary><br/>
 
-> value = v( source? , map? , unmap? )<br/>
+> value = v( source | init ? )<br/>
+
+Simple observable state, tiny replacement for `useState`. A getter/setter function with [observable](https://ghub.io/tc39/proposal-observable) interface.
+
+<!--
+TODO: move to strui
 > value = v\`...content\`<br/>
-
-Universal observable − creates a getter/setter function with [observable](https://ghub.io/observable) interface from any `source`:
-
+TODO: move to 0b
 * _Primitive_ − simple observable state.
 * _Function_ − initialized observable state.
 * _Observable_ (_v_, [observ-*](https://ghub.io/observ), [observable](https://ghub.io/observable), [mutant](https://ghub.io/mutant) etc.) − 2-way bound wrapper observable.
@@ -358,6 +358,7 @@ Universal observable − creates a getter/setter function with [observable](http
 * _Standard observable_ or [`[Symbol.observable]`](https://ghub.io/symbol-observable) ([rxjs](https://ghub.io/rxjs), [zen-observable](https://ghub.io/zen-observable) etc.) − mapped source observable.
 * _Array_, _Object_ − list / group observable, eg. for computed observable.
 * _Template string_ − observable string with dynamic fields.
+-->
 
 ```js
 import { v } from 'spect'
@@ -365,48 +366,36 @@ import { v } from 'spect'
 let v1 = v(0)
 
 // get
-v1()
+v1() // 0
 
 // set
 v1(1)
 
+// subscribe
+v1.subscribe(value => {
+  console.log(value)
+  return () => console.log('teardown', value)
+})
+
 // transform
-let v2 = v(v1, v1 => v1 * 2)
+let v2 = v(v1).map(v1 => v1 * 2)
 v2() // 2
 
 // compute
-let v3 = v([v1, v2], ([v1, v2]) => v1 + v2)
+let v3 = v(v1, v2).map((v1, v2) => v1 + v2)
 v3() // 3
-v3[0]() // 1
-
-// subscribe
-v([v1, v2, v3])(([v1, v2, v3]) => {
-  console.log(v1, v2, v3)
-  return () => console.log('teardown', v1, v2, v3)
-})
-// ... 1, 2, 3
-
-// interpolate
-let vsum = v`${v1} + ${v2} = ${v3}`()
-vsum() // "1 + 2 = 3"
-
-// diff
-v5((item, diff) => console.log(item, diff))
-item.done = true
-v5().done // false
-// ... { done: true, text: '' }, { done: true }
 
 // initialize
-let v6 = v(() => v5)
-v6() // v5
+let v4 = v(() => 4)
+v4() // 4
 
 // async iterator
-for await (const value of v(v6)) console.log(value)
+for await (const value of v4) console.log(value)
 
 // dispose
-;[v6, v5, v4, v3, v2, v1].map(v => v[Symbol.dispose]())
+v6[Symbol.dispose]()
 ```
-
+<!--
 #### Example
 
 ```js
@@ -429,13 +418,11 @@ $('.likes-count', el => h`<${el}>${
 
 likes.load()
 ```
-
-<br/>
-
+-->
 </details>
 
 
-
+<!--
 <details><summary><strong>a − attribute / property observer</strong></summary><br/>
 
 > props = a( source , path )
@@ -478,6 +465,7 @@ $('#my-component', el => {
 ```
 
 </details>
+-->
 
 ## R&D
 
