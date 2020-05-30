@@ -35,7 +35,7 @@
 </script>
 -->
 
-_Spect_ is minimalistic [_aspect-oriented_](https://en.wikipedia.org/wiki/Aspect-oriented_programming) web framework, enabling compact UI code and efficient DOM manipulations with 3 essential functions − _**$**_, _**h**_ and _**v**_, successors of [_jquery_](https://ghub.io/jquery), [_hyperscript_](https://ghub.io/hyperscript) and [_observable_](https://www.npmjs.com/package/observable).
+_Spect_ is minimalistic [_aspect-oriented_](https://en.wikipedia.org/wiki/Aspect-oriented_programming) web framework with smooth DX, enabling compact UI code with and efficient DOM manipulations with 3 essential functions − _**$**_, _**h**_ and _**v**_, successors of [_jquery_](https://ghub.io/jquery), [_hyperscript_](https://ghub.io/hyperscript) and [_observable_](https://www.npmjs.com/package/observable).
 
 :gem: **Separation of cross-cutting concerns**.
 
@@ -247,7 +247,7 @@ const $timer = $('.timer', el => {
 })
 ```
 
-_Related_: [selector-collection](ghub.io/selector-collection)
+_Related_: [selector-collection](https://ghub.io/selector-collection)
 
 <br/>
 
@@ -266,9 +266,6 @@ import { h, v } from 'spect'
 
 const text = v('foobar')
 
-// hyperscript
-const foo = h('foo', { bar: 'baz' }, text)
-
 /* jsx h */
 const bar = <bar>{ text }</bar>
 
@@ -283,10 +280,6 @@ const fooFoo = h`<foo>1</foo><foo>2</foo>`
 
 // hydrate
 h`<${foo} ...${props}>${ children }</>`
-
-// exposes props
-const a = h`<a x=1 y=2 />`
-a.props // { x: 1, y: 2 }
 ```
 
 #### Example
@@ -301,6 +294,7 @@ $('#clock', el => {
 })
 ```
 
+_Related_: [xhtm](https://ghub.io/xhtm)
 _R&D_: [lit-html](https://ghub.io/lit-html), [htm@1](https://ghub.io/htm) [htl](https://ghub.io/htl), [hyperscript](https://ghub.io/hyperscript), [incremental-dom](https://ghub.io/incremental-dom), [snabbdom](https://ghub.io/snabbdom), [nanomorph](https://ghub.io/nanomorph), [uhtml](https://ghub.io/uhtml) and others.
 
 <br/>
@@ -311,7 +305,6 @@ _R&D_: [lit-html](https://ghub.io/lit-html), [htm@1](https://ghub.io/htm) [htl](
 <details><summary><strong>i − input observer</strong></summary><br/>
 
 > value = i( input | selector )<br/>
-> value = i\`selector\`
 
 Input observable. Creates a get/set/subscribe function for values from _Input_, _Checkbox_, _Radio_, _Select_ or _Range_.
 
@@ -445,7 +438,7 @@ _R&D_: [observable/transform](https://ghub.io/observable), [react hooks](https:/
 
 <details><summary><strong>a − attribute / property observer</strong></summary><br/>
 
-> props = a( source , path, map? )
+> props = a( source , path )
 
 Attribute / property observable for defined target or element. Useful for forwarding props/attributes to templates.
 
