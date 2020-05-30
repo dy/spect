@@ -259,7 +259,7 @@ _Related_: [selector-collection](https://ghub.io/selector-collection)
 > el = h( tag | target , props? , ...children )<br/>
 > el = h\`...content\`<br/>
 
-[Hyperscript](https://ghub.io/hyperscript) with observables. Can be used as template literal or as JSX.
+[Hyperscript](https://ghub.io/hyperscript) with observables. Can be used as template literal or as JSX. Uses [htm](https://ghub.io/htm) syntax, so can be compiled away for production.
 
 ```js
 import { h, v } from 'spect'
@@ -280,6 +280,9 @@ const fooFoo = h`<foo>1</foo><foo>2</foo>`
 
 // hydrate
 h`<${foo} ...${props}>${ children }</>`
+
+// observables
+h`<a>${ rxSubject } - ${ asyncIterable } - ${ promise }</a>`
 ```
 
 #### Example
