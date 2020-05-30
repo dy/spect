@@ -10,10 +10,7 @@ const cache = new WeakSet
 const _cleanup = Symbol('cleanup'), _static = Symbol('static')
 
 const ctx = {init:false}
-
 export const h = hyperscript.bind(ctx)
-
-const html = htm.bind(h)
 
 export default function (statics) {
   if (!Array.isArray(statics)) return h(...arguments)
@@ -28,7 +25,7 @@ export default function (statics) {
   while (count--) {
     ctx.init = count ? true : false
     // init render may setup observables, which is undesirable - so we skip attributes
-    result = html(...(count ? [statics] : arguments))
+    result = htm.apply(h, arguments)
   }
 
   return primitive(result) ? document.createTextNode(result == null ? '' : result) :
@@ -37,6 +34,7 @@ export default function (statics) {
 }
 
 function hyperscript(tag, props, ...children) {
+  const init = this.init
   if (typeof tag === 'string') {
     // hyperscript-compat
     if (/#|\./.test(tag)) {
@@ -52,11 +50,16 @@ function hyperscript(tag, props, ...children) {
     }
     tag = document.createElement(tag)
 
-    // init-time render creates nodes that HTM caches, later hctx calls clones them instead of h call
-    if (this.init) tag[_static] = true
+    // shortcut for faster creation, static nodes are really simple
+    if (init) {
+      tag[_static] = true
+      for (let name in props) attr(tag, name, props[name])
+      tag.append(...flat(children))
+      return tag
+    }
   }
   // init call is irrelevant for dynamic nodes
-  else if (this.init) return
+  else if (init) return
   else if (typeof tag === 'function') {
     tag = tag({children, ...props})
     // FIXME: is there a more elegant way?
@@ -93,7 +96,7 @@ function hyperscript(tag, props, ...children) {
     }
 
   // append shortcut
-  if (!tag.childNodes.length) for (i of flat(children)) tag.append(i)
+  if (!tag.childNodes.length) tag.append(...flat(children))
   else merge(tag, tag.childNodes, flat(children))
 
   if (subs) subs.map((sub, i) => sube(sub, child => (
