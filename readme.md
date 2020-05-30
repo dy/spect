@@ -9,7 +9,7 @@
   <a href="https://travis-ci.org/spectjs/spect"><img src="https://travis-ci.org/spectjs/spect.svg?branch=master"/></a>
   <a href="https://bundlephobia.com/result?p=spect"><img alt="npm bundle size" src="https://img.shields.io/bundlephobia/minzip/spect?label=size"></a>
   <a href="https://npmjs.org/package/spect"><img alt="npm" src="https://img.shields.io/npm/v/spect"></a>
-  <img src="https://img.shields.io/badge/stability-stable-green"/>
+  <img src="https://img.shields.io/badge/stability-unstable-yellow"/>
 </p>
 
 <p align="center"><img src="/preview.png" width="566"/></p>
@@ -95,7 +95,7 @@ $('.user', async el => {
 </script>
 ```
 
-`$` defines a `.user` rule, assigning an _aspect_ callback for matching elements, similar to _CSS_ or _jQuery_, but live.<br/>
+`$` defines a `.user` rule, assigning an _aspect_ callback for matching elements on the page, similar to _CSS_ or _jQuery_, but live.<br/>
 `h` is _hyperscript_ / _htm_ in one, declaring markup effect. It rerenders automatically whenever `username` changes.<br/>
 `v` is _observable_ acting as _useState_.
 
@@ -247,7 +247,7 @@ const $timer = $('.timer', el => {
 })
 ```
 
-_Related_: [selector-collection](https://ghub.io/selector-collection)
+<!-- _Related_: [selector-collection](https://ghub.io/selector-collection) -->
 
 <br/>
 
@@ -297,8 +297,7 @@ $('#clock', el => {
 })
 ```
 
-_Related_: [xhtm](https://ghub.io/xhtm)
-_R&D_: [lit-html](https://ghub.io/lit-html), [htm@1](https://ghub.io/htm) [htl](https://ghub.io/htl), [hyperscript](https://ghub.io/hyperscript), [incremental-dom](https://ghub.io/incremental-dom), [snabbdom](https://ghub.io/snabbdom), [nanomorph](https://ghub.io/nanomorph), [uhtml](https://ghub.io/uhtml) and others.
+<!-- _Related_: [xhtm](https://ghub.io/xhtm) -->
 
 <br/>
 
@@ -337,7 +336,7 @@ celsius() // 0
 fahren() // 32
 ```
 
-_R&D_: [observable](https://ghub.io/observable).
+<!-- _R&D_: [observable](https://ghub.io/observable). -->
 
 <br/>
 
@@ -431,8 +430,6 @@ $('.likes-count', el => h`<${el}>${
 likes.load()
 ```
 
-_R&D_: [observable/transform](https://ghub.io/observable), [react hooks](https://ghub.io/unihooks), [observable proposal](https://github.com/tc39/proposal-observable), [observ](https://ghub.io/observ), [mutant](https://ghub.io/mutant), [rxjs](https://ghub.io/rxjs), [iron](https://github.com/ironjs/iron), [icaro](https://ghub.io/icaro), [introspected](https://ghub.io/introspected), [augmentor](https://ghub.io/augmentor) and others.
-
 <br/>
 
 </details>
@@ -482,6 +479,13 @@ $('#my-component', el => {
 
 </details>
 
+## R&D
+
+Existing solutions for the functions were considered:
+
+* **$**: [fast-on-load](https://ghub.io/fast-on-load) (class selectors), [selector-set](https://github.com/josh/selector-set) (feature-based selectors), [insertionQuery](https://github.com/naugtur/insertionQuery) (animation-based selectors), [selector-observer](https://github.com/josh/selector-observer), [reuse](https://ghub.io/reuse), [aspect-oriended-programming](https://en.wikipedia.org/wiki/Aspect-oriented_programming) libraries and others.
+* **h**: [lit-html](https://ghub.io/lit-html), [htm@1](https://ghub.io/htm) [htl](https://ghub.io/htl), [hyperscript](https://ghub.io/hyperscript), [incremental-dom](https://ghub.io/incremental-dom), [snabbdom](https://ghub.io/snabbdom), [nanomorph](https://ghub.io/nanomorph), [uhtml](https://ghub.io/uhtml) and others.
+* **v**: [observable/transform](https://ghub.io/observable), [react hooks](https://ghub.io/unihooks), [observable proposal](https://github.com/tc39/proposal-observable), [observ](https://ghub.io/observ), [mutant](https://ghub.io/mutant), [rxjs](https://ghub.io/rxjs), [iron](https://github.com/ironjs/iron), [icaro](https://ghub.io/icaro), [introspected](https://ghub.io/introspected), [augmentor](https://ghub.io/augmentor) and others.
 
 ## License
 
