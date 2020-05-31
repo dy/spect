@@ -158,47 +158,14 @@ t.skip('v: stringify', async t => {
   t.is(JSON.stringify(v1), '1')
   t.is(JSON.stringify(v2), `{"x":1}`)
 })
-// TODO from heer
-t('v: propagates internal item updates', async t => {
-  let a = v(0), deps = {a, x: 1}, b = v(deps)
-  let log = []
-  let unb = b(v => log.push({...v}))
-  t.is(log, [{x: 1, a: 0}])
-
-  a(1)
-  t.is(log, [{x: 1, a: 0}, {x: 1, a: 1}])
-
-  b.x(2)
-  t.is(log, [{x: 1, a: 0}, {x: 1, a: 1}, {x: 2, a: 1}])
-
-  let c = v({b})
-  log = []
-  c(v => log.push(v))
-  t.is(log, [{b: {x:2, a: 1}}])
-
-  unb()
-  log = []
-  a(2)
-  t.is(log, [{b: {x:2, a: 2}}])
-})
-t.todo('v: deep propagate internal props updates', async t => {
-  // DERESOLUTION: deep observables are confusing. Arrays/objects are used as a simple grouping container, sealed once passed.
-  let a = v(0), b = v([[a]])
-  let log
-  b(v => log = v)
-  t.is(log, [[0]])
-
-  a(1)
-  t.is(log, [[1]])
-})
-t('v: push multiple values', async t => {
+t.only('v: multiple values', async t => {
   let x = v()
   let log = []
-  x((a,b) => log.push(a, b))
+  x.subscribe((a,b,c) => log.push(a,b,c))
   t.is(log, [])
   x(1,2,3)
-  t.is(log, [1,2])
-  t.is(x(), 1)
+  t.is(log, [1,2,3])
+  t.is(x(), [1,2,3])
 })
 t('v: diff object', async t => {
   let x = v({x: v(1), y: v(2)})
