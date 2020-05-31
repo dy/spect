@@ -280,7 +280,7 @@ const bar = <a>{ text }</a>
 bar[Symbol.dispose]()
 ```
 
-### v − value / observable
+### v − value observable
 
 > value = v( init ? )
 
