@@ -2,7 +2,6 @@ import v from './v.js'
 
 const ELEMENT = 1
 const SPECT_CLASS = '👁'
-const CLASS_OFFSET = 0x1F700
 let count = 0
 
 const ids = {}, classes = {}, tags = {}, names = {}, animations = {}, setCache = new WeakMap
@@ -91,7 +90,7 @@ class $ extends Array {
       if (!anim) {
         const { sheet } = style, { cssRules } = sheet
         anim = animations[this._selector] = []
-        anim.id = String.fromCodePoint(CLASS_OFFSET + count++)
+        anim.id = SPECT_CLASS + '-' + (count++).toString(36)
         sheet.insertRule(`@keyframes ${ anim.id }{}`, cssRules.length)
         sheet.insertRule(`${ this._selector.map(sel => sel + `:not(.${ anim.id })`) }{animation:${ anim.id }}`, cssRules.length)
         sheet.insertRule(`.${ anim.id }{animation:${ anim.id }}`, cssRules.length)
