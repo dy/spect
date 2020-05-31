@@ -107,8 +107,9 @@ _Spect_ plays well with [snowpack](https://www.snowpack.dev/), but any other bun
   import { $, v, h } from 'spect'
 
   $('#timer', timer => {
-    let count = v(0), id = setInterval(() => count(c => c + 1), 1000)
-    h`<${timer}>${ v.map(date => date.toLocalTimeString()) }</>`
+    const count = v(0),
+      id = setInterval(() => count(c => c + 1), 1000)
+    h`<${timer}>${ count }</>`
     return () => clearInterval(id)
   })
 </script>
@@ -124,7 +125,7 @@ _Spect_ plays well with [snowpack](https://www.snowpack.dev/), but any other bun
   import { $, h, v } from 'spect'
 
   const count = v(0)
-  $('#count', el => count.map(c => el.value = c))
+  $('#count', el => count.subscribe(c => el.value = c))
   $('#inc', el => el.onclick = e => count(c => c+1))
   $('#dec', el => el.onclick = e => count(c => c-1))
 </script>
@@ -154,8 +155,8 @@ _Spect_ plays well with [snowpack](https://www.snowpack.dev/), but any other bun
     if (!form.checkValidity()) return
 
     // push data, update state
-    todos[0].push({ text: form.text.value })
-    todos(todos[0])
+    todos().push({ text: form.text.value })
+    todos(todos())
 
     form.reset()
   }))
@@ -169,7 +170,7 @@ _Spect_ plays well with [snowpack](https://www.snowpack.dev/), but any other bun
 <form></form>
 
 <script type="module">
-  import $ from 'spect'
+  import { $, h, v } from 'spect'
 
   const isValidEmail = s => /.+@.+\..+/i.test(s);
   $('form', form => {
@@ -253,19 +254,18 @@ foos[Symbol.dispose]()
 ```js
 import { h, v } from 'spect'
 
-const text = v('foobar')
+const text = v('foo')
 
-/* jsx h */
-const bar = <bar>{ text }</bar>
+// create <baz>
+const foo = h`<a>${ text }</a>`
+foo // <a>foo</a>
 
 // update content
-text('fooobar')
-
-// template literal
-const foo = h`<baz>${ text }</baz>`
+text('bar')
+foo // <a>bar</a>
 
 // fragment
-const fooFoo = h`<foo>1</foo><foo>2</foo>`
+const frag = h`<a>1</a><a>2</a>`
 
 // hydrate
 h`<${foo} ...${props}>${ children }</>`
@@ -273,16 +273,18 @@ h`<${foo} ...${props}>${ children }</>`
 // observables
 h`<a>${ rxSubject } - ${ asyncIterable } - ${ promise }</a>`
 
+/* jsx h */
+const bar = <a>{ text }</a>
+
 // dispose
-foo[Symbol.dispose]()
+bar[Symbol.dispose]()
 ```
 
 ### v − value / observable
 
-> value = v( source | init ? )
+> value = v( init ? )
 
 Simple observable state, tiny replacement for `useState`. Creates a getter/setter function with [observable](https://ghub.io/tc39/proposal-observable) interface.
-
 
 ```js
 import { v } from 'spect'
