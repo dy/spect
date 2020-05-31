@@ -12,7 +12,7 @@
   <img src="https://img.shields.io/badge/stability-unstable-yellow"/>
 </p>
 
-<p align="center"><img src="/preview.png" width="566"/></p>
+<p align="center"><img src="/preview.png" width="565"/></p>
 <p align="center">▶ <a href="https://codepen.io/dyv/pen/oNXXZEb" target="_blank"><strong>Run</strong></a></p>
 <br/>
 
@@ -26,7 +26,7 @@
     const date = v(new Date())
 
     h`<${el} datetime=${ date }>
-      ${ date`toLocaleTimeString` }
+      ${ date.map(d => d.toLocaleTimeString()) }
     </>`
 
     let id = setInterval(() => date(new Date()), 1000)
@@ -35,9 +35,9 @@
 </script>
 -->
 
-_Spect_ is minimalistic [_aspect-oriented_](https://en.wikipedia.org/wiki/Aspect-oriented_programming) web framework with smooth DX, enabling compact UI code with and efficient DOM manipulations via 3 essential functions − _**$**_, _**h**_ and _**v**_, successors of [_jquery_](https://ghub.io/jquery), [_hyperscript_](https://ghub.io/hyperscript) and [_observable_](https://www.npmjs.com/package/observable).
+_Spect_ is minimalistic [_aspect-oriented_](https://en.wikipedia.org/wiki/Aspect-oriented_programming) web framework with smooth DX, enabling compact UI code and efficient DOM manipulations via 3 essential functions − _**$**_, _**h**_ and _**v**_, successors of [_jquery_](https://ghub.io/jquery), [_hyperscript_](https://ghub.io/hyperscript) and [_observable_](https://www.npmjs.com/package/observable).
 
-:gem: **Separation of cross-cutting concerns**.
+:gem: **Separation of cross-cutting concerns** with aspects in CSS-like style.
 
 :deciduous_tree: **Native first** − semantic clean tree, vanilla js.
 
