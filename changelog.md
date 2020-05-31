@@ -2,6 +2,7 @@
 
 Version | Changes
 ---|---
+22.0.0 | v reduced to simple observable. Removed i, a.
 21.4.0 | HTM-based h with static caching.
 21.3.0 | HTM-based h - dropping metaprogramming due to complexity and poor result (~40% faster than HTM-based, but way less reliable).
 21.2.0 | Metaprogramming-based h algorightm, faster hyperscript algo (not really.)
