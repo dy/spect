@@ -35,7 +35,7 @@
 </script>
 -->
 
-_Spect_ is minimalistic [_aspect-oriented_](https://en.wikipedia.org/wiki/Aspect-oriented_programming) web framework with smooth DX, enabling compact UI code and efficient DOM manipulations via 3 essential functions − _**$**_, _**h**_ and _**v**_, successors of [_jquery_](https://ghub.io/jquery), [_hyperscript_](https://ghub.io/hyperscript) and [_observable_](https://www.npmjs.com/package/observable).
+_Spect_ is minimalistic [_aspect-oriented_](https://en.wikipedia.org/wiki/Aspect-oriented_programming) web framework with smooth DX, enabling compact UI code and efficient DOM manipulations with 3 essential functions − _**$**_, _**h**_ and _**v**_, successors of [_jquery_](https://ghub.io/jquery), [_hyperscript_](https://ghub.io/hyperscript) and [_observable_](https://www.npmjs.com/package/observable).
 
 :gem: **Separation of cross-cutting concerns** with aspects in CSS-like style.
 
@@ -45,7 +45,7 @@ _Spect_ is minimalistic [_aspect-oriented_](https://en.wikipedia.org/wiki/Aspect
 
 :baby_chick: **Low entry barrier**.
 
-:dizzy: **0** bundling, **0** server, **0** template.
+:dizzy: **0** bundling, **0** server, **0** boilerplate.
 
 :shipit: **Low-profile** − can be used as utility.
 
@@ -54,17 +54,17 @@ _Spect_ is minimalistic [_aspect-oriented_](https://en.wikipedia.org/wiki/Aspect
 
 ## Installation
 
-#### A. Directly as a module:
+### A. Directly as a module:
 
 ```html
 <script type="module">
-import { $, h, v } from 'https://unpkg.com/spect'
+import { $, h, v } from 'https://unpkg.com/spect?module'
 </script>
 ```
 
 Available from CDN: [unpkg](https://unpkg.com/spect?module), [pika](https://cdn.pika.dev/spect).
 
-#### B. As dependency from npm:
+### B. As dependency from npm:
 
 [![npm i spect](https://nodei.co/npm/spect.png?mini=true)](https://npmjs.org/package/spect/)
 
@@ -77,18 +77,56 @@ _Spect_ plays well with [snowpack](https://www.snowpack.dev/), but any other bun
 
 ## Examples
 
-### Data loading
+### Hello World
 
 ```html
 <div class="user">Loading...</div>
+
 <script type="module">
   import { $, h, v } from 'spect'
 
   $('.user', async el => {
-    const user = v()
-    h`<${el}>Hello, ${ user.map(u => u?.name ?? 'guest') }!</>`
+    // create user state
+    const user = v({})
+
+    // render element content, map user state
+    h`<${el}>Hello, ${ user.map(u => u.name || 'guest') }!</>`
+
+    // load data & set user
     user((await fetch('/user')).json())
   })
+</script>
+```
+
+### Timer
+
+```html
+<time id="timer"></time>
+
+<script type="module">
+  import { $, v, h } from 'spect'
+
+  $('#timer', timer => {
+    let count = v(0), id = setInterval(() => count(c => c + 1), 1000)
+    h`<${timer}>${ v.map(date => date.toLocalTimeString()) }</>`
+    return () => clearInterval(id)
+  })
+</script>
+```
+
+### Counter
+
+```html
+<output id="count">0</output>
+<button id="inc">+</button><button id="dec">-</button>
+
+<script type="module">
+  import { $, h, v } from 'spect'
+
+  const count = v(0)
+  $('#count', el => count.map(c => el.value = c))
+  $('#inc', el => el.onclick = e => count(c => c+1))
+  $('#dec', el => el.onclick = e => count(c => c-1))
 </script>
 ```
 
@@ -107,12 +145,18 @@ _Spect_ plays well with [snowpack](https://www.snowpack.dev/), but any other bun
 <script type="module">
   import { $, h, v } from 'spect'
 
-  const $todos = v([])
-  $('.todo-list', el => h`<${el}>${ $todos.map(todos => todos.map(todo => h`<li>${ item.text }</li>`)) }</>`)
+  const todos = v([])
+  $('.todo-list', el => h`<${el}>${ todos.map(items =>
+    items.map(item => h`<li>${ item.text }</li>`)
+  ) }</>`)
   $('.todo-form', form => form.addEventListener('submit', e => {
     e.preventDefault()
     if (!form.checkValidity()) return
-    $todos($todos.current.push({ text: form.text.value }))
+
+    // push data, update state
+    todos[0].push({ text: form.text.value })
+    todos(todos[0])
+
     form.reset()
   }))
 </script>
@@ -123,6 +167,7 @@ _Spect_ plays well with [snowpack](https://www.snowpack.dev/), but any other bun
 <!-- TODO: more meaningful validator -->
 ```html
 <form></form>
+
 <script type="module">
   import $ from 'spect'
 
@@ -138,36 +183,6 @@ _Spect_ plays well with [snowpack](https://www.snowpack.dev/), but any other bun
 </script>
 ```
 
-### Counter
-
-```html
-<button id="inc">+</button><button id="dec">-</button>
-<output class="count">0</output>
-<script type="module">
-  import { $, h, v } from 'spect'
-
-  const count = v(0)
-  $('.count', el => count.map(c => el.value = c))
-  $('#inc', el => el.onclick = e => count(c => c+1))
-  $('#dec', el => el.onclick = e => count(c => c-1))
-</script>
-```
-
-### Clock
-
-```html
-<time id="clock"></time>
-
-<script type="module">
-  import { $, v, h } from 'spect'
-
-  $('#clock', time => {
-    let date = v(new Date())
-    setInterval(() => date(new Date()), 1000)
-    h`<${time}>${ v.map(date => date.toISOString()) }</>`
-  })
-</script>
-```
 <!--
 ### Dialog
 
