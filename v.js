@@ -1,6 +1,6 @@
 import { symbol } from './src/util.js'
 
-export default function v() {
+export default function v(init) {
   const observers = [], current = [],
   get = () => current.length > 1 ? current : current[0],
   set = (...args) => (
@@ -23,10 +23,8 @@ export default function v() {
       complete && complete()
     ),
     subscription = { next, error, complete, unsubscribe, out:null }
-
     observers.push(subscription)
     if (current.length) subscription.cleanup = next(...current)
-
     return unsubscribe.unsubscribe = unsubscribe
   },
   map = map => {
@@ -56,11 +54,7 @@ export default function v() {
 
     [symbol.dispose]: () => {
       current.length = 0
-
-      const unsubs = observers.map(sub => {
-        if (sub.cleanup && sub.cleanup.call) sub.cleanup()
-        return sub.unsubscribe
-      })
+      const unsubs = observers.map(sub => ((typeof sub.cleanup === 'function') && sub.cleanup(), sub.unsubscribe))
       observers.length = 0
       unsubs.map(unsub => unsub())
       fn.closed = true
