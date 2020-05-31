@@ -35,7 +35,7 @@
 </script>
 -->
 
-_Spect_ is minimalistic [_aspect-oriented_](https://en.wikipedia.org/wiki/Aspect-oriented_programming) web framework with smooth DX, enabling compact UI code with and efficient DOM manipulations with 3 essential functions − _**$**_, _**h**_ and _**v**_, successors of [_jquery_](https://ghub.io/jquery), [_hyperscript_](https://ghub.io/hyperscript) and [_observable_](https://www.npmjs.com/package/observable).
+_Spect_ is minimalistic [_aspect-oriented_](https://en.wikipedia.org/wiki/Aspect-oriented_programming) web framework with smooth DX, enabling compact UI code with and efficient DOM manipulations via 3 essential functions − _**$**_, _**h**_ and _**v**_, successors of [_jquery_](https://ghub.io/jquery), [_hyperscript_](https://ghub.io/hyperscript) and [_observable_](https://www.npmjs.com/package/observable).
 
 :gem: **Separation of cross-cutting concerns**.
 
@@ -58,11 +58,11 @@ _Spect_ is minimalistic [_aspect-oriented_](https://en.wikipedia.org/wiki/Aspect
 
 ```html
 <script type="module">
-import { $, h, v } from 'https://unpkg.com/spect?module'
-
-// ... code here
+import { $, h, v } from 'https://unpkg.com/spect'
 </script>
 ```
+
+Available from CDN: [unpkg](https://unpkg.com/spect?module), [pika](https://cdn.pika.dev/spect).
 
 #### B. As dependency from npm:
 
@@ -70,120 +70,113 @@ import { $, h, v } from 'https://unpkg.com/spect?module'
 
 ```js
 import { $, h, v } from 'spect'
-
-// ... code here too
 ```
 
 _Spect_ plays well with [snowpack](https://www.snowpack.dev/), but any other bundler will do.
 
 
-## Usage
+## Examples
 
-Simple user welcoming example.
+### Data loading
 
-```js
+```html
 <div class="user">Loading...</div>
-
 <script type="module">
-import { $, h, v } from 'spect'
+  import { $, h, v } from 'spect'
 
-$('.user', async el => {
-  const user = v((await fetch('/user')).json())
-
-  h`<${el}>Hello, ${ v(user, u => u.name || 'guest') }!</>`
-})
+  $('.user', async el => {
+    const user = v()
+    h`<${el}>Hello, ${ user.map(u => u?.name ?? 'guest') }!</>`
+    user((await fetch('/user')).json())
+  })
 </script>
 ```
 
-`$` defines a `.user` rule, assigning an _aspect_ callback for matching elements on the page, similar to _CSS_ or _jQuery_, but live.<br/>
-`h` is _hyperscript_ / _htm_ in one, declaring markup effect. It rerenders automatically whenever `username` changes.<br/>
-`v` is _observable_ acting as _useState_.
+### Todo list
 
-<!--
-Consider simple todo app.
-
-```js
+```html
 <form class="todo">
   <label for="add-todo">
     <span>Add Todo</span>
-    <input name="text" required/>
+    <input name="text" required>
   </label>
   <button type="submit">Add</button>
   <ul class="todo-list"><ul>
 </form>
 
 <script type="module">
-import { $, h, on, list } from 'spect'
+  import { $, h, v } from 'spect'
 
-const todos = list([])
-
-$('.todo-list', el => h`<${el}>${ todos }</>`)
-
-$('.todo-form', el => on(el, 'submit', e => {
-  e.preventDefault()
-  if (!el.checkValidity()) return
-  todos.push({ text: e.elements.text.value })
-  el.reset()
-}))
+  const $todos = v([])
+  $('.todo-list', el => h`<${el}>${ $todos.map(todos => todos.map(todo => h`<li>${ item.text }</li>`)) }</>`)
+  $('.todo-form', form => form.addEventListener('submit', e => {
+    e.preventDefault()
+    if (!form.checkValidity()) return
+    $todos($todos.current.push({ text: form.text.value }))
+    form.reset()
+  }))
 </script>
 ```
 
-Input element here is uncontrolled and logic closely follows native js to provide _progressive enhancement_. _**`list`**_ creates an observable array `todos`, mutating it automatically rerenders _**`h`**_.
--->
+### Form validator
 
-### Examples
+<!-- TODO: more meaningful validator -->
+```html
+<form></form>
+<script type="module">
+  import $ from 'spect'
 
-* [todomvc](https://spectjs.github.io/spect/examples/todomvc.html)
+  const isValidEmail = s => /.+@.+\..+/i.test(s);
+  $('form', form => {
+    const valid = v(false)
+    h`<${form}>
+      <label for="email">Please enter an email address:</label>
+      <input#email onchange=${ e => valid(isValidEmail(e.target.value)) }/>
+      The address is ${ valid.map(b => b ? "valid" : "invalid") }
+    </>`
+  })
+</script>
+```
 
-See [/examples](examples) folder.
-
-<!--
-
-Maybe validation / sending form? (better for cases, eg. forms (all react cases))
-Or familiar examples of another framework, rewritten with spect? (better for docs, as spect vs N)
-Something showcasing wow features, like composable streaming and how that restructures waterfall rendering?
-Yes, makes more sense. The very natural flow, where with HTML you can prototype, then naturally upgrade to UI-framework, then add actions. Minimize design - code distance.
-
-an app, displaying a [list of users].
-First, create semantic HTML you'd regularly do without js.
+### Counter
 
 ```html
-<!doctype html>
-
-<template id="article">
-  <article>
-  </article>
-</template>
-
-<main>
-  <div id="articles">
-  </div>
-</main>
-```
-
-Second, make data loading circuit.
-
-```js
+<button id="inc">+</button><button id="dec">-</button>
+<output class="count">0</output>
 <script type="module">
-import { $, h, store } from 'https://unpkg.com/spect?module'
+  import { $, h, v } from 'spect'
 
-const articles = store({
-  items: [],
-  load() {
-    this.loading = true
-    this.items = await (await fetch(url)).json()
-    this.loading = false
-  }
-})
-
-$('#articles', el => {
-  h`<${el}>${
-    articles.map(item => h``)
-  }</>`
-})
+  const count = v(0)
+  $('.count', el => count.map(c => el.value = c))
+  $('#inc', el => el.onclick = e => count(c => c+1))
+  $('#dec', el => el.onclick = e => count(c => c-1))
 </script>
 ```
 
+### Clock
+
+```html
+<time id="clock"></time>
+
+<script type="module">
+  import { $, v, h } from 'spect'
+
+  $('#clock', time => {
+    let date = v(new Date())
+    setInterval(() => date(new Date()), 1000)
+    h`<${time}>${ v.map(date => date.toISOString()) }</>`
+  })
+</script>
+```
+<!--
+### Dialog
+
+```html
+``` -->
+
+[See all examples](examples).
+
+<!--
 _Spect_ doesn't make any guess about storage, actions, renderer or tooling setup and can be used with different flavors.
 
 #### Vanilla
@@ -207,20 +200,20 @@ Pending...
 
 ## API
 
-<details><summary><strong>$ − selector aspect</strong></summary><br/>
+### $ − selector aspect
 
-> $( scope? , selector , aspect? )<br/>
+> $( scope? , selector , aspect? )
 
 Observe selector, trigger `aspect` callback for elements matching the selector.
 
 * `selector` is a valid CSS selector.
-* `scope` is optional _HTMLElement_ or a list of elements to narrow down selector.
+* `scope` is optional _HTMLElement_ or a list of elements to narrow down observation scope.
 * `aspect` is a function with `(element) => teardown?` signature.
 
 ```js
 import { $, v, h } from 'spect'
 
-$('.foo', el => {
+let foos = $('.foo', el => {
   console.log('active')
   return () => console.log('inactive')
 })
@@ -231,34 +224,16 @@ document.body.append(foo)
 
 foo.remove()
 // ... "inactive"
+
+// dispose
+foos[Symbol.dispose]()
 ```
 
-#### Example
+### h − hyperscript / html
 
-```js
-import { $ } from 'spect'
+> el = h\`...content\`
 
-const $timer = $('.timer', el => {
-  let count = 0
-  let id = setInterval(() => {
-    el.innerHTML = `Seconds: ${count++}`
-  }, 1000)
-  return () => clearInterval(id)
-})
-```
-
-<!-- _Related_: [selector-collection](https://ghub.io/selector-collection) -->
-
-<br/>
-
-</details>
-
-
-<details><summary><strong>h − hyperscript / html</strong></summary><br/>
-
-> el = h\`...content\`<br/>
-
-[Hyperscript](https://ghub.io/hyperscript) with observables. Can be used as template literal or as JSX. Uses [htm](https://ghub.io/htm) syntax, so can be compiled away for production.
+[Hyperscript](https://ghub.io/hyperscript) with observables. Can be used as template literal with [htm](https://ghub.io/htm) syntax or as JSX.
 
 ```js
 import { h, v } from 'spect'
@@ -282,82 +257,17 @@ h`<${foo} ...${props}>${ children }</>`
 
 // observables
 h`<a>${ rxSubject } - ${ asyncIterable } - ${ promise }</a>`
+
+// dispose
+foo[Symbol.dispose]()
 ```
 
-#### Example
+### v − value / observable
 
-```js
-import { $, v, h } from 'spect'
+> value = v( source | init ? )
 
-$('#clock', el => {
-  let date = v(new Date())
-  setInterval(() => date(new Date()), 1000)
-  h`<${el}>${ v(date, date => date.toISOString())} </>`
-})
-```
+Simple observable state, tiny replacement for `useState`. Creates a getter/setter function with [observable](https://ghub.io/tc39/proposal-observable) interface.
 
-<!-- _Related_: [xhtm](https://ghub.io/xhtm) -->
-
-<br/>
-
-</details>
-
-<!--
-<details><summary><strong>i − input observer</strong></summary><br/>
-
-> value = i( input | selector )<br/>
-
-Input observable. Creates a get/set/subscribe function for values from _Input_, _Checkbox_, _Radio_, _Select_ or _Range_.
-
-```js
-import { i, v } from 'spect'
-
-// input
-let ids = i(h`<input#id value=1/>`)
-
-// subscribe
-ids(value => console.log(value))
-
-// computed
-let sum = v([i`#a`, i`#b`], ([a, b]) => a + b)
-```
-
-#### Example
-
-```js
-import { i, v } from 'spect'
-
-const f = i`#fahren`, c = i`#celsius`
-const celsius = v(f, f => (f - 32) / 1.8)
-const fahren = v(c, c => (c * 9) / 5 + 32)
-
-celsius() // 0
-fahren() // 32
-```
-
-</details>
--->
-
-
-<details><summary><strong>v − value / observable</strong></summary><br/>
-
-> value = v( source | init ? )<br/>
-
-Simple observable state, tiny replacement for `useState`. A getter/setter function with [observable](https://ghub.io/tc39/proposal-observable) interface.
-
-<!--
-TODO: move to strui
-> value = v\`...content\`<br/>
-TODO: move to 0b
-* _Primitive_ − simple observable state.
-* _Function_ − initialized observable state.
-* _Observable_ (_v_, [observ-*](https://ghub.io/observ), [observable](https://ghub.io/observable), [mutant](https://ghub.io/mutant) etc.) − 2-way bound wrapper observable.
-* _AsyncIterator_ or [`[Symbol.asyncIterator]`](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Symbol/asyncIterator) − mapped iterator observable.
-* _Promise_ or _thenable_ − promise state observable.
-* _Standard observable_ or [`[Symbol.observable]`](https://ghub.io/symbol-observable) ([rxjs](https://ghub.io/rxjs), [zen-observable](https://ghub.io/zen-observable) etc.) − mapped source observable.
-* _Array_, _Object_ − list / group observable, eg. for computed observable.
-* _Template string_ − observable string with dynamic fields.
--->
 
 ```js
 import { v } from 'spect'
@@ -380,91 +290,21 @@ v1.subscribe(value => {
 let v2 = v(v1).map(v1 => v1 * 2)
 v2() // 2
 
-// compute
-let v3 = v(v1, v2).map((v1, v2) => v1 + v2)
+// initialize
+let v3 = v(() => 3)
 v3() // 3
 
-// initialize
-let v4 = v(() => 4)
-v4() // 4
+// set with fn
+v3(v => v + 1)
+v3() // 4
 
 // async iterator
-for await (const value of v4) console.log(value)
+for await (const value of v3) console.log(value)
 
 // dispose
-v6[Symbol.dispose]()
-```
-<!--
-#### Example
-
-```js
-import { v } from 'spect'
-
-let likes = v({
-  count: null,
-  loading: false,
-  async load() {
-    this.loading = true
-    this.count = await (await fetch('/likes')).json()
-    this.loading = false
-  }
-})
-
-$('.likes-count', el => h`<${el}>${
-    v(likes, ({loading, count}) => loading ? `Loading...` : `Likes: ${ likes.count }`)
-  }</>`
-})
-
-likes.load()
-```
--->
-</details>
-
-
-<!--
-<details><summary><strong>a − attribute / property observer</strong></summary><br/>
-
-> props = a( source , path )
-
-Attribute / property observable for defined target or element. Useful for forwarding props/attributes to templates.
-
-```js
-import { h, v, a } from 'spect'
-
-let item = { done: false, text: '' }
-
-// observe single prop
-let done = a(item, 'done')
-done() // false
-
-// observe multiple props
-let vitem = v({a(item, 'done'), a(item, 'text')})
-vitem.done() // false
-
-// observe attribute
-let el = h`<a loading/>`
-let loading = a(el, 'loading')
-loading() // true
-
-el.setAttribute('loading', false)
-loading() // null
+v3[Symbol.dispose]()
 ```
 
-#### Example
-
-```js
-import { $, h, a } from 'spect'
-
-$('#my-component', el => {
-  h`<${el}>
-    <header>${ a(el, 'title') }</header>
-    <main>${ a(el, 'description', desc => desc.slice(0,82) + '...') }</main>
-  </>`
-})
-```
-
-</details>
--->
 
 ## R&D
 
@@ -474,11 +314,15 @@ Existing solutions for the functions were considered:
 * **h**: [lit-html](https://ghub.io/lit-html), [htm](https://ghub.io/htm), [htl](https://ghub.io/htl), [hyperscript](https://ghub.io/hyperscript), [incremental-dom](https://ghub.io/incremental-dom), [snabbdom](https://ghub.io/snabbdom), [nanomorph](https://ghub.io/nanomorph), [uhtml](https://ghub.io/uhtml) and others.
 * **v**: [rxjs](https://ghub.io/rxjs), [observable](https://ghub.io/observable), [react hooks](https://ghub.io/unihooks), [observable proposal](https://github.com/tc39/proposal-observable), [observ](https://ghub.io/observ), [mutant](https://ghub.io/mutant), [iron](https://github.com/ironjs/iron), [icaro](https://ghub.io/icaro), [introspected](https://ghub.io/introspected), [augmentor](https://ghub.io/augmentor) and others.
 
-Spect has long story of research, at some point it had repository reset. See [changelog](./changelog.md).
+Spect has long story of research, at v13.0 it had repository reset. See [changelog](./changelog.md).
+
+## Related
+
+* [element-props](https://github.com/spectjs/element-props) − unified access to element props with observable support. Comes handy for organizing components.
+* [strui](https://github.com/spectjs/strui) − collection of UI streams, such as router, storage etc. Comes handy for building complex reactive web-apps (spect, rxjs etc).
 
 ## License
 
 MIT
-
 
 <p align="center">ॐ</p>

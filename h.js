@@ -1,5 +1,7 @@
-import { symbol, observable, primitive, attr, esc } from './src/util.js'
 import htm from 'htm'
+
+if (!Symbol.observable)Symbol.observable=Symbol('observable')
+if (!Symbol.dispose)Symbol.dispose=Symbol('dispose')
 
 // DOM
 const TEXT = 3, ELEM = 1, ATTR = 2, COMM = 8, FRAG = 11, COMP = 6,
@@ -72,7 +74,7 @@ function hyperscript(tag, props, ...children) {
     return tag
   }
   // clean up previous observables
-  else if (tag[_cleanup]) { for (let fn of tag[_cleanup]) fn(); tag[_cleanup] = null }
+  else if (tag[Symbol.dispose]) tag[Symbol.dispose]()
 
   // apply props
   let cleanup = [], subs, i, child
@@ -84,6 +86,17 @@ function hyperscript(tag, props, ...children) {
     // primitive is more probable also less expensive than observable check
     if (primitive(value)) attr(tag, name, value)
     else if (observable(value)) cleanup.push(sube(value, v => attr(tag, name, v)))
+    else if (name === 'style') {
+      for (let s in value) {
+        let v = value[s]
+        if(observable(v)) cleanup.push(sube(v, v => tag.style.setProperty(s, v)))
+        else {
+          let match = v.match(/(.*)\W+!important\W*$/);
+          if (match) tag.style.setProperty(s, match[1], 'important')
+          else tag.style.setProperty(s, v)
+        }
+      }
+    }
     else attr(tag, name, value)
   }
 
@@ -105,9 +118,12 @@ function hyperscript(tag, props, ...children) {
   )))
 
   if (cleanup.length) tag[_cleanup] = cleanup
+  tag[Symbol.dispose] = dispose
 
   return tag
 }
+
+function dispose () { if (this[_cleanup]) for (let fn of this[_cleanup]) fn(); this[_cleanup] = null }
 
 const flat = (children) => {
   let out = [], i = 0, item
@@ -123,12 +139,13 @@ const flat = (children) => {
 // lil subscriby (v-less)
 function sube(target, fn) {
   let unsub, stop
-  if (typeof target === 'function') unsub = target(fn)
-  else if (target[symbol.observable]) unsub = target[symbol.observable]().subscribe({next:fn})
+  if (target[Symbol.observable]) unsub = target[Symbol.observable]().subscribe({next:fn})
   else if (target[Symbol.asyncIterator]) {
     unsub = () => stop = true
     ;(async () => { for await (target of target) { if (stop) break; fn(target) } })()
   }
+  else if (target.then) target.then(fn)
+  else if (typeof target === 'function' && target.set) unsub = target(fn)
   return unsub
 }
 
@@ -186,3 +203,39 @@ const replace = (parent, from, to, end) => {
     else merge(parent, [from], to, end)
   }
 }
+
+// excerpt from element-props
+const attr = (el, k, v, desc) => (
+  el[k] !== v &&
+  // avoid readonly props https://jsperf.com/element-own-props-set/1
+  (!(k in el.constructor.prototype) || !(desc = Object.getOwnPropertyDescriptor(el.constructor.prototype, k)) || desc.set) &&
+    (el[k] = v),
+  v === false || v == null ? el.removeAttribute(k) :
+  typeof v !== 'function' && el.setAttribute(k,
+    v === true ? '' :
+    typeof v === 'number' || typeof v === 'string' ? v :
+    k === 'class' && Array.isArray(v) ? v.filter(Boolean).join(' ') :
+    k === 'style' && v.constructor === Object ?
+      (k=v,v=Object.values(v),Object.keys(k).map((k,i) => `${k}: ${v[i]};`).join(' ')) :
+    ''
+  )
+)
+
+// not so generic, but performant
+const primitive = (val) =>
+  !val ||
+  typeof val === 'string' ||
+  typeof val === 'boolean' ||
+  typeof val === 'number' ||
+  (typeof val === 'object' ? (val instanceof RegExp || val instanceof Date) :
+  typeof val !== 'function')
+
+const observable = (arg) => !primitive(arg) &&
+  !!(
+    arg[Symbol.observable] || arg[Symbol.asyncIterator] ||
+    (typeof arg === 'function' && arg.set) ||
+    arg.next || arg.then
+    // || arg.mutation && arg._state != null
+  )
+
+const observer = (next, error, complete) => (next && next.call) || (error && error.call) || (complete && complete.call) || (next && observer(next.next, next.error, next.complete))

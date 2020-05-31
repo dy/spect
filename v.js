@@ -1,133 +1,61 @@
-import { primitive, observable, symbol } from './src/util.js'
-import Channel from './src/channel.js'
+export default function v() {
+  const observers = [], current = [],
+  get = () => current.length > 1 ? current : current[0],
+  set = (...args) => (
+    args = (typeof args[0] === 'function' ? args[0](...current) : args),
+    Array.isArray(args) ? args.map((val, i) => current[i] = val) : current[0] = args,
+    observers.map(sub => (
+      (typeof sub.cleanup === 'function') && sub.cleanup(),
+      (sub.next) && (sub.cleanup = sub.next(...current))
+    ))
+  ),
+  error = e => observers.map(sub => sub.error && sub.error(e)),
+  fn = (...args) => (!fn.closed && (args.length ? set(...args) : get())),
+  subscribe = (next, error, complete) => {
+    next = next && next.next || next
+    error = next && next.error || error
+    complete = next && next.complete || complete
 
-const depsCache = new WeakMap
-
-export default function v(source, map=v=>v,unmap=v=>v) {
-  if (source && source.raw) return v([].slice.call(arguments, 1), fields => String.raw(source, ...fields))
-
-  // current is mapped value (map can be heavy to call each get)
-  let get = () => channel.current,
-      set = (val, dif) => channel.push(map(unmap(val)), dif)
-
-  const channel = new Channel(get, set),
-    error = channel.error.bind(channel)
-
-  const fn = channel.fn
-
-  if (arguments.length) {
-    if (primitive(source)) {
-      set(source)
-    }
-    else if (typeof source === 'function') {
-      // v / observ
-      if (observable(source)) {
-        channel.set = set = v => source(unmap(v))
-        channel.subscribe(null, null, source(v => channel.push(map(v)), error))
-      }
-      // initializer
-      else {
-        set(source())
-      }
-    }
-    // Observable (stateless)
-    else if (source && source[symbol.observable]) {
-      channel.set = set = () => {}
-      let unsubscribe = source[symbol.observable]().subscribe({
-        next: v => channel.push(map(v)),
-        error
-      })
-      unsubscribe = unsubscribe.unsubscribe || unsubscribe
-      channel.subscribe(null, null, unsubscribe)
-    }
-    // async iterator (stateful, initial undefined)
-    else if (source && (source.next || source[Symbol.asyncIterator])) {
-      channel.set = set = () => {}
-      let stop
-      ;(async () => {
-        try {
-          for await (source of source) {
-            if (stop) break
-            channel.push(map(source))
-          }
-        } catch(e) {
-          error(e)
-        }
-      })()
-      channel.subscribe(null, null, () => stop = true)
-    }
-    // promise (stateful, initial undefined)
-    else if (source && source.then) {
-      channel.set = set = p => (delete channel.current, p.then(v => channel.push(map(v)), error))
-      set(source)
-    }
-    // deps
-    // NOTE: array/object may have symbol.observable, which redefines default deps behavior
-    else {
-      let vals = Array.isArray(source) ? [] : {}, keys = Object.keys(source), dchannel = new Channel()
-
-      // prevent recursion
-      if (!depsCache.has(source)) depsCache.set(source, fn)
-
-      // init observables
-      keys.forEach(key => {
-        // reserved fn props - length, arguments etc.
-        if (key in fn) (delete fn[key], Object.defineProperty(fn, key, {configurable: true, enumerable: true, writable: true}))
-        let dep
-        if (depsCache.has(source[key])) (dep = depsCache.get(source[key]))
-        else if (observable(source[key])) (dep = v(source[key]))
-        // reuse existing prop observable
-        else if (depsCache.get(source)[key]) (dep = depsCache.get(source)[key])
-        // redefine source property to observe it
-        else {
-          dep = v(() => vals[key] = source[key])
-          dep(v => vals[key] = source[key] = v)
-          // props observing logic is moved to `a`
-        }
-        fn[key] = dep
-      })
-
-      // we can handle only static deps
-      if (!source[symbol.dispose]) source[symbol.dispose] = null
-      try { Object.seal(source) } catch {}
-
-      const teardown = []
-      for (const key in fn) {
-        const dep = fn[key]
-        teardown.push(dep(val => {
-          vals[key] = val
-          // avoid self-recursion
-          if (fn !== dep) dchannel.push(vals, {[key]: val})
-        }, error))
-      }
-
-      // any deps change triggers update
-      dchannel.subscribe((values, diff) => channel.push(map(values), diff))
-
-      // if initial value is derivable from initial deps - set it
-      if (Object.keys(vals).length || !keys.length) dchannel.push(vals, vals)
-
-      channel.set = set = v => (Object.keys(v = unmap(v)).map(key => fn[key](v[key])))
-      channel.subscribe(null, null, () => {
-        dchannel.close()
-        teardown.map(teardown => teardown())
-        teardown.length = 0
-        for (let key in fn) if (!fn[key][symbol.observable]().observers.length) {
-          depsCache.delete(fn[key])
-          fn[key][symbol.dispose]()
-        }
-      })
-    }
+    const unsubscribe = () => (
+      observers.length && observers.splice(observers.indexOf(subscription) >>> 0, 1),
+      complete && complete()
+    ),
+    subscription = { next, error, complete, unsubscribe, out:null }
+    observers.push(subscription)
+    if (current.length) subscription.cleanup = next(...current)
+    return unsubscribe.unsubscribe = unsubscribe
+  },
+  map = map => {
+    const mapped = v()
+    fn.subscribe(v => mapped(map(v)))
+    return mapped
   }
 
-  // cancel subscriptions, dispose
-  channel.subscribe(null, null, () => {
-    channel.get = get = channel.set = set = () => {}
-    delete channel.current
+  if (arguments.length) set(...arguments)
+
+  return Object.assign(fn, {
+    closed: false,
+    valueOf: fn,
+    toString: fn,
+    [Symbol.toPrimitive]: (hint) => fn(),
+
+    // FIXME: replace with 0b
+    subscribe, map,
+    [Symbol.observable||(Symbol.observable=Symbol('observable'))]: () => fn,
+    async *[Symbol.asyncIterator]() {
+      let resolve, buf = [], p = new Promise(r => resolve = r),
+        unsub = fn.subscribe(v => ( buf.push(v), resolve(), p = new Promise(r => resolve = r) ))
+      try { while (1) yield* buf.splice(0), await p }
+      catch {}
+      finally { unsub() }
+    },
+
+    [Symbol.dispose||(Symbol.dispose=Symbol('dispose'))]: () => {
+      current.length = 0
+      const unsubs = observers.map(sub => ((typeof sub.cleanup === 'function') && sub.cleanup(), sub.unsubscribe))
+      observers.length = 0
+      unsubs.map(unsub => unsub())
+      fn.closed = true
+    }
   })
-
-  // prevent further modifications
-  Object.seal(fn)
-
-  return fn
 }

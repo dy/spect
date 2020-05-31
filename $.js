@@ -1,9 +1,7 @@
-import { symbol, desc } from './src/util.js'
-import Channel from './src/channel.js'
+import v from './v.js'
 
 const ELEMENT = 1
 const SPECT_CLASS = '👁'
-const CLASS_OFFSET = 0x1F700
 let count = 0
 
 const ids = {}, classes = {}, tags = {}, names = {}, animations = {}, setCache = new WeakMap
@@ -41,15 +39,15 @@ class $ extends Array {
     super()
 
     Object.defineProperties(this, {
-      _channel: desc(new Channel()),
-      _items: desc(new WeakMap),
-      _delete: desc(new WeakSet),
-      _teardown: desc(new WeakMap),
-      _scope: desc(scope),
-      _fn: desc(fn),
-      _selector: desc(),
-      _match: desc(),
-      _animation: desc()
+      _channel: {value: v(this)},
+      _items: {value: new WeakMap},
+      _delete: {value: new WeakSet},
+      _teardown: {value: new WeakMap},
+      _scope: {value: scope},
+      _fn: {value: fn},
+      _selector: {writable: true},
+      _match: {writable: true},
+      _animation: {writable: true}
     })
 
     // ignore non-selector collections
@@ -92,7 +90,7 @@ class $ extends Array {
       if (!anim) {
         const { sheet } = style, { cssRules } = sheet
         anim = animations[this._selector] = []
-        anim.id = String.fromCodePoint(CLASS_OFFSET + count++)
+        anim.id = SPECT_CLASS + '-' + (count++).toString(36)
         sheet.insertRule(`@keyframes ${ anim.id }{}`, cssRules.length)
         sheet.insertRule(`${ this._selector.map(sel => sel + `:not(.${ anim.id })`) }{animation:${ anim.id }}`, cssRules.length)
         sheet.insertRule(`.${ anim.id }{animation:${ anim.id }}`, cssRules.length)
@@ -175,7 +173,7 @@ class $ extends Array {
 
     // notify
     this._teardown.set(el, this._fn && this._fn(el))
-    this._channel.push(this)
+    this._channel(this)
   }
 
   delete(el, immediate = false) {
@@ -201,7 +199,7 @@ class $ extends Array {
         else if (teardown.then) teardown.then(fn => fn && fn.call && fn())
       }
       this._teardown.delete(el)
-      this._channel.push(this)
+      this._channel(this)
 
       setCache.get(el).delete(this)
       if (!setCache.get(el).size) {
@@ -218,7 +216,7 @@ class $ extends Array {
     else requestAnimationFrame(del)
   }
 
-  [symbol.observable]() {
+  [Symbol.observable||(Symbol.observable=Symbol('observable'))]() {
     const channel = this._channel, set = this
     return {
       subscribe(){
@@ -235,7 +233,7 @@ class $ extends Array {
 
   has(item) { return this._items.has(item) }
 
-  [symbol.dispose]() {
+  [Symbol.dispose||(Symbol.dispose=Symbol('dispose'))]() {
     const self = this
 
     if (self._selector) {
@@ -259,7 +257,7 @@ class $ extends Array {
       }
     }
 
-    self._channel.close()
+    self._channel[Symbol.dispose]()
     let els = [...self]
     self.length = 0
     els.forEach(el => self.delete(el, true))
