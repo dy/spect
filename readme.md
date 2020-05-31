@@ -213,7 +213,7 @@ Observe selector, trigger `aspect` callback for elements matching the selector.
 ```js
 import { $, v, h } from 'spect'
 
-$('.foo', el => {
+let foos = $('.foo', el => {
   console.log('active')
   return () => console.log('inactive')
 })
@@ -224,6 +224,9 @@ document.body.append(foo)
 
 foo.remove()
 // ... "inactive"
+
+// dispose
+foos[Symbol.dispose]()
 ```
 
 ### h − hyperscript / html
@@ -254,8 +257,10 @@ h`<${foo} ...${props}>${ children }</>`
 
 // observables
 h`<a>${ rxSubject } - ${ asyncIterable } - ${ promise }</a>`
-```
 
+// dispose
+foo[Symbol.dispose]()
+```
 
 ### v − value / observable
 
@@ -288,6 +293,10 @@ v2() // 2
 // initialize
 let v3 = v(() => 3)
 v3() // 3
+
+// set with fn
+v3(v => v + 1)
+v3() // 4
 
 // async iterator
 for await (const value of v3) console.log(value)

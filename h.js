@@ -1,4 +1,4 @@
-import { symbol, observable, primitive, attr, esc } from './src/util.js'
+import { symbol, observable, primitive, attr } from './src/util.js'
 import htm from 'htm'
 
 // DOM
@@ -72,7 +72,7 @@ function hyperscript(tag, props, ...children) {
     return tag
   }
   // clean up previous observables
-  else if (tag[_cleanup]) { for (let fn of tag[_cleanup]) fn(); tag[_cleanup] = null }
+  else if (tag[Symbol.dispose]) tag[Symbol.dispose]()
 
   // apply props
   let cleanup = [], subs, i, child
@@ -105,9 +105,12 @@ function hyperscript(tag, props, ...children) {
   )))
 
   if (cleanup.length) tag[_cleanup] = cleanup
+  tag[Symbol.dispose] = dispose
 
   return tag
 }
+
+const dispose = tag => { if (tag[_cleanup]) for (let fn of tag[_cleanup]) fn(); tag[_cleanup] = null }
 
 const flat = (children) => {
   let out = [], i = 0, item

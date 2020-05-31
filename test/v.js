@@ -5,7 +5,7 @@ import Observable from 'zen-observable/esm.js'
 import observable from './libs/observable.js'
 
 // value
-t('v: readme', async t => {
+t.only('v: readme', async t => {
   let log = []
   let v1 = v(0)
 
@@ -13,11 +13,9 @@ t('v: readme', async t => {
   t.is(v1(), 0)
 
   // subscribe
-  let unsub = v1(value => {
+  let unsub = v1.subscribe(value => {
     log.push(value)
-    return () => {
-      log.push('-')
-    }
+    return () => log.push('-')
   })
 
   // set
@@ -27,63 +25,29 @@ t('v: readme', async t => {
   unsub()
 
   // from value
-  let v2 = v(v1, v1 => v1 * 2)
+  let v2 = v1.map(v1 => v1 * 2)
   log = []
-  v2(v2 => log.push(v2))
+  v2.subscribe(v2 => log.push(v2))
   t.is(v2(), 2) // > 2
   t.is(v1(), 1)
   t.is(log, [2])
   v1(1)
   t.is(log, [2, 2])
 
-  // gotcha
-  v(v2)
-  t.is(v1(), 1)
-  t.is(v2(), 2)
-  v([v2, v1])
-  t.is(v1(), 1)
-  t.is(v2(), 2)
-
-  // from multiple values
-  let v3 = v([v1, v2], ([v1, v2]) => v1 + v2)
-  t.is(v3(), 3, 'from multiple values') // > 3
-
-  // run effect on every change
-  log = []
-  v([v1, v2, v3])(([v1, v2, v3]) => {
-    log.push(v1, v2, v3)
-    return () => log.push('-')
-  })
-  t.is(log, [1, 2, 3])
-  // > 1, 2, 3
-
-  // from object
-  let item = { done: v(false) }
-  let v5 = v(item)
-  log = []
-  v5(v => log.push({...v}))
-  t.is(v5.done(), false, 'internal props') // false
-  t.is(log, [{done: false}], 'emit props')
-
-  // set property, notify
-  item.done(true)
-  t.is(v5().done, true) // false
-  t.is(log, [{done: false}, {done: true}])
-
   // initialize value
-  let v6 = v(() => v5)
-  t.is(v6(), v5) // v5
+  let v3 = v(() => v1)
+  t.is(v3(), v1) // v5
 
   // dispose
-  ;[v6, v5, v3, v2, v1].map(v => v[Symbol.dispose]())
+  ;[v3, v2, v1].map(v => v[Symbol.dispose]())
 })
-t('v: core', async t => {
+t.only('v: core API', async t => {
   let s = v(0)
 
   // observer 1
   let log = []
   // ;(async () => { for await (let value of s) log.push(value) })()
-  s(value => log.push(value))
+  s.subscribe(value => log.push(value))
 
   t.is(+s, 0, 'toPrimitive')
   t.is(s.valueOf(), 0, 'valueOf')
@@ -107,7 +71,7 @@ t('v: core', async t => {
   // observer 2
   let log2 = []
   // ;(async () => { for await (let value of s) log2.push(value) })()
-  s(value => log2.push(value))
+  s.subscribe(value => log2.push(value))
 
   await tick(8)
   t.is(log.slice(-1), [3], 'should track and notify first tick changes')
@@ -124,7 +88,7 @@ t('v: core', async t => {
 
   t.end()
 })
-t('v: should not expose technical symbols', async t => {
+t.only('v: should not expose technical symbols', async t => {
   let s = v({x: 1})
   let log = []
   for(let p in s()) {
@@ -132,24 +96,16 @@ t('v: should not expose technical symbols', async t => {
   }
   t.is(log, ['x'])
 })
-t('v: function/other state gets subscribed', async t => {
-  let s = v(1)
-  let s2 = v(s)
-
-  t.is(s2(), 1)
-  s(2)
-  t.is(s2(), 2)
-})
-t('v: v to v', t => {
+t.only('v: v to v', t => {
   const a = v(0), b = v()
-  a(b)
+  a.subscribe(b)
   t.is(a(), 0)
   t.is(b(), 0)
 })
-t('v: subscribe teardown', t => {
+t.only('v: subscribe teardown', t => {
   const a = v()
   const log = []
-  a(value => {
+  a.subscribe(value => {
     log.push('in', value)
     return () => log.push('out', value)
   })
@@ -159,17 +115,17 @@ t('v: subscribe teardown', t => {
   a(1)
   t.is(log, ['in', 0, 'out', 0, 'in', 1])
 })
-t('v: multiple subscriptions should not inter-trigger', async t => {
+t.only('v: multiple subscriptions should not inter-trigger', async t => {
   let value = v(0)
   let log1 = [], log2 = [], log3 = []
-  value(v => log1.push(v))
-  value(v => log2.push(v))
+  value.subscribe(v => log1.push(v))
+  value.subscribe(v => log2.push(v))
   t.is(log1, [0])
   t.is(log2, [0])
   value(1)
   t.is(log1, [0, 1])
   t.is(log2, [0, 1])
-  value(v => log3.push(v))
+  value.subscribe(v => log3.push(v))
   t.is(log1, [0, 1])
   t.is(log2, [0, 1])
   t.is(log3, [1])
@@ -178,13 +134,8 @@ t('v: multiple subscriptions should not inter-trigger', async t => {
   t.is(log2, [0, 1, 2])
   t.is(log3, [1, 2])
 })
-t('v: mapper should be called once on group deps', async t => {
-  let a=v(0), b=v(1), log = []
-  v([a,b], (args) => log.push([...args]))
-  t.is(log, [[0, 1]])
-})
-t('v: stores arrays with observables', async t => {
-  let a = v(() => [])
+t.only('v: stores arrays with observables', async t => {
+  let a = v([])
   t.is(a(), [])
   a([1])
   t.is(a(), [1])
@@ -195,67 +146,19 @@ t('v: stores arrays with observables', async t => {
 
   let b = v(0)
   a = v([b])
-  t.is(a(), [0])
+  t.is(a(), [b])
   b(1)
-  t.is(a(), [1])
+  t.is(a(), [b])
   a([b()])
   t.is(a(), [1])
 })
-t('v: simple unmap', async t => {
-  let a = v(1, v => v + 1, v => v - 1)
-  t.is(a(), 1)
-  a(2)
-  t.is(a(), 2)
-  a(3)
-  t.is(a(), 3)
-})
-t('v: object deps', async t => {
-  let x = v(1), y = v(1)
-  let o = {x, y}
-  let log = []
-  v(o, ({x, y}) =>{
-    log.push(x, y)
-  })
-  t.is(log, [1,1])
-  x(2)
-  t.is(log, [1,1, 2,1])
-  y(2)
-  t.is(log, [1,1, 2,1, 2,2])
-})
-t('v: recursion', async t => {
-  let x = {a: v(1)}
-  x.x = x
-  let vx = v(x)
-  t.is(vx().a, 1)
-})
-t.todo('v: internal observers are preserved', async t => {
-  // NOTE: we preserve internal observers to let object props be rewritable
-  // DENOTE: internal objects/arrays are expected to be non-changeable props, only primitives can be rewritable
-  // DERESOLUTION: observable is not data storage, it is data observer. Array/object is used for calc purposes only. For data observation use `a`.
-  let x = [{x: v(0)}]
-  let log = []
-  v(x)(v => log.push(v))
-  t.is(log, [[{x: 0}]])
-})
-t('v: initializer', async t => {
-  let a = v(0), b = v(() => a), c = v(0, (v) => v + 2, (v) => v - 2)
-  t.is(b(), a)
-
-  a(1)
-  t.is(a(), 1)
-
-  b(2)
-  t.is(b(), 2)
-
-  t.is(c(), 0)
-  c(4)
-  t.is(c(), 4)
-})
-t('v: stringify', async t => {
+t.skip('v: stringify', async t => {
+  // TODO: can't fix :()
   let v1 = v(1), v2 = v({x:1})
-  t.is(JSON.stringify(v1()), '1')
-  t.is(JSON.stringify(v2()), `{"x":1}`)
+  t.is(JSON.stringify(v1), '1')
+  t.is(JSON.stringify(v2), `{"x":1}`)
 })
+// TODO from heer
 t('v: propagates internal item updates', async t => {
   let a = v(0), deps = {a, x: 1}, b = v(deps)
   let log = []

@@ -1,5 +1,5 @@
 import { symbol, desc } from './src/util.js'
-import Channel from './src/channel.js'
+import v from './v.js'
 
 const ELEMENT = 1
 const SPECT_CLASS = '👁'
@@ -41,7 +41,7 @@ class $ extends Array {
     super()
 
     Object.defineProperties(this, {
-      _channel: desc(new Channel()),
+      _channel: desc(v(this)),
       _items: desc(new WeakMap),
       _delete: desc(new WeakSet),
       _teardown: desc(new WeakMap),
@@ -175,7 +175,7 @@ class $ extends Array {
 
     // notify
     this._teardown.set(el, this._fn && this._fn(el))
-    this._channel.push(this)
+    this._channel(this)
   }
 
   delete(el, immediate = false) {
@@ -201,7 +201,7 @@ class $ extends Array {
         else if (teardown.then) teardown.then(fn => fn && fn.call && fn())
       }
       this._teardown.delete(el)
-      this._channel.push(this)
+      this._channel(this)
 
       setCache.get(el).delete(this)
       if (!setCache.get(el).size) {
@@ -259,7 +259,7 @@ class $ extends Array {
       }
     }
 
-    self._channel.close()
+    self._channel[Symbol.dispose]()
     let els = [...self]
     self.length = 0
     els.forEach(el => self.delete(el, true))
