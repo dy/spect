@@ -1,4 +1,3 @@
-import { symbol, desc } from './src/util.js'
 import v from './v.js'
 
 const ELEMENT = 1
@@ -41,15 +40,15 @@ class $ extends Array {
     super()
 
     Object.defineProperties(this, {
-      _channel: desc(v(this)),
-      _items: desc(new WeakMap),
-      _delete: desc(new WeakSet),
-      _teardown: desc(new WeakMap),
-      _scope: desc(scope),
-      _fn: desc(fn),
-      _selector: desc(),
-      _match: desc(),
-      _animation: desc()
+      _channel: {value: v(this)},
+      _items: {value: new WeakMap},
+      _delete: {value: new WeakSet},
+      _teardown: {value: new WeakMap},
+      _scope: {value: scope},
+      _fn: {value: fn},
+      _selector: {writable: true},
+      _match: {writable: true},
+      _animation: {writable: true}
     })
 
     // ignore non-selector collections
@@ -218,7 +217,7 @@ class $ extends Array {
     else requestAnimationFrame(del)
   }
 
-  [symbol.observable]() {
+  [Symbol.observable||(Symbol.observable=Symbol('observable'))]() {
     const channel = this._channel, set = this
     return {
       subscribe(){
@@ -235,7 +234,7 @@ class $ extends Array {
 
   has(item) { return this._items.has(item) }
 
-  [symbol.dispose]() {
+  [Symbol.dispose||(Symbol.dispose=Symbol('dispose'))]() {
     const self = this
 
     if (self._selector) {

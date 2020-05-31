@@ -292,7 +292,7 @@ t('html: promises', async t => {
   let el = document.createElement('div')
   document.body.appendChild(el)
 
-  h`<${el}>${v(p)}</>`
+  h`<${el}>${p}</>`
   t.is(el.outerHTMLClean, '<div></div>')
 
   return p
@@ -540,7 +540,7 @@ t('html: update own children', t => {
 
 t('html: [legacy] prop', async t => {
   let obj = v(() => ({ x: 1 }))
-  let el = h`<div>${ v(obj, obj => obj.x) }</div>`
+  let el = h`<div>${ obj.map(obj => obj.x) }</div>`
 
   t.is(el.outerHTMLClean, '<div>1</div>')
 
@@ -712,7 +712,7 @@ t('html: a#b.c', async t => {
 
 t('html: dynamic data case', async t => {
   let table = document.createElement('table'), data = v(() => [])
-  h`<${table}>${ v(data, data => data.map(item => h`<tr><td>${ item }</td></tr>`)) }</>`
+  h`<${table}>${ data.map(data => data.map(item => h`<tr><td>${ item }</td></tr>`)) }</>`
   t.is(table.innerHTML, '')
 
   console.log('---update')

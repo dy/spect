@@ -1,6 +1,4 @@
-import { symbol } from './src/util.js'
-
-export default function v(init) {
+export default function v() {
   const observers = [], current = [],
   get = () => current.length > 1 ? current : current[0],
   set = (...args) => (
@@ -43,7 +41,7 @@ export default function v(init) {
 
     // FIXME: replace with 0b
     subscribe, map,
-    [symbol.observable]: () => fn,
+    [Symbol.observable||(Symbol.observable=Symbol('observable'))]: () => fn,
     async *[Symbol.asyncIterator]() {
       let resolve, buf = [], p = new Promise(r => resolve = r),
         unsub = fn.subscribe(v => ( buf.push(v), resolve(), p = new Promise(r => resolve = r) ))
@@ -52,7 +50,7 @@ export default function v(init) {
       finally { unsub() }
     },
 
-    [symbol.dispose]: () => {
+    [Symbol.dispose||(Symbol.dispose=Symbol('dispose'))]: () => {
       current.length = 0
       const unsubs = observers.map(sub => ((typeof sub.cleanup === 'function') && sub.cleanup(), sub.unsubscribe))
       observers.length = 0

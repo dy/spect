@@ -283,7 +283,7 @@ t('h: promises', async t => {
   let el = document.createElement('div')
   document.body.appendChild(el)
 
-  h(el, null, v(p))
+  h(el, null, p)
   t.is(el.outerHTML, '<div></div>')
 
   return p
@@ -399,10 +399,11 @@ t('h: component props', async t => {
   t.is(log, ['x', 'y z'])
 })
 
-t('h: observable in class', t => {
+t.skip('h: observable in class', t => {
+  // NOTE: class terms require group observable - too comples for single use-case
   let bar = v('')
-  let el = h('div', {class: v([false, null, undefined, 'foo', bar])})
-  t.is(el.outerHTML, `<div class="foo"></div>`)
+  let el = h('div', {class: [false, null, undefined, 'foo', bar]})
+  t.is(el.outerHTML, `<div class="foo "></div>`)
   bar('bar')
   t.is(el.outerHTML, `<div class="foo bar"></div>`)
 })
@@ -463,7 +464,7 @@ t('h: update own children', t => {
 t('h: observable prop child', async t => {
   let obj = v()
   obj({ x: 1 })
-  let el = h('div', null, v(obj, obj => obj.x))
+  let el = h('div', null, obj.map(obj => obj.x))
 
   t.is(el.outerHTML, '<div>1</div>')
 
@@ -505,10 +506,11 @@ t('h: array component', t => {
 })
 
 t('h: object props preserve internal observables, only high-levels are handled', async t => {
-  let props, el = h('x', props = {x: v(0), y: v({x: v(1)})})
-  t.is(el.outerHTML, `<x x="0"></x>`)
+  let props = {x: v(0), y: v({x: v(1)})}
+  let el = h('x', props)
+  t.any(el.outerHTML, [`<x x="0"></x>`,`<x x="0" y=""></x>`])
   t.is(el.y, props.y())
-  t.is(el.y, {x: 1})
+  t.is(el.y.x(), 1)
 })
 
 t('h: caching attr cases', async t => {

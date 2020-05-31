@@ -186,8 +186,7 @@ t.skip('v: error in set', async t => {
 })
 // Observable methods
 t('v: o.map', async t => {
-  let v1 = v(1),
-      v2 = v1.map(x => x + 1)
+  let v1 = v(1), v2 = v1.map(x => x + 1)
   t.is(v2(), 2)
   v1(2)
   t.is(v2(), 3)

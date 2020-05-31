@@ -109,7 +109,7 @@ test('hyperscript: observable property', function(t){
 test('hyperscript: observable style', function(t){
   var color = o()
   color('red')
-  var div = h('div', {style: v({'color': color})})
+  var div = h('div', {style: {'color': color}})
   t.is(div.style.color, 'red')
   color('blue')
   t.is(div.style.color, 'blue')

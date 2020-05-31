@@ -481,7 +481,8 @@ t('$: template literal', async t => {
   let els = $`div.${'x'}`
   t.is([...els], [...el.childNodes])
 })
-t('$: v($)', async t => {
+t.todo('$: v($)', async t => {
+  // TODO: do as strui/from
   let $l = $()
   let vl = v($l)
   let log = []
