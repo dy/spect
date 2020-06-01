@@ -27,7 +27,7 @@ export default function v() {
   },
   map = map => {
     const mapped = v()
-    fn.subscribe(v => mapped(map(v)))
+    fn.subscribe((...args) => mapped(map(...args)))
     return mapped
   }
 

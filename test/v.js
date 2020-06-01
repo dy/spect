@@ -164,6 +164,9 @@ t('v: multiple values', async t => {
   x(1,2,3)
   t.is(log, [1,2,3])
   t.is(x(), [1,2,3])
+
+  let y = x.map((a,b,c) => log.push(a,b,c))
+  t.is(log, [1,2,3,1,2,3])
 })
 
 // error
