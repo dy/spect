@@ -27,7 +27,7 @@ export default function (statics) {
   while (count--) {
     ctx.init = count ? true : false
     // init render may setup observables, which is undesirable - so we skip attributes
-    result = htm.apply(h, arguments)
+    result = htm.apply(h, count ? [statics] : arguments)
   }
 
   return primitive(result) ? document.createTextNode(result == null ? '' : result) :

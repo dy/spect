@@ -805,6 +805,12 @@ t('html: various-stack htm caching', t => {
   t.not(c6(), c6())
 })
 
+t('html: clildnodes as entry', t => {
+  let a = h`<a>123</a>`
+  let b = h`<x>${a.childNodes}</x>`
+  t.is(b.outerHTML, `<x>123</x>`)
+})
+
 t.todo('html: onClick and onclick - both should work', t => {
   let log = []
   let x = h`<x onClick=${e => log.push('x')}/>`
