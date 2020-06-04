@@ -1,4 +1,5 @@
 import htm from 'htm'
+import { observable, primitive, sube } from './src/util.js'
 
 if (!Symbol.observable)Symbol.observable=Symbol('observable')
 if (!Symbol.dispose)Symbol.dispose=Symbol('dispose')
@@ -136,19 +137,6 @@ const flat = (children) => {
   return out
 }
 
-// lil subscriby (v-less)
-function sube(target, fn) {
-  let unsub, stop
-  if (target[Symbol.observable]) unsub = target[Symbol.observable]().subscribe({next:fn})
-  else if (target[Symbol.asyncIterator]) {
-    unsub = () => stop = true
-    ;(async () => { for await (target of target) { if (stop) break; fn(target) } })()
-  }
-  else if (target.then) target.then(fn)
-  else if (typeof target === 'function' && target.set) unsub = target(fn)
-  return unsub
-}
-
 // FIXME: make same-key morph for faster updates
 // FIXME: modifying prev key can also make it faster
 const same = (a, b) => a === b || (a && b && a.nodeType === TEXT && b.nodeType === TEXT && a.data === b.data)
@@ -220,22 +208,3 @@ const attr = (el, k, v, desc) => (
     ''
   )
 )
-
-// not so generic, but performant
-const primitive = (val) =>
-  !val ||
-  typeof val === 'string' ||
-  typeof val === 'boolean' ||
-  typeof val === 'number' ||
-  (typeof val === 'object' ? (val instanceof RegExp || val instanceof Date) :
-  typeof val !== 'function')
-
-const observable = (arg) => !primitive(arg) &&
-  !!(
-    arg[Symbol.observable] || arg[Symbol.asyncIterator] ||
-    (typeof arg === 'function' && arg.set) ||
-    arg.next || arg.then
-    // || arg.mutation && arg._state != null
-  )
-
-const observer = (next, error, complete) => (next && next.call) || (error && error.call) || (complete && complete.call) || (next && observer(next.next, next.error, next.complete))

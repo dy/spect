@@ -168,6 +168,25 @@ t('v: multiple values', async t => {
   let y = x.map((a,b,c) => log.push(a,b,c))
   t.is(log, [1,2,3,1,2,3])
 })
+// Observable methods
+t('v: o.map', async t => {
+  let v1 = v(1), v2 = v1.map(x => x + 1)
+  t.is(v2(), 2)
+  v1(2)
+  t.is(v2(), 3)
+})
+t('v: init from observable', t => {
+  let v1 = v(1), v2 = v(v1)
+  t.is(v2(), 1)
+  v1(2)
+  t.is(v2(), 2)
+})
+t('v: init from mixed args', t => {
+  let v1 = v(1), v2 = v(1, v1)
+  t.is(v2(), [1, 1])
+  v1(2)
+  t.is(v2(), [1, 2])
+})
 
 // error
 t.skip('v: error in mapper', async t => {
@@ -186,11 +205,4 @@ t.skip('v: error in init', async t => {
 t.skip('v: error in set', async t => {
   let x = v(1)
   x(x => {throw Error(123)})
-})
-// Observable methods
-t('v: o.map', async t => {
-  let v1 = v(1), v2 = v1.map(x => x + 1)
-  t.is(v2(), 2)
-  v1(2)
-  t.is(v2(), 3)
 })

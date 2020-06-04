@@ -315,11 +315,14 @@ v3() // 3
 v3(v => v + 1)
 v3() // 4
 
+// multiple values (non-standard)
+let v4 = v(v3, v2).map((v3, v2) => v3 + v2)
+
 // async iterator
-for await (const value of v3) console.log(value)
+for await (const value of v4) console.log(value)
 
 // dispose
-v3[Symbol.dispose]()
+v4[Symbol.dispose]()
 ```
 
 

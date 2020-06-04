@@ -1,9 +1,10 @@
-export default function v() {
+import { observable, primitive, sube } from './src/util.js'
+
+const v = (...args) => {
   const observers = [], current = [],
   get = () => current.length > 1 ? current : current[0],
   set = (...args) => (
-    args = (typeof args[0] === 'function' ? args[0](...current) : args),
-    Array.isArray(args) ? args.map((val, i) => current[i] = val) : current[0] = args,
+    Array.isArray(args) ? args.map((val, i) => current[i] = typeof val === 'function' ? val(current[i]) : val) : (current[0] = args),
     observers.map(sub => (
       (typeof sub.cleanup === 'function') && sub.cleanup(),
       (sub.next) && (sub.cleanup = sub.next(...current))
@@ -29,9 +30,8 @@ export default function v() {
     const mapped = v()
     fn.subscribe((...args) => mapped(map(...args)))
     return mapped
-  }
-
-  if (arguments.length) set(...arguments)
+  },
+  subs = args.map((arg, i) => observable(arg) ? sube(arg, arg => current[i] = arg ) : ( current[i] = typeof arg === 'function' ? arg() : arg, null ))
 
   return Object.assign(fn, {
     closed: false,
@@ -56,6 +56,9 @@ export default function v() {
       observers.length = 0
       unsubs.map(unsub => unsub())
       fn.closed = true
+      subs.map(sub => sub && sub())
     }
   })
 }
+
+export default v

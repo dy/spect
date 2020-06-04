@@ -39,7 +39,7 @@ class $ extends Array {
     super()
 
     Object.defineProperties(this, {
-      _channel: {value: v(this)},
+      _channel: {value: v(() => this)},
       _items: {value: new WeakMap},
       _delete: {value: new WeakSet},
       _teardown: {value: new WeakMap},
