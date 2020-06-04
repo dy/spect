@@ -187,6 +187,16 @@ t('v: init from mixed args', t => {
   v1(2)
   t.is(v2(), [1, 2])
 })
+t('v: expose current value by index', t => {
+  let a = v(0,1,2)
+  t.is(a[0], 0)
+  t.is(a[1], 1)
+  t.is(a[2], 2)
+  a(1,2,3)
+  t.is(a[0], 1)
+  t.is(a[1], 2)
+  t.is(a[2], 3)
+})
 
 // error
 t.skip('v: error in mapper', async t => {

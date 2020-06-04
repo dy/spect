@@ -33,6 +33,8 @@ const v = (...args) => {
   },
   subs = args.map((arg, i) => observable(arg) ? sube(arg, arg => current[i] = arg ) : ( current[i] = typeof arg === 'function' ? arg() : arg, null ))
 
+  current.map((v,i) => Object.defineProperty(fn, i, {get(){return current[i]}}))
+
   return Object.assign(fn, {
     closed: false,
     valueOf: fn,
