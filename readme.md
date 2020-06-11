@@ -226,7 +226,7 @@ Observes selector, triggers `aspect` callback for elements in document matching 
 * `scope` is optional _HTMLElement_ or a list of elements to narrow down observation scope.
 * `aspect` is a function with `(element) => teardown?` signature.
 
-Returns collection of matched elements.
+Returns live collection of matched elements.
 
 ```js
 import { $, v, h } from 'spect'
