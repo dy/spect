@@ -220,7 +220,7 @@ Pending...
 
 > $( scope? , selector , aspect? )
 
-Observe selector, trigger `aspect` callback for elements matching the selector.
+Observes selector, triggers `aspect` callback for elements in document matching the selector. Uses mixed animevent/optimized selector-set with mutation observer under the hood.
 
 * `selector` is a valid CSS selector.
 * `scope` is optional _HTMLElement_ or a list of elements to narrow down observation scope.
