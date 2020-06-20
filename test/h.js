@@ -524,3 +524,8 @@ t('h: avoid multiple templates for children', async t => {
   t.is(a2.outerHTML, `<a>bcd</a>`)
   // console.log(h.cache)
 })
+
+t.todo('h: closing component', t => {
+  let el = document.createElement('x')
+  h`<${el}>1</${el}>`
+})

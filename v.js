@@ -1,10 +1,10 @@
-import { observable, primitive, sube } from './src/util.js'
+import { observable, sube } from './src/util.js'
 
 const v = (...args) => {
   const observers = [], current = [],
   get = () => current.length > 1 ? current : current[0],
   set = (...args) => (
-    Array.isArray(args) ? args.map((val, i) => current[i] = typeof val === 'function' ? val(current[i]) : val) : (current[0] = args),
+    args.map((val, i) => current[i] = typeof val === 'function' ? val(current[i]) : val),
     observers.map(sub => (
       (typeof sub.cleanup === 'function') && sub.cleanup(),
       (sub.next) && (sub.cleanup = sub.next(...current))
