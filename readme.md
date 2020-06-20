@@ -220,11 +220,13 @@ Pending...
 
 > $( scope? , selector , aspect? )
 
-Observe selector, trigger `aspect` callback for elements matching the selector.
+Observes selector, triggers `aspect` callback for elements in document matching the selector.
 
 * `selector` is a valid CSS selector.
 * `scope` is optional _HTMLElement_ or a list of elements to narrow down observation scope.
 * `aspect` is a function with `(element) => teardown?` signature.
+
+Returns live collection of matched elements.
 
 ```js
 import { $, v, h } from 'spect'
