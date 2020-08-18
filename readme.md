@@ -82,10 +82,10 @@ _Spect_ plays well with [snowpack](https://www.snowpack.dev/), but any other bun
 
 > $( scope? , selector , aspect? )
 
-Observes selector, triggers `aspect` callback for elements in document matching the selector.
+Observes selector, triggers `aspect` callback for elements in `scope` matching the selector.
 
 * `selector` is a valid CSS selector.
-* `scope` is optional _HTMLElement_ for observation scope, defaults to document.
+* `scope` is optional _HTMLElement_ for observation scope, defaults to `document`.
 * `aspect` is a function with `(element) => teardown?` signature.
 
 Returns live collection of matched elements.
@@ -146,9 +146,9 @@ bar[Symbol.dispose]()
 
 ### v − value observable
 
-> value = v( init ? )
+> value = v( init? )
 
-Simple observable state, tiny replacement for `useState`. Creates a getter/setter function with [observable](https://ghub.io/tc39/proposal-observable) interface.
+Stateful [_Observable_](https://ghub.io/tc39/proposal-observable).
 
 ```js
 import { v } from 'spect'
@@ -168,7 +168,7 @@ v1.subscribe(value => {
 })
 
 // transform
-let v2 = v(v1).map(v1 => v1 * 2)
+let v2 = v1.map(value => value * 2)
 v2() // 2
 
 // initialize
@@ -179,7 +179,7 @@ v3() // 3
 v3(v => v + 1)
 v3() // 4
 
-// multiple values (non-standard)
+// from multiple values
 let v4 = v(v3, v2).map((v3, v2) => v3 + v2)
 
 // async iterator
@@ -188,7 +188,6 @@ for await (const value of v4) console.log(value)
 // dispose
 v4[Symbol.dispose]()
 ```
-
 
 
 ## Examples
