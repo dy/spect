@@ -113,7 +113,7 @@ foos[Symbol.dispose]()
 
 > el = h\`...content\`
 
-[Hyperscript](https://ghub.io/hyperscript) with observables. Can be used as template literal with [htm](https://ghub.io/htm) syntax or as JSX.
+[Hyperscript](https://ghub.io/hyperscript) with [HTM](https://ghub.io/htm) / JSX syntax and _Observables_ / _AsyncIterators_ / _Promise_ support.
 
 ```js
 import { h, v } from 'spect'
