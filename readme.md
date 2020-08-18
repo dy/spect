@@ -78,17 +78,11 @@ _Spect_ plays well with [snowpack](https://www.snowpack.dev/), but any other bun
 
 ## API
 
-### $ − selector aspect
+### $
 
 > $( scope? , selector , aspect? )
 
-Observes selector, triggers `aspect` callback for elements in `scope` matching the selector.
-
-* `selector` is a valid CSS selector.
-* `scope` is optional _HTMLElement_ for observation scope, defaults to `document`.
-* `aspect` is a function with `(element) => teardown?` signature.
-
-Returns live collection of matched elements.
+Selector observer, triggers `aspect` callback for elements in `scope` matching the `selector`. Returns live collection of matched elements.
 
 ```js
 import { $, v, h } from 'spect'
@@ -109,7 +103,7 @@ foo.remove()
 foos[Symbol.dispose]()
 ```
 
-### h − hyperscript / html
+### h
 
 > el = h\`...content\`
 
@@ -144,7 +138,7 @@ const bar = <a>{ text }</a>
 bar[Symbol.dispose]()
 ```
 
-### v − value observable
+### v
 
 > value = v( init? )
 
