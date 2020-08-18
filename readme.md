@@ -35,7 +35,8 @@
 </script>
 -->
 
-_Spect_ is minimalistic [_aspect-oriented_](https://en.wikipedia.org/wiki/Aspect-oriented_programming) web framework with smooth DX, enabling compact UI code and efficient DOM manipulations with 3 essential functions − _**$**_, _**h**_ and _**v**_, successors of [_jquery_](https://ghub.io/jquery), [_hyperscript_](https://ghub.io/hyperscript) and [_observable_](https://www.npmjs.com/package/observable).
+_Spect_ is minimalistic [_aspect-oriented_](https://en.wikipedia.org/wiki/Aspect-oriented_programming) web framework with smooth DX, enabling compact UI code and efficient DOM manipulations with 3 canonical functions − _**$**_, _**h**_ and _**v**_
+<!--, successors of [_jquery_](https://ghub.io/jquery), [_hyperscript_](https://ghub.io/hyperscript) and [_observable_](https://www.npmjs.com/package/observable). -->
 
 :gem: **Separation of cross-cutting concerns** with aspects in CSS-like style.
 
