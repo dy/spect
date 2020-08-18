@@ -80,9 +80,9 @@ _Spect_ plays well with [snowpack](https://www.snowpack.dev/), but any other bun
 
 ### $
 
-> $( scope? , selector , aspect? )
+> $( scope=document , selector , aspect? )
 
-Selector observer, triggers `aspect` callback for elements in `scope` matching the `selector`. Returns live collection of matched elements.
+Selector observer. Triggers `aspect` callback for elements in `scope` matching the `selector`. Returns live collection of matched elements.
 
 ```js
 import { $, v, h } from 'spect'
@@ -107,7 +107,7 @@ foos[Symbol.dispose]()
 
 > el = h\`...content\`
 
-[Hyperscript](https://ghub.io/hyperscript) with [HTM](https://ghub.io/htm) / JSX syntax and _Observables_ / _AsyncIterators_ / _Promise_ support.
+[Hyperscript](https://ghub.io/hyperscript) with [HTM](https://ghub.io/htm) / JSX syntax and _Observables_ / _AsyncIterables_ / _Promise_ support.
 
 ```js
 import { h, v } from 'spect'
@@ -142,7 +142,7 @@ bar[Symbol.dispose]()
 
 > value = v( init? )
 
-Stateful [_Observable_](https://ghub.io/tc39/proposal-observable).
+Stateful [_Observable_](https://ghub.io/tc39/proposal-observable). Simple reactive value.
 
 ```js
 import { v } from 'spect'
