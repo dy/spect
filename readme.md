@@ -35,7 +35,7 @@
 </script>
 -->
 
-_Spect_ is minimalistic [_aspect-oriented_](https://en.wikipedia.org/wiki/Aspect-oriented_programming) web framework with smooth DX, enabling compact UI code and efficient DOM manipulations with 3 canonical functions − _**$**_, _**h**_ and _**v**_
+_Spect_ is reactive [_aspect-oriented_](https://en.wikipedia.org/wiki/Aspect-oriented_programming) web framework providing compact UI code and efficient DOM manipulations with 3 canonical functions − _**$**_, _**h**_ and _**v**_, for better smooth DX.
 <!--, successors of [_jquery_](https://ghub.io/jquery), [_hyperscript_](https://ghub.io/hyperscript) and [_observable_](https://www.npmjs.com/package/observable). -->
 
 :gem: **Separation of cross-cutting concerns** with aspects in CSS-like style.
@@ -50,7 +50,7 @@ _Spect_ is minimalistic [_aspect-oriented_](https://en.wikipedia.org/wiki/Aspect
 
 :shipit: **Low-profile** − can be used as utility.
 
-:golf: Reasonable **performance / size** balance.
+:golf: Good **performance / size** balance.
 
 
 ## Installation
@@ -74,6 +74,121 @@ import { $, h, v } from 'spect'
 ```
 
 _Spect_ plays well with [snowpack](https://www.snowpack.dev/), but any other bundler will do.
+
+
+## API
+
+### $ − selector aspect
+
+> $( scope? , selector , aspect? )
+
+Observes selector, triggers `aspect` callback for elements in document matching the selector.
+
+* `selector` is a valid CSS selector.
+* `scope` is optional _HTMLElement_ for observation scope, defaults to document.
+* `aspect` is a function with `(element) => teardown?` signature.
+
+Returns live collection of matched elements.
+
+```js
+import { $, v, h } from 'spect'
+
+let foos = $('.foo', el => {
+  console.log('active')
+  return () => console.log('inactive')
+})
+
+let foo = h`<div.foo/>`
+document.body.append(foo)
+// ... "active"
+
+foo.remove()
+// ... "inactive"
+
+// dispose
+foos[Symbol.dispose]()
+```
+
+### h − hyperscript / html
+
+> el = h\`...content\`
+
+[Hyperscript](https://ghub.io/hyperscript) with observables. Can be used as template literal with [htm](https://ghub.io/htm) syntax or as JSX.
+
+```js
+import { h, v } from 'spect'
+
+const text = v('foo')
+
+// create <baz>
+const foo = h`<a>${ text }</a>`
+foo // <a>foo</a>
+
+// update content
+text('bar')
+foo // <a>bar</a>
+
+// fragment
+const frag = h`<a>1</a><a>2</a>`
+
+// hydrate
+h`<${foo} ...${props}>${ children }</>`
+
+// observables
+h`<a>${ rxSubject } - ${ asyncIterable } - ${ promise }</a>`
+
+/* jsx h */
+const bar = <a>{ text }</a>
+
+// dispose
+bar[Symbol.dispose]()
+```
+
+### v − value observable
+
+> value = v( init ? )
+
+Simple observable state, tiny replacement for `useState`. Creates a getter/setter function with [observable](https://ghub.io/tc39/proposal-observable) interface.
+
+```js
+import { v } from 'spect'
+
+let v1 = v(0)
+
+// get
+v1() // 0
+
+// set
+v1(1)
+
+// subscribe
+v1.subscribe(value => {
+  console.log(value)
+  return () => console.log('teardown', value)
+})
+
+// transform
+let v2 = v(v1).map(v1 => v1 * 2)
+v2() // 2
+
+// initialize
+let v3 = v(() => 3)
+v3() // 3
+
+// set with fn
+v3(v => v + 1)
+v3() // 4
+
+// multiple values (non-standard)
+let v4 = v(v3, v2).map((v3, v2) => v3 + v2)
+
+// async iterator
+for await (const value of v4) console.log(value)
+
+// dispose
+v4[Symbol.dispose]()
+```
+
 
 
 ## Examples
@@ -214,119 +329,6 @@ Pending...
 Pending...
 
 -->
-
-## API
-
-### $ − selector aspect
-
-> $( scope? , selector , aspect? )
-
-Observes selector, triggers `aspect` callback for elements in document matching the selector.
-
-* `selector` is a valid CSS selector.
-* `scope` is optional _HTMLElement_ or a list of elements to narrow down observation scope.
-* `aspect` is a function with `(element) => teardown?` signature.
-
-Returns live collection of matched elements.
-
-```js
-import { $, v, h } from 'spect'
-
-let foos = $('.foo', el => {
-  console.log('active')
-  return () => console.log('inactive')
-})
-
-let foo = h`<div.foo/>`
-document.body.append(foo)
-// ... "active"
-
-foo.remove()
-// ... "inactive"
-
-// dispose
-foos[Symbol.dispose]()
-```
-
-### h − hyperscript / html
-
-> el = h\`...content\`
-
-[Hyperscript](https://ghub.io/hyperscript) with observables. Can be used as template literal with [htm](https://ghub.io/htm) syntax or as JSX.
-
-```js
-import { h, v } from 'spect'
-
-const text = v('foo')
-
-// create <baz>
-const foo = h`<a>${ text }</a>`
-foo // <a>foo</a>
-
-// update content
-text('bar')
-foo // <a>bar</a>
-
-// fragment
-const frag = h`<a>1</a><a>2</a>`
-
-// hydrate
-h`<${foo} ...${props}>${ children }</>`
-
-// observables
-h`<a>${ rxSubject } - ${ asyncIterable } - ${ promise }</a>`
-
-/* jsx h */
-const bar = <a>{ text }</a>
-
-// dispose
-bar[Symbol.dispose]()
-```
-
-### v − value observable
-
-> value = v( init ? )
-
-Simple observable state, tiny replacement for `useState`. Creates a getter/setter function with [observable](https://ghub.io/tc39/proposal-observable) interface.
-
-```js
-import { v } from 'spect'
-
-let v1 = v(0)
-
-// get
-v1() // 0
-
-// set
-v1(1)
-
-// subscribe
-v1.subscribe(value => {
-  console.log(value)
-  return () => console.log('teardown', value)
-})
-
-// transform
-let v2 = v(v1).map(v1 => v1 * 2)
-v2() // 2
-
-// initialize
-let v3 = v(() => 3)
-v3() // 3
-
-// set with fn
-v3(v => v + 1)
-v3() // 4
-
-// multiple values (non-standard)
-let v4 = v(v3, v2).map((v3, v2) => v3 + v2)
-
-// async iterator
-for await (const value of v4) console.log(value)
-
-// dispose
-v4[Symbol.dispose]()
-```
 
 
 ## R&D
