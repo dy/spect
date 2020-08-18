@@ -35,7 +35,7 @@
 </script>
 -->
 
-_Spect_ is reactive [_aspect-oriented_](https://en.wikipedia.org/wiki/Aspect-oriented_programming) web framework for the better DX, providing compact UI code and efficient DOM manipulations with 3 canonical functions − _**$**_, _**h**_ and _**v**_.
+_Spect_ is reactive [_aspect-oriented_](https://en.wikipedia.org/wiki/Aspect-oriented_programming) web framework providing compact UI code and efficient DOM manipulations with 3 canonical functions − _**$**_, _**h**_ and _**v**_. For the better DX.
 <!--, successors of [_jquery_](https://ghub.io/jquery), [_hyperscript_](https://ghub.io/hyperscript) and [_observable_](https://www.npmjs.com/package/observable). -->
 
 :gem: **Separation of cross-cutting concerns** with aspects in CSS-like style.
