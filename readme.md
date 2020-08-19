@@ -99,7 +99,6 @@ document.body.append(foo)
 foo.remove()
 // ... "inactive"
 
-// dispose
 foos[Symbol.dispose]()
 ```
 
@@ -134,7 +133,6 @@ h`<a>${ rxSubject } - ${ asyncIterable } - ${ promise }</a>`
 /* jsx h */
 const bar = <a>{ text }</a>
 
-// dispose
 bar[Symbol.dispose]()
 ```
 
@@ -179,7 +177,6 @@ let v4 = v(v3, v2).map((v3, v2) => v3 + v2)
 // async iterator
 for await (const value of v4) console.log(value)
 
-// dispose
 v4[Symbol.dispose]()
 ```
 
