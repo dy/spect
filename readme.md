@@ -113,27 +113,20 @@ import { h, v } from 'spect'
 
 const text = v('foo')
 
-// create <baz>
-const foo = h`<a>${ text }</a>`
-foo // <a>foo</a>
+const a = h`<a>${ text }</a>`
+a // <a>foo</a>
 
-// update content
 text('bar')
-foo // <a>bar</a>
+a // <a>bar</a>
 
-// fragment
-const frag = h`<a>1</a><a>2</a>`
+const frag = h`<x>1</x><y>2</y>`
+h`<${a} ...${{x: 1}>${ frag }</>`
+a // <a x="1"><x>1</x><y>2</y></a>
 
-// hydrate
-h`<${foo} ...${props}>${ children }</>`
-
-// observables
-h`<a>${ rxSubject } - ${ asyncIterable } - ${ promise }</a>`
+a[Symbol.dispose]()
 
 /* jsx h */
-const bar = <a>{ text }</a>
-
-bar[Symbol.dispose]()
+const a2 = <a>{ rxSubject } - { asyncIterable } - { promise }</a>
 ```
 
 ### v
@@ -147,34 +140,26 @@ import { v } from 'spect'
 
 let v1 = v(0)
 
-// get
 v1() // 0
-
-// set
 v1(1)
+v1() // 1
 
-// subscribe
 v1.subscribe(value => {
   console.log(value)
   return () => console.log('teardown', value)
 })
 
-// transform
 let v2 = v1.map(value => value * 2)
 v2() // 2
 
-// initialize
 let v3 = v(() => 3)
 v3() // 3
 
-// set with fn
 v3(v => v + 1)
 v3() // 4
 
-// from multiple values
 let v4 = v(v3, v2).map((v3, v2) => v3 + v2)
 
-// async iterator
 for await (const value of v4) console.log(value)
 
 v4[Symbol.dispose]()
