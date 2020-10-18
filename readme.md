@@ -73,9 +73,6 @@ Available from CDN: [unpkg](https://unpkg.com/spect?module), [pika](https://cdn.
 import { $, h, v } from 'spect'
 ```
 
-_Spect_ plays well with [snowpack](https://www.snowpack.dev/), but any other bundler will do.
-
-
 ## API
 
 ### $
