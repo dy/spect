@@ -147,9 +147,9 @@ const a2 = <a>{ rxSubject } or { asyncIterable } or { promise }</a>
 
 ### spect/v
 
-_`ref = v( value | init? )`_
+_`ref = v( init? )`_
 
-Takes an _`init`_ value or function and returns a reactive mutable _`ref`_ object with a single `.value` property that points to the inner value. _ref_ implements _Observable_/_AsyncIterable_ interface, enabling subscription to changes.
+Takes an _`init`_ value and returns a reactive mutable _`ref`_ object with a single `.value` property that points to the inner value. _ref_ implements _Observable_/_AsyncIterable_ interface, enabling subscription to changes.
 
 ```js
 import v from 'spect/v'
@@ -180,14 +180,14 @@ count.value = 3
 double.value // 6
 
 
-// create from initializer
-let sum = v(() => count.value + double.value)
+// combined value
+let sum = v(count.value + double.value)
 
 // observe components
 count.subscribe(v => sum.value = count.value + double.value)
 double.subscribe(v => sum.value = count.value + double.value)
 
-// iterate
+// async iterable
 for await (const value of sum) console.log(value)
 
 
