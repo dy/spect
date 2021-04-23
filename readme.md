@@ -43,15 +43,15 @@ _Spect_ is minimalistic toolkit, providing [_aspects_](https://en.wikipedia.org/
 
 :deciduous_tree: **Native first** − healthy semantic HTML tree, vanilla js friendly.
 
-:calling: Unblocked simplified **progressive enhancement**.
+:calling: Unblocked, facilitated **progressive enhancement**.
 
 :baby_chick: **No entry barrier** − already familiar functions.
 
-:dizzy: **0** bundling, **0** boilerplate, **0** SSR needed.
+:dizzy: **0** tooling, **0** boilerplate code, **0** environment setup needed.
 
-:shipit: **Low-profile** − doesn't impose itself, can be used as side-utility, each module separately.
+:shipit: **Low-profile** − doesn't impose itself, can be used as side-utility; separate modules.
 
-:golf: Great **performance / size** balance.
+:golf: Good **performance / size** balance.
 
 
 ## Installation
