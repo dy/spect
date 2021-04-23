@@ -107,7 +107,7 @@ foos[Symbol.dispose]()
 
 ### spect/h
 
-_``el = h\`...content\```_
+_`` el = h`...content` ``_
 
 HTML renderer with [HTM](https://ghub.io/htm) syntax and reactive values support: _Promise_, _Async Iterable_, any [Observable](https://github.com/tc39/proposal-observable), [RXjs](https://rxjs-dev.firebaseapp.com/guide/overview), any [observ*](https://github.com/Raynos/observ).
 
