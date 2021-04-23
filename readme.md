@@ -36,14 +36,14 @@
 </script>
 -->
 
-_Spect_ is minimalistic DOM toolkit, providing simple [_aspects_](https://en.wikipedia.org/wiki/Aspect-oriented_programming), reactivity and observables with 3 canonical (familiar!) functions − _**$**_, _**h**_ and _**v**_, for better compact UI code and efficient DOM.
+_Spect_ is minimalistic toolkit, providing [_aspects_](https://en.wikipedia.org/wiki/Aspect-oriented_programming), reactivity and observables with 3 canonical functions − _**$**_, _**h**_ and _**v**_, for better compact UI code and efficient DOM.
 <!--, successors of [_jquery_](https://ghub.io/jquery), [_hyperscript_](https://ghub.io/hyperscript) and [_observable_](https://www.npmjs.com/package/observable). -->
 
-:gem: **Separation of cross-cutting concerns** with CSS-like DOM aspects.
+:gem: **Separation of cross-cutting concerns** with CSS-like aspects.
 
-:deciduous_tree: **Native first** − healthy semantic DOM tree, vanilla js/DOM API friendly.
+:deciduous_tree: **Native first** − healthy semantic HTML tree, vanilla js friendly.
 
-:calling: Encourages **progressive enhancement** naturally.
+:calling: Unblocked simplified **progressive enhancement**.
 
 :baby_chick: **No entry barrier** − already familiar functions.
 
