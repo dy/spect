@@ -182,7 +182,7 @@ double.value // 6
 
 // create from initializer
 let arrRef = v(() => [1,2,3]),
-    objRef = v(() => ({})),
+    objRef = v(() => ({x: 1})),
     fnRef = v(() => () => {})
 
 
