@@ -78,9 +78,9 @@ import { $, h, v } from 'spect'
 
 ### spect/$
 
-_$( container? , selector , handler? )_
+_`$( container? , selector , handler? )`_
 
-Assign an aspect `handler` function to a `selector` within the `container` (by defaults `document`). Handler is called for each element matching the `selector`. Returns live collection of matched elements.
+Assign an aspect _`handler`_ function to a _`selector`_ within the _`container`_ (by defaults _`document`_). Handler is called for each element matching the _`selector`_. Returns live collection of matched elements.
 
 ```js
 import $ from 'spect/$'
@@ -100,7 +100,7 @@ foo.remove()
 
 // ... "inactive"
 
-// remove selector observer
+// destroy selector observer
 foos.dispose()
 ```
 
