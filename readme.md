@@ -36,7 +36,7 @@
 </script>
 -->
 
-_Spect_ is minimalistic toolkit, providing [_aspects_](https://en.wikipedia.org/wiki/Aspect-oriented_programming), reactivity and observables with 3 canonical functions − _**$**_, _**h**_ and _**v**_, for better compact UI code and efficient DOM.
+_Spect_ is minimalistic DOM toolkit, providing [_aspects_](https://en.wikipedia.org/wiki/Aspect-oriented_programming), reactivity and observables with 3 canonical functions − _**$**_, _**h**_ and _**v**_, for better compact UI code and efficient manipulations.
 <!--, successors of [_jquery_](https://ghub.io/jquery), [_hyperscript_](https://ghub.io/hyperscript) and [_observable_](https://www.npmjs.com/package/observable). -->
 
 :gem: **Separation of cross-cutting concerns** with CSS-like aspects.
@@ -64,7 +64,7 @@ import { $, h, v } from 'https://unpkg.com/spect?module'
 </script>
 ```
 
-Available from CDN: [unpkg](https://unpkg.com/spect?module), [pika](https://cdn.pika.dev/spect).
+Available from CDN: [unpkg](https://unpkg.com/spect?module), [pika](https://cdn.pika.dev/spect), [jsdelivr](https://cdn.jsdelivr.net/npm/spect).
 
 ### B. As a dependency from npm:
 
@@ -78,26 +78,30 @@ import { $, h, v } from 'spect'
 
 ### spect/$
 
-_$( scope=document , selector , aspect? )_
+_$( container? , selector , handler? )_
 
-Selector observer. Triggers `aspect` callback for elements in `scope` matching the `selector`. Returns live collection of matched elements.
+Assign an aspect `handler` function to a `selector` within the `container` (by defaults `document`). Handler is called for each element matching the `selector`. Returns live collection of matched elements.
 
 ```js
-import { $, v, h } from 'spect'
+import $ from 'spect/$'
 
 let foos = $('.foo', el => {
   console.log('active')
   return () => console.log('inactive')
 })
 
-let foo = h`<div.foo/>`
+let foo = document.createElement('div')
+foo.className = 'foo'
 document.body.append(foo)
+
 // ... "active"
 
 foo.remove()
+
 // ... "inactive"
 
-foos[Symbol.dispose]()
+// remove selector observer
+foos.dispose()
 ```
 
 ### spect/h
