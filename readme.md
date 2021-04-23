@@ -75,7 +75,7 @@ import { $, h, v } from 'spect'
 
 ## API
 
-### $
+### spect/$
 
 > $( scope=document , selector , aspect? )
 
@@ -99,7 +99,7 @@ foo.remove()
 foos[Symbol.dispose]()
 ```
 
-### h
+### spect/h
 
 > el = h\`...content\`
 
@@ -126,14 +126,14 @@ a[Symbol.dispose]()
 const a2 = <a>{ rxSubject } - { asyncIterable } - { promise }</a>
 ```
 
-### v
+### spect/v
 
 > value = v( init? )
 
 Stateful [_Observable_](https://ghub.io/tc39/proposal-observable). Simple reactive value.
 
 ```js
-import { v } from 'spect'
+import v from 'spect/v'
 
 let v1 = v(0)
 
