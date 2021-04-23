@@ -36,7 +36,7 @@
 </script>
 -->
 
-_Spect_ is minimalistic DOM toolkit, providing [_aspects_](https://en.wikipedia.org/wiki/Aspect-oriented_programming), reactivity and observables with 3 essential canonical functions − _**$**_, _**h**_ and _**v**_, for better compact UI code and efficient manipulations.
+_Spect_ is minimalistic DOM toolkit, providing [_aspects_](https://en.wikipedia.org/wiki/Aspect-oriented_programming), reactivity and observables with 3 essential functions − _**$**_, _**h**_ and _**v**_, for better compact UI code and efficient manipulations.
 <!--, successors of [_jquery_](https://ghub.io/jquery), [_hyperscript_](https://ghub.io/hyperscript) and [_observable_](https://www.npmjs.com/package/observable). -->
 
 :gem: **Separation of cross-cutting concerns** with CSS-like aspects.
@@ -51,7 +51,7 @@ _Spect_ is minimalistic DOM toolkit, providing [_aspects_](https://en.wikipedia.
 
 :shipit: **Low-profile** − doesn't impose itself, can be used as side-utility; separate modules.
 
-:golf: Good **performance / size** balance.
+:golf: Good **performance / size** result.
 
 <!-- _Spect_ doesn't make any guess about storage, actions, renderer or tooling setup and can be used with different flavors. -->
 
@@ -109,19 +109,19 @@ foos[Symbol.dispose]()
 
 _``el = h\`...content\```_
 
-HTML renderer with [HTM](https://ghub.io/htm) syntax and reactive values support: _Promise_, _Async Iterable_, any [Observable](https://github.com/tc39/proposal-observable), [rxjs](https://rxjs-dev.firebaseapp.com/guide/overview), any [observ*](https://github.com/Raynos/observ), an object with `subscribe` method.
+HTML renderer with [HTM](https://ghub.io/htm) syntax and reactive values support: _Promise_, _Async Iterable_, any [Observable](https://github.com/tc39/proposal-observable), [RXjs](https://rxjs-dev.firebaseapp.com/guide/overview), any [observ*](https://github.com/Raynos/observ).
 
 ```js
 import {h, v} from 'spect'
 
-// create value ref (like vue3)
+// create reactive value
 const text = v('foo')
 
 // create live node
 const a = h`<a>${ text }</a>`
 a // <a>foo</a>
 
-// update ref value => update node
+// updating value updates node
 text.value = 'bar'
 a // <a>bar</a>
 
@@ -133,22 +133,23 @@ const frag = h`<x ...${{x: 1}}>1</x><y>2</y>`
 h`<${a}>${ frag }</a>`
 a // <a><x x="1">1</x><y>2</y></a>
 
-// dispose values observers
+
+// dispose values
 a[Symbol.dispose]()
 ```
 
-Can be used as JSX/[hyperscript](https://ghub.io/hyperscript):
+Can also be used as JSX/[hyperscript](https://ghub.io/hyperscript):
 
 ```js
 /* jsx h */
-const a2 = <a>{ rxSubject } - { asyncIterable } - { promise }</a>
+const a2 = <a>{ rxSubject } or { asyncIterable } or { promise }</a>
 ```
 
 ### spect/v
 
-_`ref = v( init? )`_
+_`ref = v( value | init? )`_
 
-Takes an _`init`_ value and returns a reactive mutable _`ref`_ object. The _`ref`_ object has `.value` property that points to the inner value. It also extends _Observable_/_AsyncIterable_ interface, enabling subscription to changes.
+Takes an _`init`_ value or function and returns a reactive mutable _`ref`_ object with a single `.value` property that points to the inner value. _ref_ implements _Observable_/_AsyncIterable_ interface, enabling subscription to changes.
 
 ```js
 import v from 'spect/v'
@@ -179,14 +180,16 @@ count.value = 3
 double.value // 6
 
 
+// create from initializer
+let arrRef = v(() => [1,2,3]),
+    objRef = v(() => ({})),
+    fnRef = v(() => () => {})
+
+
 // create ref from multiple reactive values
 let sum = v([count, double], ([count, double]) => count + double)
 
 for await (const value of sum) console.log(value)
-
-
-// create from initializer
-let arrRef = v(() => [1,2,3]), objRef = v(() => ({})), fnRef = v(() => () => {})
 
 
 // dispose reference, disconnect listeners
