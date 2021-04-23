@@ -80,16 +80,18 @@ import { $, h, v } from 'spect'
 
 _`$( container? , selector , handler? )`_
 
-Assign an aspect _`handler`_ function to a _`selector`_ within the _`container`_ (by defaults _`document`_). Handler is called for each element matching the _`selector`_. Returns live collection of matched elements.
+Assign an aspect _`handler`_ function to a _`selector`_ within the _`container`_ (by default _`document`_). Handler is called for each element matching the _`selector`_, returned function acts as disconnect callback. Returns live collection of matched elements.
 
 ```js
 import $ from 'spect/$'
 
+// assign an aspect to all .foo elements
 let foos = $('.foo', el => {
   console.log('active')
   return () => console.log('inactive')
 })
 
+// append .foo element
 let foo = document.createElement('div')
 foo.className = 'foo'
 document.body.append(foo)
@@ -106,7 +108,7 @@ foos.dispose()
 
 ### spect/h
 
-_el = h\`...content\`_
+_`el = h\`...content\``_
 
 [Hyperscript](https://ghub.io/hyperscript) with [HTM](https://ghub.io/htm) / JSX syntax and _Observables_ / _AsyncIterables_ / _Promise_ support.
 
