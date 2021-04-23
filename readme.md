@@ -181,14 +181,13 @@ double.value // 6
 
 
 // create from initializer
-let arrRef = v(() => [1,2,3]),
-    objRef = v(() => ({x: 1})),
-    fnRef = v(() => () => {})
+let sum = v(() => count.value + double.value)
 
+// observe components
+count.subscribe(v => sum.value = count.value + double.value)
+double.subscribe(v => sum.value = count.value + double.value)
 
-// create ref from multiple reactive values
-let sum = v([count, double], ([count, double]) => count + double)
-
+// iterate
 for await (const value of sum) console.log(value)
 
 
