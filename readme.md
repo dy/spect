@@ -13,7 +13,7 @@
   <img src="https://img.shields.io/badge/stability-unstable-yellow"/>
 </p>
 
-<p align="center"><img src="/preview.png" width="565"/></p>
+<p align="center"><img src="/preview.png" width="625"/></p>
 <p align="center">▶ <a href="https://codepen.io/dyv/pen/oNXXZEb" target="_blank"><strong>Run</strong></a></p>
 <br/>
 
