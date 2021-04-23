@@ -36,22 +36,22 @@
 </script>
 -->
 
-_Spect_ is minimalistic reactive [_aspect-oriented_](https://en.wikipedia.org/wiki/Aspect-oriented_programming) web framework with fine DX, providing compact UI code and efficient DOM manipulations with 3 canonical functions − _**$**_, _**h**_ and _**v**_.
+_Spect_ is minimalistic DOM toolkit, providing simple [_aspects_](https://en.wikipedia.org/wiki/Aspect-oriented_programming), reactivity and observables with 3 canonical (familiar!) functions − _**$**_, _**h**_ and _**v**_, for better compact UI code and efficient DOM.
 <!--, successors of [_jquery_](https://ghub.io/jquery), [_hyperscript_](https://ghub.io/hyperscript) and [_observable_](https://www.npmjs.com/package/observable). -->
 
-:gem: **Separation of cross-cutting concerns** with aspects in CSS-like style.
+:gem: **Separation of cross-cutting concerns** with CSS-like DOM aspects.
 
-:deciduous_tree: **Native first** − semantic clean tree, vanilla js.
+:deciduous_tree: **Native first** − healthy semantic DOM tree, vanilla js/DOM API friendly.
 
-:calling: Organic **progressive enhancement**.
+:calling: Encourages **progressive enhancement** naturally.
 
-:baby_chick: **Low entry barrier**.
+:baby_chick: **No entry barrier** − already familiar functions.
 
-:dizzy: **0** bundling, **0** server, **0** boilerplate.
+:dizzy: **0** bundling, **0** boilerplate, **0** SSR needed.
 
-:shipit: **Low-profile** − can be used as utility.
+:shipit: **Low-profile** − doesn't impose itself, can be used as side-utility, each module separately.
 
-:golf: Good **performance / size** balance.
+:golf: Great **performance / size** balance.
 
 
 ## Installation
@@ -66,7 +66,7 @@ import { $, h, v } from 'https://unpkg.com/spect?module'
 
 Available from CDN: [unpkg](https://unpkg.com/spect?module), [pika](https://cdn.pika.dev/spect).
 
-### B. As dependency from npm:
+### B. As a dependency from npm:
 
 [![npm i spect](https://nodei.co/npm/spect.png?mini=true)](https://npmjs.org/package/spect/)
 
@@ -78,7 +78,7 @@ import { $, h, v } from 'spect'
 
 ### spect/$
 
-> $( scope=document , selector , aspect? )
+_$( scope=document , selector , aspect? )_
 
 Selector observer. Triggers `aspect` callback for elements in `scope` matching the `selector`. Returns live collection of matched elements.
 
@@ -102,7 +102,7 @@ foos[Symbol.dispose]()
 
 ### spect/h
 
-> el = h\`...content\`
+_el = h\`...content\`_
 
 [Hyperscript](https://ghub.io/hyperscript) with [HTM](https://ghub.io/htm) / JSX syntax and _Observables_ / _AsyncIterables_ / _Promise_ support.
 
@@ -129,7 +129,7 @@ const a2 = <a>{ rxSubject } - { asyncIterable } - { promise }</a>
 
 ### spect/v
 
-> value = v( init? )
+_value = v( init? )_
 
 Stateful [_Observable_](https://ghub.io/tc39/proposal-observable). Simple reactive value.
 
