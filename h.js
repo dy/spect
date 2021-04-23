@@ -141,7 +141,7 @@ const flat = (children) => {
 // FIXME: modifying prev key can also make it faster
 const same = (a, b) => a === b || (a && b && a.nodeType === TEXT && b.nodeType === TEXT && a.data === b.data)
 
-// source: src/diff-inflate.js
+// SOURCE: src/diff-inflate.js
 const merge = (parent, a, b, end = null) => {
   let i = 0, cur, next, bi, n = b.length, m = a.length
 

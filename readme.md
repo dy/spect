@@ -2,7 +2,7 @@
 <p align="center"><h1 align="center">spect</h1></p>
 <p align="center">
   <!--Reactive aspect-oriented web-framework.<br/>-->
-  Micro DOM aspects.<br/>
+  Micro DOM aspects toolkit.<br/>
   <!-- Build reactive UIs with rules, similar to CSS.<br/> -->
   <!-- Each rule specifies an <em>aspect</em> function, carrying a piece of logic.<br/> -->
 </p>
@@ -36,7 +36,7 @@
 </script>
 -->
 
-_Spect_ is minimalistic DOM toolkit, providing [_aspects_](https://en.wikipedia.org/wiki/Aspect-oriented_programming), reactivity and observables with 3 canonical functions − _**$**_, _**h**_ and _**v**_, for better compact UI code and efficient manipulations.
+_Spect_ is minimalistic DOM toolkit, providing [_aspects_](https://en.wikipedia.org/wiki/Aspect-oriented_programming), reactivity and observables with 3 essential canonical functions − _**$**_, _**h**_ and _**v**_, for better compact UI code and efficient manipulations.
 <!--, successors of [_jquery_](https://ghub.io/jquery), [_hyperscript_](https://ghub.io/hyperscript) and [_observable_](https://www.npmjs.com/package/observable). -->
 
 :gem: **Separation of cross-cutting concerns** with CSS-like aspects.
@@ -53,6 +53,7 @@ _Spect_ is minimalistic DOM toolkit, providing [_aspects_](https://en.wikipedia.
 
 :golf: Good **performance / size** balance.
 
+<!-- _Spect_ doesn't make any guess about storage, actions, renderer or tooling setup and can be used with different flavors. -->
 
 ## Installation
 
@@ -95,78 +96,101 @@ let foos = $('.foo', el => {
 let foo = document.createElement('div')
 foo.className = 'foo'
 document.body.append(foo)
-
 // ... "active"
 
 foo.remove()
-
 // ... "inactive"
 
 // destroy selector observer
-foos.dispose()
+foos[Symbol.dispose]()
 ```
 
 ### spect/h
 
-_`el = h\`...content\``_
+_``el = h\`...content\```_
 
-[Hyperscript](https://ghub.io/hyperscript) with [HTM](https://ghub.io/htm) / JSX syntax and _Observables_ / _AsyncIterables_ / _Promise_ support.
+HTML renderer with [HTM](https://ghub.io/htm) syntax and reactive values support: _Promise_, _Async Iterable_, any [Observable](https://github.com/tc39/proposal-observable), [rxjs](https://rxjs-dev.firebaseapp.com/guide/overview), any [observ*](https://github.com/Raynos/observ), an object with `subscribe` method.
 
 ```js
-import { h, v } from 'spect'
+import {h, v} from 'spect'
 
+// create value ref (like vue3)
 const text = v('foo')
 
+// create live node
 const a = h`<a>${ text }</a>`
 a // <a>foo</a>
 
-text('bar')
+// update ref value => update node
+text.value = 'bar'
 a // <a>bar</a>
 
-const frag = h`<x>1</x><y>2</y>`
-h`<${a} ...${{x: 1}>${ frag }</>`
-a // <a x="1"><x>1</x><y>2</y></a>
 
+// HTM syntax is fully supported
+const frag = h`<x ...${{x: 1}}>1</x><y>2</y>`
+
+// mount content on another element
+h`<${a}>${ frag }</a>`
+a // <a><x x="1">1</x><y>2</y></a>
+
+// dispose values observers
 a[Symbol.dispose]()
+```
 
+Can be used as JSX/[hyperscript](https://ghub.io/hyperscript):
+
+```js
 /* jsx h */
 const a2 = <a>{ rxSubject } - { asyncIterable } - { promise }</a>
 ```
 
 ### spect/v
 
-_value = v( init? )_
+_`ref = v( init? )`_
 
-Stateful [_Observable_](https://ghub.io/tc39/proposal-observable). Simple reactive value.
+Takes an _`init`_ value and returns a reactive mutable _`ref`_ object. The _`ref`_ object has `.value` property that points to the inner value. It also extends _Observable_/_AsyncIterable_ interface, enabling subscription to changes.
 
 ```js
 import v from 'spect/v'
 
-let v1 = v(0)
+// create value ref
+let count = v(0)
+count.value // 0
 
-v1() // 0
-v1(1)
-v1() // 1
-
-v1.subscribe(value => {
+// subscribe to value changes
+count.subscribe(value => {
   console.log(value)
   return () => console.log('teardown', value)
 })
 
-let v2 = v1.map(value => value * 2)
-v2() // 2
+count.value = 1
+// ... "1"
 
-let v3 = v(() => 3)
-v3() // 3
+count.value = 2
+// ... "teardown 1"
+// "2"
 
-v3(v => v + 1)
-v3() // 4
 
-let v4 = v(v3, v2).map((v3, v2) => v3 + v2)
+// create mapped value ref
+let double = v(count, value => value * 2)
+double.value // 4
 
-for await (const value of v4) console.log(value)
+count.value = 3
+double.value // 6
 
-v4[Symbol.dispose]()
+
+// create ref from multiple reactive values
+let sum = v([count, double], ([count, double]) => count + double)
+
+for await (const value of sum) console.log(value)
+
+
+// create from initializer
+let arrRef = v(() => [1,2,3]), objRef = v(() => ({})), fnRef = v(() => () => {})
+
+
+// dispose reference, disconnect listeners
+sum[Symbol.dispose]()
 ```
 
 
@@ -182,13 +206,13 @@ v4[Symbol.dispose]()
 
   $('.user', async el => {
     // create user state
-    const user = v({})
+    const user = v({ name: 'guest' })
 
     // render element content, map user state
-    h`<${el}>Hello, ${ user.map(u => u.name || 'guest') }!</>`
+    h`<${el}>Hello, ${ v(user, u => u.name) }!</>`
 
     // load data & set user
-    user((await fetch('/user')).json())
+    user.value = (await fetch('/user')).json()
   })
 </script>
 ```
@@ -202,8 +226,7 @@ v4[Symbol.dispose]()
   import { $, v, h } from 'spect'
 
   $('#timer', timer => {
-    const count = v(0),
-      id = setInterval(() => count(c => c + 1), 1000)
+    const count = v(0), id = setInterval(() => count.value++, 1000)
     h`<${timer}>${ count }</>`
     return () => clearInterval(id)
   })
@@ -221,8 +244,8 @@ v4[Symbol.dispose]()
 
   const count = v(0)
   $('#count', el => count.subscribe(c => el.value = c))
-  $('#inc', el => el.onclick = e => count(c => c+1))
-  $('#dec', el => el.onclick = e => count(c => c-1))
+  $('#inc', el => el.onclick = e => count.value++)
+  $('#dec', el => el.onclick = e => count.value--)
 </script>
 ```
 
@@ -242,16 +265,16 @@ v4[Symbol.dispose]()
   import { $, h, v } from 'spect'
 
   const todos = v([])
-  $('.todo-list', el => h`<${el}>${ todos.map(items =>
-    items.map(item => h`<li>${ item.text }</li>`)
-  ) }</>`)
+  $('.todo-list', el => h`<${el}>${
+    v(todos, items =>
+      items.map(item => h`<li>${ item.text }</li>`)
+    )
+  }</>`)
   $('.todo-form', form => form.addEventListener('submit', e => {
     e.preventDefault()
     if (!form.checkValidity()) return
 
-    // push data, update state
-    todos().push({ text: form.text.value })
-    todos(todos())
+    todos.value = [...todos.value, { text: form.text.value }]
 
     form.reset()
   }))
@@ -267,47 +290,39 @@ v4[Symbol.dispose]()
 <script type="module">
   import { $, h, v } from 'spect'
 
-  const isValidEmail = s => /.+@.+\..+/i.test(s);
+  const isValidEmail = s => /.+@.+\..+/i.test(s)
+
   $('form', form => {
     const valid = v(false)
     h`<${form}>
       <label for="email">Please enter an email address:</label>
-      <input#email onchange=${ e => valid(isValidEmail(e.target.value)) }/>
-      The address is ${ valid.map(b => b ? "valid" : "invalid") }
+      <input#email onchange=${ e => valid.value = isValidEmail(e.target.value) }/>
+      The address is ${ v(valid, b => b ? "valid" : "invalid") }
     </>`
   })
 </script>
 ```
 
-<!--
-### Dialog
+### Prompt
 
 ```html
-``` -->
+<script>
+import {v,h} from 'spect'
 
-[See all examples](examples).
+const showPrompt = v(false), proceed = v(false)
 
-<!--
-_Spect_ doesn't make any guess about storage, actions, renderer or tooling setup and can be used with different flavors.
-
-#### Vanilla
-
-```js
-import { $ } from 'spect'
-
-// touched inputs
-$('input', el => el.addEventListener('focus', e => el.classList.add('touched')))
+document.body.appendChild(h`<dialog open=${showPrompt}>
+  Proceed?
+  <menu>
+    <button onclick=${e => (showPrompt.value = false, proceed.value = false)}>Cancel</button>
+    <button onclick=${e => (showPrompt.value = false, proceed.value = true)}>Confirm</button>
+  </menu>
+</>`)
+</script>
 ```
 
-#### Microfrontends
 
-Pending...
-
-#### Aspect-Oriented DOM
-
-Pending...
-
--->
+[See all examples](examples).
 
 
 ## R&D
