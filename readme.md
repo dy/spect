@@ -149,7 +149,7 @@ const a2 = <a>{ rxSubject } or { asyncIterable } or { promise }</a>
 
 _`ref = v( init? )`_
 
-Takes an _`init`_ value and returns a reactive mutable _`ref`_ object with a single `.value` property that points to the inner value. _ref_ implements _Observable_/_AsyncIterable_ interface, enabling subscription to changes.
+Takes an _`init`_ value and returns a reactive mutable _`ref`_ object with a single `.value` property that points to the inner value. _`ref`_ implements _Observable_/_AsyncIterable_ interface, enabling subscription to changes. It's essentially like _vue3/ref_ + _Observable_.
 
 ```js
 import v from 'spect/v'
@@ -173,15 +173,15 @@ count.value = 2
 
 
 // create mapped value ref
-let double = v(count, value => value * 2)
+let double = count.map(value => value * 2)
 double.value // 4
 
 count.value = 3
 double.value // 6
 
 
-// combined value
-let sum = v(count.value + double.value)
+// create from initializer
+let sum = v(() => count.value + double.value)
 
 // observe components
 count.subscribe(v => sum.value = count.value + double.value)
@@ -211,7 +211,7 @@ sum[Symbol.dispose]()
     const user = v({ name: 'guest' })
 
     // render element content, map user state
-    h`<${el}>Hello, ${ v(user, u => u.name) }!</>`
+    h`<${el}>Hello, ${ user.map(u => u.name) }!</>`
 
     // load data & set user
     user.value = (await fetch('/user')).json()
@@ -268,7 +268,7 @@ sum[Symbol.dispose]()
 
   const todos = v([])
   $('.todo-list', el => h`<${el}>${
-    v(todos, items =>
+    todos.map(items =>
       items.map(item => h`<li>${ item.text }</li>`)
     )
   }</>`)
