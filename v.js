@@ -1,66 +1,67 @@
-import { observable, sube } from './src/util.js'
+export default (init) => new Ref(init)
 
-const v = (...args) => {
-  const observers = [], current = [],
-  get = () => current.length > 1 ? current : current[0],
-  set = (...args) => (
-    args.map((val, i) => current[i] = typeof val === 'function' ? val(current[i]) : val),
-    observers.map(sub => (
-      (typeof sub.cleanup === 'function') && sub.cleanup(),
-      (sub.next) && (sub.cleanup = sub.next(...current))
-    ))
-  ),
-  error = e => observers.map(sub => sub.error && sub.error(e)),
-  fn = (...args) => (!fn.closed && (args.length ? set(...args) : get())),
-  subscribe = (next, error, complete) => {
+class Ref {
+  constructor(arg){
+    // FIXME: use private maybe?
+    Object.defineProperties(this, {
+      observers: {value:[]},
+    })
+    this[0] = arg
+  }
+
+  get value() { return this[0] }
+  set value(val) {
+    this[0] = val
+    for (let sub of this.observers) {
+      if (typeof sub._teardown === 'function') sub._teardown()
+      if (sub.next) (sub._teardown = sub.next(val))
+    }
+  }
+
+  valueOf() {return this.value}
+  toString() {return this.value}
+  [Symbol.toPrimitive](hint) {return this.value}
+
+  // FIXME: replace with 0b?
+  subscribe(next, error, complete) {
     next = next && next.next || next
     error = next && next.error || error
     complete = next && next.complete || complete
 
     const unsubscribe = () => (
-      observers.length && observers.splice(observers.indexOf(subscription) >>> 0, 1),
+      this.observers.length && this.observers.splice(this.observers.indexOf(subscription) >>> 0, 1),
       complete && complete()
     ),
-    subscription = { next, error, complete, unsubscribe, out:null }
-    observers.push(subscription)
-    if (current.length) subscription.cleanup = next(...current)
+    subscription = { next, error, complete, unsubscribe, _teardown:null }
+    this.observers.push(subscription)
+
+    if ( this[0] !== undefined ) subscription._teardown = next(this[0])
+
     return unsubscribe.unsubscribe = unsubscribe
-  },
-  map = map => {
-    const mapped = v()
-    fn.subscribe((...args) => mapped(map(...args)))
-    return mapped
-  },
-  subs = args.map((arg, i) => observable(arg) ? sube(arg, arg => current[i] = arg ) : ( current[i] = typeof arg === 'function' ? arg() : arg, null ))
+  }
 
-  current.map((v,i) => Object.defineProperty(fn, i, {get(){return current[i]}}))
+  map(mapper) {
+    const ref = new Ref()
+    this.subscribe(v => ref.value = mapper(v))
+    return ref
+  }
 
-  return Object.assign(fn, {
-    closed: false,
-    valueOf: fn,
-    toString: fn,
-    [Symbol.toPrimitive]: (hint) => fn(),
+  error(e) {this.observers.map(sub => sub.error && sub.error(e))}
 
-    // FIXME: replace with 0b
-    subscribe, map,
-    [Symbol.observable||(Symbol.observable=Symbol('observable'))]: () => fn,
-    async *[Symbol.asyncIterator]() {
-      let resolve, buf = [], p = new Promise(r => resolve = r),
-        unsub = fn.subscribe(v => ( buf.push(v), resolve(), p = new Promise(r => resolve = r) ))
-      try { while (1) yield* buf.splice(0), await p }
-      catch {}
-      finally { unsub() }
-    },
+  [Symbol.observable||(Symbol.observable=Symbol('observable'))](){return this}
 
-    [Symbol.dispose||(Symbol.dispose=Symbol('dispose'))]: () => {
-      current.length = 0
-      const unsubs = observers.map(sub => ((typeof sub.cleanup === 'function') && sub.cleanup(), sub.unsubscribe))
-      observers.length = 0
-      unsubs.map(unsub => unsub())
-      fn.closed = true
-      subs.map(sub => sub && sub())
-    }
-  })
+  async *[Symbol.asyncIterator]() {
+    let resolve, buf = [], p = new Promise(r => resolve = r),
+      unsub = this.subscribe(v => ( buf.push(v), resolve(), p = new Promise(r => resolve = r) ))
+    try { while (1) yield* buf.splice(0), await p }
+    catch {}
+    finally { unsub() }
+  }
+
+  [Symbol.dispose||(Symbol.dispose=Symbol('dispose'))]() {
+    this[0] = null
+    const unsubs = this.observers.map(sub => ((typeof sub._teardown === 'function') && sub._teardown(), sub.unsubscribe))
+    this.observers.length = 0
+    unsubs.map(unsub => unsub())
+  }
 }
-
-export default v

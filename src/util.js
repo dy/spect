@@ -2,6 +2,7 @@
 export const sube = (target, fn) => {
   let unsub, stop
   if (target[Symbol.observable]) unsub = target[Symbol.observable]().subscribe({next:fn})
+  else if (target.subscribe) unsub = target.subscribe(fn)
   else if (target[Symbol.asyncIterator]) {
     unsub = () => stop = true
     ;(async () => { for await (target of target) { if (stop) break; fn(target) } })()

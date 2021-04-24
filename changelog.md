@@ -2,10 +2,11 @@
 
 Version | Changes
 ---|---
+23.0.0 | v reduced to ref: universal observable value reference (vue3-ref like).
 22.0.0 | v reduced to simple observable. Removed i, a.
 21.4.0 | HTM-based h with static caching.
 21.3.0 | HTM-based h - dropping metaprogramming due to complexity and poor result (~40% faster than HTM-based, but way less reliable).
-21.2.0 | Metaprogramming-based h algorightm, faster hyperscript algo (not really.)
+21.2.0 | Metaprogramming-based h algorightm, presumably faster hyperscript algo.
 21.0.0 | Faster `h` algorithm, `i` and `a` entries.
 20.0.0 | Stage 3: `$` live collections, `h` caching & templates, `v` errors & template literals.
 19.1.0 | Sealed deps on `v`. Observed dep props.
