@@ -149,7 +149,7 @@ const a2 = <a>{ rxSubject } or { asyncIterable } or { promise }</a>
 
 _`ref = v( init? )`_
 
-Takes an _`init`_ value and returns a reactive mutable _`ref`_ object with a single `.value` property that points to the inner value. _`ref`_ implements _Observable_/_AsyncIterable_, allowing subscription to changes. (It's essentially _vue3/ref_ + _Observable_).
+Takes an _`init`_ value and returns a reactive mutable _`ref`_ object with a single `.value` property that points to the inner value. _`ref`_ implements _Observable_/_AsyncIterable_, allowing subscription to changes (essentially _vue3/ref_ with _Observable_).
 
 ```js
 import v from 'spect/v'
