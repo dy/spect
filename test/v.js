@@ -8,7 +8,7 @@ t('v: readme', async t => {
   let v1 = v(0)
 
   // get
-  t.is(v1(), 0)
+  t.is(v1.value, 0)
 
   // subscribe
   let unsub = v1.subscribe(value => {
@@ -17,8 +17,8 @@ t('v: readme', async t => {
   })
 
   // set
-  v1(1)
-  t.is(v1(), 1)
+  v1.value = 1
+  t.is(v1.value, 1)
   t.is(log, [0, '-', 1])
   unsub()
 
@@ -26,15 +26,15 @@ t('v: readme', async t => {
   let v2 = v1.map(v1 => v1 * 2)
   log = []
   v2.subscribe(v2 => log.push(v2))
-  t.is(v2(), 2) // > 2
-  t.is(v1(), 1)
+  t.is(v2.value, 2) // > 2
+  t.is(v1.value, 1)
   t.is(log, [2])
-  v1(1)
+  v1.value = 1
   t.is(log, [2, 2])
 
   // initialize value
-  let v3 = v(() => v1)
-  t.is(v3(), v1) // v5
+  let v3 = v(v1)
+  t.is(v3.value, v1) // v5
 
   // dispose
   ;[v3, v2, v1].map(v => v[Symbol.dispose]())
@@ -51,20 +51,20 @@ t('v: core API', async t => {
   t.is(s.valueOf(), 0, 'valueOf')
   t.is(s.toString(), 0, 'toString')
 
-  t.is(s(), 0, 's()')
+  t.is(s.value, 0, 's()')
 
   await tick()
   t.is(log, [0], 'should publish the initial state')
 
-  s(1)
+  s.value = 1
   t.is(+s, 1, 'state.current = value')
 
-  s(2)
+  s.value = 2
   t.is(+s, 2, 'state(value)')
-  t.is(s(), 2, 'state(value)')
+  t.is(s.value, 2, 'state(value)')
 
-  s(s() + 1)
-  t.is(s(), 3, 'state(state + value)')
+  s.value += 1
+  t.is(s.value, 3, 'state(state + value)')
 
   // observer 2
   let log2 = []
@@ -75,10 +75,10 @@ t('v: core API', async t => {
   t.is(log.slice(-1), [3], 'should track and notify first tick changes')
   await tick(8)
   t.is(log2, [3], 'should properly init set')
-  s(4)
+  s. value = 4
   await tick(8) // why 4 ticks delay?
   t.is(log.slice(-1), [4], 'arbitrary change 1')
-  s(5)
+  s. value = 5
   await tick(8)
   t.is(log.slice(-1), [5], 'arbitrary change 2')
 
@@ -86,19 +86,28 @@ t('v: core API', async t => {
 
   t.end()
 })
-t('v: should not expose technical symbols', async t => {
+t.skip('v: should not expose technical symbols', async t => {
   let s = v({x: 1})
   let log = []
-  for(let p in s()) {
+  for(let p in s) {
     log.push(p)
   }
-  t.is(log, ['x'])
+  t.is(log, [])
 })
-t('v: v to v', t => {
+t('spreadable', t => {
+  let s = v(0)
+  let [x] = s
+  t.is(x,0)
+
+  let {value} = s
+  t.is(value, 0)
+})
+t.skip('v: v to v', t => {
+  // NOTE: we don't support setter function anymore, use arrow subscriber
   const a = v(0), b = v()
   a.subscribe(b)
-  t.is(a(), 0)
-  t.is(b(), 0)
+  t.is(a.value, 0)
+  t.is(b.value, 0)
 })
 t('v: subscribe teardown', t => {
   const a = v()
@@ -108,9 +117,9 @@ t('v: subscribe teardown', t => {
     return () => log.push('out', value)
   })
   t.is(log, [])
-  a(0)
+  a.value = 0
   t.is(log, ['in', 0])
-  a(1)
+  a.value = 1
   t.is(log, ['in', 0, 'out', 0, 'in', 1])
 })
 t('v: multiple subscriptions should not inter-trigger', async t => {
@@ -120,35 +129,35 @@ t('v: multiple subscriptions should not inter-trigger', async t => {
   value.subscribe(v => log2.push(v))
   t.is(log1, [0])
   t.is(log2, [0])
-  value(1)
+  value.value = 1
   t.is(log1, [0, 1])
   t.is(log2, [0, 1])
   value.subscribe(v => log3.push(v))
   t.is(log1, [0, 1])
   t.is(log2, [0, 1])
   t.is(log3, [1])
-  value(2)
+  value.value = 2
   t.is(log1, [0, 1, 2])
   t.is(log2, [0, 1, 2])
   t.is(log3, [1, 2])
 })
 t('v: stores arrays with observables', async t => {
   let a = v([])
-  t.is(a(), [])
-  a([1])
-  t.is(a(), [1])
-  a([1, 2])
-  t.is(a(), [1, 2])
-  a([])
-  t.is(a(), [])
+  t.is(a.value, [])
+  a.value = [1]
+  t.is(a.value, [1])
+  a.value = [1, 2]
+  t.is(a.value, [1, 2])
+  a.value = []
+  t.is(a.value, [])
 
   let b = v(0)
   a = v([b])
-  t.is(a(), [b])
-  b(1)
-  t.is(a(), [b])
-  a([b()])
-  t.is(a(), [1])
+  t.is(a.value, [b])
+  b.value = 1
+  t.is(a.value, [b])
+  a.value = [b.value]
+  t.is(a.value, [1])
 })
 t.skip('v: stringify', async t => {
   // TODO: can't fix :()
@@ -156,7 +165,9 @@ t.skip('v: stringify', async t => {
   t.is(JSON.stringify(v1), '1')
   t.is(JSON.stringify(v2), `{"x":1}`)
 })
-t('v: multiple values', async t => {
+t.skip('v: multiple values', async t => {
+  // NOTE: we don't support multiple values due to simple nature of ref
+  // create and bind composed values manually
   let x = v()
   let log = []
   x.subscribe((a,b,c) => log.push(a,b,c))
@@ -171,31 +182,35 @@ t('v: multiple values', async t => {
 // Observable methods
 t('v: o.map', async t => {
   let v1 = v(1), v2 = v1.map(x => x + 1)
-  t.is(v2(), 2)
-  v1(2)
-  t.is(v2(), 3)
+  t.is(v2.value, 2)
+  v1.value = 2
+  t.is(v2.value, 3)
 })
-t('v: init from observable', t => {
+t.skip('v: init from observable', t => {
+  // NOTE: we don't init from anything. Use strui/from
   let v1 = v(1), v2 = v(v1)
   t.is(v2(), 1)
-  v1(2)
+  v1.value = 2
   t.is(v2(), 2)
 })
-t('v: init from mixed args', t => {
+t.skip('v: init from mixed args', t => {
+  // NOTE: we don't init from anything. Use strui/from
   let v1 = v(1), v2 = v(1, v1)
   t.is(v2(), [1, 1])
-  v1(2)
+  v1.value = 2
   t.is(v2(), [1, 2])
 })
 t('v: expose current value by index', t => {
+  // NOTE: we don't support multiple values, but exposing by index is good idea
   let a = v(0,1,2)
   t.is(a[0], 0)
-  t.is(a[1], 1)
-  t.is(a[2], 2)
-  a(1,2,3)
+  // t.is(a[1], 1)
+  // t.is(a[2], 2)
+  // a(1,2,3)
+  a.value = 1
   t.is(a[0], 1)
-  t.is(a[1], 2)
-  t.is(a[2], 3)
+  // t.is(a[1], 2)
+  // t.is(a[2], 3)
 })
 
 // error
