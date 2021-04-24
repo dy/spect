@@ -1,6 +1,6 @@
 {
   "name": "spect",
-  "version": "22.0.2",
+  "version": "22.1.0",
   "description": "Aspect-oriented DOM framework",
   "main": "index.js",
   "module": "index.js",
