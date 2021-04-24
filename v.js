@@ -1,5 +1,7 @@
 export default (init) => new Ref(init)
 
+const _teardown = Symbol('teardown')
+
 class Ref {
   constructor(arg){
     // FIXME: use private maybe?
@@ -13,8 +15,8 @@ class Ref {
   set value(val) {
     this[0] = val
     for (let sub of this.observers) {
-      if (typeof sub._teardown === 'function') sub._teardown()
-      if (sub.next) (sub._teardown = sub.next(val))
+      if (typeof sub[_teardown] === 'function') sub[_teardown]()
+      if (sub.next) (sub[_teardown] = sub.next(val))
     }
   }
 
@@ -32,10 +34,10 @@ class Ref {
       this.observers.length && this.observers.splice(this.observers.indexOf(subscription) >>> 0, 1),
       complete && complete()
     ),
-    subscription = { next, error, complete, unsubscribe, _teardown:null }
+    subscription = { next, error, complete, unsubscribe, [_teardown]:null }
     this.observers.push(subscription)
 
-    if ( this[0] !== undefined ) subscription._teardown = next(this[0])
+    if ( this[0] !== undefined ) subscription[_teardown] = next(this[0])
 
     return unsubscribe.unsubscribe = unsubscribe
   }
@@ -60,7 +62,7 @@ class Ref {
 
   [Symbol.dispose||(Symbol.dispose=Symbol('dispose'))]() {
     this[0] = null
-    const unsubs = this.observers.map(sub => ((typeof sub._teardown === 'function') && sub._teardown(), sub.unsubscribe))
+    const unsubs = this.observers.map(sub => ((typeof sub[_teardown] === 'function') && sub[_teardown](), sub.unsubscribe))
     this.observers.length = 0
     unsubs.map(unsub => unsub())
   }
