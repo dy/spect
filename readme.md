@@ -30,7 +30,7 @@
       ${ date.map(d => d.toLocaleTimeString()) }
     </>`
 
-    let id = setInterval(() => date(new Date()), 1000)
+    let id = setInterval(() => date.value = new Date(), 1000)
     return () => clearInterval(id)
   })
 </script>

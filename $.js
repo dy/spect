@@ -217,14 +217,7 @@ class $ extends Array {
   }
 
   [Symbol.observable||(Symbol.observable=Symbol('observable'))]() {
-    const channel = this._channel, set = this
-    return {
-      subscribe(){
-        const unsubscribe = channel.subscribe(...arguments)
-        // channel.push.call(channel.observers.slice(-1), set)
-        return unsubscribe
-      }
-    }
+    return this._channel
   }
 
   item(n) { return n < 0 ? this[this.length + n] : this[n] }

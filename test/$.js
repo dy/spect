@@ -493,7 +493,7 @@ t.todo('$: v($)', async t => {
   $l.add(x = document.createElement('div'))
   t.is(log, [[], [x]])
 })
-t('$: changed attribute name rewires refefence', async t => {
+t('$: changed attribute name rewires reference', async t => {
   let el = document.body.appendChild(h`<div><a/><a/></div>`)
   let x = $(el, '#a, #b')
   el.childNodes[1].id = 'a'
