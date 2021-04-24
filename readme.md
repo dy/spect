@@ -180,12 +180,10 @@ count.value = 3
 double.value // 6
 
 
-// create from initializer
-let sum = v(() => count.value + double.value)
-
-// observe components
-count.subscribe(v => sum.value = count.value + double.value)
-double.subscribe(v => sum.value = count.value + double.value)
+// combined value
+let sum = v(count.value + double.value)
+count.subscribe(v => sum.value = v + double.value)
+double.subscribe(v => sum.value = count.value + v)
 
 // async iterable
 for await (const value of sum) console.log(value)
