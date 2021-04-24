@@ -527,3 +527,11 @@ t.todo('h: closing component', t => {
   let el = document.createElement('x')
   h`<${el}>1</${el}>`
 })
+
+t.todo('h: keyed', t => {
+  // NOTE: delegated to strui/list
+  let ul = document.createElement('ul')
+  let [a1,b1] = h`<${ul}><li id=1>1</li><li>2</li></>`.childNodes
+  let [a2,b2] = h`<${ul}><li id=1>1</li><li>2</li></>`.childNodes
+  t.is(a1, a2)
+})
