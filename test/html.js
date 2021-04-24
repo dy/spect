@@ -34,10 +34,10 @@ t('html: observable attr', t => {
   el = h`<div a=${val}></div>`
   t.is(el.outerHTMLClean, `<div a="0"></div>`, 'observable value')
 
-  val(1)
+  val.value = (1)
   t.is(el.outerHTMLClean, `<div a="1"></div>`, 'changed observable value')
 
-  val(null)
+  val.value = (null)
   t.is(el.outerHTMLClean, `<div></div>`, 'null value')
 
   val[Symbol.dispose]()
@@ -55,10 +55,10 @@ t('html: single attribute on mounted node', async t => {
   await tick(28)
   t.is(div.outerHTMLClean, `<div a="0"></div>`)
 
-  a(1)
+  a.value = 1
   await tick(24)
   t.is(div.outerHTMLClean, `<div a="1"></div>`)
-  a(null)
+  a.value = null
   await tick(24)
   t.is(div.outerHTMLClean, `<div></div>`)
 })
@@ -80,11 +80,11 @@ t('html: observable text content', async t => {
   await tick(8)
   t.is(el.outerHTMLClean, `<div>0</div>`)
 
-  a(1)
+  a.value = (1)
   await tick(8)
   t.is(el.outerHTMLClean, `<div>1</div>`)
 
-  a(undefined)
+  a.value = (undefined)
   await tick(8)
   t.is(el.outerHTMLClean, `<div></div>`)
 })
@@ -97,7 +97,7 @@ t('html: child node', async t => {
   t.is(b.outerHTMLClean, `<b><a>0</a></b>`)
   t.is(b.firstChild, a, 'b > a')
 
-  text(1)
+  text.value = (1)
   await tick(8)
   t.is(a.outerHTMLClean, `<a>1</a>`)
   t.is(b.outerHTMLClean, `<b><a>1</a></b>`)
@@ -117,27 +117,23 @@ t('html: dynamic list', async t => {
   const foo = h`<foo></foo>`
   const bar = `bar`
   const baz = h`<baz/>`
-  const content = v()
-  content([foo, bar, baz])
+  const content = v([foo, bar, baz])
 
   const a = h`<a>${ content }</a>`
   t.is(a.outerHTMLClean, `<a><foo></foo>bar<baz></baz></a>`)
   await tick(8)
   t.is(a.outerHTMLClean, `<a><foo></foo>bar<baz></baz></a>`)
 
-  content().push(h`qux`)
+  content.value = [...content.value, h`qux`]
   console.log('---update')
-  content(content())
   await tick(8)
   t.is(a.outerHTMLClean, `<a><foo></foo>bar<baz></baz>qux</a>`)
 
-  content().shift()
-  content(content())
+  content.value = [...content.value.slice(1)]
   await tick(8)
   t.is(a.outerHTMLClean, `<a>bar<baz></baz>qux</a>`, 'shift')
 
-  content().length = 0
-  content(content())
+  content.value = []
   await tick(8)
   t.is(a.outerHTMLClean, `<a></a>`)
 })
@@ -539,12 +535,12 @@ t('html: update own children', t => {
 })
 
 t('html: [legacy] prop', async t => {
-  let obj = v(() => ({ x: 1 }))
+  let obj = v(({ x: 1 }))
   let el = h`<div>${ obj.map(obj => obj.x) }</div>`
 
   t.is(el.outerHTMLClean, '<div>1</div>')
 
-  obj({x: 2})
+  obj.value = ({x: 2})
   await tick(8)
   t.is(el.outerHTMLClean, '<div>2</div>')
 })
@@ -711,12 +707,12 @@ t('html: a#b.c', async t => {
 })
 
 t('html: dynamic data case', async t => {
-  let table = document.createElement('table'), data = v(() => [])
+  let table = document.createElement('table'), data = v([])
   h`<${table}>${ data.map(data => data.map(item => h`<tr><td>${ item }</td></tr>`)) }</>`
   t.is(table.innerHTML, '')
 
   console.log('---update')
-  data([1])
+  data.value = ([1])
   t.is(table.innerHTML, '<tr><td>1</td></tr>')
 })
 

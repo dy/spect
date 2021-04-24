@@ -39,7 +39,7 @@ class $ extends Array {
     super()
 
     Object.defineProperties(this, {
-      _channel: {value: v(() => this)},
+      _channel: {value: v(this)},
       _items: {value: new WeakMap},
       _delete: {value: new WeakSet},
       _teardown: {value: new WeakMap},
@@ -173,7 +173,7 @@ class $ extends Array {
 
     // notify
     this._teardown.set(el, this._fn && this._fn(el))
-    this._channel(this)
+    this._channel.value = this
   }
 
   delete(el, immediate = false) {
@@ -199,7 +199,7 @@ class $ extends Array {
         else if (teardown.then) teardown.then(fn => fn && fn.call && fn())
       }
       this._teardown.delete(el)
-      this._channel(this)
+      this._channel.value = this
 
       setCache.get(el).delete(this)
       if (!setCache.get(el).size) {
@@ -221,7 +221,7 @@ class $ extends Array {
     return {
       subscribe(){
         const unsubscribe = channel.subscribe(...arguments)
-        channel.push.call(channel.observers.slice(-1), set)
+        // channel.push.call(channel.observers.slice(-1), set)
         return unsubscribe
       }
     }

@@ -20,11 +20,11 @@ t('h: single attribute', async t => {
   await tick(28)
   t.is(el.outerHTML, `<div a="0"></div>`)
 
-  a(1)
+  a.value = (1)
   await tick(24)
   t.is(el.outerHTML, `<div a="1"></div>`)
 
-  a(undefined)
+  a.value = (undefined)
   a[Symbol.dispose](null)
   await tick(24)
   t.is(el.outerHTML, `<div></div>`)
@@ -41,12 +41,12 @@ t('h: single attribute on mounted node', async t => {
   await tick(28)
   t.is(el.outerHTML, `<div a="0"></div>`)
 
-  a(1)
+  a.value = (1)
   // FIXME: why so big delay?
   await tick(24)
   t.is(el.outerHTML, `<div a="1"></div>`)
 
-  a(undefined)
+  a.value = (undefined)
   a[Symbol.dispose]()
   await tick(24)
   t.is(el.outerHTML, `<div></div>`)
@@ -61,11 +61,11 @@ t('h: text content', async t => {
   await tick(8)
   t.is(el.outerHTML, `<div>0</div>`)
 
-  a(1)
+  a.value = (1)
   await tick(8)
   t.is(el.outerHTML, `<div>1</div>`)
 
-  a(undefined)
+  a.value = (undefined)
   a[Symbol.dispose]()
   await tick(8)
   t.is(el.outerHTML, `<div></div>`)
@@ -78,7 +78,7 @@ t('h: child node', async t => {
 
   t.is(b.outerHTML, `<b><a>0</a></b>`)
 
-  text(1)
+  text.value = (1)
   await tick(8)
   t.is(b.outerHTML, `<b><a>1</a></b>`)
 })
@@ -107,7 +107,7 @@ t('h: dynamic list', async t => {
   const bar = `bar`
   const baz = h('baz')
   const content = v()
-  content([foo, bar, baz])
+  content.value = ([foo, bar, baz])
 
   const a = h('a', null, content)
   t.is(a.outerHTML, `<a><foo></foo>bar<baz></baz></a>`)
@@ -115,22 +115,19 @@ t('h: dynamic list', async t => {
   t.is(a.outerHTML, `<a><foo></foo>bar<baz></baz></a>`)
 
   // content.push(`qux`)
-  content([...content(), `qux`])
+  content.value = ([...content.value, `qux`])
   await tick(8)
   t.is(a.outerHTML, `<a><foo></foo>bar<baz></baz>qux</a>`)
 
-  content().shift()
-  content(content())
+  content.value = [...content.value.slice(1)]
   await tick(8)
   t.is(a.outerHTML, `<a>bar<baz></baz>qux</a>`)
 
-  content().length = 0
-  content(content())
+  content.value = []
   await tick(8)
   t.is(a.outerHTML, `<a></a>`)
 
-  content().push('x')
-  content(content())
+  content.value = [...content.value, 'x']
   t.is(a.outerHTML, `<a>x</a>`)
 })
 
@@ -463,12 +460,12 @@ t('h: update own children', t => {
 
 t('h: observable prop child', async t => {
   let obj = v()
-  obj({ x: 1 })
+  obj.value = ({ x: 1 })
   let el = h('div', null, obj.map(obj => obj.x))
 
   t.is(el.outerHTML, '<div>1</div>')
 
-  obj({ x: 2 })
+  obj.value = ({ x: 2 })
   await tick(8)
   t.is(el.outerHTML, '<div>2</div>')
 })
@@ -509,8 +506,9 @@ t('h: object props preserve internal observables, only high-levels are handled',
   let props = {x: v(0), y: v({x: v(1)})}
   let el = h('x', props)
   t.any(el.outerHTML, [`<x x="0"></x>`,`<x x="0" y=""></x>`])
-  t.is(el.y, props.y())
-  t.is(el.y.x(), 1)
+  t.is(el.y, props.y.value)
+  t.is(el.x, props.x.value)
+  t.is(el.y.x.value, 1)
 })
 
 t('h: caching attr cases', async t => {

@@ -94,10 +94,13 @@ t.skip('v: should not expose technical symbols', async t => {
   }
   t.is(log, [])
 })
-t('spreadable', t => {
+t('spreading', t => {
+  // NOTE: we don't spread array because it may create confusing error accidentally spreading array value
   let s = v(0)
-  let [x] = s
-  t.is(x,0)
+  t.throws(() => {
+    let [x] = s
+  })
+  // t.is(x,0)
 
   let {value} = s
   t.is(value, 0)

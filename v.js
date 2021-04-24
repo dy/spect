@@ -58,10 +58,6 @@ class Ref {
     finally { unsub() }
   }
 
-  *[Symbol.iterator]() {
-    yield this[0]
-  }
-
   [Symbol.dispose||(Symbol.dispose=Symbol('dispose'))]() {
     this[0] = null
     const unsubs = this.observers.map(sub => ((typeof sub._teardown === 'function') && sub._teardown(), sub.unsubscribe))
