@@ -1,16 +1,12 @@
 import htm from 'htm'
 import { observable, primitive, sube } from './src/util.js'
-
-if (!Symbol.observable)Symbol.observable=Symbol('observable')
-if (!Symbol.dispose)Symbol.dispose=Symbol('dispose')
+import { _teardown, _static } from './src/sym.js'
 
 // DOM
 const TEXT = 3, ELEM = 1, ATTR = 2, COMM = 8, FRAG = 11, COMP = 6,
       SHOW_ELEMENT = 1, SHOW_TEXT = 4, SHOW_COMMENT = 128
 
 const cache = new WeakSet
-
-const _cleanup = Symbol('cleanup'), _static = Symbol('static')
 
 const ctx = {init:false}
 export const h = hyperscript.bind(ctx)
@@ -78,7 +74,7 @@ function hyperscript(tag, props, ...children) {
   else if (tag[Symbol.dispose]) tag[Symbol.dispose]()
 
   // apply props
-  let cleanup = [], subs, i, child
+  let teardown = [], subs, i, child
   for (let name in props) {
     let value = props[name]
     // FIXME: tweak own compiler
@@ -86,11 +82,11 @@ function hyperscript(tag, props, ...children) {
 
     // primitive is more probable also less expensive than observable check
     if (primitive(value)) attr(tag, name, value)
-    else if (observable(value)) cleanup.push(sube(value, v => attr(tag, name, v)))
+    else if (observable(value)) teardown.push(sube(value, v => attr(tag, name, v)))
     else if (name === 'style') {
       for (let s in value) {
         let v = value[s]
-        if(observable(v)) cleanup.push(sube(v, v => tag.style.setProperty(s, v)))
+        if(observable(v)) teardown.push(sube(v, v => tag.style.setProperty(s, v)))
         else {
           let match = v.match(/(.*)\W+!important\W*$/);
           if (match) tag.style.setProperty(s, match[1], 'important')
@@ -106,7 +102,7 @@ function hyperscript(tag, props, ...children) {
     if (child = children[i]) {
       // static nodes (cached by HTM) must be cloned, because h is not called for them more than once
       if (child[_static]) (children[i] = child.cloneNode(true))
-      else if (observable(child)) cleanup.push((subs || (subs = []))[i] = child), child = document.createTextNode('')
+      else if (observable(child)) teardown.push((subs || (subs = []))[i] = child), child = document.createTextNode('')
     }
 
   // append shortcut
@@ -118,13 +114,13 @@ function hyperscript(tag, props, ...children) {
     merge(tag, tag.childNodes, flat(children))
   )))
 
-  if (cleanup.length) tag[_cleanup] = cleanup
+  if (teardown.length) tag[_teardown] = teardown
   tag[Symbol.dispose] = dispose
 
   return tag
 }
 
-function dispose () { if (this[_cleanup]) for (let fn of this[_cleanup]) fn(); this[_cleanup] = null }
+function dispose () { if (this[_teardown]) for (let fn of this[_teardown]) fn(); this[_teardown] = null }
 
 const flat = (children) => {
   let out = [], i = 0, item

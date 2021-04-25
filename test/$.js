@@ -3,6 +3,7 @@ import { $, h } from '../index.js'
 import { tick, frame, idle, time } from 'wait-please'
 // import { augmentor, useState, useEffect, useMemo } from 'augmentor/esm/index.js'
 import v from '../v.js'
+import {_match} from '../src/sym.js'
 
 t('$: tag selector', async t => {
   let ellog = []
@@ -577,26 +578,26 @@ t('$: debugger cases', async t => {
   console.log('*', set = $('*'))
   set.delete(document.body)
   console.log(set)
-  t.is(set._match, false)
+  t.is(set[_match], false)
   set[Symbol.dispose]()
 
   console.log('a', set = $('a'))
-  t.is(set._match, false)
+  t.is(set[_match], false)
   set[Symbol.dispose]()
 
   console.log('#a', set = $('#a'))
-  t.is(set._match, false)
+  t.is(set[_match], false)
   set[Symbol.dispose]()
 
   console.log('.a', set = $('.a'))
-  t.is(set._match, false)
+  t.is(set[_match], false)
   set[Symbol.dispose]()
 
   console.log('a#b', set = $('a#b'))
-  t.is(set._match, true)
+  t.is(set[_match], true)
   set[Symbol.dispose]()
   console.log('a b', set = $('a b'))
-  t.is(set._match, true)
+  t.is(set[_match], true)
   set[Symbol.dispose]()
   console.log('empty', $())
   console.log('list', $([h`<a#a/>`, h`<b#b/>`, h`<c name=c/>`]))

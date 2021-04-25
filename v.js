@@ -1,6 +1,6 @@
-export default (init) => new Ref(init)
+import {_teardown} from './src/sym.js'
 
-const _teardown = Symbol('teardown')
+export default (init) => new Ref(init)
 
 class Ref {
   constructor(arg){
@@ -50,7 +50,7 @@ class Ref {
 
   error(e) {this.observers.map(sub => sub.error && sub.error(e))}
 
-  [Symbol.observable||(Symbol.observable=Symbol('observable'))](){return this}
+  [Symbol.observable](){return this}
 
   async *[Symbol.asyncIterator]() {
     let resolve, buf = [], p = new Promise(r => resolve = r),
@@ -60,7 +60,7 @@ class Ref {
     finally { unsub() }
   }
 
-  [Symbol.dispose||(Symbol.dispose=Symbol('dispose'))]() {
+  [Symbol.dispose]() {
     this[0] = null
     const unsubs = this.observers.map(sub => ((typeof sub[_teardown] === 'function') && sub[_teardown](), sub.unsubscribe))
     this.observers.length = 0
