@@ -18,8 +18,8 @@ Reference: https://ecss.io/appendix1.html.
 
 Comparing time spent on initializing selectors:
 
-                       | `spect@20` | `spect@19` | `vanilla` | `selector-observer` | `regular-elements` | `insertionQuery` | `mutation-summary` | `qso`
-                    ---|---|---|---|---|---
+   | `spect@20` | `spect@19` | `vanilla` | `selector-observer` | `regular-elements` | `insertionQuery` | `mutation-summary` | `qso`
+---|---|---|---|---|---
 `#a`                   |
 `[name=a]`             |
 `.link`                |
@@ -30,16 +30,16 @@ Comparing time spent on initializing selectors:
 `[data-select]`        |
 `a[data-select]`       |
 `[class^="wrap"]`      |
-`[data-select="link"]`
-`a[data-select="link"]`
-`div[data-div="layer1"] a[data-select="link"]`
-`.tagA.link`
-`.tagUl .link`
-`.tagB > .tagA`
-`.div:nth-of-type(1) a`
-`.div:nth-of-type(1) .div:nth-of-type(1) a`
-`div.tagDiv > div.tagDiv.layer2 > ul.tagUL > li.tagLi > b.tagB > a.tagA.link`
-`.tagLi .tagB a.TagA.link`
+`[data-select="link"]` |
+`a[data-select="link"]`|
+`div[data-div="layer1"] a[data-select="link"]`|
+`.tagA.link`|
+`.tagUl .link`|
+`.tagB > .tagA`|
+`.div:nth-of-type(1) a`|
+`.div:nth-of-type(1) .div:nth-of-type(1) a`|
+`div.tagDiv > div.tagDiv.layer2 > ul.tagUL > li.tagLi > b.tagB > a.tagA.link`|
+`.tagLi .tagB a.TagA.link`|
 
 hasInitialDelay
 
