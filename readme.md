@@ -136,13 +136,13 @@ a // <a><x x="1">1</x><y>2</y></a>
 
 // dispose values
 a[Symbol.dispose]()
-```
 
-Can also be used as JSX/[hyperscript](https://ghub.io/hyperscript):
 
-```js
 /* jsx h */
 const a2 = <a>{ rxSubject } or { asyncIterable } or { promise }</a>
+
+// render/update/hydrate
+h(a, a2)
 ```
 
 ### spect/v
