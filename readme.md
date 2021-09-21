@@ -42,7 +42,7 @@ It attempts to follow the principles:
 
 :deciduous_tree: **No native API wrapping** − work directly with HTML tree, vanilla js.
 
-:calling: **Progressive enhancement**-ready.
+:calling: **Progressive enhancement**-friendly.
 
 :baby_chick: **Familiarity** − no entry barrier.
 
