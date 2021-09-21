@@ -38,21 +38,20 @@ _Spect_ provides 3 conventional DOM functions − _**$**_, _**h**_ and _**v**_ f
 
 It attempts to observe the following principles:
 
-:gem: **Separation of cross-cutting concerns** with CSS-like aspects.
+:gem: **Separation of cross-cutting concerns**.
 
-:deciduous_tree: **No overhead** − work with HTML tree (not virtual DOM), vanilla js.
+:deciduous_tree: **No native API wrapping** − work directly with HTML tree, vanilla js.
 
-:calling: **Progressive enhancement** first.
+:calling: **Progressive enhancement**-ready.
 
 :baby_chick: **Familiarity** − no entry barrier.
 
 :dizzy: **No** tooling, **no** boilerplate code, **no** environment setup needed.
 
-:shipit: **Low-profile** - can be used as side-utility.
+:shipit: **Low-profile** - can be used as side-utility, no guesses about storage, actions, renderer, can be used with different flavors.
 
 :golf: Good **performance / size**.
 
-_Spect_ doesn't make guesses about storage, actions, renderer or tooling setup and can be used with different flavors.
 <!--
 ## Installation
 
