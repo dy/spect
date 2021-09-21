@@ -52,27 +52,6 @@ It attempts to observe the following principles:
 
 :golf: Good **performance / size**.
 
-<!--
-## Installation
-
-### A. Directly as a module:
-
-```html
-<script type="module">
-import { $, h, v } from 'https://unpkg.com/spect?module'
-</script>
-```
-
-Available from CDN: [unpkg](https://unpkg.com/spect?module), [pika](https://cdn.pika.dev/spect), [jsdelivr](https://cdn.jsdelivr.net/npm/spect).
-
-### B. As a dependency from npm:
-
-[![npm i spect](https://nodei.co/npm/spect.png?mini=true)](https://npmjs.org/package/spect/)
-
-```js
-import { $, h, v } from 'spect'
-```
--->
 ## API
 
 ### spect/$
@@ -82,7 +61,7 @@ _`$( container? , selector , handler? )`_
 Assign an aspect _`handler`_ function to a _`selector`_ within the _`container`_ (by default _`document`_). Handler is called for each element matching the _`selector`_, returned function acts as disconnect callback. Returns live collection of matched elements.
 
 ```js
-import $ from 'spect/$'
+import $ from 'spect/$.js'
 
 // assign an aspect to all .foo elements
 let foos = $('.foo', el => {
@@ -150,7 +129,7 @@ _`ref = v( init? )`_
 Takes an _`init`_ value and returns a reactive mutable _`ref`_ object with a single `.value` property that points to the inner value. _`ref`_ implements _Observable_/_AsyncIterable_, allowing subscription to changes (essentially _vue3/ref_ with _Observable_).
 
 ```js
-import v from 'spect/v'
+import v from 'spect/v.js'
 
 // create value ref
 let count = v(0)
