@@ -36,7 +36,7 @@
 
 _Spect_ provides 3 conventional DOM functions − _**$**_, _**h**_ and _**v**_ for dom aspects, reactivity and observables.
 
-It attempts to observe the following principles:
+It attempts to follow the principles:
 
 :gem: **Separation of cross-cutting concerns**.
 
