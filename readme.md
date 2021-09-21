@@ -58,8 +58,8 @@ It attempts to follow the principles:
 
 _`$( container? , selector , handler? )`_
 
-Assign an aspect _`handler`_ function to a _`selector`_ within the _`container`_ (by default _`document`_). Each element matching the _`selector`_ will call handler. If handler returns a function, it acts as disconnect callback.
-`$` also acts like live collection of matched elements (hypothetical _SelectorCollection_ API).
+Observe _`selector`_ within _`container`_ (by default _`document`_), call `handler` when matching elements added or found. Handler can return teardown function.
+`$` result is live collection of matched elements (hypothetical _SelectorCollection_ API).
 
 ```js
 import $ from 'spect/$.js'
