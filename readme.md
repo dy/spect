@@ -56,10 +56,10 @@ It attempts to follow the principles:
 
 ### spect/$
 
-_`$( container? , selector , handler? )`_
+_`$( container=document , selector , handler? )`_
 
-Observe _`selector`_ within _`container`_ (by default _`document`_), call `handler` when matching elements added or found. Handler can return teardown function.
-`$` result is live collection of matched elements (hypothetical _SelectorCollection_ API).
+Observe _`selector`_ within _`container`_, call `handler` when matching elements found. Handler can return teardown function.
+Returns live collection of matched elements (hypothetical _SelectorCollection_ API).
 
 ```js
 import $ from 'spect/$.js'
