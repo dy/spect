@@ -58,18 +58,17 @@ It attempts to observe the following principles:
 
 _`$( container? , selector , handler? )`_
 
-Assign an aspect _`handler`_ function to a _`selector`_ within the _`container`_ (by default _`document`_). Handler is called for each element matching the _`selector`_, returned function acts as disconnect callback. Returns live collection of matched elements.
+Assign an aspect _`handler`_ function to a _`selector`_ within the _`container`_ (by default _`document`_). Each element matching the _`selector`_ will call handler. If handler returns a function, it acts as disconnect callback.
+`$` also acts like live collection of matched elements (hypothetical _SelectorCollection_ API).
 
 ```js
 import $ from 'spect/$.js'
 
-// assign an aspect to all .foo elements
 let foos = $('.foo', el => {
   console.log('active')
-  return () => console.log('inactive')
+  return () => console.log('inactive') // teardown
 })
 
-// append .foo element
 let foo = document.createElement('div')
 foo.className = 'foo'
 document.body.append(foo)
@@ -78,64 +77,53 @@ document.body.append(foo)
 foo.remove()
 // ... "inactive"
 
-// destroy selector observer
-foos[Symbol.dispose]()
+foos[Symbol.dispose]() // destroy selector observer
 ```
 
 ### spect/h
 
 _`` el = h`...content` ``_
 
-HTML renderer with [HTM](https://ghub.io/htm) syntax and reactive values support: _Promise_, _Async Iterable_, any [Observable](https://github.com/tc39/proposal-observable), [RXjs](https://rxjs-dev.firebaseapp.com/guide/overview), any [observ*](https://github.com/Raynos/observ).
+HTML builder with [HTM](https://ghub.io/htm) syntax and reactive values support: _Promise_, _Async Iterable_, any [Observable](https://github.com/tc39/proposal-observable), [RXjs](https://rxjs-dev.firebaseapp.com/guide/overview), any [observ*](https://github.com/Raynos/observ) etc.
 
 ```js
 import {h, v} from 'spect'
 
-// create reactive value
-const text = v('foo')
+const text = v('foo') // reactive value (== vue3 ref)
 
-// create live node
-const a = h`<a>${ text }</a>`
+const a = h`<a>${ text }</a>` // create bound node
 a // <a>foo</a>
 
-// updating value updates node
 text.value = 'bar'
 a // <a>bar</a>
 
 
-// HTM syntax is fully supported
-const frag = h`<x ...${{x: 1}}>1</x><y>2</y>`
+const frag = h`<x ...${{x: 1}}>1</x><y>2</y>`  // === htm syntax
 
-// mount content on another element
-h`<${a}>${ frag }</a>`
+h`<${a}>${ frag }</a>` // mount to another element
 a // <a><x x="1">1</x><y>2</y></a>
 
-
-// dispose values
-a[Symbol.dispose]()
+a[Symbol.dispose]() // dispose observers
 
 
 /* jsx h */
 const a2 = <a>{ rxSubject } or { asyncIterable } or { promise }</a>
 
-// render/update/hydrate
-h(a, a2)
+h(a, a2) // render/update
 ```
 
 ### spect/v
 
 _`ref = v( init? )`_
 
-Takes an _`init`_ value and returns a reactive mutable _`ref`_ object with a single `.value` property that points to the inner value. _`ref`_ implements _Observable_/_AsyncIterable_, allowing subscription to changes (essentially _vue3/ref_ with _Observable_).
+Creates reactive mutable _`ref`_ object with a single `.value` property that points to the internal value. _`ref`_ implements _Observable_/_AsyncIterable_, allowing subscription to changes (identical _vue3/ref_ with _Observable_ interface).
 
 ```js
 import v from 'spect/v.js'
 
-// create value ref
 let count = v(0)
 count.value // 0
 
-// subscribe to value changes
 count.subscribe(value => {
   console.log(value)
   return () => console.log('teardown', value)
@@ -149,25 +137,21 @@ count.value = 2
 // "2"
 
 
-// create mapped value ref
-let double = count.map(value => value * 2)
+let double = count.map(value => value * 2) // create mapped ref
 double.value // 4
 
 count.value = 3
 double.value // 6
 
 
-// combined value
-let sum = v(count.value + double.value)
+let sum = v(count.value + double.value) // combined ref
 count.subscribe(v => sum.value = v + double.value)
 double.subscribe(v => sum.value = count.value + v)
 
 // async iterable
 for await (const value of sum) console.log(value)
 
-
-// dispose reference, disconnect listeners
-sum[Symbol.dispose]()
+sum[Symbol.dispose]() // destroy observations
 ```
 
 
