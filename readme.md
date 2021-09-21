@@ -2,9 +2,7 @@
 <p align="center"><h1 align="center">spect</h1></p>
 <p align="center">
   <!--Reactive aspect-oriented web-framework.<br/>-->
-  Micro DOM aspects.<br/>
-  <!-- Build reactive UIs with rules, similar to CSS.<br/> -->
-  <!-- Each rule specifies an <em>aspect</em> function, carrying a piece of logic.<br/> -->
+  Micro DOM aspects: pieces of logic declared with CSS rules.<br/>
 </p>
 <p align="center">
   <a href="https://travis-ci.org/spectjs/spect"><img src="https://travis-ci.org/spectjs/spect.svg?branch=master"/></a>
@@ -36,25 +34,26 @@
 </script>
 -->
 
-_Spect_ is minimalistic DOM toolkit, providing [_aspects_](https://en.wikipedia.org/wiki/Aspect-oriented_programming), reactivity and observables with 3 essential functions − _**$**_, _**h**_ and _**v**_, for better compact UI code and efficient manipulations.
-<!--, successors of [_jquery_](https://ghub.io/jquery), [_hyperscript_](https://ghub.io/hyperscript) and [_observable_](https://www.npmjs.com/package/observable). -->
+_Spect_ provides 3 conventional DOM functions − _**$**_, _**h**_ and _**v**_ for [_aspects_](https://en.wikipedia.org/wiki/Aspect-oriented_programming), reactivity and observables.
+
+It attempts to observe the following principles:
 
 :gem: **Separation of cross-cutting concerns** with CSS-like aspects.
 
-:deciduous_tree: **Native first** − healthy semantic HTML tree, vanilla js friendly.
+:deciduous_tree: **No overhead** − work with HTML tree (not virtual DOM), vanilla js.
 
-:calling: Unblocked, facilitated **progressive enhancement**.
+:calling: **Progressive enhancement** first.
 
-:baby_chick: **No entry barrier** − already familiar functions.
+:baby_chick: **Familiarity** − no entry barrier.
 
-:dizzy: **0** tooling, **0** boilerplate code, **0** environment setup needed.
+:dizzy: **No** tooling, **no** boilerplate code, **no** environment setup needed.
 
-:shipit: **Low-profile** − doesn't impose itself, can be used as side-utility; separate modules.
+:shipit: **Low-profile** - can be used as side-utility.
 
-:golf: Good **performance / size** result.
+:golf: Good **performance / size**.
 
-<!-- _Spect_ doesn't make any guess about storage, actions, renderer or tooling setup and can be used with different flavors. -->
-
+_Spect_ doesn't make guesses about storage, actions, renderer or tooling setup and can be used with different flavors.
+<!--
 ## Installation
 
 ### A. Directly as a module:
@@ -74,7 +73,7 @@ Available from CDN: [unpkg](https://unpkg.com/spect?module), [pika](https://cdn.
 ```js
 import { $, h, v } from 'spect'
 ```
-
+-->
 ## API
 
 ### spect/$
@@ -325,6 +324,7 @@ document.body.appendChild(h`<dialog open=${showPrompt}>
 [See all examples](examples).
 
 
+<!--
 ## R&D
 
 Sources of inspiration / analysis:
@@ -339,7 +339,7 @@ Spect has long story of research, at v13.0 it had repository reset. See [changel
 
 * [element-props](https://github.com/spectjs/element-props) − unified access to element props with observable support. Comes handy for organizing components.
 * [strui](https://github.com/spectjs/strui) − collection of UI streams, such as router, storage etc. Comes handy for building complex reactive web-apps (spect, rxjs etc).
-
+-->
 ## License
 
 MIT
