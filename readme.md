@@ -116,7 +116,7 @@ h(a, a2) // render/update
 
 _`ref = v( init? )`_
 
-Creates reactive mutable _`ref`_ object with a single `.value` property that points to the internal value. _`ref`_ implements _Observable_/_AsyncIterable_, allowing subscription to changes (identical _vue3/ref_ with _Observable_ interface).
+Creates reactive mutable _`ref`_ object with a single `.value` property that points to the internal value. _`ref`_ is like vue3 ref with _Observable_ and _AsyncIterable_ interface.
 
 ```js
 import v from 'spect/v.js'
