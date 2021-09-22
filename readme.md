@@ -34,7 +34,7 @@
 </script>
 -->
 
-_Spect_ provides 3 conventional DOM functions − _**$**_, _**h**_ and _**v**_ for dom aspects, reactivity and observables.
+_Spect_ provides 3 conventional DOM functions − _**$**_, _**h**_ and _**v**_ for dom aspects, reactive html and observable data.
 
 It attempts to follow the principles:
 
