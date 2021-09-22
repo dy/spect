@@ -194,6 +194,7 @@ sum[Symbol.dispose]() // destroy observations
 </details>
     
 <details><summary>Counter</summary>
+  
 ```html
 <output id="count">0</output>
 <button id="inc">+</button><button id="dec">-</button>
