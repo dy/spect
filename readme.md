@@ -84,26 +84,23 @@ foos[Symbol.dispose]() // destroy selector observer
 
 _`` el = h`...content` ``_
 
-HTML builder with [HTM](https://ghub.io/htm) syntax and reactive values support: _Promise_, _Async Iterable_, any [Observable](https://github.com/tc39/proposal-observable), [RXjs](https://rxjs-dev.firebaseapp.com/guide/overview), any [observ*](https://github.com/Raynos/observ) etc.
+HTML builder with [HTM](https://ghub.io/htm) syntax and reactive fields support: _Promise_, _Async Iterable_, any [Observable](https://github.com/tc39/proposal-observable), [RXjs](https://rxjs-dev.firebaseapp.com/guide/overview), any [observ*](https://github.com/Raynos/observ) etc.
 
 ```js
 import {h, v} from 'spect'
 
 const text = v('foo') // reactive value (== vue3 ref)
 
-const a = h`<a>${ text }</a>` // create bound node
-a // <a>foo</a>
+const a = h`<a>${ text }</a>` // <a>foo</a>
 
-text.value = 'bar'
-a // <a>bar</a>
+text.value = 'bar' // <a>bar</a>
 
 
-const frag = h`<x ...${{x: 1}}>1</x><y>2</y>`  // === htm syntax
+const frag = h`<x ...${{x: 1}}>1</x><y>2</y>`  // htm syntax
 
-h`<${a}>${ frag }</a>` // mount to another element
-a // <a><x x="1">1</x><y>2</y></a>
+h`<${a}>${ frag }</a>` // <a><x x="1">1</x><y>2</y></a>
 
-a[Symbol.dispose]() // dispose observers
+a[Symbol.dispose]() // destroy observers
 
 
 /* jsx h */
@@ -116,7 +113,7 @@ h(a, a2) // render/update
 
 _`ref = v( init? )`_
 
-Creates reactive mutable _`ref`_ object with a single `.value` property that points to the internal value. _`ref`_ is like vue3 ref with _Observable_ and _AsyncIterable_ interface.
+Creates reactive mutable _`ref`_ object with a single `.value` property holding internal value. _`ref`_ is identical to vue3 ref with _Observable_ and _AsyncIterable_ interface.
 
 ```js
 import v from 'spect/v.js'
@@ -130,11 +127,11 @@ count.subscribe(value => {
 })
 
 count.value = 1
-// ... "1"
+// > 1
 
 count.value = 2
-// ... "teardown 1"
-// "2"
+// > "teardown" 1
+// > 2
 
 
 let double = count.map(value => value * 2) // create mapped ref
@@ -144,7 +141,7 @@ count.value = 3
 double.value // 6
 
 
-let sum = v(count.value + double.value) // combined ref
+let sum = v(count.value + double.value)
 count.subscribe(v => sum.value = v + double.value)
 double.subscribe(v => sum.value = count.value + v)
 
@@ -157,13 +154,13 @@ sum[Symbol.dispose]() // destroy observations
 
 ## Examples
 
-### Hello World
+<details><summary>Hello World</summary>
 
 ```html
 <div class="user">Loading...</div>
 
 <script type="module">
-  import { $, h, v } from 'spect'
+  import { $, h, v } from 'spect.js'
 
   $('.user', async el => {
     // create user state
@@ -177,14 +174,15 @@ sum[Symbol.dispose]() // destroy observations
   })
 </script>
 ```
+</details>
 
-### Timer
+<details><summary>Timer</summary>
 
 ```html
 <time id="timer"></time>
 
 <script type="module">
-  import { $, v, h } from 'spect'
+  import { $, v, h } from 'spect.js'
 
   $('#timer', timer => {
     const count = v(0), id = setInterval(() => count.value++, 1000)
@@ -193,15 +191,15 @@ sum[Symbol.dispose]() // destroy observations
   })
 </script>
 ```
-
-### Counter
-
+</details>
+    
+<details><summary>Counter</summary>
 ```html
 <output id="count">0</output>
 <button id="inc">+</button><button id="dec">-</button>
 
 <script type="module">
-  import { $, h, v } from 'spect'
+  import { $, h, v } from 'spect.js'
 
   const count = v(0)
   $('#count', el => count.subscribe(c => el.value = c))
@@ -209,8 +207,9 @@ sum[Symbol.dispose]() // destroy observations
   $('#dec', el => el.onclick = e => count.value--)
 </script>
 ```
+</details>
 
-### Todo list
+<details><summary>Todo list</summary>
 
 ```html
 <form class="todo">
@@ -223,7 +222,7 @@ sum[Symbol.dispose]() // destroy observations
 </form>
 
 <script type="module">
-  import { $, h, v } from 'spect'
+  import { $, h, v } from 'spect.js'
 
   const todos = v([])
   $('.todo-list', el => h`<${el}>${
@@ -241,15 +240,16 @@ sum[Symbol.dispose]() // destroy observations
   }))
 </script>
 ```
+</details>
 
-### Form validator
+<details><summary>Form validator</summary>
 
 <!-- TODO: more meaningful validator -->
 ```html
 <form></form>
 
 <script type="module">
-  import { $, h, v } from 'spect'
+  import { $, h, v } from 'spect.js'
 
   const isValidEmail = s => /.+@.+\..+/i.test(s)
 
@@ -263,12 +263,13 @@ sum[Symbol.dispose]() // destroy observations
   })
 </script>
 ```
+</details>
 
-### Prompt
+<details><summary>Prompt</summary>
 
 ```html
 <script>
-import {v,h} from 'spect'
+import {v,h} from 'spect.js'
 
 const showPrompt = v(false), proceed = v(false)
 
@@ -281,7 +282,7 @@ document.body.appendChild(h`<dialog open=${showPrompt}>
 </>`)
 </script>
 ```
-
+</details>
 
 [See all examples](examples).
 
