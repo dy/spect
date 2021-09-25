@@ -78,7 +78,6 @@ typings/
 
 bundle*
 
-dist/
 pkg/
 
 .github

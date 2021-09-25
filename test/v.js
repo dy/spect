@@ -1,6 +1,6 @@
-import t from 'tst'
+import t from './libs/tst.js'
 import { v } from '../index.js'
-import { tick, frame, time } from 'wait-please'
+import { tick, frame, time } from './libs/wait-please.js'
 
 // value
 t('v: readme', async t => {

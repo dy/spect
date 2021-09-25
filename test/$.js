@@ -1,6 +1,6 @@
-import t from 'tst'
+import t from './libs/tst.js'
 import { $, h } from '../index.js'
-import { tick, frame, idle, time } from 'wait-please'
+import { tick, frame, idle, time } from './libs/wait-please.js'
 // import { augmentor, useState, useEffect, useMemo } from 'augmentor/esm/index.js'
 import v from '../v.js'
 import {_match} from '../src/sym.js'
@@ -403,7 +403,7 @@ t('async aspects', async t => {
 })
 // FIXME: this breaks in travis
 t.demo('rebinding to other document', async t => {
-  let all = await import('nodom')
+  let all = await import('./libs/nodom.js')
   let document = new Document()
 
   var div = document.createElement("div")

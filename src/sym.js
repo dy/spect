@@ -1,13 +1,14 @@
-export const _channel = Symbol('c'),
-            _items = Symbol('i'),
-            _delete = Symbol('d'),
-            _scope = Symbol('s'),
-            _fn = Symbol('f'),
-            _selector = Symbol('$'),
-            _match = Symbol('m'),
-            _animation = Symbol('a'),
-            _teardown = Symbol('t'),
+const S = Symbol
+export const _channel = S('c'),
+            _items = S('i'),
+            _delete = S('d'),
+            _scope = S('s'),
+            _fn = S('f'),
+            _selector = S('$'),
+            _match = S('m'),
+            _animation = S('a'),
+            _teardown = S('t'),
             _static = _scope
 
-if (!Symbol.observable) Symbol.observable=Symbol('observable')
-if (!Symbol.dispose) Symbol.dispose=Symbol('dispose')
+if (!S.observable) S.observable=S('observable')
+if (!S.dispose) S.dispose=S('dispose')

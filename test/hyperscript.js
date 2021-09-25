@@ -1,4 +1,4 @@
-import test from 'tst'
+import test from './libs/tst.js'
 import { h, v } from '../index.js'
 import o from './libs/observable.js'
 

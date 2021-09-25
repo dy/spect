@@ -2,6 +2,7 @@
 
 Version | Changes
 ---|---
+23.1.0 | internalized deps
 23.0.0 | v reduced to ref: universal observable value reference (vue3-ref like).
 22.0.0 | v reduced to simple observable. Removed i, a.
 21.4.0 | HTM-based h with static caching.

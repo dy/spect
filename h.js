@@ -1,4 +1,4 @@
-import htm from 'htm'
+import htm from './src/htm.js'
 import { observable, primitive, sube } from './src/util.js'
 import { _teardown, _static } from './src/sym.js'
 

@@ -1,12 +1,12 @@
 import './hyperscript.js'
 import './html.js'
-import t from 'tst'
+import t from './libs/tst.js'
 import { v } from '../index.js'
 import h, { h as sh } from '../h.js'
 // import h, { default as sh } from './libs/h21.js'
 // import h, { default as sh } from './libs/h-compact.js'
 // import h, { default as sh } from './libs/h-vm.js'
-import { tick, frame, idle, time } from 'wait-please'
+import { tick, frame, idle, time } from './libs/wait-please.js'
 import observable from './libs/observable.js'
 
 
