@@ -204,7 +204,7 @@ sum[Symbol.dispose]() // destroy observations
 <details><summary>Todo list</summary>
 
 ```html
-<form class="todo">
+<form class="todo-form">
   <label for="add-todo">
     <span>Add Todo</span>
     <input name="text" required>
