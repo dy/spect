@@ -290,6 +290,7 @@ Spect has long story of research, at v13.0 it had repository reset. See [changel
 ## Related
 
 * [element-props](https://github.com/spectjs/element-props) − unified access to element props with observable support. Comes handy for organizing components.
+* [subscribable-things](https://github.com/chrisguttandin/subscribable-things) − collection of observables for different browser APIs - perfect match with spect.
 <!-- * [strui](https://github.com/spectjs/strui) − collection of UI streams, such as router, storage etc. Comes handy for building complex reactive web-apps (spect, rxjs etc). -->
 
 ## License
