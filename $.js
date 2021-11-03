@@ -27,7 +27,7 @@ export default function (scope, selector, fn) {
   // spect(selector, fn)
   if (typeof scope === 'string') return new $(null, scope, selector)
   // spect(target, fn)
-  if (!selector ||  typeof selector === 'function') {
+  if (!selector || typeof selector === 'function') {
     fn = selector
     let target = scope
     if (!target) target = []

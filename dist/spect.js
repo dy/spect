@@ -481,23 +481,23 @@ function hyperscript(tag, props, ...children) {
       if (child[_static])
         children[i] = child.cloneNode(true);
       else if (observable(child))
-        teardown.push((subs || (subs = []))[i] = child), child = document.createTextNode("");
+        (subs || (subs = []))[i] = child, child = document.createTextNode("");
     }
   if (!tag.childNodes.length)
     tag.append(...flat(children));
   else
     merge(tag, tag.childNodes, flat(children));
   if (subs)
-    subs.map((sub, i2) => sube(sub, (child2) => (children[i2] = child2, merge(tag, tag.childNodes, flat(children)))));
+    teardown.push(...subs.map((sub, i2) => sube(sub, (child2) => (children[i2] = child2, merge(tag, tag.childNodes, flat(children))))));
   if (teardown.length)
     tag[_teardown] = teardown;
-  tag[Symbol.dispose] = dispose;
+  tag[Symbol.dispose] = tag.unsubscribe = dispose;
   return tag;
 }
 function dispose() {
   if (this[_teardown])
     for (let fn of this[_teardown])
-      fn();
+      fn.call ? fn() : fn.unsubscribe();
   this[_teardown] = null;
 }
 var flat = (children) => {
