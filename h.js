@@ -102,25 +102,24 @@ function hyperscript(tag, props, ...children) {
     if (child = children[i]) {
       // static nodes (cached by HTM) must be cloned, because h is not called for them more than once
       if (child[_static]) (children[i] = child.cloneNode(true))
-      else if (observable(child)) teardown.push((subs || (subs = []))[i] = child), child = document.createTextNode('')
+      else if (observable(child)) (subs || (subs = []))[i] = child, child = document.createTextNode('')
     }
 
   // append shortcut
   if (!tag.childNodes.length) tag.append(...flat(children))
   else merge(tag, tag.childNodes, flat(children))
 
-  if (subs) subs.map((sub, i) => sube(sub, child => (
+  if (subs) teardown.push(...subs.map((sub, i) => sube(sub, child => (
     children[i] = child,
     merge(tag, tag.childNodes, flat(children))
-  )))
-
+  ))))
   if (teardown.length) tag[_teardown] = teardown
-  tag[Symbol.dispose] = dispose
+  tag[Symbol.dispose] = tag.unsubscribe = dispose
 
   return tag
 }
 
-function dispose () { if (this[_teardown]) for (let fn of this[_teardown]) fn(); this[_teardown] = null }
+function dispose () {if (this[_teardown]) for (let fn of this[_teardown]) fn.call?fn():fn.unsubscribe(); this[_teardown] = null }
 
 const flat = (children) => {
   let out = [], i = 0, item

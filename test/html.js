@@ -6,6 +6,7 @@ import { tick, frame, idle, time } from './libs/wait-please.js'
 import observable from './libs/observable.js'
 // import { v as iv } from 'ironjs'
 import Observable from './libs/zen-observable.js'
+import {animationFrame} from './libs/sub-things.js'
 
 
 t('html: fast simple case', async t => {
@@ -723,11 +724,21 @@ t('html: fields order', async t => {
 t('html: accepts rxjs directly', async t => {
   const foo = new Observable(subscriber => {
     subscriber.next(42);
+    setTimeout(()=>subscriber.next(54), 1080)
   });
 
   let el = h`<div>${ foo }</div>`
+  // document.body.appendChild(el)
   await frame(2)
   t.is(el.outerHTMLClean, `<div>42</div>`)
+  el[Symbol.dispose]()
+})
+
+t('html: subscribable-things', async t => {
+  let el = document.body.appendChild(h`<div>${animationFrame()}</div>`)
+  setTimeout(() => {
+    el[Symbol.dispose]()
+  }, 1080)
 })
 
 t('html: should not delete element own attribs', t => {
