@@ -34,10 +34,8 @@
 </script>
 -->
 
-_Spect_ is selector observer, invoking handler for matched nodes found in document.<br/>
-It allows separating cross-cutting concerns, ie. organizing **DOM aspects**.<br/>
-This way **progressive enhancement** is natural strategy.<br/>
-It's designed to be used as side-utility, no guesses about storage, actions, renderer, and can be used with different flavors.
+_Spect_ is selector observer, invoking handler for matched nodes found in document. It allows separating cross-cutting concerns, ie.  **DOM aspects**. This way **progressive enhancement** becomes natural and easy.
+Designed to be used as side-utility, it makes no guesses about storage, actions, renderer.
 
 ### spect/$
 
