@@ -41,7 +41,7 @@ Handler can return a teardown function.<br/>
 Returns live collection of matched elements (hypothetical _SelectorCollection_ API).
 
 ```js
-import spect from 'spect/$.js'
+import spect from './spect.js'
 
 let foos = spect('.foo', el => {
   console.log('active')
@@ -228,11 +228,6 @@ document.body.appendChild(h`<dialog open=${showPrompt}>
 
 [See all examples](examples).
 
-
-## Refs
-
-* **$**: [fast-on-load](https://ghub.io/fast-on-load), [selector-set](https://github.com/josh/selector-set), [insertionQuery](https://github.com/naugtur/insertionQuery), [selector-observer](https://github.com/josh/selector-observer), [reuse](https://ghub.io/reuse), [aspect-oriended-programming](https://en.wikipedia.org/wiki/Aspect-oriented_programming), [qso](https://www.npmjs.com/package/qso), [pure-js](https://pure-js.com/), [element-observer](https://github.com/WebReflection/element-observer) libraries and others.
-
 Spect has long story of research, at v13.0 it had repository reset. See [changelog](./changelog.md).
 
 ## Related
@@ -240,6 +235,11 @@ Spect has long story of research, at v13.0 it had repository reset. See [changel
 * [element-props](https://github.com/spectjs/element-props) − unified access to element props with observable support. Comes handy for organizing components.
 * [subscribable-things](https://github.com/chrisguttandin/subscribable-things) − collection of observables for different browser APIs - perfect match with spect.
 <!-- * [strui](https://github.com/spectjs/strui) − collection of UI streams, such as router, storage etc. Comes handy for building complex reactive web-apps (spect, rxjs etc). -->
+
+
+## Refs
+
+[fast-on-load](https://ghub.io/fast-on-load), [selector-set](https://github.com/josh/selector-set), [insertionQuery](https://github.com/naugtur/insertionQuery), [selector-observer](https://github.com/josh/selector-observer), [reuse](https://ghub.io/reuse), [aspect-oriended-programming](https://en.wikipedia.org/wiki/Aspect-oriented_programming), [qso](https://www.npmjs.com/package/qso), [pure-js](https://pure-js.com/), [element-observer](https://github.com/WebReflection/element-observer) libraries and others.
 
 ## License
 
