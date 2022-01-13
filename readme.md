@@ -34,7 +34,7 @@
 </script>
 -->
 
-## Principles
+_Spect_ is selector observer, assigning handler for matched nodes in DOM. It allows organizing DOM aspects.
 
 :gem: **Separation of cross-cutting concerns**.
 
