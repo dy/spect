@@ -34,9 +34,9 @@
 </script>
 -->
 
-_Spect_ is selector observer, assigning handler for matched nodes in DOM. It allows organizing DOM aspects.
+_Spect_ is selector observer, assigning handler for matched nodes in DOM.
 
-:gem: **Separation of cross-cutting concerns**.
+:gem: Separation of cross-cutting concerns via **DOM aspects**.
 
 :deciduous_tree: **No native API wrapping** − work directly with HTML tree, vanilla js.
 
