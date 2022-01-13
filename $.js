@@ -9,17 +9,14 @@ import { _teardown,
       _match,
       _animation } from './src/sym.js'
 
-const ELEMENT = 1
-const SPECT_CLASS = '👁'
-let count = 0
+const ELEMENT = 1, SPECT_CLASS = '👁'
 
-const ids = {}, classes = {}, tags = {}, names = {}, animations = {}, setCache = new WeakMap
-
-const hasAnimevent = typeof AnimationEvent !== 'undefined'
-const style = document.head.appendChild(document.createElement('style'))
+let count = 0, ids = {}, classes = {}, tags = {}, names = {}, animations = {}, setCache = new WeakMap,
+    hasAnimevent = typeof AnimationEvent !== 'undefined',
+    style = document.head.appendChild(document.createElement('style'))
 
 
-// FIXME: use Symbol.species to fix add/map/etc
+// FIXME: use Symbol.species to fix add/map/etc?
 
 export default function (scope, selector, fn) {
   // spect`#x`
