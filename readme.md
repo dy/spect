@@ -37,7 +37,8 @@
 #### _`spect( container=document , selector , handler? )`_
 
 Observe _`selector`_ within _`container`_, call `handler` when matching elements found.<br/>
-Handler can return a teardown function. Returns live collection of matched elements (hypothetical _SelectorCollection_ API).
+Handler can return a teardown function.<br/>
+Returns live collection of matched elements (hypothetical _SelectorCollection_ API).
 
 ```js
 import spect from 'spect/$.js'
