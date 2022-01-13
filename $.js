@@ -1,13 +1,4 @@
 import v from './v.js'
-import { _teardown,
-      _channel,
-      _items,
-      _delete,
-      _scope,
-      _fn,
-      _selector,
-      _match,
-      _animation } from './src/sym.js'
 
 const ELEMENT = 1, SPECT_CLASS = '👁'
 
@@ -39,18 +30,27 @@ export default function (scope, selector, fn) {
 }
 
 class $ extends Array {
+  #channel
+  #items
+  #delete
+  #teardown
+  #scope
+  #callback
+  #selector
+  #animation
+  #match
   constructor(scope, selector, fn){
     // self-call, like splice, map, slice etc. fall back to array
     if (typeof scope === 'number') return Array(scope)
 
     super()
 
-    this[_channel] = v(this)
-    this[_items] = new WeakMap
-    this[_delete] = new WeakSet
-    this[_teardown] = new WeakMap
-    this[_scope] = scope
-    this[_fn] = fn
+    this.#channel = v(this)
+    this.#items = new WeakMap
+    this.#delete = new WeakSet
+    this.#teardown = new WeakMap
+    this.#scope = scope
+    this.#callback = fn
 
     // ignore non-selector collections
     if (!selector) return
@@ -59,15 +59,18 @@ class $ extends Array {
     const proto = Object.getPrototypeOf(this)
     ;(scope || document).querySelectorAll(selector).forEach(el => {proto.add.call(this, el)})
 
-    // if last selector part is simple (id|name|class|tag), followed by classes - index that
+    // if last selector part is simple (id|name|class|tag), followed by classes or attrs - index that
+    // #a[x][y], [name="e"].x, .x.y, *, a-b-c:x - simple
+    // a b - not simple
+    // a.b.c - simple, but filter is .b.c
     const rtokens = /(?:#([\w:-]+)|\[\s*name=['"]?([\w:-]+)['"]?\s*\]|\.([\w:-]+)|([\*\w:-]+))(\[[^\]]+\]|\.[\w:-]+)*$/
 
-    this[_selector] = selector.split(/\s*,\s*/).map(selector => {
+    this.#selector = selector.split(/\s*,\s*/).map(selector => {
       selector = new String(selector)
 
       const match = selector.match(rtokens)
       selector.filter = selector
-      if (!match) return selector
+      if (!match) return selector // skip indexing
 
       let [str, id, name, cls, tag, filter] = match
       if (id) (ids[selector.id = id] = ids[id] || []).push(this)
@@ -81,22 +84,23 @@ class $ extends Array {
 
       return selector
     })
-    this[_match] = this[_selector].some(sel => sel.filter)
+    this.#match = this.#selector.some(sel => sel.filter)
 
-    // complex selectors are handled via anim events (technique from insertionQuery). Cases:
+    // complex selectors are handled via anim events (technique from insertionQuery).
+    // Cases:
     // - dynamically added attributes so that existing nodes match (we don't observe attribs in mutation obserever)
-    // - complex selectors, inc * - we avoid > O(c) sync mutations check
+    // - complex selectors, including `*` - we avoid > O(c) sync mutations check
     // NOTE: only connected scope supports anim observer
-    if (!hasAnimevent || !this[_selector].every(sel => sel.tag && !sel.filter)) {
-      let anim = animations[this[_selector]]
+    if (!hasAnimevent || !this.#selector.every(sel => sel.tag && !sel.filter)) {
+      let anim = animations[this.#selector]
       if (!anim) {
         const { sheet } = style, { cssRules } = sheet
-        anim = animations[this[_selector]] = []
+        anim = animations[this.#selector] = []
         anim.id = SPECT_CLASS + '-' + (count++).toString(36)
         sheet.insertRule(`@keyframes ${ anim.id }{}`, cssRules.length)
-        sheet.insertRule(`${ this[_selector].map(sel => sel + `:not(.${ anim.id })`) }{animation:${ anim.id }}`, cssRules.length)
+        sheet.insertRule(`${ this.#selector.map(sel => sel + `:not(.${ anim.id })`) }{animation:${ anim.id }}`, cssRules.length)
         sheet.insertRule(`.${ anim.id }{animation:${ anim.id }}`, cssRules.length)
-        sheet.insertRule(`${ this[_selector].map(sel => sel + `.${ anim.id }`) }{animation:unset;animation:revert}`, cssRules.length)
+        sheet.insertRule(`${ this.#selector.map(sel => sel + `.${ anim.id }`) }{animation:unset;animation:revert}`, cssRules.length)
         anim.rules = [].slice.call(cssRules, -4)
 
         anim.onanim = e => {
@@ -117,35 +121,35 @@ class $ extends Array {
         }
         document.addEventListener('animationstart', anim.onanim, true)
       }
-      this[_animation] = anim.id
+      this.#animation = anim.id
       anim.push(this)
     }
   }
 
-  add(el, check=this[_match]) {
+  add(el, check=this.#match) {
     if (!el) return
 
     // ignore existing
-    if (this[_items].has(el)) return
+    if (this.#items.has(el)) return
 
     // ignore not-matching
-    if (check) if (!el.matches(this[_selector])) return
+    if (check) if (!el.matches(this.#selector)) return
 
     // ignore out-of-scope
-    if (this[_scope]) {
-      if (this[_scope] === el) return
-      if (this[_scope].nodeType) { if (!this[_scope].contains(el)) return }
-      else if ([].every.call(this[_scope], scope => !scope.contains(el))) return
+    if (this.#scope) {
+      if (this.#scope === el) return
+      if (this.#scope.nodeType) { if (!this.#scope.contains(el)) return }
+      else if ([].every.call(this.#scope, scope => !scope.contains(el))) return
     }
 
     // track collection
     this.push(el)
-    this[_items].set(el, [el.id, el.name])
+    this.#items.set(el, [el.id, el.name])
     if (el.name) this[el.name] = el
     if (el.id) this[el.id] = el
 
     // cancel planned delete
-    if (this[_delete].has(el)) this[_delete].delete(el)
+    if (this.#delete.has(el)) this.#delete.delete(el)
 
     // ignore existing items
     if (setCache.has(el) && setCache.get(el).has(this)) return
@@ -174,34 +178,34 @@ class $ extends Array {
     el.classList.add(SPECT_CLASS)
 
     // notify
-    this[_teardown].set(el, this[_fn] && this[_fn](el))
-    this[_channel].value = this
+    this.#teardown.set(el, this.#callback && this.#callback(el))
+    this.#channel.value = this
   }
 
   delete(el, immediate = false) {
-    if (!this[_items].has(el)) return
+    if (!this.#items.has(el)) return
 
     // remove element from list sync
     if (this.length) this.splice(this.indexOf(el >>> 0, 1), 1)
-    const [id, name] = this[_items].get(el)
+    const [id, name] = this.#items.get(el)
     if (name) delete this[name]
     if (id) delete this[id]
-    this[_items].delete(el)
+    this.#items.delete(el)
     // plan destroy async (can be re-added)
-    this[_delete].add(el)
+    this.#delete.add(el)
 
     const del = () => {
-      if (!this[_delete].has(el)) return
-      this[_delete].delete(el)
+      if (!this.#delete.has(el)) return
+      this.#delete.delete(el)
 
       if (!setCache.has(el)) return
-      const teardown = this[_teardown].get(el)
+      const teardown = this.#teardown.get(el)
       if (teardown) {
         if (teardown.call) teardown(el)
         else if (teardown.then) teardown.then(fn => fn && fn.call && fn())
       }
-      this[_teardown].delete(el)
-      this[_channel].value = this
+      this.#teardown.delete(el)
+      this.#channel.value = this
 
       setCache.get(el).delete(this)
       if (!setCache.get(el).size) {
@@ -219,32 +223,30 @@ class $ extends Array {
   }
 
   [Symbol.observable]() {
-    return this[_channel]
+    return this.#channel
   }
 
   item(n) { return n < 0 ? this[this.length + n] : this[n] }
 
   namedItem(name) { return this[name] }
 
-  has(item) { return this[_items].has(item) }
+  has(item) { return this.#items.has(item) }
 
   [Symbol.dispose]() {
-    const self = this
-
-    if (self[_selector]) {
-      self[_selector].forEach(({id, class:cls, name, tag}) => {
-        id && ids[id].splice(ids[id].indexOf(self) >>> 0, 1)
-        name && names[name].splice(names[name].indexOf(self) >>> 0, 1)
-        cls && classes[cls].splice(classes[cls].indexOf(self) >>> 0, 1)
-        tag && tags[tag].splice(tags[tag].indexOf(self) >>> 0, 1)
+    if (this.#selector) {
+      this.#selector.forEach(({id, class:cls, name, tag}) => {
+        id && ids[id].splice(ids[id].indexOf(this) >>> 0, 1)
+        name && names[name].splice(names[name].indexOf(this) >>> 0, 1)
+        cls && classes[cls].splice(classes[cls].indexOf(this) >>> 0, 1)
+        tag && tags[tag].splice(tags[tag].indexOf(this) >>> 0, 1)
       })
     }
-    if (self[_animation]) {
-      const anim = animations[self[_selector]]
-      anim.splice(anim.indexOf(self) >>> 0, 1)
+    if (this.#animation) {
+      const anim = animations[this.#selector]
+      anim.splice(anim.indexOf(this) >>> 0, 1)
       if (!anim.length) {
         document.removeEventListener('animationstart', anim.onanim)
-        delete animations[self[_selector]]
+        delete animations[this.#selector]
         if (anim.rules) anim.rules.forEach(rule => {
           let idx = [].indexOf.call(style.sheet.cssRules, rule)
           if (~idx) style.sheet.deleteRule(idx)
@@ -252,18 +254,18 @@ class $ extends Array {
       }
     }
 
-    self[_channel][Symbol.dispose]()
-    let els = [...self]
-    self.length = 0
-    els.forEach(el => self.delete(el, true))
+    this.#channel[Symbol.dispose]()
+    let els = [...this]
+    this.length = 0
+    els.forEach(el => this.delete(el, true))
   }
 }
 
 const queryAdd = (targets, sets, check) => {
   if (!sets || !targets) return
   ;[].forEach.call(targets.nodeType ? [targets] : targets, target => sets.forEach(set => Object.getPrototypeOf(set).add.call(set, target, check)))
-}
-const queryDelete = target => [target.classList.contains(SPECT_CLASS) ? target : null, ...target.getElementsByClassName(SPECT_CLASS)]
+},
+queryDelete = target => [target.classList.contains(SPECT_CLASS) ? target : null, ...target.getElementsByClassName(SPECT_CLASS)]
   .forEach(node => setCache.has(node) && setCache.get(node).forEach(set => set.delete(node)))
 
 ;(new MutationObserver((list) => {
