@@ -5,10 +5,9 @@ import { _teardown, _static } from './src/sym.js'
 // DOM
 const TEXT = 3, ELEM = 1, ATTR = 2, COMM = 8, FRAG = 11, COMP = 6,
       SHOW_ELEMENT = 1, SHOW_TEXT = 4, SHOW_COMMENT = 128
-
-const cache = new WeakSet
-
-const ctx = {init:false}
+const cache = new WeakSet,
+      ctx = {init:false},
+      doc=document
 export const h = hyperscript.bind(ctx)
 
 export default function (statics) {
@@ -27,8 +26,8 @@ export default function (statics) {
     result = htm.apply(h, count ? [statics] : arguments)
   }
 
-  return primitive(result) ? document.createTextNode(result == null ? '' : result) :
-        Array.isArray(result) ? h(document.createDocumentFragment(), null, ...result) :
+  return primitive(result) ? doc.createTextNode(result == null ? '' : result) :
+        Array.isArray(result) ? h(doc.createDocumentFragment(), null, ...result) :
         result[_static] ? result.cloneNode(true) : result
 }
 
@@ -47,7 +46,7 @@ function hyperscript(tag, props, ...children) {
         if (cls.length) props.class = cls
       }
     }
-    tag = document.createElement(tag)
+    tag = doc.createElement(tag)
 
     // shortcut for faster creation, static nodes are really simple
     if (init) {
@@ -63,7 +62,7 @@ function hyperscript(tag, props, ...children) {
     tag = tag({children, ...props})
     // FIXME: is there a more elegant way?
     if (Array.isArray(tag)) {
-      let frag = document.createDocumentFragment()
+      let frag = doc.createDocumentFragment()
       frag.append(...tag)
       tag = frag
     }
@@ -102,7 +101,7 @@ function hyperscript(tag, props, ...children) {
     if (child = children[i]) {
       // static nodes (cached by HTM) must be cloned, because h is not called for them more than once
       if (child[_static]) (children[i] = child.cloneNode(true))
-      else if (observable(child)) (subs || (subs = []))[i] = child, child = document.createTextNode('')
+      else if (observable(child)) (subs || (subs = []))[i] = child, child = doc.createTextNode('')
     }
 
   // append shortcut
@@ -172,7 +171,7 @@ const merge = (parent, a, b, end = null) => {
 
 const insert = (parent, a, before) => {
   if (a != null) {
-    if (primitive(a)) parent.insertBefore(document.createTextNode(a), before)
+    if (primitive(a)) parent.insertBefore(doc.createTextNode(a), before)
     else parent.insertBefore(a, before)
   }
 }
