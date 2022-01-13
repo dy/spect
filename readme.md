@@ -36,17 +36,15 @@
 
 _Spect_ is selector observer, invoking handler function for matched nodes found in document. This way it allows separating cross-cutting concerns into **DOM aspects**.
 
-### spect/$
-
-_`$( container=document , selector , handler? )`_
+#### _`spect( container=document , selector , handler? )`_
 
 Observe _`selector`_ within _`container`_, call `handler` when matching elements found. Handler can return a teardown function.
 Returns live collection of matched elements (hypothetical _SelectorCollection_ API).
 
 ```js
-import $ from 'spect/$.js'
+import spect from 'spect/$.js'
 
-let foos = $('.foo', el => {
+let foos = spect('.foo', el => {
   console.log('active')
   return () => console.log('inactive') // teardown
 })
@@ -62,6 +60,7 @@ foo.remove()
 foos.dispose() // destroy selector observer
 ```
 
+<!--
 ### spect/h
 
 _`` el = h`...content` ``_
@@ -85,6 +84,7 @@ const a2 = <a>{ rxSubject } or { asyncIterable } or { promise }</a>
 
 h(a, a2) // render/update
 ```
+-->
 
 
 ## Examples
@@ -95,11 +95,11 @@ h(a, a2) // render/update
 <div class="user">Loading...</div>
 
 <script type="module">
-  import $ from './spect.js'
+  import spect from './spect.js'
   import v from './vref.js'
-  import h from 'hdom'
+  import h from './hypfrag.js'
 
-  $('.user', async el => {
+  spect('.user', async el => {
     // create user state
     const user = v({ name: 'guest' })
 
@@ -120,9 +120,10 @@ h(a, a2) // render/update
 
 <script type="module">
   import v from './vref.js'
-  import { $, h } from './spect.js'
+  import spect from './spect.js'
+  import h from './hyperf.js'
 
-  $('#timer', timer => {
+  spect('#timer', timer => {
     const count = v(0), id = setInterval(() => count.value++, 1000)
     h`<${timer}>${ count }</>`
     return () => clearInterval(id)
@@ -134,14 +135,16 @@ h(a, a2) // render/update
 <details><summary>Counter</summary>
   
 ```html
-<output id="count">0</output>
+<output id="count">{{ count }}</output>
 <button id="inc">+</button><button id="dec">-</button>
 
 <script type="module">
-  import { $, h, v } from './spect.js'
+  import spect from './spect.js'
+  import v from './vref.js'
+  import templize from './templize.js'
 
   const count = v(0)
-  $('#count', el => count.subscribe(c => el.value = c))
+  $('#count', el => templize(el))
   $('#inc', el => el.onclick = e => count.value++)
   $('#dec', el => el.onclick = e => count.value--)
 </script>
@@ -208,7 +211,7 @@ h(a, a2) // render/update
 
 ```html
 <script>
-import h from './spect.js'
+import h from './hyperf.js'
 import v from './vref.js'
 
 const showPrompt = v(false), proceed = v(false)
