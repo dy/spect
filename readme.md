@@ -91,23 +91,21 @@ h(a, a2) // render/update
 <details><summary>Hello World</summary>
 
 ```html
-<div class="user">Loading...</div>
+<div class="user">{{ user.name || "Loading..." }}</div>
 
 <script type="module">
   import spect from './spect.js'
   import v from './vref.js'
-  import h from './hypfrag.js'
+  import tpl from './templize.js'
 
-  spect('.user', async el => {
-    // create user state
-    const user = v({ name: 'guest' })
+  // create user state
+  const user = v({ name: 'guest' })
 
-    // render element content, map user state
-    h`<${el}>Hello, ${ user.map(u => u.name) }!</>`
+  // initialize template
+  spect('.user', async el => tpl(el, { user }))
 
-    // load data & set user
-    user.value = (await fetch('/user')).json()
-  })
+  // load data
+  user.value = (await fetch('/user')).json()
 </script>
 ```
 </details>
@@ -115,15 +113,16 @@ h(a, a2) // render/update
 <details><summary>Timer</summary>
 
 ```html
-<time id="timer"></time>
+<time id="timer">{{ count }}</time>
 
 <script type="module">
   import v from './vref.js'
   import spect from './spect.js'
-  import h from './hyperf.js'
+  import tpl from './templize.js'
 
   spect('#timer', timer => {
     const count = v(0), id = setInterval(() => count.value++, 1000)
+    templize(timer, { count })
     h`<${timer}>${ count }</>`
     return () => clearInterval(id)
   })
