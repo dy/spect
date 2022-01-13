@@ -232,7 +232,8 @@ Spect has long story of research, at v13.0 it had repository reset. See [changel
 
 ## Related
 
-* [vref](https://github.com/spectjs/vref) − observable value container.
+* [vref](https://github.com/spectjs/vref) − value container with observable interface.
+* [templize](https://github.com/spectjs/templize) − templating for DOM.
 * [subscribable-things](https://github.com/chrisguttandin/subscribable-things) − collection of observables for different browser APIs - perfect match with spect.
 * [element-props](https://github.com/spectjs/element-props) − unified access to element props with observable support. Comes handy for organizing components.
 <!-- * [strui](https://github.com/spectjs/strui) − collection of UI streams, such as router, storage etc. Comes handy for building complex reactive web-apps (spect, rxjs etc). -->
