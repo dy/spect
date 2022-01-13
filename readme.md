@@ -34,9 +34,7 @@
 </script>
 -->
 
-_Spect_ provides 3 conventional DOM functions − _**$**_, _**h**_ and _**v**_ for dom aspects, reactive html and observable data.
-
-It attempts to follow the principles:
+## Principles
 
 :gem: **Separation of cross-cutting concerns**.
 
@@ -52,13 +50,12 @@ It attempts to follow the principles:
 
 :golf: Good **performance / size**.
 
-## API
 
 ### spect/$
 
 _`$( container=document , selector , handler? )`_
 
-Observe _`selector`_ within _`container`_, call `handler` when matching elements found. Handler can return teardown function.
+Observe _`selector`_ within _`container`_, call `handler` when matching elements found. Handler can return a teardown function.
 Returns live collection of matched elements (hypothetical _SelectorCollection_ API).
 
 ```js
@@ -77,16 +74,16 @@ document.body.append(foo)
 foo.remove()
 // ... "inactive"
 
-foos[Symbol.dispose]() // destroy selector observer
+foos.dispose() // destroy selector observer
 ```
 
 ### spect/h
 
 _`` el = h`...content` ``_
 
-HTML builder with [HTM](https://ghub.io/htm) syntax and reactive fields support: _Promise_, _Async Iterable_, any [Observable](https://github.com/tc39/proposal-observable), [RXjs](https://rxjs-dev.firebaseapp.com/guide/overview), any [observ*](https://github.com/Raynos/observ) etc.
+HTML builder with [HTM](https://ghub.io/htm) syntax and reactive fields support: _Promise_, _Async Iterable_, any [Observable](https://github.com/tc39/proposal-observable), [RXjs](https://rxjs-dev.firebaseapp.com/guide/overview), any [observ\*](https://github.com/Raynos/observ) etc.
 
-```js
+```jsx
 import {h, v} from 'spect'
 
 const text = v('foo') // reactive value (== vue3 ref)
@@ -104,44 +101,6 @@ const a2 = <a>{ rxSubject } or { asyncIterable } or { promise }</a>
 h(a, a2) // render/update
 ```
 
-### spect/v
-
-_`ref = v( init? )`_
-
-Creates reactive mutable _`ref`_ object with a single `.value` property holding internal value. _`ref`_ is identical to vue3 ref with _Observable_ and _AsyncIterable_ interface.
-
-```js
-import v from 'spect/v.js'
-
-let count = v(0)
-count.value // 0
-
-count.subscribe(value => {
-  console.log(value)
-  return () => console.log('teardown', value)
-})
-count.value = 1
-// > 1
-count.value = 2
-// > "teardown" 1
-// > 2
-
-let double = count.map(value => value * 2) // create mapped ref
-double.value // 4
-
-count.value = 3
-double.value // 6
-
-let sum = v(count.value + double.value)
-count.subscribe(v => sum.value = v + double.value)
-double.subscribe(v => sum.value = count.value + v)
-
-// async iterable
-for await (const value of sum) console.log(value)
-
-sum[Symbol.dispose]() // destroy observations
-```
-
 
 ## Examples
 
@@ -151,7 +110,9 @@ sum[Symbol.dispose]() // destroy observations
 <div class="user">Loading...</div>
 
 <script type="module">
-  import { $, h, v } from 'spect.js'
+  import $ from './spect.js'
+  import v from './vref.js'
+  import h from 'hdom'
 
   $('.user', async el => {
     // create user state
@@ -173,7 +134,8 @@ sum[Symbol.dispose]() // destroy observations
 <time id="timer"></time>
 
 <script type="module">
-  import { $, v, h } from 'spect.js'
+  import v from './vref.js'
+  import { $, h } from './spect.js'
 
   $('#timer', timer => {
     const count = v(0), id = setInterval(() => count.value++, 1000)
@@ -191,7 +153,7 @@ sum[Symbol.dispose]() // destroy observations
 <button id="inc">+</button><button id="dec">-</button>
 
 <script type="module">
-  import { $, h, v } from 'spect.js'
+  import { $, h, v } from './spect.js'
 
   const count = v(0)
   $('#count', el => count.subscribe(c => el.value = c))
@@ -214,7 +176,7 @@ sum[Symbol.dispose]() // destroy observations
 </form>
 
 <script type="module">
-  import { $, h, v } from 'spect.js'
+  import { $, h, v } from './spect.js'
 
   const todos = v([])
   $('.todo-list', el => h`<${el}>${
@@ -241,7 +203,7 @@ sum[Symbol.dispose]() // destroy observations
 <form></form>
 
 <script type="module">
-  import { $, h, v } from 'spect.js'
+  import { $, h, v } from './spect.js'
 
   const isValidEmail = s => /.+@.+\..+/i.test(s)
 
@@ -261,7 +223,8 @@ sum[Symbol.dispose]() // destroy observations
 
 ```html
 <script>
-import {v,h} from 'spect.js'
+import h from './spect.js'
+import v from './vref.js'
 
 const showPrompt = v(false), proceed = v(false)
 
@@ -282,8 +245,6 @@ document.body.appendChild(h`<dialog open=${showPrompt}>
 ## Refs
 
 * **$**: [fast-on-load](https://ghub.io/fast-on-load), [selector-set](https://github.com/josh/selector-set), [insertionQuery](https://github.com/naugtur/insertionQuery), [selector-observer](https://github.com/josh/selector-observer), [reuse](https://ghub.io/reuse), [aspect-oriended-programming](https://en.wikipedia.org/wiki/Aspect-oriented_programming), [qso](https://www.npmjs.com/package/qso), [pure-js](https://pure-js.com/), [element-observer](https://github.com/WebReflection/element-observer) libraries and others.
-* **h**: [lit-html](https://ghub.io/lit-html), [htm](https://ghub.io/htm), [htl](https://ghub.io/htl), [hyperscript](https://ghub.io/hyperscript), [incremental-dom](https://ghub.io/incremental-dom), [snabbdom](https://ghub.io/snabbdom), [nanomorph](https://ghub.io/nanomorph), [uhtml](https://ghub.io/uhtml) and others.
-* **v**: [vue3/ref](https://v3.vuejs.org/api/refs-api.html), [knockout/observable](https://github.com/knockout/tko/issues/22), [mobx/observable](https://mobx.js.org/api.html), [rxjs](https://ghub.io/rxjs), [observable](https://ghub.io/observable), [react hooks](https://ghub.io/unihooks), [observable proposal](https://github.com/tc39/proposal-observable), [observ](https://ghub.io/observ), [mutant](https://ghub.io/mutant), [iron](https://github.com/ironjs/iron), [icaro](https://ghub.io/icaro), [introspected](https://ghub.io/introspected), [augmentor](https://ghub.io/augmentor) and others.
 
 Spect has long story of research, at v13.0 it had repository reset. See [changelog](./changelog.md).
 
