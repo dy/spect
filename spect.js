@@ -1,4 +1,4 @@
-import v from './v.js'
+import v from './node_modules/vref/vref.js'
 
 const ELEMENT = 1, SPECT_CLASS = '👁'
 
