@@ -13,6 +13,7 @@
   + allows <5kb entry for microjs
   + $ can act directly with templize, not necessary own h
   + less tests
+  + reduces complexity/messiness of project, separates concerns of benchmarking etc.
 
 * [x] ~~swap spect(cnt, sel, fn) to spect(sel, fn, cnt?) ?~~
   - cnt at the end is too far
