@@ -24,6 +24,7 @@
     "last 1 Chrome versions"
   ],
   "keywords": [
+    "dom aspect",
     "aspect",
     "aop",
     "aspect oriented programming",
@@ -31,30 +32,14 @@
     "join point",
     "advice",
     "observable",
-    "hooks",
     "useEffect",
-    "fx",
-    "iterator",
-    "async iterator",
     "live collection",
     "HTMLCollection",
     "animationevent",
     "insertionQuery",
     "selector-observer",
     "selector-set",
-    "fast-on-load",
-    "regular-elements",
-    "hyperscript",
-    "observ",
-    "mutant",
-    "ironjs",
-    "react-hooks",
-    "react",
-    "preact",
-    "rxjs",
-    "jquery",
-    "jsx",
-    "htm"
+    "fast-on-load"
   ],
   "author": "dy <df.creative@gmail.com>",
   "license": "MIT",
@@ -62,7 +47,6 @@
     "url": "https://github.com/spectjs/spect/issues"
   },
   "homepage": "https://github.com/spectjs/spect#readme",
-  "dependencies": {},
   "devDependencies": {
     "augmentor": "^2.1.5",
     "autoesm": "^1.0.5",
@@ -72,7 +56,7 @@
     "ironjs": "0.0.17-alpha",
     "jsdom": "^16.2.2",
     "observable": "^2.1.4",
-    "tst": "^6.1.1",
+    "tst": "^7.0.0",
     "uhtml": "^1.9.1",
     "wait-please": "^3.1.0",
     "xhtm": "^1.5.3"
@@ -95,5 +79,8 @@
       "uhtml",
       "incremental-dom"
     ]
+  },
+  "dependencies": {
+    "vref": "^1.1.0"
   }
 }
