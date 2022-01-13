@@ -1,5 +1,9 @@
 # plan
 
+* [ ] make tests use remote deps as peer-deps, reduce number of dev dep libs
+
+* [ ] reogranize building
+
 * [ ] publish to microjs
 
 * [ ] Split h, v, and $ into separate components:
