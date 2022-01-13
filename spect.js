@@ -232,7 +232,7 @@ class $ extends Array {
 
   has(item) { return this.#items.has(item) }
 
-  [Symbol.dispose]() {
+  dispose() {
     if (this.#selector) {
       this.#selector.forEach(({id, class:cls, name, tag}) => {
         id && ids[id].splice(ids[id].indexOf(this) >>> 0, 1)
@@ -259,6 +259,8 @@ class $ extends Array {
     this.length = 0
     els.forEach(el => this.delete(el, true))
   }
+
+  [Symbol.dispose]() { return this.dispose }
 }
 
 const queryAdd = (targets, sets, check) => {
