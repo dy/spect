@@ -34,9 +34,7 @@
 </script>
 -->
 
-_Spect_ is selector observer, invoking handler function for matched nodes found in document. This way it allows separating cross-cutting concerns into **DOM aspects**.
-
-#### _`spect( container=document , selector , handler? )`_
+### _`spect( container=document , selector , handler? )`_
 
 Observe _`selector`_ within _`container`_, call `handler` when matching elements found. Handler can return a teardown function.
 Returns live collection of matched elements (hypothetical _SelectorCollection_ API).
