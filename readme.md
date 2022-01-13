@@ -34,7 +34,7 @@
 </script>
 -->
 
-_Spect_ is selector observer, invoking handler function for matched nodes found in document. This way it allows separating cross-cutting concerns into _DOM aspects_.
+_Spect_ is selector observer, invoking handler function for matched nodes found in document. This way it allows separating cross-cutting concerns into **DOM aspects**.
 
 ### spect/$
 
