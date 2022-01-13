@@ -38,7 +38,7 @@
 
 Observe _`selector`_ within _`container`_, call `handler` when matching elements found.<br/>
 Handler can return a teardown function, called for unmatched elements.<br/>
-Returns live collection of matched elements (hypothetical _SelectorCollection_ API).
+Returns live collection of elements (hypothetical _SelectorCollection_ API).
 
 ```js
 import spect from './spect.js'
