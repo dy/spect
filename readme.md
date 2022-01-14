@@ -16,7 +16,7 @@
 <br/>
 -->
 
-# <img alt="subscript" src="./logo.svg" height=24 /> Spect [![test](https://github.com/spectjs/spect/actions/workflows/node.js.yml/badge.svg)](https://github.com/spectjs/spect/actions/workflows/node.js.yml) [![npm version](https://img.shields.io/npm/v/spect)](http://npmjs.org/spect)
+# <img alt="subscript" src="./logo.svg" height=24 /> Spect <a href="https://travis-ci.org/spectjs/spect"><img src="https://travis-ci.org/spectjs/spect.svg?branch=master"/></a> <a href="https://bundlephobia.com/result?p=spect"><img alt="npm bundle size" src="https://img.shields.io/bundlephobia/minzip/spect?label=size"></a> <a href="https://npmjs.org/package/spect"><img alt="npm" src="https://img.shields.io/npm/v/spect"></a> <img src="https://img.shields.io/badge/stability-unstable-yellow"/>
 
 > Micro DOM aspects: pieces of logic declared with CSS rules.
 
