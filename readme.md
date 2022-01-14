@@ -16,7 +16,7 @@
 <br/>
 -->
 
-# <img alt="subscript" src="/logo.svg" height=28/> [![test](https://github.com/spectjs/spect/actions/workflows/node.js.yml/badge.svg)](https://github.com/spectjs/spect/actions/workflows/node.js.yml) [![npm version](https://img.shields.io/npm/v/spect)](http://npmjs.org/spect)
+# <img alt="subscript" src="./logo.svg" height=28/> Spect [![test](https://github.com/spectjs/spect/actions/workflows/node.js.yml/badge.svg)](https://github.com/spectjs/spect/actions/workflows/node.js.yml) [![npm version](https://img.shields.io/npm/v/spect)](http://npmjs.org/spect)
 
 > Micro DOM aspects: pieces of logic declared with CSS rules.
 
