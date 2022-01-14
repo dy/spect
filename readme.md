@@ -11,7 +11,7 @@
 
 Observe _`selector`_ within _`container`_, call `handler` when matching elements found.<br/>
 Handler can return a teardown function, called for unmatched elements.<br/>
-Returns live collection of elements (hypothetical _SelectorCollection_ API).
+Returns live collection of elements (hypothetical _SelectorCollection_).
 
 ```js
 import spect from './spect.js'
@@ -41,17 +41,12 @@ foos.dispose() // destroy selector observer
 
 <script type="module">
   import spect from './spect.js'
-  import v from './vref.js'
-  import tpl from './templize.js'
-
-  // create user state
-  const user = v({ name: 'guest' })
+  import templize from './templize.js'
 
   // initialize template
-  spect('.user', async el => tpl(el, { user }))
-
-  // load data
-  user.value = (await fetch('/user')).json()
+  spect('.user', async el => templize(el, {
+    user: (await fetch('/user')).json() // value is available when resolved
+  }))
 </script>
 ```
 </details>
@@ -64,12 +59,11 @@ foos.dispose() // destroy selector observer
 <script type="module">
   import v from './vref.js'
   import spect from './spect.js'
-  import tpl from './templize.js'
+  import templize from './templize.js'
 
   spect('#timer', timer => {
     const count = v(0), id = setInterval(() => count.value++, 1000)
     templize(timer, { count })
-    h`<${timer}>${ count }</>`
     return () => clearInterval(id)
   })
 </script>
@@ -80,7 +74,8 @@ foos.dispose() // destroy selector observer
   
 ```html
 <output id="count">{{ count }}</output>
-<button id="inc">+</button><button id="dec">-</button>
+<button id="inc">+</button>
+<button id="dec">-</button>
 
 <script type="module">
   import spect from './spect.js'
@@ -88,9 +83,9 @@ foos.dispose() // destroy selector observer
   import templize from './templize.js'
 
   const count = v(0)
-  $('#count', el => templize(el))
-  $('#inc', el => el.onclick = e => count.value++)
-  $('#dec', el => el.onclick = e => count.value--)
+  spect('#count', el => templize(el, { count }))
+  spect('#inc', el => el.onclick = e => count.value++)
+  spect('#dec', el => el.onclick = e => count.value--)
 </script>
 ```
 </details>
@@ -104,24 +99,25 @@ foos.dispose() // destroy selector observer
     <input name="text" required>
   </label>
   <button type="submit">Add</button>
-  <ul class="todo-list"><ul>
+  <ul class="todo-list">{{ todos }}<ul>
 </form>
 
 <script type="module">
-  import { $, h, v } from './spect.js'
+  import spect from './spect.js'
+  import v from './vref.js'
+  import h from './hyperf.js'
+  import tpl from './templize.js'
 
   const todos = v([])
-  $('.todo-list', el => h`<${el}>${
-    todos.map(items =>
-      items.map(item => h`<li>${ item.text }</li>`)
-    )
-  }</>`)
-  $('.todo-form', form => form.addEventListener('submit', e => {
+
+  spect('.todo-list', el => tpl(el, {
+    todos: todos.map(item => h`<li>${ item.text }</li>`)
+  }))
+
+  spect('.todo-form', form => form.addEventListener('submit', e => {
     e.preventDefault()
     if (!form.checkValidity()) return
-
     todos.value = [...todos.value, { text: form.text.value }]
-
     form.reset()
   }))
 </script>
@@ -132,19 +128,21 @@ foos.dispose() // destroy selector observer
 
 <!-- TODO: more meaningful validator -->
 ```html
-<form></form>
+<form id="email-form"></form>
 
 <script type="module">
-  import { $, h, v } from './spect.js'
+  import spect from './spect.js'
+  import h from './hyperf.js'
+  import v from './vref.js'
 
   const isValidEmail = s => /.+@.+\..+/i.test(s)
 
-  $('form', form => {
+  spect('#email-form', form => {
     const valid = v(false)
     h`<${form}>
       <label for="email">Please enter an email address:</label>
       <input#email onchange=${ e => valid.value = isValidEmail(e.target.value) }/>
-      The address is ${ v(valid, b => b ? "valid" : "invalid") }
+      The address is ${ v(valid).map(b => b ? "valid" : "invalid") }
     </>`
   })
 </script>
@@ -173,8 +171,6 @@ document.body.appendChild(h`<dialog open=${showPrompt}>
 
 [See all examples](examples).
 
-Spect has long story of research, at v13.0 it had repository reset. See [changelog](./changelog.md).
-
 ## Related
 
 * [vref](https://github.com/spectjs/vref) − value container with observable interface.
@@ -187,6 +183,7 @@ Spect has long story of research, at v13.0 it had repository reset. See [changel
 
 ## Refs
 
+Spect has long story of research, at v13.0 it had repository reset. See [changelog](./changelog.md).
 [fast-on-load](https://ghub.io/fast-on-load), [selector-set](https://github.com/josh/selector-set), [insertionQuery](https://github.com/naugtur/insertionQuery), [selector-observer](https://github.com/josh/selector-observer), [reuse](https://ghub.io/reuse), [aspect-oriended-programming](https://en.wikipedia.org/wiki/Aspect-oriented_programming), [qso](https://www.npmjs.com/package/qso), [pure-js](https://pure-js.com/), [element-observer](https://github.com/WebReflection/element-observer).
 
 
