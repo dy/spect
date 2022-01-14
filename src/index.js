@@ -179,7 +179,7 @@ class SelectorCollection extends Array {
     el.classList.add(SPECT_CLASS)
 
     // notify
-    this.#teardown.set(el, this.#callback && this.#callback(el))
+    this.#teardown.set(el, this.#callback?.(el))
     this.#channel.value = this
   }
 

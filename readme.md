@@ -11,7 +11,7 @@
 
 Observe _`selector`_ within _`container`_, call `handler` when matching elements found.<br/>
 Handler can return a teardown function, called for unmatched elements.<br/>
-Returns live collection of elements (hypothetical _SelectorCollection_).
+Returns live collection of elements _SelectorCollection_.
 
 ```js
 import spect from './spect.js'
@@ -29,7 +29,12 @@ document.body.append(foo)
 foo.remove()
 // ... "inactive"
 
-foos.dispose() // destroy selector observer
+// SelectorCollection
+foos[idx]                                     // extends Array
+foos.has(el), foos.add(el), foos.delete(el)   // implements Set
+foos.item(idx), foos.namedItem(elementId)     // implements HTMLCollection
+foos.subscribe(fn)                            // Observable
+foos.dispose()                                // destroy selector observer / unsubscribe
 ```
 
 ## Examples
