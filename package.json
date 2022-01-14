@@ -13,8 +13,7 @@
   },
   "scripts": {
     "test": "node -r ./test/register.cjs --experimental-loader autoesm test/index.js",
-    "build": "esbuild index.js --bundle --sourcemap --format=esm --outfile=dist/spect.js",
-    "build-min": "esbuild index.js --bundle --minify --sourcemap --format=esm --outfile=dist/spect.min.js"
+    "build": "terser spect.js -o spect.min.js --module -c passes=3 -m"
   },
   "repository": {
     "type": "git",
@@ -24,7 +23,7 @@
     "last 1 Chrome versions"
   ],
   "keywords": [
-    "dom aspect",
+    "dom aspects",
     "aspect",
     "aop",
     "aspect oriented programming",
@@ -32,14 +31,14 @@
     "join point",
     "advice",
     "observable",
-    "useEffect",
     "live collection",
     "HTMLCollection",
     "animationevent",
     "insertionQuery",
     "selector-observer",
     "selector-set",
-    "fast-on-load"
+    "fast-on-load",
+    "qso"
   ],
   "author": "dy <df.creative@gmail.com>",
   "license": "MIT",
@@ -58,19 +57,6 @@
     "dist",
     "*.js"
   ],
-  "snowpack": {
-    "webDependencies": [
-      "htm",
-      "htl",
-      "observable",
-      "preact",
-      "hyperscript/index.js",
-      "lit-html",
-      "augmentor",
-      "uhtml",
-      "incremental-dom"
-    ]
-  },
   "dependencies": {
     "vref": "^1.1.0"
   }

@@ -6,6 +6,8 @@
 
 * [ ] publish to microjs
 
+* [ ] use sube as dependency?
+
 * [x] Split h, v, and $ into separate components:
   + it's confusing now to have mix of 3 separate purpose funtions
     + often we need just value ref, or dom builder, not aspector
