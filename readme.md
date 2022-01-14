@@ -1,7 +1,7 @@
+<!--
 <div align="center"><img src="https://avatars3.githubusercontent.com/u/53097200?s=200&v=4" width=108 /></div>
 <p align="center"><h1 align="center">spect</h1></p>
 <p align="center">
-  <!--Reactive aspect-oriented web-framework.<br/>-->
   Micro DOM aspects: pieces of logic declared with CSS rules.<br/>
 </p>
 <p align="center">
@@ -14,6 +14,11 @@
 <p align="center"><img src="/preview.png" width="625"/></p>
 <p align="center">▶ <a href="https://codepen.io/dyv/pen/oNXXZEb" target="_blank"><strong>Run</strong></a></p>
 <br/>
+-->
+
+# <img alt="subscript" src="/logo.svg" height=28/> [![test](https://github.com/spectjs/spect/actions/workflows/node.js.yml/badge.svg)](https://github.com/spectjs/spect/actions/workflows/node.js.yml) [![npm version](https://img.shields.io/npm/v/spect)](http://npmjs.org/spect)
+
+> Micro DOM aspects: pieces of logic declared with CSS rules.
 
 <!--
 <time id="clock"></time>
