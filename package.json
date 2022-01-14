@@ -48,18 +48,9 @@
   },
   "homepage": "https://github.com/spectjs/spect#readme",
   "devDependencies": {
-    "augmentor": "^2.1.5",
-    "autoesm": "^1.0.5",
-    "htl": "^0.2.0",
-    "hyperscript": "^2.0.2",
-    "incremental-dom": "^0.7.0",
-    "ironjs": "0.0.17-alpha",
     "jsdom": "^16.2.2",
-    "observable": "^2.1.4",
     "tst": "^7.0.0",
-    "uhtml": "^1.9.1",
-    "wait-please": "^3.1.0",
-    "xhtm": "^1.5.3"
+    "wait-please": "^3.1.0"
   },
   "files": [
     "readme.md",
