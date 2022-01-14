@@ -34,7 +34,8 @@ foos[idx]                                     // extends Array
 foos.has(el), foos.add(el), foos.delete(el)   // implements Set
 foos.item(idx), foos.namedItem(elementId)     // implements HTMLCollection
 foos.subscribe(fn)                            // Observable
-foos.dispose()                                // destroy selector observer / unsubscribe
+
+foos.dispose() // destroy selector observer / unsubscribe
 ```
 
 ## Examples
