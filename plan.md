@@ -1,5 +1,7 @@
 # plan
 
+* [ ] migrate tests to github
+
 * [ ] reogranize building
 
 * [ ] publish to microjs
