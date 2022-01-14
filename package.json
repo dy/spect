@@ -2,18 +2,14 @@
   "name": "spect",
   "version": "23.1.1",
   "description": "Aspect-oriented DOM framework",
-  "main": "index.js",
-  "module": "index.js",
-  "unpkg": "dist/spect.min.js",
+  "main": "spect.js",
+  "module": "spect.js",
+  "unpkg": "./spect.min.js",
   "type": "module",
-  "exports": {
-    ".": "./index.js",
-    "./": "./",
-    "./dist/": "./dist/"
-  },
   "scripts": {
     "test": "node -r ./test/register.cjs --experimental-loader autoesm test/index.js",
-    "build": "terser spect.js -o spect.min.js --module -c passes=3 -m"
+    "build": "rollup src/index.js --file spect.js --format esm",
+    "minify": "terser spect.js -o spect.min.js --module -c passes=3 -m"
   },
   "repository": {
     "type": "git",
@@ -48,6 +44,8 @@
   "homepage": "https://github.com/spectjs/spect#readme",
   "devDependencies": {
     "jsdom": "^16.2.2",
+    "rollup": "^2.63.0",
+    "terser": "^5.10.0",
     "tst": "^7.0.0",
     "wait-please": "^3.1.0"
   },
