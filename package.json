@@ -34,7 +34,8 @@
     "selector-observer",
     "selector-set",
     "fast-on-load",
-    "qso"
+    "qso",
+    "mutation observer"
   ],
   "author": "dy <df.creative@gmail.com>",
   "license": "MIT",
