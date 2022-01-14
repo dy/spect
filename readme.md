@@ -169,7 +169,7 @@ document.body.appendChild(h`<dialog open=${showPrompt}>
 ```
 </details>
 
-[See all examples](examples).
+<!-- [See all examples](examples). -->
 
 ## Related
 
