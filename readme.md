@@ -183,8 +183,6 @@ document.body.appendChild(h`<dialog open=${showPrompt}>
 
 ## Refs
 
-Spect has long story of research, at v13.0 it had repository reset. See [changelog](./changelog.md).
 [fast-on-load](https://ghub.io/fast-on-load), [selector-set](https://github.com/josh/selector-set), [insertionQuery](https://github.com/naugtur/insertionQuery), [selector-observer](https://github.com/josh/selector-observer), [reuse](https://ghub.io/reuse), [aspect-oriended-programming](https://en.wikipedia.org/wiki/Aspect-oriented_programming), [qso](https://www.npmjs.com/package/qso), [pure-js](https://pure-js.com/), [element-observer](https://github.com/WebReflection/element-observer).
-
 
 <p align="center">ॐ</p>
