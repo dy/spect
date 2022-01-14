@@ -1,49 +1,11 @@
 <!--
-<div align="center"><img src="https://avatars3.githubusercontent.com/u/53097200?s=200&v=4" width=108 /></div>
-<p align="center"><h1 align="center">spect</h1></p>
-<p align="center">
-  Micro DOM aspects: pieces of logic declared with CSS rules.<br/>
-</p>
-<p align="center">
-  <a href="https://travis-ci.org/spectjs/spect"><img src="https://travis-ci.org/spectjs/spect.svg?branch=master"/></a>
-  <a href="https://bundlephobia.com/result?p=spect"><img alt="npm bundle size" src="https://img.shields.io/bundlephobia/minzip/spect?label=size"></a>
-  <a href="https://npmjs.org/package/spect"><img alt="npm" src="https://img.shields.io/npm/v/spect"></a>
-  <img src="https://img.shields.io/badge/stability-unstable-yellow"/>
-</p>
-
-<p align="center"><img src="/preview.png" width="625"/></p>
 <p align="center">▶ <a href="https://codepen.io/dyv/pen/oNXXZEb" target="_blank"><strong>Run</strong></a></p>
 <br/>
 -->
 
 # <sub><img alt="subscript" src="./logo2.svg" height=30 /></sub> spect   <a href="https://travis-ci.org/spectjs/spect"><img src="https://travis-ci.org/spectjs/spect.svg?branch=master"/></a> <a href="https://bundlephobia.com/result?p=spect"><img alt="npm bundle size" src="https://img.shields.io/bundlephobia/minzip/spect?label=size"></a> <a href="https://npmjs.org/package/spect"><img alt="npm" src="https://img.shields.io/npm/v/spect"></a>
 
-> Micro DOM aspects: pieces of logic declared with CSS rules.
-
-<!--
-<time id="clock"></time>
-
-<script type="module">
-  import { $, h, v } from "https://unpkg.com/spect"
-
-  $('#clock', el => {
-    const date = v(new Date())
-
-    h`<${el} datetime=${ date }>
-      ${ date.map(d => d.toLocaleTimeString()) }
-    </>`
-
-    let id = setInterval(() => date.value = new Date(), 1000)
-    return () => clearInterval(id)
-  })
-</script>
--->
-
-#### _`spect( container=document , selector , handler? )`_
-
-Observe _`selector`_ within _`container`_, call `handler` when matching elements found.<br/>
-Handler can return a teardown function, called for unmatched elements.<br/>
-Returns live collection of elements (hypothetical _SelectorCollection_ API).
+> DOM aspects: pieces of logic declared with CSS rules.
 
 ```js
 import spect from './spect.js'
@@ -64,31 +26,11 @@ foo.remove()
 foos.dispose() // destroy selector observer
 ```
 
-<!--
-### spect/h
+#### _`spect( container=document , selector , handler? )`_
 
-_`` el = h`...content` ``_
-
-HTML builder with [HTM](https://ghub.io/htm) syntax and reactive fields support: _Promise_, _Async Iterable_, any [Observable](https://github.com/tc39/proposal-observable), [RXjs](https://rxjs-dev.firebaseapp.com/guide/overview), any [observ\*](https://github.com/Raynos/observ) etc.
-
-```jsx
-import {h, v} from 'spect'
-
-const text = v('foo') // reactive value (== vue3 ref)
-const a = h`<a>${ text }</a>` // <a>foo</a>
-text.value = 'bar' // <a>bar</a>
-
-const frag = h`<x ...${{x: 1}}>1</x><y>2</y>`  // htm syntax
-h`<${a}>${ frag }</a>` // <a><x x="1">1</x><y>2</y></a>
-
-a[Symbol.dispose]() // destroy observers
-
-/* jsx h */
-const a2 = <a>{ rxSubject } or { asyncIterable } or { promise }</a>
-
-h(a, a2) // render/update
-```
--->
+Observe _`selector`_ within _`container`_, call `handler` when matching elements found.<br/>
+Handler can return a teardown function, called for unmatched elements.<br/>
+Returns live collection of elements (hypothetical _SelectorCollection_ API).
 
 
 ## Examples
