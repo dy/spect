@@ -1,6 +1,6 @@
 import './testfill.js'
+import spect from '../src/index.js'
 import t, {is, throws} from '../node_modules/tst/tst.js'
-import spect from '../spect.js'
 import { tick, frame, idle, time } from '../node_modules/wait-please/index.js'
 import v from '../node_modules/vref/vref.js'
 import h from '../node_modules/hyperf/hyperf.js'

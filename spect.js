@@ -76,9 +76,9 @@ let count = 0, ids = {}, classes = {}, tags = {}, names = {}, animations = {}, s
 
 function index (scope, selector, fn) {
   // spect`#x`
-  if (scope && scope.raw) return new $(null, String.raw.apply(null, arguments))
+  if (scope && scope.raw) return new SelectorCollection(null, String.raw.apply(null, arguments))
   // spect(selector, fn)
-  if (typeof scope === 'string') return new $(null, scope, selector)
+  if (typeof scope === 'string') return new SelectorCollection(null, scope, selector)
   // spect(target, fn)
   if (!selector || typeof selector === 'function') {
     fn = selector;
@@ -86,15 +86,15 @@ function index (scope, selector, fn) {
     if (!target) target = [];
     if (target.nodeType) target = [target];
 
-    const set = new $(null, null, fn);
+    const set = new SelectorCollection(null, null, fn);
     target.forEach(el => set.add(el));
     return set
   }
 
-  return new $(scope, selector, fn)
+  return new SelectorCollection(scope, selector, fn)
 }
 
-class $ extends Array {
+class SelectorCollection extends Array {
   #channel
   #items
   #delete
@@ -104,6 +104,7 @@ class $ extends Array {
   #selector
   #animation
   #match
+
   constructor(scope, selector, fn){
     // self-call, like splice, map, slice etc. fall back to array
     if (typeof scope === 'number') return Array(scope)
@@ -287,9 +288,7 @@ class $ extends Array {
     else requestAnimationFrame(del);
   }
 
-  [Symbol.observable]() {
-    return this.#channel
-  }
+  [Symbol.observable||=Symbol.for('observable')]() { return this.#channel }
 
   item(n) { return n < 0 ? this[this.length + n] : this[n] }
 
