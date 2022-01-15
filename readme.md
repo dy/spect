@@ -7,7 +7,7 @@
 
 > DOM aspects: pieces of logic declared with CSS rules.
 
-#### _`spect( [container=document,] selector, handler? )`_
+#### _`spect( [ container=document, ] selector, handler? )`_
 
 Observe _`selector`_ within _`container`_, call `handler` when matching elements found.<br/>
 Handler can return a teardown function, called for unmatched elements.<br/>
