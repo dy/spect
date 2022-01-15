@@ -30,9 +30,9 @@ foo.remove()
 // ... "inactive"
 ```
 
-### API
+### SelectorCollection
 
-_SelectorCollection_ extends _Array_, implements _Set_, _HTMLCollection_ methods, and provides _Observable_, _AsyncIterable_, _Disposable_ interfaces.
+Extends _Array_, implements _Set_, _HTMLCollection_ methods, and provides _Observable_, _AsyncIterable_, _Disposable_ interfaces.
 
 ```js
 foos[idx]                                     // Array
