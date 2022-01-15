@@ -183,7 +183,7 @@ document.body.appendChild(h`<dialog open=${showPrompt}>
 
 ## Related
 
-* [vref](https://github.com/spectjs/vref) − value container with observable interface.
+* [value-ref](https://github.com/spectjs/value-ref) − value container with observable interface.
 * [templize](https://github.com/spectjs/templize) − DOM element template parts.
 * [hyperf](https://github.com/spectjs/hyperf) − Hypertext fragment builder with reactivity.
 * [subscribable-things](https://github.com/chrisguttandin/subscribable-things) − collection of observables for different browser APIs - perfect match with spect.
