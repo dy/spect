@@ -1,3 +1,4 @@
+// FIXME: can that be made a weakref?
 var v = init => new Ref(init);
 
 const _teardown = Symbol();
@@ -46,7 +47,7 @@ class Ref {
 
   error(e) {this.#observers.map(sub => sub.error && sub.error(e));}
 
-  [Symbol.observable](){return this}
+  [Symbol.observable||=Symbol.for('observable')](){return this}
 
   async *[Symbol.asyncIterator]() {
     let resolve, buf = [], p = new Promise(r => resolve = r),
@@ -62,15 +63,16 @@ class Ref {
     this.#observers.length = 0;
     unsubs.map(unsub => unsub());
   }
-  [Symbol.dispose]() { return this.dispose() }
+  [Symbol.dispose||=Symbol('dispose')]() { return this.dispose() }
 }
 
-const ELEMENT = 1, SPECT_CLASS = '👁';
+const ELEMENT = 1, SPECT_CLASS = '⬡';
 
 let count = 0, ids = {}, classes = {}, tags = {}, names = {}, animations = {}, setCache = new WeakMap,
     hasAnimevent = typeof AnimationEvent !== 'undefined',
     style = document.head.appendChild(document.createElement('style'));
 
+Symbol.dispose ||= Symbol('dispose');
 
 // FIXME: use Symbol.species to fix add/map/etc?
 
@@ -244,7 +246,7 @@ class SelectorCollection extends Array {
     el.classList.add(SPECT_CLASS);
 
     // notify
-    this.#teardown.set(el, this.#callback && this.#callback(el));
+    this.#teardown.set(el, this.#callback?.(el));
     this.#channel.value = this;
   }
 
