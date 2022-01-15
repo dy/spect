@@ -1,6 +1,6 @@
 {
   "name": "spect",
-  "version": "23.1.1",
+  "version": "24.0.0",
   "description": "DOM aspects - pieces of logic defined with CSS rules",
   "main": "./src/index.js",
   "module": "./src/index.js",
