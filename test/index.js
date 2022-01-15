@@ -1,8 +1,8 @@
 import './testfill.js'
 import spect from '../src/index.js'
-import t, {is, throws} from '../node_modules/tst/tst.js'
+import t, {is, throws, same, ok} from '../node_modules/tst/tst.js'
 import { tick, frame, idle, time } from '../node_modules/wait-please/index.js'
-import v from '../node_modules/vref/vref.js'
+import v from '../node_modules/value-ref/value-ref.js'
 import h from '../node_modules/hyperf/hyperf.js'
 
 t('spect: tag selector', async t => {
@@ -99,11 +99,11 @@ t.skip('spect: simple hooks', async t => {
 t('spect: throwing error must not create recursion', async t => {
   let a = document.createElement('a')
   document.body.appendChild(a)
-  console.groupCollapsed('error here')
-  t.throws(() => spect('a', el => {
+  // console.groupCollapsed('error here')
+  throws(() => spect('a', el => {
     throw Error('That error is planned')
   }), 'That error is planned')
-  console.groupEnd()
+  // console.groupEnd()
   await tick()
 
   document.body.removeChild(a)
@@ -253,7 +253,7 @@ t('spect: contextual query', async t => {
   })
   el.innerHTML = '<x class="x"><y></y></x>'
   await frame(3)
-  t.same(log, ['.x y', '.x', '-', ' y'])
+  same(log, ['.x y', '.x', '-', ' y'])
 })
 t('spect: adding/removing attribute with attribute selector, mixed with direct selector', async t => {
   let el = document.body.appendChild(document.createElement('div'))
@@ -419,7 +419,7 @@ t.skip('empty selectors', t => {
   is($z.length, 0)
 
   // NOTE: this one creates content
-  // let $w = $`div`
+  // let $w = spect`div`
   // is($w.length, 0)
 
   t.notEqual($x, $y)
@@ -446,8 +446,8 @@ t('spect: selecting by name', async t => {
   let $f = spect(h`<form><input name="a"/><input name="b"/></form>`, 'input')
 
   is($f.length, 2)
-  t.ok($f.a)
-  t.ok($f.b)
+  ok($f.a)
+  ok($f.b)
 
 })
 t('spect: init on list of elements', async t => {
@@ -473,7 +473,7 @@ t('spect: template literal', async t => {
   document.body.appendChild(el)
   el.innerHTML = '<div class="x"></div><div class="x"></div>'
 
-  let els = $`div.${'x'}`
+  let els = spect`div.${'x'}`
   is([...els], [...el.childNodes])
 })
 t.todo('spect: v($)', async t => {
@@ -537,7 +537,7 @@ t('spect: simple selector cases', async t => {
   c.dispose()
 })
 t('spect: does not expose private props', t => {
-  is(Object.keys($`privates`), [])
+  is(Object.keys(spect`privates`), [])
 })
 t.skip('spect: complex selectors', async t => {
   spect('a [x] b', el => {
@@ -549,7 +549,7 @@ t('spect: conflicting names', t => {
   let el = document.createElement('div')
   el.innerHTML = '<a id="add"></a>'
   document.body.appendChild(el)
-  let a = $`#add`
+  let a = spect`#add`
   console.log(a)
 
   a.dispose()

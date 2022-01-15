@@ -2,11 +2,11 @@
 
 * [ ] migrate tests to github
 
-* [ ] reogranize building
-
 * [ ] publish to microjs
 
-* [ ] use sube as dependency?
+* [x] reogranize building
+
+* [x] use sube as dependency?
 
 * [x] Split h, v, and $ into separate components:
   + it's confusing now to have mix of 3 separate purpose funtions

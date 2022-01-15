@@ -1,4 +1,4 @@
-import v from '../node_modules/vref/vref.js'
+import v from '../node_modules/value-ref/value-ref.js'
 
 const ELEMENT = 1, SPECT_CLASS = '⬡'
 
@@ -6,6 +6,7 @@ let count = 0, ids = {}, classes = {}, tags = {}, names = {}, animations = {}, s
     hasAnimevent = typeof AnimationEvent !== 'undefined',
     style = document.head.appendChild(document.createElement('style'))
 
+Symbol.dispose ||= Symbol('dispose')
 
 // FIXME: use Symbol.species to fix add/map/etc?
 

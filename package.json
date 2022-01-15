@@ -45,6 +45,7 @@
   "homepage": "https://github.com/spectjs/spect#readme",
   "devDependencies": {
     "autoesm": "^1.0.5",
+    "hyperf": "^1.0.1",
     "jsdom": "^16.2.2",
     "rollup": "^2.63.0",
     "terser": "^5.10.0",
@@ -52,12 +53,11 @@
     "wait-please": "^3.1.0"
   },
   "files": [
-    "readme.md",
     "src",
-    "dist",
-    "*.js"
+    "spect.js",
+    "spect.min.js"
   ],
   "dependencies": {
-    "value-ref": "^1.2.0"
+    "value-ref": "^1.2.1"
   }
 }

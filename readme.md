@@ -63,7 +63,7 @@ foos.dispose() // destroy selector observer / unsubscribe
 <time id="timer">{{ count }}</time>
 
 <script type="module">
-  import v from './vref.js'
+  import v from './value-ref.js'
   import spect from './spect.js'
   import templize from './templize.js'
 
@@ -85,7 +85,7 @@ foos.dispose() // destroy selector observer / unsubscribe
 
 <script type="module">
   import spect from './spect.js'
-  import v from './vref.js'
+  import v from './value-ref.js'
   import templize from './templize.js'
 
   const count = v(0)
@@ -110,7 +110,7 @@ foos.dispose() // destroy selector observer / unsubscribe
 
 <script type="module">
   import spect from './spect.js'
-  import v from './vref.js'
+  import v from './value-ref.js'
   import h from './hyperf.js'
   import tpl from './templize.js'
 
@@ -139,7 +139,7 @@ foos.dispose() // destroy selector observer / unsubscribe
 <script type="module">
   import spect from './spect.js'
   import h from './hyperf.js'
-  import v from './vref.js'
+  import v from './value-ref.js'
 
   const isValidEmail = s => /.+@.+\..+/i.test(s)
 
@@ -160,7 +160,7 @@ foos.dispose() // destroy selector observer / unsubscribe
 ```html
 <script>
 import h from './hyperf.js'
-import v from './vref.js'
+import v from './value-ref.js'
 
 const showPrompt = v(false), proceed = v(false)
 
