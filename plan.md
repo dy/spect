@@ -1,5 +1,7 @@
 # plan
 
+* [ ] make use of weakref
+
 * [ ] migrate tests to github
 
 * [ ] publish to microjs

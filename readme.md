@@ -28,14 +28,18 @@ document.body.append(foo)
 
 foo.remove()
 // ... "inactive"
+```
 
-// SelectorCollection
-foos[idx]                                     // extends Array
-foos.has(el), foos.add(el), foos.delete(el)   // implements Set
-foos.item(idx), foos.namedItem(elementId)     // implements HTMLCollection
+### API
+
+_SelectorCollection_ extends _Array_, implements _Set_, _HTMLCollection_ methods, and provides _Observable_, _AsyncIterable_, _Disposable_ interfaces.
+
+```js
+foos[idx]                                     // Array
+foos.has(el), foos.add(el), foos.delete(el)   // Set
+foos.item(idx), foos.namedItem(elementId)     // HTMLCollection
 foos.subscribe(fn)                            // Observable
-
-foos.dispose() // destroy selector observer / unsubscribe
+foos.dispose()  // destroy selector observer / unsubscribe
 ```
 
 ## Examples
