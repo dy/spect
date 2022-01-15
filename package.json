@@ -1,7 +1,7 @@
 {
   "name": "spect",
   "version": "23.1.1",
-  "description": "Aspect-oriented DOM framework",
+  "description": "DOM aspects - pieces of logic defined with CSS rules",
   "main": "./src/index.js",
   "module": "./src/index.js",
   "unpkg": "./spect.min.js",
@@ -37,7 +37,7 @@
     "qso",
     "mutation observer"
   ],
-  "author": "dy <df.creative@gmail.com>",
+  "author": "Dmitry Iv <df.creative@gmail.com>",
   "license": "MIT",
   "bugs": {
     "url": "https://github.com/spectjs/spect/issues"
