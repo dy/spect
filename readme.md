@@ -3,7 +3,7 @@
 <br/>
 -->
 
-# <sub><img alt="subscript" src="./logo2.svg" height=30 /></sub> spect   <a href="https://github.com/spectjs/spect/actions/workflows/test.yml"><img src="https://github.com/spectjs/spect/actions/workflows/spect.yml/badge.svg"/></a> <a href="https://bundlephobia.com/result?p=spect"><img alt="npm bundle size" src="https://img.shields.io/bundlephobia/minzip/spect?label=size"></a> <a href="https://npmjs.org/package/spect"><img alt="npm" src="https://img.shields.io/npm/v/spect"></a>
+# <sub><img alt="subscript" src="./logo2.svg" height=30 /></sub> spect   <a href="https://github.com/spectjs/spect/actions/workflows/test.yml"><img src="https://github.com/spectjs/spect/actions/workflows/test.yml/badge.svg"/></a> <a href="https://bundlephobia.com/result?p=spect"><img alt="npm bundle size" src="https://img.shields.io/bundlephobia/minzip/spect?label=size"></a> <a href="https://npmjs.org/package/spect"><img alt="npm" src="https://img.shields.io/npm/v/spect"></a>
 
 > DOM aspects: pieces of logic declared with CSS rules.
 
