@@ -44,7 +44,8 @@
   },
   "homepage": "https://github.com/spectjs/spect#readme",
   "devDependencies": {
-    "hyperf": "^1.0.1",
+    "es-module-shims": "^1.4.1",
+    "hyperf": "^1.1.2",
     "jsdom": "^16.2.2",
     "rollup": "^2.63.0",
     "terser": "^5.10.0",

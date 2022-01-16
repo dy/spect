@@ -1,4 +1,4 @@
-import vref from '../node_modules/value-ref/value-ref.js'
+import vref from 'value-ref'
 
 const ELEMENT = 1, SPECT_CLASS = '⬡'
 

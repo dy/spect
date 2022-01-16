@@ -1,9 +1,9 @@
 import './testfill.js'
 import spect from '../src/index.js'
-import t, {is, throws, same, ok} from '../node_modules/tst/tst.js'
-import { tick, frame, idle, time } from '../node_modules/wait-please/index.js'
-import v from '../node_modules/value-ref/value-ref.js'
-import h from '../node_modules/hyperf/hyperf.js'
+import t, {is, throws, same, ok} from 'tst'
+import { tick, frame, idle, time } from 'wait-please'
+import v from 'value-ref'
+import h from 'hyperf'
 
 t('spect: tag selector', async t => {
   let ellog = []

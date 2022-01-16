@@ -1,6 +1,6 @@
 # plan
 
-* [ ] make use of weakref
+* [ ] make use of weakref (iterable weakmap)
 
 * [ ] migrate tests to github
 
