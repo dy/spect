@@ -42,9 +42,9 @@ foos.subscribe(fn)                            // Observable
 foos.dispose()  // destroy selector observer / unsubscribe
 ```
 
-### Design
+### Technique
 
-It combines methods selector parts indexing from [selector-observer](https://github.com/josh/selector-observer)  for simple queries and animation events [insertionQuery](https://github.com/naugtur/insertionQuery) for complex selectors.
+It combines selector parts indexing from [selector-observer](https://github.com/josh/selector-observer) for simple queries and animation events [insertionQuery](https://github.com/naugtur/insertionQuery) for complex selectors.
 
 ## Examples
 
