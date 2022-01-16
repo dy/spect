@@ -16,12 +16,12 @@ Returns live collection of elements _SelectorCollection_.
 ```js
 import spect from './spect.js'
 
-let foos = spect('.foo', el => {
+const foos = spect('.foo', el => {
   console.log('active')
   return () => console.log('inactive') // teardown
 })
 
-let foo = document.createElement('div')
+const foo = document.createElement('div')
 foo.className = 'foo'
 document.body.append(foo)
 // ... "active"
@@ -41,6 +41,10 @@ foos.item(idx), foos.namedItem(elementId)     // HTMLCollection
 foos.subscribe(fn)                            // Observable
 foos.dispose()  // destroy selector observer / unsubscribe
 ```
+
+### Design
+
+It combines methods selector parts indexing from [selector-observer](https://github.com/josh/selector-observer)  for simple queries and animation events [insertionQuery](https://github.com/naugtur/insertionQuery) for complex selectors.
 
 ## Examples
 
@@ -84,8 +88,8 @@ foos.dispose()  // destroy selector observer / unsubscribe
   
 ```html
 <output id="count">{{ count }}</output>
-<button id="inc">+</button>
-<button id="dec">-</button>
+<button id="inc" onclick="{{ inc }}">+</button>
+<button id="dec" onclick="{{ dec }}">-</button>
 
 <script type="module">
   import spect from './spect.js'
@@ -94,8 +98,8 @@ foos.dispose()  // destroy selector observer / unsubscribe
 
   const count = v(0)
   spect('#count', el => templize(el, { count }))
-  spect('#inc', el => el.onclick = e => count.value++)
-  spect('#dec', el => el.onclick = e => count.value--)
+  spect('#inc', el => templize(el, { inc() { count.value++ } }))
+  spect('#dec', el => templize(el, { dec() { count.value-- } }))
 </script>
 ```
 </details>
@@ -118,6 +122,7 @@ foos.dispose()  // destroy selector observer / unsubscribe
   import h from './hyperf.js'
   import tpl from './templize.js'
 
+  // FIXME: use specially designed reactive list for optimized updates
   const todos = v([])
 
   spect('.todo-list', el => tpl(el, {
@@ -193,6 +198,6 @@ document.body.appendChild(h`<dialog open=${showPrompt}>
 
 ## Refs
 
-[fast-on-load](https://ghub.io/fast-on-load), [selector-set](https://github.com/josh/selector-set), [insertionQuery](https://github.com/naugtur/insertionQuery), [selector-observer](https://github.com/josh/selector-observer), [reuse](https://ghub.io/reuse), [aspect-oriended-programming](https://en.wikipedia.org/wiki/Aspect-oriented_programming), [qso](https://www.npmjs.com/package/qso), [pure-js](https://pure-js.com/), [element-observer](https://github.com/WebReflection/element-observer).
+[fast-on-load](https://ghub.io/fast-on-load), [selector-set](https://github.com/josh/selector-set), [insertionQuery](https://github.com/naugtur/insertionQuery), [selector-observer](https://github.com/josh/selector-observer), [reuse](https://ghub.io/reuse), [aspect-oriended-programming](https://en.wikipedia.org/wiki/Aspect-oriented_programming), [qso](https://www.npmjs.com/package/qso), [pure-js](https://pure-js.com/), [element-observer](https://github.com/WebReflection/element-observer), [livequery](https://github.com/hazzik/livequery), [selector-listener](https://github.com/csuwildcat/SelectorListener), [mutation-summary](https://github.com/rafaelw/mutation-summary), [rkusa/selector-observer](https://github.com/rkusa/selector-observer).
 
 <p align="center">ॐ</p>
