@@ -2,6 +2,7 @@
 
 Version | Changes
 ---|---
+24.0.0 | `spect/v` → [value-ref](https://github.com/spectjs/value-ref), `spect/h` → [https://github.com/spectjs/hyperf]
 23.1.0 | internalized deps
 23.0.0 | v reduced to ref: universal observable value reference (vue3-ref like).
 22.0.0 | v reduced to simple observable. Removed i, a.
