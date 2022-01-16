@@ -7,7 +7,7 @@
   "unpkg": "./spect.min.js",
   "type": "module",
   "scripts": {
-    "test": "node -r ./test/register.cjs --loader autoesm test/index.js",
+    "test": "node -r ./test/register.cjs test/index.js",
     "build": "rollup src/index.js --file spect.js --format esm",
     "minify": "terser spect.js -o spect.min.js --module -c passes=3 -m"
   },
@@ -44,7 +44,6 @@
   },
   "homepage": "https://github.com/spectjs/spect#readme",
   "devDependencies": {
-    "autoesm": "^1.0.5",
     "hyperf": "^1.0.1",
     "jsdom": "^16.2.2",
     "rollup": "^2.63.0",
@@ -58,6 +57,6 @@
     "spect.min.js"
   ],
   "dependencies": {
-    "value-ref": "^1.2.1"
+    "value-ref": "^1.3.0"
   }
 }

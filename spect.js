@@ -1,7 +1,7 @@
 // FIXME: can that be made a weakref?
-var v = init => new Ref(init);
+var vref = init => new Ref(init);
 
-const _teardown = Symbol();
+const NEXT=0, ERROR=1, COMPLETE=2, UNSUB=3, TEARDOWN=4;
 
 class Ref {
   #observers=[]
@@ -12,8 +12,9 @@ class Ref {
   set value(val) {
     this[0] = val;
     for (let sub of this.#observers) {
-      if (typeof sub[_teardown] === 'function') sub[_teardown]();
-      if (sub.next) (sub[_teardown] = sub.next(val));
+      sub[TEARDOWN]?.call?.();
+      !(sub[NEXT]||sub[ERROR]||sub[COMPLETE]).deref() ? sub[UNSUB]() : // unsubscribe is ref is lost
+        sub[TEARDOWN] = sub[NEXT].deref()?.(val);
     }
   }
 
@@ -23,18 +24,20 @@ class Ref {
 
   // FIXME: replace with 0b?
   subscribe(next, error, complete) {
-    next = next && next.next || next;
-    error = next && next.error || error;
-    complete = next && next.complete || complete;
+    next = next?.next || next;
+    error = next?.error || error;
+    complete = next?.complete || complete;
 
-    const unsubscribe = () => (
-      this.#observers.length && this.#observers.splice(this.#observers.indexOf(subscription) >>> 0, 1),
-      complete && complete()
-    ),
-    subscription = { next, error, complete, unsubscribe };
+    const unsubscribe = () => this.#observers.length && this.#observers.splice(this.#observers.indexOf(subscription) >>> 0, 1),
+      subscription = [
+        next && new WeakRef(next), // weakrefs automatically unsubscribe targets
+        error && new WeakRef(error),
+        complete && new WeakRef(complete),
+        unsubscribe,
+        this[0] !== undefined ? next(this[0]) : null // teardown
+      ];
+
     this.#observers.push(subscription);
-
-    if ( this[0] !== undefined ) subscription[_teardown] = next(this[0]);
 
     return unsubscribe.unsubscribe = unsubscribe
   }
@@ -45,7 +48,7 @@ class Ref {
     return ref
   }
 
-  error(e) {this.#observers.map(sub => sub.error && sub.error(e));}
+  error(e) {this.#observers.map(sub => sub[ERROR]?.deref()?.(e));}
 
   [Symbol.observable||=Symbol.for('observable')](){return this}
 
@@ -59,7 +62,7 @@ class Ref {
 
   dispose() {
     this[0] = null;
-    const unsubs = this.#observers.map(sub => ((typeof sub[_teardown] === 'function') && sub[_teardown](), sub.unsubscribe));
+    const unsubs = this.#observers.map(sub => (sub[TEARDOWN]?.call?.(), sub[COMPLETE]?.deref()?.(), sub[UNSUB]));
     this.#observers.length = 0;
     unsubs.map(unsub => unsub());
   }
@@ -69,8 +72,10 @@ class Ref {
 const ELEMENT = 1, SPECT_CLASS = '⬡';
 
 let count = 0, ids = {}, classes = {}, tags = {}, names = {}, animations = {}, setCache = new WeakMap,
+    doc = document,
     hasAnimevent = typeof AnimationEvent !== 'undefined',
-    style = document.head.appendChild(document.createElement('style'));
+    style = doc.head.appendChild(doc.createElement('style')),
+    _proto = Symbol();
 
 Symbol.dispose ||= Symbol('dispose');
 
@@ -113,19 +118,19 @@ class SelectorCollection extends Array {
 
     super();
 
-    this.#channel = v(this);
+    this.#channel = vref(this);
     this.#items = new WeakMap;
     this.#delete = new WeakSet;
     this.#teardown = new WeakMap;
     this.#scope = scope;
     this.#callback = fn;
+    this[_proto] = Object.getPrototypeOf(this);
 
     // ignore non-selector collections
     if (!selector) return
 
     // init existing elements
-    const proto = Object.getPrototypeOf(this)
-    ;(scope || document).querySelectorAll(selector).forEach(el => {proto.add.call(this, el);});
+    ;(scope || doc).querySelectorAll(selector).forEach(el => { this[_proto].add.call(this, el); });
 
     // if last selector part is simple (id|name|class|tag), followed by classes or attrs - index that
     // #a[x][y], [name="e"].x, .x.y, *, a-b-c:x - simple
@@ -180,14 +185,14 @@ class SelectorCollection extends Array {
 
           if (!target.classList.contains(anim.id)) {
             target.classList.add(anim.id);
-            anim.forEach(set => Object.getPrototypeOf(set).add.call(set, target, false));
+            anim.forEach(set => set[_proto].add.call(set, target, false));
           }
           else {
             target.classList.remove(anim.id);
             anim.forEach(set => set.delete(target));
           }
         };
-        document.addEventListener('animationstart', anim.onanim, true);
+        doc.addEventListener('animationstart', anim.onanim, true);
       }
       this.#animation = anim.id;
       anim.push(this);
@@ -204,11 +209,7 @@ class SelectorCollection extends Array {
     if (check) if (!el.matches(this.#selector)) return
 
     // ignore out-of-scope
-    if (this.#scope) {
-      if (this.#scope === el) return
-      if (this.#scope.nodeType) { if (!this.#scope.contains(el)) return }
-      else if ([].every.call(this.#scope, scope => !scope.contains(el))) return
-    }
+    if (this.#scope && (this.#scope === el || !this.#scope.contains(el))) return
 
     // track collection
     this.push(el);
@@ -311,7 +312,7 @@ class SelectorCollection extends Array {
       const anim = animations[this.#selector];
       anim.splice(anim.indexOf(this) >>> 0, 1);
       if (!anim.length) {
-        document.removeEventListener('animationstart', anim.onanim);
+        doc.removeEventListener('animationstart', anim.onanim);
         delete animations[this.#selector];
         if (anim.rules) anim.rules.forEach(rule => {
           let idx = [].indexOf.call(style.sheet.cssRules, rule);
@@ -331,7 +332,10 @@ class SelectorCollection extends Array {
 
 const queryAdd = (targets, sets, check) => {
   if (!sets || !targets) return
-  ;[].forEach.call(targets.nodeType ? [targets] : targets, target => sets.forEach(set => Object.getPrototypeOf(set).add.call(set, target, check)));
+  // HTMLCollection has only iterable method
+  ;[].forEach.call(targets.nodeType ? [targets] : targets,
+    target => sets.forEach(set => set[_proto].add.call(set, target, check))
+  );
 },
 queryDelete = target => [target.classList.contains(SPECT_CLASS) ? target : null, ...target.getElementsByClassName(SPECT_CLASS)]
   .forEach(node => setCache.has(node) && setCache.get(node).forEach(set => set.delete(node)))
@@ -372,10 +376,10 @@ queryDelete = target => [target.classList.contains(SPECT_CLASS) ? target : null,
     });
   }
 }))
-.observe(document, {
+.observe(doc, {
   childList: true,
   subtree: true,
   attributes: !hasAnimevent
 });
 
-export { index as default };
+export { SelectorCollection, index as default };

@@ -1,10 +1,12 @@
-import v from '../node_modules/value-ref/value-ref.js'
+import vref from '../node_modules/value-ref/value-ref.js'
 
 const ELEMENT = 1, SPECT_CLASS = '⬡'
 
 let count = 0, ids = {}, classes = {}, tags = {}, names = {}, animations = {}, setCache = new WeakMap,
+    doc = document,
     hasAnimevent = typeof AnimationEvent !== 'undefined',
-    style = document.head.appendChild(document.createElement('style'))
+    style = doc.head.appendChild(doc.createElement('style')),
+    _proto = Symbol()
 
 Symbol.dispose ||= Symbol('dispose')
 
@@ -30,7 +32,7 @@ export default function (scope, selector, fn) {
   return new SelectorCollection(scope, selector, fn)
 }
 
-class SelectorCollection extends Array {
+export class SelectorCollection extends Array {
   #channel
   #items
   #delete
@@ -47,19 +49,19 @@ class SelectorCollection extends Array {
 
     super()
 
-    this.#channel = v(this)
+    this.#channel = vref(this)
     this.#items = new WeakMap
     this.#delete = new WeakSet
     this.#teardown = new WeakMap
     this.#scope = scope
     this.#callback = fn
+    this[_proto] = Object.getPrototypeOf(this)
 
     // ignore non-selector collections
     if (!selector) return
 
     // init existing elements
-    const proto = Object.getPrototypeOf(this)
-    ;(scope || document).querySelectorAll(selector).forEach(el => {proto.add.call(this, el)})
+    ;(scope || doc).querySelectorAll(selector).forEach(el => { this[_proto].add.call(this, el) })
 
     // if last selector part is simple (id|name|class|tag), followed by classes or attrs - index that
     // #a[x][y], [name="e"].x, .x.y, *, a-b-c:x - simple
@@ -114,14 +116,14 @@ class SelectorCollection extends Array {
 
           if (!target.classList.contains(anim.id)) {
             target.classList.add(anim.id)
-            anim.forEach(set => Object.getPrototypeOf(set).add.call(set, target, false))
+            anim.forEach(set => set[_proto].add.call(set, target, false))
           }
           else {
             target.classList.remove(anim.id)
             anim.forEach(set => set.delete(target))
           }
         }
-        document.addEventListener('animationstart', anim.onanim, true)
+        doc.addEventListener('animationstart', anim.onanim, true)
       }
       this.#animation = anim.id
       anim.push(this)
@@ -138,11 +140,7 @@ class SelectorCollection extends Array {
     if (check) if (!el.matches(this.#selector)) return
 
     // ignore out-of-scope
-    if (this.#scope) {
-      if (this.#scope === el) return
-      if (this.#scope.nodeType) { if (!this.#scope.contains(el)) return }
-      else if ([].every.call(this.#scope, scope => !scope.contains(el))) return
-    }
+    if (this.#scope && (this.#scope === el || !this.#scope.contains(el))) return
 
     // track collection
     this.push(el)
@@ -245,7 +243,7 @@ class SelectorCollection extends Array {
       const anim = animations[this.#selector]
       anim.splice(anim.indexOf(this) >>> 0, 1)
       if (!anim.length) {
-        document.removeEventListener('animationstart', anim.onanim)
+        doc.removeEventListener('animationstart', anim.onanim)
         delete animations[this.#selector]
         if (anim.rules) anim.rules.forEach(rule => {
           let idx = [].indexOf.call(style.sheet.cssRules, rule)
@@ -265,7 +263,10 @@ class SelectorCollection extends Array {
 
 const queryAdd = (targets, sets, check) => {
   if (!sets || !targets) return
-  ;[].forEach.call(targets.nodeType ? [targets] : targets, target => sets.forEach(set => Object.getPrototypeOf(set).add.call(set, target, check)))
+  // HTMLCollection has only iterable method
+  ;[].forEach.call(targets.nodeType ? [targets] : targets,
+    target => sets.forEach(set => set[_proto].add.call(set, target, check))
+  )
 },
 queryDelete = target => [target.classList.contains(SPECT_CLASS) ? target : null, ...target.getElementsByClassName(SPECT_CLASS)]
   .forEach(node => setCache.has(node) && setCache.get(node).forEach(set => set.delete(node)))
@@ -306,7 +307,7 @@ queryDelete = target => [target.classList.contains(SPECT_CLASS) ? target : null,
     })
   }
 }))
-.observe(document, {
+.observe(doc, {
   childList: true,
   subtree: true,
   attributes: !hasAnimevent
