@@ -252,7 +252,6 @@ export class SelectorCollection extends Array {
       }
     }
 
-    this.#channel[Symbol.dispose]()
     let els = [...this]
     this.length = 0
     els.forEach(el => this.delete(el, true))

@@ -58,6 +58,6 @@
     "spect.min.js"
   ],
   "dependencies": {
-    "value-ref": "^1.3.0"
+    "value-ref": "^1.4.0"
   }
 }
