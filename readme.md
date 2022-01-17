@@ -39,7 +39,7 @@ foos[idx]                                     // Array
 foos.has(el), foos.add(el), foos.delete(el)   // Set
 foos.item(idx), foos.namedItem(elementId)     // HTMLCollection
 foos.subscribe(fn)                            // Observable
-foos.dispose()  // destroy selector observer / unsubscribe
+foos.dispose()                                // destroy selector observer / unsubscribe
 ```
 
 ### Technique

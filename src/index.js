@@ -195,7 +195,7 @@ export class SelectorCollection extends Array {
     this.#delete.add(el)
 
     const del = () => {
-      if (!this.#delete.has(el)) return
+      if (!this.#delete.has(el) || !this.#channel) return
       this.#delete.delete(el)
 
       if (!setCache.has(el)) return
@@ -255,6 +255,8 @@ export class SelectorCollection extends Array {
     let els = [...this]
     this.length = 0
     els.forEach(el => this.delete(el, true))
+
+    this.#channel = null
   }
 
   [Symbol.dispose]() { return this.dispose }

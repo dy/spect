@@ -570,7 +570,7 @@ t('spect: item, namedItem', async t => {
 t('spect: debugger cases', async t => {
   let set
   console.log('*', set = spect('*'))
-  set.delete(document.body)
+  set.delete(document.body, true)
   console.log(set)
   // is(set._match, false)
   set.dispose()
