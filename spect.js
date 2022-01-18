@@ -1,19 +1,24 @@
 var vref = init => new Ref(init);
 
-const NEXT=0, ERROR=1, COMPLETE=2, UNSUB=3, TEARDOWN=4;
+const NEXT=0, ERROR=1, UNSUB=3, TEARDOWN=4;
+
+const unsubscribe = obs => obs?.map?.(sub => sub[UNSUB]()),
+      registry = new FinalizationRegistry(unsubscribe);
 
 class Ref {
   #observers=[]
 
-  constructor(init){ this[0] = init; }
+  // NOTE: on finalization strategy
+  // we unsubscribe only by losing source, not by losing subscriptions
+  // safe is to let event handlers sit there as far as source is available
+  // it can generate events, dereferencing listeners would be incorrect
+  constructor(init){ this[0] = init, registry.register(this, this.#observers); }
 
   get value() { return this[0] }
   set value(val) {
     this[0] = val;
     for (let sub of this.#observers)
-      sub[TEARDOWN]?.call?.(),
-      !(sub[NEXT]||sub[ERROR]||sub[COMPLETE]).deref() ? sub[UNSUB]() : // unsubscribe is ref is lost
-        sub[TEARDOWN] = sub[NEXT].deref()?.(val);
+      (sub[TEARDOWN]?.call?.(), sub[TEARDOWN] = sub[NEXT](val));
   }
 
   valueOf() {return this.value}
@@ -25,16 +30,20 @@ class Ref {
     error = next?.error || error;
     complete = next?.complete || complete;
 
-    const unsubscribe = () => this.#observers.length && this.#observers.splice(this.#observers.indexOf(subscription) >>> 0, 1),
+    const observers = this.#observers,
+      unsubscribe = () => (
+        subscription[TEARDOWN]?.call?.(),
+        observers.splice(observers.indexOf(subscription) >>> 0, 1)
+      ),
       subscription = [
-        next && new WeakRef(next), // weakrefs automatically unsubscribe targets
-        error && new WeakRef(error),
-        complete && new WeakRef(complete),
+        next,
+        error,
+        complete,
         unsubscribe,
         this[0] !== undefined ? next(this[0]) : null // teardown
       ];
 
-    this.#observers.push(subscription);
+    observers.push(subscription);
 
     return unsubscribe.unsubscribe = unsubscribe
   }
@@ -45,7 +54,7 @@ class Ref {
     return ref
   }
 
-  error(e) {this.#observers.map(sub => sub[ERROR]?.deref()?.(e));}
+  error(e) {this.#observers.map(sub => sub[ERROR]?.(e));}
 
   [Symbol.observable||=Symbol.for('observable')](){return this}
 
@@ -56,6 +65,12 @@ class Ref {
     catch {}
     unsub();
   }
+
+  [Symbol.dispose||=Symbol('dispose')]() {
+    unsubscribe(this.#observers);
+    delete this[0];
+    this.#observers = null;
+  }
 }
 
 const ELEMENT = 1, SPECT_CLASS = '⬡';
@@ -65,8 +80,6 @@ let count = 0, ids = {}, classes = {}, tags = {}, names = {}, animations = {}, s
     hasAnimevent = typeof AnimationEvent !== 'undefined',
     style = doc.head.appendChild(doc.createElement('style')),
     _proto = Symbol();
-
-Symbol.dispose ||= Symbol('dispose');
 
 // FIXME: use Symbol.species to fix add/map/etc?
 
@@ -314,10 +327,11 @@ class SelectorCollection extends Array {
     this.length = 0;
     els.forEach(el => this.delete(el, true));
 
+    this.#channel[Symbol.dispose]?.();
     this.#channel = null;
   }
 
-  [Symbol.dispose]() { return this.dispose }
+  [Symbol.dispose||=Symbol('dispose')]() { return this.dispose }
 }
 
 const queryAdd = (targets, sets, check) => {

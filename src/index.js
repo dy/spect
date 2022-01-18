@@ -8,8 +8,6 @@ let count = 0, ids = {}, classes = {}, tags = {}, names = {}, animations = {}, s
     style = doc.head.appendChild(doc.createElement('style')),
     _proto = Symbol()
 
-Symbol.dispose ||= Symbol('dispose')
-
 // FIXME: use Symbol.species to fix add/map/etc?
 
 export default function (scope, selector, fn) {
@@ -256,10 +254,11 @@ export class SelectorCollection extends Array {
     this.length = 0
     els.forEach(el => this.delete(el, true))
 
+    this.#channel[Symbol.dispose]?.()
     this.#channel = null
   }
 
-  [Symbol.dispose]() { return this.dispose }
+  [Symbol.dispose||=Symbol('dispose')]() { return this.dispose }
 }
 
 const queryAdd = (targets, sets, check) => {
