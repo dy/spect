@@ -14,7 +14,7 @@ Handler can return a teardown function, called for unmatched elements.<br/>
 Returns live collection of elements _SelectorCollection_.
 
 ```js
-import spect from './spect.js'
+import spect from 'spect'
 
 const foos = spect('.foo', el => {
   console.log('active')
@@ -54,8 +54,8 @@ It combines selector parts indexing from [selector-observer](https://github.com/
 <div class="user">{{ user.name || "Loading..." }}</div>
 
 <script type="module">
-  import spect from './spect.js'
-  import templize from './templize.js'
+  import spect from 'spect'
+  import templize from 'templize'
 
   // initialize template
   spect('.user', async el => templize(el, {
@@ -68,14 +68,15 @@ It combines selector parts indexing from [selector-observer](https://github.com/
 <details><summary>Timer</summary>
 
 ```html
-<time id="timer">{{ count }}</time>
+<time class="timer">{{ count }}</time>
+<time class="timer">{{ count }}</time>
 
 <script type="module">
-  import v from './value-ref.js'
-  import spect from './spect.js'
-  import templize from './templize.js'
+  import v from 'value-ref'
+  import spect from 'spect'
+  import templize from 'templize'
 
-  spect('#timer', timer => {
+  spect('.timer', timer => {
     const count = v(0), id = setInterval(() => count.value++, 1000)
     templize(timer, { count })
     return () => clearInterval(id)
@@ -92,14 +93,16 @@ It combines selector parts indexing from [selector-observer](https://github.com/
 <button id="dec" onclick="{{ dec }}">-</button>
 
 <script type="module">
-  import spect from './spect.js'
-  import v from './value-ref.js'
-  import templize from './templize.js'
+  import spect from 'spect'
+  import v from 'value-ref'
+  import templize from 'templize'
 
   const count = v(0)
   spect('#count', el => templize(el, { count }))
-  spect('#inc', el => templize(el, { inc() { count.value++ } }))
-  spect('#dec', el => templize(el, { dec() { count.value-- } }))
+
+  // bind events via HTML template
+  spect('#inc', el => templize(el, { inc: () => count.value++ }))
+  spect('#dec', el => templize(el, { dec: () => count.value-- }))
 </script>
 ```
 </details>
@@ -117,10 +120,10 @@ It combines selector parts indexing from [selector-observer](https://github.com/
 </form>
 
 <script type="module">
-  import spect from './spect.js'
-  import v from './value-ref.js'
-  import h from './hyperf.js'
-  import tpl from './templize.js'
+  import spect from 'spect'
+  import v from 'value-ref'
+  import h from 'hyperf'
+  import tpl from 'templize'
 
   // FIXME: use specially designed reactive list for optimized updates
   const todos = v([])
@@ -146,9 +149,9 @@ It combines selector parts indexing from [selector-observer](https://github.com/
 <form id="email-form"></form>
 
 <script type="module">
-  import spect from './spect.js'
-  import h from './hyperf.js'
-  import v from './value-ref.js'
+  import spect from 'spect'
+  import h from 'hyperf'
+  import v from 'value-ref'
 
   const isValidEmail = s => /.+@.+\..+/i.test(s)
 
@@ -167,32 +170,39 @@ It combines selector parts indexing from [selector-observer](https://github.com/
 <details><summary>Prompt</summary>
 
 ```html
-<script>
-import h from './hyperf.js'
-import v from './value-ref.js'
-
-const showPrompt = v(false), proceed = v(false)
-
-document.body.appendChild(h`<dialog open=${showPrompt}>
+<dialog class="dialog" open={{showPrompt}}>
   Proceed?
   <menu>
-    <button onclick=${e => (showPrompt.value = false, proceed.value = false)}>Cancel</button>
-    <button onclick=${e => (showPrompt.value = false, proceed.value = true)}>Confirm</button>
+    <button onclick={{cancel}}>Cancel</button>
+    <button onclick={{confirm}}>Confirm</button>
   </menu>
-</>`)
+</dialog>
+
+<script>
+import v from 'value-ref'
+import spect from 'spect'
+
+spect('.dialog', el => {
+  const showPrompt = v(false), proceed = v(false)
+  templize(el, {
+    showPrompt, proceed,
+    cancel() {showPrompt.value = proceed.value = false;},
+    confirm() {showPrompt.value = false; proceed.value = true;}
+  })
+})
 </script>
 ```
 </details>
 
 <!-- [See all examples](examples). -->
 
-## Related
+## Best Buddies
 
-* [value-ref](https://github.com/spectjs/value-ref) − value container with observable interface.
-* [templize](https://github.com/spectjs/templize) − DOM element template parts.
-* [hyperf](https://github.com/spectjs/hyperf) − Hypertext fragment builder with reactivity.
-* [subscribable-things](https://github.com/chrisguttandin/subscribable-things) − collection of observables for different browser APIs - perfect match with spect.
-* [element-props](https://github.com/spectjs/element-props) − unified access to element props with observable support. Comes handy for organizing components.
+* [value-ref](https://github.com/spectjs/value-ref) − value container with observable interface. Indispensible for reactive data.
+* [templize](https://github.com/spectjs/templize) − DOM buddy - hooks up reactive values to element template parts.
+* [hyperf](https://github.com/spectjs/hyperf) − builds HTML fragments with reactive fields.
+* [subscribable-things](https://github.com/chrisguttandin/subscribable-things) − collection of observables for different browser APIs.
+<!-- * [element-props](https://github.com/spectjs/element-props) − unified access to element props with observable support. Comes handy for organizing components. -->
 <!-- * [strui](https://github.com/spectjs/strui) − collection of UI streams, such as router, storage etc. Comes handy for building complex reactive web-apps (spect, rxjs etc). -->
 
 

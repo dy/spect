@@ -13,21 +13,35 @@
   <section class="todoapp">
     <header class="header">
       <h1>todos</h1>
-      <input class="new-todo" placeholder="What needs to be done?" autofocus>
+      <input class="new-todo" placeholder="What needs to be done?" autofocus onkeypress={{addItem}}>
     </header>
     <section class="main">
-      <input id="toggle-all" class="toggle-all" type="checkbox">
+      <input id="toggle-all" class="toggle-all" type="checkbox" onclick={{toggleAll}}>
       <label for="toggle-all">Mark all as complete</label>
-      <ul class="todo-list"></ul>
+      <ul class="todo-list">
+        <li :each="{{ item in todos }}"
+          class="{{ item.done ? 'completed' : '' }}"
+          hidden="{{ item.hidden }}"
+          ondblclick="{{ item.editMode }}">
+          <div class="view">
+            <input class="toggle" type="checkbox" checked="{{ item.done }}" onchange="{{ item.toggle }}"/>
+            <label>{{ item.text }}</label>
+            <button class="destroy" onclick="{{ item.remove }}"></button>
+          </div>
+          <input class=edit value="{{ item.text }}" onchange="{{ item.edit }}"/>
+        </li>
+      </ul>
     </section>
     <footer class="footer" hidden>
-      <span class="todo-count"><strong>0</strong> item left</span>
+      <span class="todo-count">
+        <strong>{{ remainingCount }}</strong>{{ remainingCount }} {{ plur('item', count) }}  left
+      </span>
       <ul class="filters">
         <li><a class="selected" href="#/">All</a></li>
         <li><a href="#/active">Active</a></li>
         <li><a href="#/completed">Completed</a></li>
       </ul>
-      <button class="clear-completed">Clear completed</button>
+      <button class="clear-completed" hidden={{doneNone}} onclick={{clearCompleted}}>Clear completed</button>
     </footer>
   </section>
   <footer class="info">
@@ -37,99 +51,74 @@
   </footer>
   <script src="https://unpkg.com/todomvc-common/base.js"></script>
   <script type="module">
-    import plur from 'https://cdn.pika.dev/plur'
-    import { $, h, v } from "https://unpkg.com/spect"
-    // import { $, h, v } from "../index.js"
+    import spect from 'spect'
+    import templize from 'templize'
+    import plur from 'plur'
 
-    let [list] = $`.todo-list`
-    let items = v(() => [])
-    items.add = item => {
-      item = v(item)
-      items().push(item)
-      let li
-      list.appendChild(li = h`<li/>`).item = item
-      item(() => items(items()), null, () => li.remove())
-    }
-    items.remove = item => {
-      item[Symbol.dispose]()
-      items().splice(items().indexOf(item) >>> 0, 1)
-      items(items())
-    }
+    // store
+    let items = ref([])
+    items.add = (text, item) => (items.value = [
+      ...items.value,
+      item = {
+        text: ref(text),
+        done: ref(false),
+        get hidden: () => hash.value === '#/active' ? item.done.value : hash.value === '#/completed' ? !item.done.value : false
+        edit: e => item.text.value = e.target.value
+        toggle: e => item.done.value = !item.done.value,
+        remove: () => items.value = items.value.filter(i => i !== item),
+        editMode: e => {
+          const li = e.target, edit = li.querySelector('.edit')
+          li.classList.add('editing')
+          edit.focus()
+          edit.onblur = e => li.classList.remove('editing')
+          edit.onkeypress = e => e.key === 'Enter' ? e.target.blur() : null
+        }
+      }
+    ])
 
-    // init store
+    // persistence
     let str = localStorage.getItem('todomvc.items')
     if (str) JSON.parse(str).map(item => items.add(item))
-    items(items => localStorage.setItem('todomvc.items', JSON.stringify(items.map(item => item()))))
+    items.subscribe(items => localStorage.setItem('todomvc.items', JSON.stringify(items)))
 
-    const remains = v(items, items => items.filter(item => !item.done()).length)
-    const allComplete = v(items, items => items.every(item => item.done()))
-
-
-    const hash = v(() => window.location.hash || '#/')
+    // hash source
+    const hash = ref(window.location.hash || '#/')
     window.addEventListener('hashchange', e => hash(window.location.hash))
 
-    $('.new-todo', el => {
-      el.addEventListener('keypress', e => {
-        if (e.key === 'Enter') {
-          items.add({ text: e.target.value, done: false })
-          e.target.value = ''
-        }
-      })
-    })
 
-    $('.todo-list li', li => {
-      const { item } = li
-
-      const hidden = v(([hash, item]), ([hash, item]) => hash === '#/active' ? item.done : hash === '#/completed' ? !item.done : false )
-
-      let toggle, edit, destroy
-      h`<${li} class="${ v(item, ({done}) => done ? 'completed' : '') }" hidden=${ hidden }>
-        <div class="view">
-          ${ toggle = h`<input class="toggle" type="checkbox" checked=${ item.done }/>` }
-          <label>${ item.text }</label>
-          <button class="destroy" onclick=${e => (items.remove(item))}></button>
-        </div>
-        ${ edit = h`<input class=edit value=${ item.text } />` }
-      </>`
-
-      v(toggle)(item.done)
-      v(edit)(item.text)
-
-      li.addEventListener('dblclick', e => {
-        li.classList.add('editing')
-        edit.focus()
-        edit.onblur = e => li.classList.remove('editing')
-        edit.onkeypress = e => e.key === 'Enter' ? e.target.blur() : null
-      })
-    })
-
-    $('.todo-count', el => {
-      h`<${el}>
-        <strong>${ remains }</strong>
-        ${ v(remains, count => plur('item', count) + ' left' ) }
-      </>`
-    })
-
-    $('.toggle-all', el => el.addEventListener('click', e => {
-      const all = allComplete()
-      items.map(item => item.done(all ? false : true ))
+    // parts
+    spect('.new-todo', el => templize(el, {
+      addItem: e => {
+        if (e.key !== 'Enter') return
+        items.add(e.target.value)
+        e.target.value = ''
+      }
     }))
-    $('.clear-completed', el => {
-      el.addEventListener('click', e => {
-        items(items().filter(item => !item.done() ? true : (item[Symbol.dispose](), false)))
-      })
-      h(el, {hidden: v(items, items => items.every(item => !item.done()))})
-    })
 
-    // if $ is observable that can be done simpler
-    $('.main', el => items(items => h(el, {hidden: !items.length})))
-    $('.footer', el => items(items => h(el, {hidden: !items.length})))
-    $('.filters li a', el => {
-      v(hash, (hash) => {
-        if (hash === el.hash) el.classList.add('selected')
-        else el.classList.remove('selected')
-      })
-    })
+    spect('.todo-list', list => templize(list, {todos: items}))
+
+    spect('.todo-count', el => templize(el, {
+      remainingCount: ref.from(items, items => items.filter(item => !item.done.value).length),
+      plur
+    }))
+
+    spect('.toggle-all', el => templize(el, {
+      toggleAll: () => {
+        const all = items.value.every(item => item.done.value)
+        items.value = items.value.map(item => item.done.value = !all)
+      }
+    }))
+
+    spect('.clear-completed', el => templize(el, {
+      doneNone: ref.from(items, items => items.every(item => !item.done.value)),
+      clearCompleted: () => items.value = items.value.filter(item => !item.done.value ? true : false)
+    }))
+
+    spect('.filters li a', el =>
+      hash.subscribe(hash =>
+        hash === el.hash ? el.classList.add('selected') : el.classList.remove('selected')
+      )
+    )
   </script>
 </body>
 </html>
