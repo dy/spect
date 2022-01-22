@@ -19,6 +19,7 @@
       <input id="toggle-all" class="toggle-all" type="checkbox" onclick={{toggleAll}}>
       <label for="toggle-all">Mark all as complete</label>
       <ul class="todo-list">
+        <!-- <template directive="each" expression="item in todos"> -->
         <li :each="{{ item in todos }}"
           class="{{ item.done ? 'completed' : '' }}"
           hidden="{{ item.hidden }}"
@@ -34,7 +35,7 @@
     </section>
     <footer class="footer" hidden>
       <span class="todo-count">
-        <strong>{{ remainingCount }}</strong>{{ remainingCount }} {{ plur('item', count) }}  left
+        <strong>{{ count }}</strong>{{ count }} {{ plur('item', count) }}  left
       </span>
       <ul class="filters">
         <li><a class="selected" href="#/">All</a></li>
@@ -98,7 +99,7 @@
     spect('.todo-list', list => templize(list, {todos: items}))
 
     spect('.todo-count', el => templize(el, {
-      remainingCount: ref.from(items, items => items.filter(item => !item.done.value).length),
+      count: ref.from(items, items => items.filter(item => !item.done.value).length),
       plur
     }))
 

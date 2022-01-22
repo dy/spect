@@ -72,13 +72,12 @@ It combines selector parts indexing from [selector-observer](https://github.com/
 <time class="timer">{{ count }}</time>
 
 <script type="module">
-  import v from 'value-ref'
   import spect from 'spect'
   import templize from 'templize'
 
   spect('.timer', timer => {
-    const count = v(0), id = setInterval(() => count.value++, 1000)
-    templize(timer, { count })
+    const params = templize(timer, { count: 0 })
+    const id = setInterval(() => params.count++, 1000)
     return () => clearInterval(id)
   })
 </script>
@@ -125,11 +124,10 @@ It combines selector parts indexing from [selector-observer](https://github.com/
   import h from 'hyperf'
   import tpl from 'templize'
 
-  // FIXME: use specially designed reactive list for optimized updates
   const todos = v([])
 
   spect('.todo-list', el => tpl(el, {
-    todos: todos.map(item => h`<li>${ item.text }</li>`)
+    todos: v.from(todos, item => h`<li>${ item.text }</li>`)
   }))
 
   spect('.todo-form', form => form.addEventListener('submit', e => {
@@ -146,22 +144,23 @@ It combines selector parts indexing from [selector-observer](https://github.com/
 
 <!-- TODO: more meaningful validator -->
 ```html
-<form id="email-form"></form>
+<form id="email-form">
+  <label for="email">Please enter an email address:</label>
+  <input id="email" onchange={{ validate }}/>
+  The address is {{ valid ? "valid" : "invalid" }}
+</form>
 
 <script type="module">
   import spect from 'spect'
-  import h from 'hyperf'
-  import v from 'value-ref'
+  import templize from 'templize'
 
   const isValidEmail = s => /.+@.+\..+/i.test(s)
 
   spect('#email-form', form => {
-    const valid = v(false)
-    h`<${form}>
-      <label for="email">Please enter an email address:</label>
-      <input#email onchange=${ e => valid.value = isValidEmail(e.target.value) }/>
-      The address is ${ v(valid).map(b => b ? "valid" : "invalid") }
-    </>`
+    const params = templize(form, {
+      valid: false,
+      validate: () => params.valid = isValidEmail(e.target.value)
+    })
   })
 </script>
 ```
@@ -194,12 +193,12 @@ spect('.dialog', el => {
 ```
 </details>
 
-<!-- [See all examples](examples). -->
+[See all examples](examples).
 
 ## Best Buddies
 
 * [value-ref](https://github.com/spectjs/value-ref) − value container with observable interface. Indispensible for reactive data.
-* [templize](https://github.com/spectjs/templize) − DOM buddy - hooks up reactive values to element template parts.
+* [templize](https://github.com/spectjs/templize) − DOM buddy - hooks up reactive values to template parts.
 * [hyperf](https://github.com/spectjs/hyperf) − builds HTML fragments with reactive fields.
 * [subscribable-things](https://github.com/chrisguttandin/subscribable-things) − collection of observables for different browser APIs.
 <!-- * [element-props](https://github.com/spectjs/element-props) − unified access to element props with observable support. Comes handy for organizing components. -->
