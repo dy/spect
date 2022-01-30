@@ -1,4 +1,42 @@
-var vref = init => new Ref(init);
+// lil subscriby (v-less)
+Symbol.observable||=Symbol('observable');
+
+// is target observable
+const observable = arg => arg && !!(
+  arg[Symbol.observable] || arg[Symbol.asyncIterator] ||
+  arg.call && arg.set ||
+  arg.subscribe || arg.then
+  // || arg.mutation && arg._state != null
+);
+
+// cleanup subscriptions
+// ref: https://v8.dev/features/weak-references
+// FIXME: maybe there's smarter way to unsubscribe in weakref, like, wrapping target in weakref?
+const registry$1 = new FinalizationRegistry(unsub => unsub.call?.()),
+
+// this thingy must lose target out of context to let gc hit
+unsubr = sub => sub && (() => sub.unsubscribe?.());
+
+var sube = (target, next, error, complete, stop, unsub) => target && (
+  unsub = unsubr((target[Symbol.observable]?.() || target).subscribe?.( next, error, complete )) ||
+  target.set && target.call?.(stop, next) || // observ
+  (
+    target.then?.(v => (!stop && next(v), complete?.()), error) ||
+    (async v => {
+      try {
+        // FIXME: possible drawback: it will catch error happened in next, not only in iterator
+        for await (v of target) { if (stop) return; next(v); }
+        complete?.();
+      } catch (err) { error?.(err); }
+    })()
+  ) && (_ => stop=1),
+
+  // register autocleanup
+  registry$1.register(target, unsub),
+  unsub
+);
+
+const ref = (...init) => new Ref(...init);
 
 const NEXT=0, ERROR=1, UNSUB=3, TEARDOWN=4;
 
@@ -7,23 +45,32 @@ const unsubscribe = obs => obs?.map?.(sub => sub[UNSUB]()),
 
 class Ref {
   #observers=[]
+  #value=[]
 
   // NOTE: on finalization strategy
   // we unsubscribe only by losing source, not by losing subscriptions
   // safe is to let event handlers sit there as far as source is available
   // it can generate events, dereferencing listeners would be incorrect
-  constructor(init){ this[0] = init, registry.register(this, this.#observers); }
+  constructor(...args) {
+    this.#value = args;
+    registry.register(this, this.#observers);
+  }
 
-  get value() { return this[0] }
-  set value(val) {
-    this[0] = val;
+  get value() { return this.#value[0] }
+  set value(val) { this.#value[0] = val, this.set(...this.#value);}
+
+  set(...values) {
+    this.#value = values;
     for (let sub of this.#observers)
-      (sub[TEARDOWN]?.call?.(), sub[TEARDOWN] = sub[NEXT](val));
+      (sub[TEARDOWN]?.call?.(), sub[TEARDOWN] = sub[NEXT](...this.#value));
   }
 
   valueOf() {return this.value}
   toString() {return this.value}
+  toJSON() {return this.value}
   [Symbol.toPrimitive](hint) {return this.value}
+
+  *[Symbol.iterator]() { for (let value of this.#value) yield value; }
 
   subscribe(next, error, complete) {
     next = next?.next || next;
@@ -40,7 +87,7 @@ class Ref {
         error,
         complete,
         unsubscribe,
-        this[0] !== undefined ? next(this[0]) : null // teardown
+        this.#value.length ? next(...this.#value) : null // teardown
       ];
 
     observers.push(subscription);
@@ -48,12 +95,7 @@ class Ref {
     return unsubscribe.unsubscribe = unsubscribe
   }
 
-  map(mapper) {
-    const ref = new Ref();
-    this.subscribe(v => ref.value = mapper(v));
-    return ref
-  }
-
+  // FIXME: it never gets called
   error(e) {this.#observers.map(sub => sub[ERROR]?.(e));}
 
   [Symbol.observable||=Symbol.for('observable')](){return this}
@@ -68,10 +110,25 @@ class Ref {
 
   [Symbol.dispose||=Symbol('dispose')]() {
     unsubscribe(this.#observers);
-    delete this[0];
+    this.#value = null;
     this.#observers = null;
   }
 }
+
+// create new ref from [possibly multiple] sources
+Ref.from = ref.from = (...args) => {
+  let map, values, ref;
+  if (args[args.length-1]?.call) map = args.pop();
+
+  values = [];
+  args.map(
+    (arg,i) => observable(arg) ?
+      sube(arg, v => (values[i]=v, ref && (map ? ref.value=map(...values) : ref.set(...values)))) :
+      (values[i] = arg)
+  );
+
+  return ref = map ? new Ref(map(...values)) : new Ref(...values)
+};
 
 const ELEMENT = 1, SPECT_CLASS = '⬡';
 
@@ -120,7 +177,7 @@ class SelectorCollection extends Array {
 
     super();
 
-    this.#channel = vref(this);
+    this.#channel = ref(this);
     this.#items = new WeakMap;
     this.#delete = new WeakSet;
     this.#teardown = new WeakMap;
