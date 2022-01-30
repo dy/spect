@@ -51,11 +51,19 @@
     <p>Part of <a href="http://todomvc.com">TodoMVC</a></p>
   </footer>
   <script src="https://unpkg.com/todomvc-common/base.js"></script>
-  <script type="importmap"> {
+  <!--<script type="importmap"> {
     "imports": {
       "templize": "../node_modules/templize/templize.min.js",
       "value-ref": "../node_modules/value-ref/value-ref.min.js",
       "spect": "../spect.js",
+      "plur": "https://cdn.skypack.dev/plur"
+    }
+  } </script>-->
+  <script type="importmap"> {
+    "imports": {
+      "templize": "https://unpkg.com/templize/templize.min.js",
+      "value-ref": "https://unpkg.com/value-ref/value-ref.min.js",
+      "spect": "https://unpkg.com/spect/spect.min.js",
       "plur": "https://cdn.skypack.dev/plur"
     }
   } </script>
