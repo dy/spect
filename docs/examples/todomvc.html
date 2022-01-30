@@ -51,14 +51,15 @@
     <p>Part of <a href="http://todomvc.com">TodoMVC</a></p>
   </footer>
   <script src="https://unpkg.com/todomvc-common/base.js"></script>
-  <!--<script type="importmap"> {
+  <!-- <script type="importmap"> {
     "imports": {
-      "templize": "../node_modules/templize/templize.min.js",
-      "value-ref": "../node_modules/value-ref/value-ref.min.js",
-      "spect": "../spect.js",
+      "templize": "../../node_modules/templize/templize.min.js",
+      "value-ref": "../../node_modules/value-ref/value-ref.min.js",
+      "spect": "../../spect.js",
       "plur": "https://cdn.skypack.dev/plur"
     }
-  } </script>-->
+  }
+  </script> -->
   <script type="importmap"> {
     "imports": {
       "templize": "https://unpkg.com/templize/templize.min.js",
@@ -94,8 +95,8 @@
           edit.onkeypress = e => e.key === 'Enter' ? e.target.blur() : null
         }
       }],
-      item.done.subscribe(item => save(items.value)),
-      item.text.subscribe(item => save(items.value))
+      item.done.subscribe(item => (save(items.value), items.value = items.value)),
+      item.text.subscribe(item => (save(items.value), items.value = items.value))
     )
 
     // hash source
