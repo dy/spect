@@ -1,6 +1,6 @@
 {
   "name": "spect",
-  "version": "24.1.4",
+  "version": "24.2.0",
   "description": "Observe selectors in DOM",
   "main": "./src/index.js",
   "module": "./src/index.js",
