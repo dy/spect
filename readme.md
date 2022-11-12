@@ -53,7 +53,7 @@ nodes.at(-1).remove()
 // ... "disconnected"
 ```
 
-#### _`spect\`selector\``_
+#### _<code>spect\`selector\`</code>_
 
 Creates live collection of elements matching the selector. Collection extends Array and implements Set / HTMLColection interfaces.
 
