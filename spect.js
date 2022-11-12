@@ -1,135 +1,3 @@
-// lil subscriby (v-less)
-Symbol.observable||=Symbol('observable');
-
-// is target observable
-const observable = arg => arg && !!(
-  arg[Symbol.observable] || arg[Symbol.asyncIterator] ||
-  arg.call && arg.set ||
-  arg.subscribe || arg.then
-  // || arg.mutation && arg._state != null
-);
-
-// cleanup subscriptions
-// ref: https://v8.dev/features/weak-references
-// FIXME: maybe there's smarter way to unsubscribe in weakref, like, wrapping target in weakref?
-const registry$1 = new FinalizationRegistry(unsub => unsub.call?.()),
-
-// this thingy must lose target out of context to let gc hit
-unsubr = sub => sub && (() => sub.unsubscribe?.());
-
-var sube = (target, next, error, complete, stop, unsub) => target && (
-  unsub = unsubr((target[Symbol.observable]?.() || target).subscribe?.( next, error, complete )) ||
-  target.set && target.call?.(stop, next) || // observ
-  (
-    target.then?.(v => (!stop && next(v), complete?.()), error) ||
-    (async v => {
-      try {
-        // FIXME: possible drawback: it will catch error happened in next, not only in iterator
-        for await (v of target) { if (stop) return; next(v); }
-        complete?.();
-      } catch (err) { error?.(err); }
-    })()
-  ) && (_ => stop=1),
-
-  // register autocleanup
-  registry$1.register(target, unsub),
-  unsub
-);
-
-const ref = (...init) => new Ref(...init);
-
-const NEXT=0, ERROR=1, UNSUB=3, TEARDOWN=4;
-
-const unsubscribe = obs => obs?.map?.(sub => sub[UNSUB]()),
-      registry = new FinalizationRegistry(unsubscribe);
-
-class Ref {
-  #observers=[]
-  #value=[]
-
-  // NOTE: on finalization strategy
-  // we unsubscribe only by losing source, not by losing subscriptions
-  // safe is to let event handlers sit there as far as source is available
-  // it can generate events, dereferencing listeners would be incorrect
-  constructor(...args) {
-    this.#value = args;
-    registry.register(this, this.#observers);
-  }
-
-  get value() { return this.#value[0] }
-  set value(val) { this.#value[0] = val, this.set(...this.#value);}
-
-  set(...values) {
-    this.#value = values;
-    for (let sub of this.#observers)
-      (sub[TEARDOWN]?.call?.(), sub[TEARDOWN] = sub[NEXT](...this.#value));
-  }
-
-  valueOf() {return this.value}
-  toString() {return this.value}
-  toJSON() {return this.value}
-  [Symbol.toPrimitive](hint) {return this.value}
-
-  *[Symbol.iterator]() { for (let value of this.#value) yield value; }
-
-  subscribe(next, error, complete) {
-    next = next?.next || next;
-    error = next?.error || error;
-    complete = next?.complete || complete;
-
-    const observers = this.#observers,
-      unsubscribe = () => (
-        subscription[TEARDOWN]?.call?.(),
-        observers.splice(observers.indexOf(subscription) >>> 0, 1)
-      ),
-      subscription = [
-        next,
-        error,
-        complete,
-        unsubscribe,
-        this.#value.length ? next(...this.#value) : null // teardown
-      ];
-
-    observers.push(subscription);
-
-    return unsubscribe.unsubscribe = unsubscribe
-  }
-
-  // FIXME: it never gets called
-  error(e) {this.#observers.map(sub => sub[ERROR]?.(e));}
-
-  [Symbol.observable||=Symbol.for('observable')](){return this}
-
-  async *[Symbol.asyncIterator]() {
-    let resolve, buf = [], p = new Promise(r => resolve = r),
-      unsub = this.subscribe(v => ( buf.push(v), resolve(), p = new Promise(r => resolve = r) ));
-    try { while (1) yield* buf.splice(0), await p; }
-    catch {}
-    unsub();
-  }
-
-  [Symbol.dispose||=Symbol('dispose')]() {
-    unsubscribe(this.#observers);
-    this.#value = null;
-    this.#observers = null;
-  }
-}
-
-// create new ref from [possibly multiple] sources
-Ref.from = ref.from = (...args) => {
-  let map, values, ref;
-  if (args[args.length-1]?.call) map = args.pop();
-
-  values = [];
-  args.map(
-    (arg,i) => observable(arg) ?
-      sube(arg, v => (values[i]=v, ref && (map ? ref.value=map(...values) : ref.set(...values)))) :
-      (values[i] = arg)
-  );
-
-  return ref = map ? new Ref(map(...values)) : new Ref(...values)
-};
-
 const ELEMENT = 1, SPECT_CLASS = '⬡';
 
 let count = 0, ids = {}, classes = {}, tags = {}, names = {}, animations = {}, setCache = new WeakMap,
@@ -140,7 +8,7 @@ let count = 0, ids = {}, classes = {}, tags = {}, names = {}, animations = {}, s
 
 // FIXME: use Symbol.species to fix add/map/etc?
 
-function index (scope, selector, fn) {
+function spect (scope, selector, fn) {
   // spect`#x`
   if (scope && scope.raw) return new SelectorCollection(null, String.raw.apply(null, arguments))
   // spect(selector, fn)
@@ -161,7 +29,6 @@ function index (scope, selector, fn) {
 }
 
 class SelectorCollection extends Array {
-  #channel
   #items
   #delete
   #teardown
@@ -177,7 +44,6 @@ class SelectorCollection extends Array {
 
     super();
 
-    this.#channel = ref(this);
     this.#items = new WeakMap;
     this.#delete = new WeakSet;
     this.#teardown = new WeakMap;
@@ -201,8 +67,8 @@ class SelectorCollection extends Array {
       selector = new String(selector);
 
       const match = selector.match(rtokens);
-      selector.filter = selector;
-      if (!match) return selector // skip indexing
+      selector.filter = selector;  // default filter is itself?
+      if (!match) return selector // skip indexing (complex one?)
 
       let [str, id, name, cls, tag, filter] = match;
       if (id) (ids[selector.id = id] = ids[id] || []).push(this);
@@ -216,6 +82,8 @@ class SelectorCollection extends Array {
 
       return selector
     });
+
+    // if extra match (filtering) is needed
     this.#match = this.#selector.some(sel => sel.filter);
 
     // complex selectors are handled via anim events (technique from insertionQuery).
@@ -228,7 +96,7 @@ class SelectorCollection extends Array {
       if (!anim) {
         const { sheet } = style, { cssRules } = sheet;
         anim = animations[this.#selector] = [];
-        anim.id = SPECT_CLASS + '-' + (count++).toString(36);
+        anim.id = `${SPECT_CLASS}-${(count++).toString(36)}`;
         sheet.insertRule(`@keyframes ${ anim.id }{}`, cssRules.length);
         sheet.insertRule(`${ this.#selector.map(sel => sel + `:not(.${ anim.id })`) }{animation:${ anim.id }}`, cssRules.length);
         sheet.insertRule(`.${ anim.id }{animation:${ anim.id }}`, cssRules.length);
@@ -307,7 +175,6 @@ class SelectorCollection extends Array {
 
     // notify
     this.#teardown.set(el, this.#callback?.(el));
-    this.#channel.value = this;
   }
 
   delete(el, immediate = false) {
@@ -323,7 +190,7 @@ class SelectorCollection extends Array {
     this.#delete.add(el);
 
     const del = () => {
-      if (!this.#delete.has(el) || !this.#channel) return
+      if (!this.#delete.has(el) || !this.#items) return
       this.#delete.delete(el);
 
       if (!setCache.has(el)) return
@@ -333,7 +200,6 @@ class SelectorCollection extends Array {
         else if (teardown.then) teardown.then(fn => fn && fn.call && fn());
       }
       this.#teardown.delete(el);
-      this.#channel.value = this;
 
       setCache.get(el).delete(this);
       if (!setCache.get(el).size) {
@@ -349,8 +215,6 @@ class SelectorCollection extends Array {
     if (immediate) del();
     else requestAnimationFrame(del);
   }
-
-  [Symbol.observable||=Symbol.for('observable')]() { return this.#channel }
 
   item(n) { return n < 0 ? this[this.length + n] : this[n] }
 
@@ -383,9 +247,6 @@ class SelectorCollection extends Array {
     let els = [...this];
     this.length = 0;
     els.forEach(el => this.delete(el, true));
-
-    this.#channel[Symbol.dispose]?.();
-    this.#channel = null;
   }
 
   [Symbol.dispose||=Symbol('dispose')]() { return this.dispose }
@@ -394,8 +255,7 @@ class SelectorCollection extends Array {
 const queryAdd = (targets, sets, check) => {
   if (!sets || !targets) return
   // HTMLCollection has only iterable method
-  ;[].forEach.call(targets.nodeType ? [targets] : targets,
-    target => sets.forEach(set => set[_proto].add.call(set, target, check))
+  ;[].forEach.call(targets, target => sets.forEach(set => set[_proto].add.call(set, target, check))
   );
 },
 queryDelete = target => [target.classList.contains(SPECT_CLASS) ? target : null, ...target.getElementsByClassName(SPECT_CLASS)]
@@ -419,21 +279,20 @@ queryDelete = target => [target.classList.contains(SPECT_CLASS) ? target : null,
 
       // selector-set optimization:
       // instead of walking all registered selectors for each node, we detect which selectors are applicable for the node
-      if (target.id) {
-        queryAdd(target, ids[target.id]);
+      if (target.id && ids[target.id]) queryAdd([target], ids[target.id]);
+      if (target.name && names[target.name]) queryAdd([target], names[target.name]);
+      if (target.className) target.classList.forEach(cls => queryAdd([target], classes[cls]));
+      if (tags[target.tagName]) queryAdd([target], tags[target.tagName]);
+
+      // detect children against tables
+      // FIXME: this can be O(n)
+      if (target.hasChildNodes()) {
         // NOTE: <a> and other inlines may not have `getElementById`
         if (target.getElementById) for (let id in ids) queryAdd(target.getElementById(id), ids[id]);
-      }
-      if (target.name) {
-        queryAdd(target, names[target.name]);
         for (let name in names) queryAdd(target.getElementsByName(name), names[name]);
-      }
-      if (target.className) {
-        target.classList.forEach(cls => queryAdd(target, classes[cls]));
         for (let cls in classes) queryAdd(target.getElementsByClassName(cls), classes[cls]);
+        for (let tag in tags) queryAdd(target.getElementsByTagName(tag), tags[tag]);
       }
-      queryAdd(target, tags[target.tagName]);
-      for (let tag in tags) queryAdd(target.getElementsByTagName(tag), tags[tag]);
     });
   }
 }))
@@ -443,4 +302,4 @@ queryDelete = target => [target.classList.contains(SPECT_CLASS) ? target : null,
   attributes: !hasAnimevent
 });
 
-export { SelectorCollection, index as default };
+export { SelectorCollection, spect as default };
