@@ -243,6 +243,7 @@ spect('.dialog', el => {
 [insertionQuery](https://github.com/naugtur/insertionQuery),
 [selector-observer](https://github.com/josh/selector-observer),
 [qso](https://www.npmjs.com/package/qso),
+[qsa-observer](https://www.npmjs.com/package/qsa-observer),
 [element-observer](https://github.com/WebReflection/element-observer),
 [livequery](https://github.com/hazzik/livequery),
 [selector-listener](https://github.com/csuwildcat/SelectorListener),
