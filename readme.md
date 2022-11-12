@@ -55,16 +55,15 @@ nodes.at(-1).remove()
 
 #### _`spect\`selector\``_
 
-Creates live collection of elements matching the selector. Collection extends Array and implements Set, HTMLColection, Observable interfaces.
+Creates live collection of elements matching the selector. Collection extends Array and implements Set / HTMLColection interfaces.
 
 ```js
 const foos = spect`.foo`;
 
 // live collection
-foos[idx]                                     // Array
+foos[idx], foos.at(idx)                       // Array
 foos.has(el), foos.add(el), foos.delete(el)   // Set
 foos.item(idx), foos.namedItem(elementId)     // HTMLCollection
-foos.subscribe(fn)                            // Observable
 foos.dispose()                                // destroy selector observer / unsubscribe
 ```
 
@@ -72,6 +71,10 @@ foos.dispose()                                // destroy selector observer / uns
 
 It combines selector parts indexing from [selector-observer](https://github.com/josh/selector-observer) for simple queries and animation events from [insertionQuery](https://github.com/naugtur/insertionQuery) for complex selectors.
 
+Simple selector is id/name/class/tag followed by classes or attrs.
+
+* `#a`, `.x.y`, `[name="e"].x`, `*`, `a-b-c:x` - simple selectors.
+* `a b`, `#b .c` - complex selectors.
 
 <!--
 ## Examples

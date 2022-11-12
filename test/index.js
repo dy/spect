@@ -1,6 +1,6 @@
 import './testfill.js'
 import spect from '../src/index.js'
-import t, {is, throws, same, ok} from 'tst'
+import t, {is, throws, same, ok, not} from 'tst'
 import { tick, frame, idle, time } from 'wait-please'
 import v from 'value-ref'
 import h from 'hyperf'
@@ -37,6 +37,25 @@ t('spect: tag selector', async t => {
   document.body.removeChild(container)
   x1.dispose()
   x2.dispose()
+
+})
+t('spect: id selector', async t => {
+  let container = document.body.appendChild(document.createElement('div'))
+  let log = []
+
+  let x1 = spect('#x', el => {
+    log.push(el.tagName.toLowerCase())
+  })
+
+  let x = document.createElement('div')
+  x.id = 'x'
+  container.appendChild(x)
+
+  await frame()
+  is(log, ['div'])
+
+  document.body.removeChild(container)
+  x1.dispose()
 
 })
 t('spect: init existing elements', async t => {
@@ -243,19 +262,19 @@ t('spect: adding/removing attribute with attribute selector, mixed with direct s
   const log = []
   el.innerHTML = '<x></x>'
   const x = el.firstChild
-  spect(el, 'x', e => {})
+  spect(el, 'x', e => {log.push(0)})
   spect(el, 'x[y]', e => {
     log.push(1)
     return () => log.push(2)
   })
   await frame(2)
-  is(log, [])
+  is(log, [0])
   x.setAttribute('y', true)
   await frame(2)
-  is(log, [1])
+  is(log, [0,1])
   x.removeAttribute('y')
   await frame(2)
-  is(log, [1, 2])
+  is(log, [0, 1, 2])
   el.remove()
 })
 t('spect: matching nodes in added subtrees', async t => {
@@ -274,93 +293,16 @@ t('spect: matching nodes in added subtrees', async t => {
   await frame(2)
   is(log, ['+', '-'])
 })
-t.todo('subaspects', async t => {
+t('new custom element', async t => {
   let log = []
-
-  let a = document.body.appendChild(document.createElement('a'))
-  let b = a.appendChild(document.createElement('b'))
-  let c = b.appendChild(document.createElement('c'))
-
-  await spect('a').use(el => {
-    log.push('a')
-    spect('b').use(el => {
-      log.push('b')
-      spect('c').use(el => {
-        log.push('c')
-        return () => log.push('-c')
-      })
-      return () => log.push('-b')
-    })
-    return () => log.push('-a')
-  })
-
-  is(log, ['a', 'b', 'c'])
-
-  spect(a).dispose()
-
-  is(log, ['a', 'b', 'c', '-c', '-b', '-a'])
-
-  document.body.removeChild(a)
-})
-t.todo('new custom element', t => {
   spect('custom-element', () => {
-
-  })
-})
-t.todo('duplicates are ignored', async t => {
-  let log = []
-
-  await spect({}).use([fn, fn, fn])
-
-  function fn() {
-    log.push(1)
-  }
-
-  is(log, [1])
-
-  await spect({}).use([fn, fn, fn])
-
-  is(log, [1, 1])
-})
-t.skip('same aspect different targets', t => {
-  let log = []
-  function fx([el]) {
     log.push(el.tagName)
-    // return () => log.push('destroy ' + el.tagName)
-  }
-
-  let $el = spect({ tagName: 'A' }).use(fx)
-
-  is($el.target.tagName, log[0])
-  is(log, ['A'])
-
-  $el.target.innerHTML = '<span></span>'
-  spect($el.target.firstChild).use(fx)
-
-  is(log, ['A', 'SPAN'])
-})
-t.todo('same target different aspects', async t => {
-  let log = []
-
-  let a = {}
-
-  let afx, bfx
-  await spect(a).use([afx = () => (log.push('a'), () => log.push('de a'))])
-  is(log, ['a'])
-  await spect(a).use([bfx = () => (log.push('b'), () => log.push('de b'))])
-  is(log, ['a', 'b'])
-})
-t.todo('same aspect same target', async t => {
-  let log = []
-  let a = {}
-
-  let fx = () => (log.push('a'), () => log.push('z'))
-  await spect(a).use(fx)
-  is(log, ['a'])
-  await spect(a).use(fx)
-  is(log, ['a'])
-  await spect(a).use(fx)
-  is(log, ['a'])
+  })
+  let el = document.createElement('custom-element')
+  document.body.appendChild(el)
+  await frame()
+  is(log, ['CUSTOM-ELEMENT'])
+  document.body.removeChild(el)
 })
 t('async aspects', async t => {
   let a = document.createElement('a')
@@ -391,7 +333,7 @@ t.demo('rebinding to other document', async t => {
     is(el.nodeName.toUpperCase(), 'DIV')
   })
 })
-t.skip('empty selectors', t => {
+t('empty selectors', t => {
   let $x = spect()
   is($x.length, 0)
 
@@ -401,13 +343,12 @@ t.skip('empty selectors', t => {
   let $z = spect(null)
   is($z.length, 0)
 
-  // NOTE: this one creates content
-  // let $w = spect`div`
-  // is($w.length, 0)
+  let $w = spect`www`
+  is($w.length, 0)
 
-  t.notEqual($x, $y)
-  t.notEqual($x, $z)
-  // t.notEqual($x, $w)
+  ok($x !== $y)
+  ok($x !== $z)
+  ok($x !== $w)
 })
 t('spect: returned result is live collection', async t => {
   let scope = document.body.appendChild(document.createElement('div'))
@@ -458,18 +399,6 @@ t('spect: template literal', async t => {
 
   let els = spect`div.${'x'}`
   is([...els], [...el.childNodes])
-})
-t.todo('spect: v($)', async t => {
-  // TODO: do as strui/from
-  let $l = spect()
-  let vl = v($l)
-  let log = []
-  vl(list => log.push([...list]))
-  is(log, [[]])
-
-  let x
-  $l.add(x = document.createElement('div'))
-  is(log, [[], [x]])
 })
 t('spect: changed attribute name rewires reference', async t => {
   let el = document.body.appendChild(h`<div><a/><a/></div>`)
@@ -528,7 +457,7 @@ t.skip('spect: complex selectors', async t => {
 
   spect('a b > c')
 })
-t('spect: conflicting names', t => {
+t('spect: conflicting id with Set/Array method name', t => {
   let el = document.createElement('div')
   el.innerHTML = '<a id="add"></a>'
   document.body.appendChild(el)

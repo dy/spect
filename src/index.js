@@ -67,8 +67,8 @@ export class SelectorCollection extends Array {
       selector = new String(selector)
 
       const match = selector.match(rtokens)
-      selector.filter = selector
-      if (!match) return selector // skip indexing
+      selector.filter = selector  // default filter is itself?
+      if (!match) return selector // skip indexing (complex one?)
 
       let [str, id, name, cls, tag, filter] = match
       if (id) (ids[selector.id = id] = ids[id] || []).push(this)
@@ -82,6 +82,8 @@ export class SelectorCollection extends Array {
 
       return selector
     })
+
+    // if extra match (filtering) is needed
     this.#match = this.#selector.some(sel => sel.filter)
 
     // complex selectors are handled via anim events (technique from insertionQuery).
@@ -94,7 +96,7 @@ export class SelectorCollection extends Array {
       if (!anim) {
         const { sheet } = style, { cssRules } = sheet
         anim = animations[this.#selector] = []
-        anim.id = SPECT_CLASS + '-' + (count++).toString(36)
+        anim.id = `${SPECT_CLASS}-${(count++).toString(36)}`
         sheet.insertRule(`@keyframes ${ anim.id }{}`, cssRules.length)
         sheet.insertRule(`${ this.#selector.map(sel => sel + `:not(.${ anim.id })`) }{animation:${ anim.id }}`, cssRules.length)
         sheet.insertRule(`.${ anim.id }{animation:${ anim.id }}`, cssRules.length)
@@ -253,8 +255,7 @@ export class SelectorCollection extends Array {
 const queryAdd = (targets, sets, check) => {
   if (!sets || !targets) return
   // HTMLCollection has only iterable method
-  ;[].forEach.call(targets.nodeType ? [targets] : targets,
-    target => sets.forEach(set => set[_proto].add.call(set, target, check))
+  ;[].forEach.call(targets, target => sets.forEach(set => set[_proto].add.call(set, target, check))
   )
 },
 queryDelete = target => [target.classList.contains(SPECT_CLASS) ? target : null, ...target.getElementsByClassName(SPECT_CLASS)]
@@ -278,21 +279,20 @@ queryDelete = target => [target.classList.contains(SPECT_CLASS) ? target : null,
 
       // selector-set optimization:
       // instead of walking all registered selectors for each node, we detect which selectors are applicable for the node
-      if (target.id) {
-        queryAdd(target, ids[target.id])
+      if (target.id && ids[target.id]) queryAdd([target], ids[target.id])
+      if (target.name && names[target.name]) queryAdd([target], names[target.name])
+      if (target.className) target.classList.forEach(cls => queryAdd([target], classes[cls]))
+      if (tags[target.tagName]) queryAdd([target], tags[target.tagName])
+
+      // detect children against tables
+      // FIXME: this can be O(n)
+      if (target.hasChildNodes()) {
         // NOTE: <a> and other inlines may not have `getElementById`
         if (target.getElementById) for (let id in ids) queryAdd(target.getElementById(id), ids[id])
-      }
-      if (target.name) {
-        queryAdd(target, names[target.name])
         for (let name in names) queryAdd(target.getElementsByName(name), names[name])
-      }
-      if (target.className) {
-        target.classList.forEach(cls => queryAdd(target, classes[cls]))
         for (let cls in classes) queryAdd(target.getElementsByClassName(cls), classes[cls])
+        for (let tag in tags) queryAdd(target.getElementsByTagName(tag), tags[tag])
       }
-      queryAdd(target, tags[target.tagName])
-      for (let tag in tags) queryAdd(target.getElementsByTagName(tag), tags[tag])
     })
   }
 }))
