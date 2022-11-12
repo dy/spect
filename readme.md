@@ -5,36 +5,62 @@
 
 # <sub><img alt="subscript" src="./logo2.svg" height=30 /></sub> spect   <a href="https://github.com/spectjs/spect/actions/workflows/test.yml"><img src="https://github.com/spectjs/spect/actions/workflows/test.yml/badge.svg"/></a> <a href="https://bundlephobia.com/result?p=spect"><img alt="npm bundle size" src="https://img.shields.io/bundlephobia/minzip/spect?label=size"></a> <a href="https://npmjs.org/package/spect"><img alt="npm" src="https://img.shields.io/npm/v/spect"></a>
 
-> DOM aspects: pieces of logic declared with CSS rules.
+> Observe selectors in DOM.
 
-#### _`spect( [ container=document, ] selector, handler? )`_
+#### _`spect( container=document, selector, handler? )`_
 
-Observe _`selector`_ within _`container`_, call `handler` when matching elements found.<br/>
+Observes _`selector`_ in _`container`_, invokes `handler` any time matching elements appear or disappear.<br/>
 Handler can return a teardown function, called for unmatched elements.<br/>
-Returns live collection of elements _SelectorCollection_.
+Returns live collection of elements.
 
 ```js
-import spect from 'spect'
+import spect from 'spect';
 
+// assign aspect
 const foos = spect('.foo', el => {
-  console.log('active')
-  return () => console.log('inactive') // teardown
-})
+  console.log('connected');
+  return () => console.log('disconnected');
+});
 
-const foo = document.createElement('div')
-foo.className = 'foo'
-document.body.append(foo)
-// ... "active"
+// modify DOM
+const foo = document.createElement('div');
+foo.className = 'foo';
+document.body.append(foo);
+// ... "connected"
 
-foo.remove()
-// ... "inactive"
+foo.remove();
+// ... "disconnected"
 ```
 
-### SelectorCollection
+#### _`spect(element[s], handler)`_
 
-Extends _Array_, implements _Set_, _HTMLCollection_ methods, and provides _Observable_, _AsyncIterable_, _Disposable_ interfaces.
+Listens for connected/disconnected events for the list of elements. (alternative to [fast-on-load](https://www.npmjs.com/package/fast-on-load))
 
 ```js
+let nodes = [...document.querySelectorAll('.foo'), document.createElement('div')];
+
+// assign listener
+spect(nodes, el => {
+  console.log("connected");
+  return () => console.log("disconnected");
+});
+
+// modify DOM
+document.body.appendChild(nodes.at(-1))
+// ... "connected"
+
+nodes.at(-1).remove()
+// ... "disconnected"
+```
+
+#### _`spect\`selector\``_
+
+Creates live collection of elements matching the selector. Collection extends Array and implements Set, HTMLColection, Observable interfaces.
+
+```js
+const foos = spect`.foo`;
+
+// live collection
 foos[idx]                                     // Array
 foos.has(el), foos.add(el), foos.delete(el)   // Set
 foos.item(idx), foos.namedItem(elementId)     // HTMLCollection
@@ -44,8 +70,10 @@ foos.dispose()                                // destroy selector observer / uns
 
 ### Technique
 
-It combines selector parts indexing from [selector-observer](https://github.com/josh/selector-observer) for simple queries and animation events [insertionQuery](https://github.com/naugtur/insertionQuery) for complex selectors.
+It combines selector parts indexing from [selector-observer](https://github.com/josh/selector-observer) for simple queries and animation events from [insertionQuery](https://github.com/naugtur/insertionQuery) for complex selectors.
 
+
+<!--
 ## Examples
 
 <details><summary>Hello World</summary>
@@ -83,9 +111,9 @@ It combines selector parts indexing from [selector-observer](https://github.com/
 </script>
 ```
 </details>
-    
+
 <details><summary>Counter</summary>
-  
+
 ```html
 <output id="count">{{ count }}</output>
 <button id="inc" onclick="{{ inc }}">+</button>
@@ -142,7 +170,6 @@ It combines selector parts indexing from [selector-observer](https://github.com/
 
 <details><summary>Form validator</summary>
 
-<!-- TODO: more meaningful validator -->
 ```html
 <form id="email-form">
   <label for="email">Please enter an email address:</label>
@@ -194,19 +221,30 @@ spect('.dialog', el => {
 </details>
 
 [See all examples](examples).
+-->
 
+<!--
 ## Best Buddies
 
 * [value-ref](https://github.com/spectjs/value-ref) − value container with observable interface. Indispensible for reactive data.
 * [templize](https://github.com/spectjs/templize) − DOM buddy - hooks up reactive values to template parts.
 * [hyperf](https://github.com/spectjs/hyperf) − builds HTML fragments with reactive fields.
 * [subscribable-things](https://github.com/chrisguttandin/subscribable-things) − collection of observables for different browser APIs.
+-->
 <!-- * [element-props](https://github.com/spectjs/element-props) − unified access to element props with observable support. Comes handy for organizing components. -->
 <!-- * [strui](https://github.com/spectjs/strui) − collection of UI streams, such as router, storage etc. Comes handy for building complex reactive web-apps (spect, rxjs etc). -->
 
 
-## Refs
+## Alternatives
 
-[fast-on-load](https://ghub.io/fast-on-load), [selector-set](https://github.com/josh/selector-set), [insertionQuery](https://github.com/naugtur/insertionQuery), [selector-observer](https://github.com/josh/selector-observer), [reuse](https://ghub.io/reuse), [aspect-oriended-programming](https://en.wikipedia.org/wiki/Aspect-oriented_programming), [qso](https://www.npmjs.com/package/qso), [pure-js](https://pure-js.com/), [element-observer](https://github.com/WebReflection/element-observer), [livequery](https://github.com/hazzik/livequery), [selector-listener](https://github.com/csuwildcat/SelectorListener), [mutation-summary](https://github.com/rafaelw/mutation-summary), [rkusa/selector-observer](https://github.com/rkusa/selector-observer).
+[insertionQuery](https://github.com/naugtur/insertionQuery), [selector-observer](https://github.com/josh/selector-observer)
+[qso](https://www.npmjs.com/package/qso),
+[element-observer](https://github.com/WebReflection/element-observer),
+[livequery](https://github.com/hazzik/livequery),
+[selector-listener](https://github.com/csuwildcat/SelectorListener),
+[mutation-summary](https://github.com/rafaelw/mutation-summary),
+[fast-on-load](https://ghub.io/fast-on-load),
+[selector-set](https://github.com/josh/selector-set),
+[rkusa/selector-observer](https://github.com/rkusa/selector-observer).
 
 <p align="center">ॐ</p>

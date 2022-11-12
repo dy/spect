@@ -1,5 +1,3 @@
-import vref from 'value-ref'
-
 const ELEMENT = 1, SPECT_CLASS = '⬡'
 
 let count = 0, ids = {}, classes = {}, tags = {}, names = {}, animations = {}, setCache = new WeakMap,
@@ -10,7 +8,7 @@ let count = 0, ids = {}, classes = {}, tags = {}, names = {}, animations = {}, s
 
 // FIXME: use Symbol.species to fix add/map/etc?
 
-export default function (scope, selector, fn) {
+export default function spect (scope, selector, fn) {
   // spect`#x`
   if (scope && scope.raw) return new SelectorCollection(null, String.raw.apply(null, arguments))
   // spect(selector, fn)
@@ -31,7 +29,6 @@ export default function (scope, selector, fn) {
 }
 
 export class SelectorCollection extends Array {
-  #channel
   #items
   #delete
   #teardown
@@ -47,7 +44,6 @@ export class SelectorCollection extends Array {
 
     super()
 
-    this.#channel = vref(this)
     this.#items = new WeakMap
     this.#delete = new WeakSet
     this.#teardown = new WeakMap
@@ -177,7 +173,6 @@ export class SelectorCollection extends Array {
 
     // notify
     this.#teardown.set(el, this.#callback?.(el))
-    this.#channel.value = this
   }
 
   delete(el, immediate = false) {
@@ -193,7 +188,7 @@ export class SelectorCollection extends Array {
     this.#delete.add(el)
 
     const del = () => {
-      if (!this.#delete.has(el) || !this.#channel) return
+      if (!this.#delete.has(el) || !this.#items) return
       this.#delete.delete(el)
 
       if (!setCache.has(el)) return
@@ -203,7 +198,6 @@ export class SelectorCollection extends Array {
         else if (teardown.then) teardown.then(fn => fn && fn.call && fn())
       }
       this.#teardown.delete(el)
-      this.#channel.value = this
 
       setCache.get(el).delete(this)
       if (!setCache.get(el).size) {
@@ -219,8 +213,6 @@ export class SelectorCollection extends Array {
     if (immediate) del()
     else requestAnimationFrame(del)
   }
-
-  [Symbol.observable||=Symbol.for('observable')]() { return this.#channel }
 
   item(n) { return n < 0 ? this[this.length + n] : this[n] }
 
@@ -253,9 +245,6 @@ export class SelectorCollection extends Array {
     let els = [...this]
     this.length = 0
     els.forEach(el => this.delete(el, true))
-
-    this.#channel[Symbol.dispose]?.()
-    this.#channel = null
   }
 
   [Symbol.dispose||=Symbol('dispose')]() { return this.dispose }

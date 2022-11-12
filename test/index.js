@@ -79,23 +79,6 @@ t('spect: dynamically assigned selector', async t => {
 
   await frame(2)
 })
-t.skip('spect: simple hooks', async t => {
-  let el = document.createElement('div')
-
-  const hx = spect(el, augmentor(el => {
-    let [count, setCount] = useState(0)
-    el.count = count
-    useEffect(() => {
-      setCount(1)
-    }, [])
-  }))
-
-  is(el.count, 0)
-  await frame(2)
-  is(el.count, 1)
-
-  hx.dispose()
-})
 t('spect: throwing error must not create recursion', async t => {
   let a = document.createElement('a')
   document.body.appendChild(a)

@@ -95,6 +95,7 @@
           edit.onkeypress = e => e.key === 'Enter' ? e.target.blur() : null
         }
       }],
+      // FIXME: replace with deep ref
       item.done.subscribe(item => (save(items.value), items.value = items.value)),
       item.text.subscribe(item => (save(items.value), items.value = items.value))
     )
