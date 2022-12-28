@@ -3,7 +3,7 @@
   "version": "24.2.0",
   "description": "Observe selectors in DOM",
   "main": "./src/index.js",
-  "module": "./src/index.js",
+  "module": "./spect.min.js",
   "unpkg": "./spect.min.js",
   "type": "module",
   "scripts": {
