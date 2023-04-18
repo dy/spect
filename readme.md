@@ -240,6 +240,7 @@ spect('.dialog', el => {
 
 ## Alternatives
 
+[element-behaviors](https://github.com/lume/element-behaviors)
 [insertionQuery](https://github.com/naugtur/insertionQuery),
 [selector-observer](https://github.com/josh/selector-observer),
 [qso](https://www.npmjs.com/package/qso),
