@@ -240,7 +240,7 @@ spect('.dialog', el => {
 
 ## Alternatives
 
-[element-behaviors](https://github.com/lume/element-behaviors)
+[element-behaviors](https://github.com/lume/element-behaviors),
 [insertionQuery](https://github.com/naugtur/insertionQuery),
 [selector-observer](https://github.com/josh/selector-observer),
 [qso](https://www.npmjs.com/package/qso),
@@ -253,4 +253,4 @@ spect('.dialog', el => {
 [selector-set](https://github.com/josh/selector-set),
 [rkusa/selector-observer](https://github.com/rkusa/selector-observer).
 
-<p align="center">ॐ</p>
+<p align="center"><a href="https://krishnized.com/license/">ॐ</a></p>
