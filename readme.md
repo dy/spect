@@ -9,7 +9,7 @@
 
 #### _`spect( container=document, selector, handler? )`_
 
-Observes _`selector`_ in _`container`_, invokes `handler` any time matching elements appear or disappear.<br/>
+Observes _`selector`_ in _`container`_, invokes `handler` any time matching elements appear.<br/>
 Handler can return a teardown function, called for unmatched elements.<br/>
 Returns live collection of elements.
 
