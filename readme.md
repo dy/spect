@@ -52,12 +52,12 @@ nodes.at(-1).remove()
 // ... "disconnected"
 ```
 
-#### _`spect('<selector>')`, <code>spect\`<selector>\`</code>_
+#### _Live Collection_
 
-Creates live collection of elements matching the selector. Collection extends Array and implements Set / HTMLColection interfaces.
+Spect creates live collection of elements matching the selector. Collection extends Array and implements Set / HTMLColection interfaces.
 
 ```js
-const foos = spect`.foo`;
+const foos = spect(`.foo`);
 
 // live collection
 foos[idx], foos.at(idx)                       // Array
