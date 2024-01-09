@@ -45,11 +45,11 @@ spect(nodes, el => {
   return () => console.log("disconnected");
 });
 
-nodes.at(-1).remove()
-// ... "disconnected"
-
 document.body.appendChild(nodes.at(-1))
 // ... "connected"
+
+nodes.at(-1).remove()
+// ... "disconnected"
 ```
 
 #### _<code>spect\`selector\`</code>_
