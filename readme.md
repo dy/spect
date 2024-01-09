@@ -52,7 +52,7 @@ nodes.at(-1).remove()
 // ... "disconnected"
 ```
 
-#### _Live Collection_
+### Live Collection
 
 Spect creates live collection of elements matching the selector. Collection extends Array and implements Set / HTMLColection interfaces.
 
