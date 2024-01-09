@@ -37,7 +37,7 @@ foo.remove();
 Listens for connected/disconnected events for the list of elements. (alternative to [fast-on-load](https://www.npmjs.com/package/fast-on-load))
 
 ```js
-let nodes = [...document.querySelectorAll('.foo'), document.createElement('div')];
+const nodes = [...document.querySelectorAll('.foo'), document.createElement('div')];
 
 // assign listener
 spect(nodes, el => {
@@ -45,12 +45,11 @@ spect(nodes, el => {
   return () => console.log("disconnected");
 });
 
-// modify DOM
-document.body.appendChild(nodes.at(-1))
-// ... "connected"
-
 nodes.at(-1).remove()
 // ... "disconnected"
+
+document.body.appendChild(nodes.at(-1))
+// ... "connected"
 ```
 
 #### _<code>spect\`selector\`</code>_
