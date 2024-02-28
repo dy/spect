@@ -251,5 +251,6 @@ spect('.dialog', el => {
 [fast-on-load](https://ghub.io/fast-on-load),
 [selector-set](https://github.com/josh/selector-set),
 [rkusa/selector-observer](https://github.com/rkusa/selector-observer).
+[css-chain](https://github.com/sashafirsov/css-chain)
 
 <p align="center"><a href="https://krishnized.com/license/">ॐ</a></p>
