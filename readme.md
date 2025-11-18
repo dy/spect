@@ -9,8 +9,7 @@
 
 #### _`spect( container=document, selector, handler? )`_
 
-Observes _`selector`_ in _`container`_, invokes `handler` any time matching elements appear.<br/>
-Handler can return a teardown function, called for unmatched elements.<br/>
+Observes _`selector`_ in _`container`_, invokes `handler` for matched elements, which can return a teardown function called when elements unmatch.<br/>
 Returns live collection of elements.
 
 ```js
@@ -68,7 +67,7 @@ foos.dispose()                                // destroy selector observer / uns
 
 ### Technique
 
-It combines selector parts indexing from [selector-observer](https://github.com/josh/selector-observer) for simple queries and animation events from [insertionQuery](https://github.com/naugtur/insertionQuery) for complex selectors.
+Selector parts indexing from [selector-observer](https://github.com/josh/selector-observer) for simple queries and animation events from [insertionQuery](https://github.com/naugtur/insertionQuery) for complex selectors.
 
 Simple selector is id/name/class/tag followed by classes or attrs.
 
